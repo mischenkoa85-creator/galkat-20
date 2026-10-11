@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ГалКат, площадка 20: 3D-модель розміщення УЗЕ 1,725 МВт / 5 МВт·год, фундамент, кабельний канал і креслення. Ескіз за довідковими кресленнями виробника.">
+<style>
+:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>3D-макет площадки 20 ГалКат</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: viewer-first workbench. The 3D viewport leads; a control rail sits to its right and
+   drops underneath on phones; reference data follows as plain tables. */
+:root{
+  --bg:#eef1f4; --panel:#f9fafb; --ink:#16212c; --muted:#56646f; --line:#cdd5dc;
+  --accent:#a85200; --accent-soft:#f6e3cf; --on-accent:#ffffff;
+  --scene-sky:#dbe3ea; --scene-ground:#98a08c; --scene-apron:#b4bbab; --scene-line:#16212c;
+  --tag-bg:rgba(249,250,251,.92); --ghost:#dfae74; --chan:#c9cdd0;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171d; --panel:#18212a; --ink:#e4eaef; --muted:#93a2af; --line:#2c3944;
+    --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
+    --scene-sky:#18222b; --scene-ground:#4a5048; --scene-apron:#353b36; --scene-line:#e4eaef;
+    --tag-bg:rgba(24,33,42,.92); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171d; --panel:#18212a; --ink:#e4eaef; --muted:#93a2af; --line:#2c3944;
+  --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
+  --scene-sky:#18222b; --scene-ground:#4a5048; --scene-apron:#353b36; --scene-line:#e4eaef;
+  --tag-bg:rgba(24,33,42,.92); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(22px,3.2vw,30px);line-height:1.15;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px}
+.status{margin-left:auto;font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 8px;border-radius:2px;white-space:nowrap}
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.viewer{position:relative;height:clamp(380px,70vh,780px);background:var(--scene-sky);overflow:hidden;touch-action:none}
+.viewer canvas{display:block;width:100%;height:100%}
+.stage{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line)}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;background:var(--panel);border-top:1px solid var(--line);padding:9px 12px;font-size:13px;line-height:1.3}
+.legend .row{display:flex;gap:8px;align-items:center}
+.legend .n{flex:none;width:21px;height:21px;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);font-family:var(--f-mono);font-weight:500;font-size:13px}
+.legend b{font-family:var(--f-display);font-weight:600;font-size:14.5px}
+.legend small{margin-left:8px;color:var(--muted);font-family:var(--f-mono);font-size:11.5px;white-space:nowrap}
+.legend .sw{flex:none;width:21px;height:13px;background:var(--ghost);border:1px dashed var(--ink)}
+.legend .sw.ch{background:var(--chan);border-style:solid}
+.legend .u{margin-left:auto;color:var(--muted);font-size:12px}
+.hint{position:absolute;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);bottom:8px;font-size:12px;color:var(--muted);background:var(--tag-bg);padding:2px 8px;pointer-events:none}
+.fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+.rail{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.rail h2{font-family:var(--f-mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:13.5px;color:var(--ink);background:transparent;border:1px solid var(--line);padding:6px 10px;border-radius:2px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tip{margin:8px 0 0;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.checks label{display:flex;gap:7px;align-items:center;font-size:14px;cursor:pointer}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.slider{display:flex;flex-direction:column;gap:4px}
+.slider .row{display:flex;justify-content:space-between;font-size:14px}
+.slider output{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.data{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px 28px}
+.data section{min-width:0}
+.data h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 14px;font-size:14px}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.src{color:var(--muted);font-size:13px;max-width:75ch}
+/* drawing viewer: covers the page, the 3D model stays underneath */
+.sheetview{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:var(--bg)}
+.sv-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
+.sv-bar .back{font-weight:600;border-color:var(--ink)}
+.sv-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.sv-zoom{display:flex;gap:6px;margin-left:auto}
+.sv-note{padding:7px 16px;font-size:13.5px;line-height:1.4;background:var(--accent-soft);border-bottom:1px solid var(--line)}
+.sv-stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;cursor:grab;background:var(--scene-sky)}
+.sv-stage.drag{cursor:grabbing}
+.sv-stage img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.28);user-select:none;-webkit-user-drag:none}
+.sv-load{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;pointer-events:none}
+@media (max-width:860px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .viewer{height:clamp(320px,58vh,560px)}
+  .status{margin-left:0}
+  .legend{gap:7px 16px}
+  .legend .u{margin-left:0}
+}
+.dl{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Площадка 20 · УЗЕ 1,725 МВт / 5 МВт·год</h1>
+    <span class="sub">ГалКат · розміщення контейнерів і фундамент</span>
+    <span class="status">Ескіз, не для будівництва</span>
+  </header>
+
+  <div class="bench">
+    <div class="stage">
+      <div class="viewer" id="viewer">
+        <div class="hint" id="hint">Клацніть на об’єкт, щоб відкрити його креслення · тягніть, щоб обертати</div>
+      </div>
+      <div class="legend" id="legend">
+        <div class="row"><span class="n">1</span><span><b>Контейнер BESS</b><small>5 015 кВт·год · ≈ 43 т</small></span></div>
+        <div class="row"><span class="n">2</span><span><b>Блок PCS + трансформатор</b><small>1 725 кВт · 6 кВ · ≈ 17 т</small></span></div>
+        <div class="row"><span class="sw"></span><span>фундамент блока PCS показано умовно</span></div>
+        <div class="row"><span class="sw ch"></span><span>кабельний канал: попередній розрахунок</span></div>
+        <div class="u">Розміри в мм, позначки рівнів у м</div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div>
+        <h2>Вид</h2>
+        <div class="btns" id="views">
+          <button type="button" id="view-iso" data-view="iso" aria-pressed="true">Загальний</button>
+          <button type="button" id="view-top" data-view="top" aria-pressed="false">Зверху</button>
+          <button type="button" id="view-south" data-view="south" aria-pressed="false">З боку дверей</button>
+          <button type="button" id="view-west" data-view="west" aria-pressed="false">З торця</button>
+          <button type="button" id="view-found" data-view="found" aria-pressed="false">Фундамент</button>
+          <button type="button" id="view-chan" data-view="chan" aria-pressed="false">Канал</button>
+        </div>
+      </div>
+      <div>
+        <h2>Шари</h2>
+        <div class="checks">
+          <label><input type="checkbox" id="chk-containers" checked> Контейнери</label>
+          <label><input type="checkbox" id="chk-found" checked> Фундаменти</label>
+          <label><input type="checkbox" id="chk-dims" checked> Розміри</label>
+          <label><input type="checkbox" id="chk-tags" checked> Підписи</label>
+          <label><input type="checkbox" id="chk-zone" checked> Межа зони</label>
+          <label><input type="checkbox" id="chk-chan" checked> Кабельний канал</label>
+          <label><input type="checkbox" id="chk-cov" checked> Плити каналу</label>
+        </div>
+      </div>
+      <div>
+        <h2>Клік по моделі</h2>
+        <div class="btns" id="mode">
+          <button type="button" id="mode-sheet" data-mode="sheet" aria-pressed="true">Відкриває креслення</button>
+          <button type="button" id="mode-door" data-mode="door" aria-pressed="false">Відчиняє двері</button>
+        </div>
+        <p class="tip" id="mode-tip">Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик.</p>
+      </div>
+      <div>
+        <h2>Креслення</h2>
+        <div class="btns" id="sheets">
+          <button type="button" id="open-1" data-sheet="1">1 · План</button>
+          <button type="button" id="open-2" data-sheet="2">2 · Двері</button>
+          <button type="button" id="open-3" data-sheet="3">3 · Фундамент</button>
+          <button type="button" id="open-4" data-sheet="4">4 · Вигляди</button>
+        </div>
+        <p class="tip"><a class="dl" href="Kreslennya_GalKat_ploshchadka_20.pdf">Завантажити всі аркуші (PDF, A3)</a></p>
+      </div>
+      <div>
+        <h2>Двері</h2>
+        <div class="btns">
+          <button type="button" id="doors-open" aria-pressed="false">Відчинити всі</button>
+          <button type="button" id="doors-close" aria-pressed="true">Зачинити всі</button>
+        </div>
+        <p class="tip">Зараз <span id="doors-out">усі зачинені</span>. Окремі дверцята відчиняються кліком у режимі «Відчиняє двері».</p>
+      </div>
+      <div>
+        <h2>Ґрунт</h2>
+        <div class="btns" id="ground">
+          <button type="button" id="ground-solid" data-ground="solid" aria-pressed="false">Суцільний</button>
+          <button type="button" id="ground-glass" data-ground="glass" aria-pressed="true">Прозорий</button>
+          <button type="button" id="ground-off" data-ground="off" aria-pressed="false">Сховати</button>
+        </div>
+      </div>
+      <div class="slider">
+        <div class="row"><label for="lift">Підняти контейнери</label><output id="lift-out" for="lift">0,0 м</output></div>
+        <input type="range" id="lift" min="0" max="4" step="0.1" value="0">
+      </div>
+    </aside>
+  </div>
+
+  <div class="data">
+    <section>
+      <h2>Майданчик</h2>
+      <dl>
+        <dt>Зона розміщення</dt><dd>16 058 × 19 876 мм</dd>
+        <dt>Площа</dt><dd>≈ 319 м²</dd>
+        <dt>Відступи з усіх боків</dt><dd>5 000 мм</dd>
+        <dt>Між контейнерами</dt><dd>5 000 мм</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Обладнання</h2>
+      <dl>
+        <dt>Контейнер BESS</dt><dd>6058 × 2438 × 2896</dd>
+        <dt>Ємність, маса</dt><dd>5 015 кВт·год, ≈ 43 т</dd>
+        <dt>Блок PCS + трансформатор</dt><dd>6058 × 2438 × 2896</dd>
+        <dt>Потужність, маса</dt><dd>1 725 кВт, 6 кВ, ≈ 17 т</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Фундамент контейнера BESS</h2>
+      <dl>
+        <dt>Габарит у плані</dt><dd>6158 × 2538 мм</dd>
+        <dt>Верх / низ</dt><dd>+0,300 / −1,850</dd>
+        <dt>Обв'язувальна балка</dt><dd>350 × 350, C25</dd>
+        <dt>Армування балки</dt><dd>4Ø12, хомути Ø8/200</dd>
+        <dt>Колони</dt><dd>8 шт., 350 × 350 × 1800</dd>
+        <dt>Між колонами</dt><dd>цегляна кладка</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Кабельний канал (попередньо)</h2>
+      <dl>
+        <dt>Внутрішній переріз</dt><dd>600 × 450 мм</dd>
+        <dt>Довжина між фундаментами</dt><dd>4 900 мм</dd>
+        <dt>Силові DC, до 1 773 А</dt><dd>8 × (1×300 мм² Cu)</dd>
+        <dt>Власні потреби (припущення)</dt><dd>5×25…35 мм² Cu</dd>
+        <dt>Зв'язок і контроль</dt><dd>на окремій полиці</dd>
+        <dt>Заземлення</dt><dd>смуга 40×4</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Що показано умовно</h2>
+      <ul>
+        <li>Фундамент блока PCS і трансформатора. Golen дав креслення лише для контейнера BESS, тому тут повторено той самий тип.</li>
+        <li>Товщина цегляної кладки (350 мм) і ширина сходинок. На кресленні Golen їх не вказано.</li>
+        <li>Двері блока PCS: ширину стулок знято з масштабу плану Golen, кут відчинення (90°) виробник не вказав. Для контейнера BESS стулки й кут понад 120° взято з плану.</li>
+        <li>Частину блока з шафами PCS показано як відкриту раму з дахом: на плані Golen дверцята шаф стоять усередині контуру, за 550–625 мм від краю.</li>
+        <li>Те, що видно за дверима (стійки, шафи, трансформатор), намальовано схематично.</li>
+        <li>Кабельний канал і кабелі: розміри з мого попереднього розрахунку, трасу в кабельних просторах і місця вводів показано умовно. Остаточно — за переліком кабелів Golen.</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="src">Побудовано за довідковими кресленнями Golen Power Technology: Annex 1 до Response 1, аркуші Layout Drawing, Hoisting Schematic і Reference Foundation Drawing. Модель показує розміщення і принцип фундаменту; робочі креслення та розрахунок виконує проєктувальник.</p>
+</div>
+
+<div class="sheetview" id="sheetview" hidden>
+  <div class="sv-bar">
+    <button type="button" class="back" id="sv-back">← До 3D-моделі</button>
+    <div class="sv-tabs" id="sv-tabs">
+      <button type="button" id="sv-tab-1" data-sheet="1" aria-pressed="false">1 · План</button>
+      <button type="button" id="sv-tab-2" data-sheet="2" aria-pressed="false">2 · Двері</button>
+      <button type="button" id="sv-tab-3" data-sheet="3" aria-pressed="false">3 · Фундамент</button>
+      <button type="button" id="sv-tab-4" data-sheet="4" aria-pressed="false">4 · Вигляди</button>
+    </div>
+    <div class="sv-zoom">
+      <button type="button" id="sv-out" aria-label="Зменшити">−</button>
+      <button type="button" id="sv-in" aria-label="Збільшити">+</button>
+      <button type="button" id="sv-fit">Весь аркуш</button>
+    </div>
+  </div>
+  <div class="sv-note" id="sv-note"></div>
+  <div class="sv-stage" id="sv-stage">
+    <div class="sv-load" id="sv-load">Завантажую аркуш…</div>
+    <img id="sv-img" alt="" draggable="false">
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script>
+(function(){
+  const viewer = document.getElementById('viewer');
+  const legend = document.getElementById('legend');
+  const $ = id => document.getElementById(id);
+  if (!window.THREE) { fail('Не вдалося завантажити 3D-бібліотеку. Оновіть сторінку.'); return; }
+
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({antialias:true}); }
+  catch(e){ fail('Цей браузер не показує 3D-графіку (WebGL вимкнено).'); return; }
+  function fail(msg){ const d=document.createElement('div'); d.className='fail'; d.textContent=msg; viewer.appendChild(d); $('hint').hidden=true; legend.hidden=true; }
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  viewer.insertBefore(renderer.domElement, viewer.firstChild);
+
+  // ---- geometry, metres (source: Golen Annex 1) ----
+  const W=16.058, D=19.876, L=6.058, B=2.438, H=2.896, GAP=5.0;
+  const F_TOP=0.3, COL_H=1.8, BEAM=0.35, OFF=0.05;
+  const X0=-W/2+GAP, X1=X0+L;
+  const Z_SKID=-D/2+GAP, Z_BESS=Z_SKID+B+GAP;
+  const COL_X=[0,2.0,3.808,5.808];
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 400);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 3; controls.maxDistance = 150; controls.maxPolarAngle = Math.PI*0.62;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f86, 0.78));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.62);
+  sun.position.set(-14, 22, 16); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70});
+  sun.shadow.bias = -0.0006;
+  scene.add(sun);
+
+  // ---- textures ----
+  function tex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h);
+    const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=4; return t; }
+  const corrTex = base => tex(64,8,(g,w,h)=>{ for(let x=0;x<w;x++){ const s=Math.sin(x/w*Math.PI*2); const v=Math.round(base+s*16); g.fillStyle='rgb('+v+','+(v+2)+','+(v+4)+')'; g.fillRect(x,0,1,h);} });
+  const louverTex = tex(8,32,(g,w,h)=>{ g.fillStyle='#8f989f'; g.fillRect(0,0,w,h); g.fillStyle='#3b454d'; g.fillRect(0,0,w,h*0.42); });
+  louverTex.repeat.set(1,9);
+  const brickTex = tex(128,64,(g,w,h)=>{ g.fillStyle='#c9c2b6'; g.fillRect(0,0,w,h);
+    for(let r=0;r<4;r++){ const o=r%2?16:0; for(let x=-32;x<w;x+=32){ const k=150+((x*7+r*31)%28); g.fillStyle='rgb('+k+','+Math.round(k*0.45)+','+Math.round(k*0.34)+')'; g.fillRect(x+o+1,r*16+1,30,14);} } });
+  const concTex = tex(96,96,(g,w,h)=>{ g.fillStyle='#a9adaf'; g.fillRect(0,0,w,h); let s=7;
+    for(let i=0;i<900;i++){ s=(s*16807)%2147483647; const x=s%w; s=(s*16807)%2147483647; const y=s%h; const v=140+(s%60); g.fillStyle='rgba('+v+','+v+','+v+',.55)'; g.fillRect(x,y,1.4,1.4);} });
+
+  const M = {
+    body: new THREE.MeshStandardMaterial({color:0xe9edf0, roughness:.75, metalness:.1}),
+    bodySkid: new THREE.MeshStandardMaterial({color:0xd9dee2, roughness:.75, metalness:.1}),
+    frame: new THREE.MeshStandardMaterial({color:0x35414b, roughness:.6, metalness:.3}),
+    door: new THREE.MeshStandardMaterial({color:0xf3f5f7, roughness:.7, metalness:.1}),
+    louver: new THREE.MeshStandardMaterial({map:louverTex, roughness:.8}),
+    concrete: new THREE.MeshStandardMaterial({map:concTex, roughness:.95}),
+    brick: new THREE.MeshStandardMaterial({map:brickTex, roughness:.95}),
+    steel: new THREE.MeshStandardMaterial({color:0x4b5660, roughness:.5, metalness:.6}),
+    ghostC: new THREE.MeshStandardMaterial({color:0xd99a52, roughness:.95, transparent:true, opacity:.55}),
+    ghostB: new THREE.MeshStandardMaterial({color:0xc98d4a, roughness:.95, transparent:true, opacity:.32}),
+    edge: new THREE.LineBasicMaterial({color:0x1d2731, transparent:true, opacity:.5}),
+    dim: new THREE.LineBasicMaterial({color:0x16212c}),
+    zone: new THREE.LineDashedMaterial({color:0x16212c, dashSize:.45, gapSize:.28}),
+    hover: new THREE.LineBasicMaterial({color:0xa85200, depthTest:false, transparent:true}),
+    zoneHot: new THREE.LineDashedMaterial({color:0xa85200, dashSize:.45, gapSize:.28}),
+    ground: new THREE.MeshStandardMaterial({color:0xb7bdb0, roughness:1, transparent:true, opacity:.5, depthWrite:false}),
+    apron: new THREE.MeshStandardMaterial({color:0xcbd1c6, roughness:1, transparent:true, opacity:.5, depthWrite:false})
+  };
+
+  // box positioned by its minimum corner
+  function box(parent,w,h,d,mat,x,y,z,opts){
+    opts=opts||{};
+    const g=new THREE.BoxGeometry(w,h,d);
+    if(opts.uv){ const uv=g.attributes.uv; for(let i=0;i<uv.count;i++){ uv.setXY(i, uv.getX(i)*opts.uv[0], uv.getY(i)*opts.uv[1]); } }
+    const m=new THREE.Mesh(g,mat); m.position.set(x+w/2,y+h/2,z+d/2);
+    m.castShadow = opts.shadow!==false; m.receiveShadow=true; parent.add(m);
+    if(opts.edges!==false){ const e=new THREE.LineSegments(new THREE.EdgesGeometry(g), M.edge); e.position.copy(m.position); parent.add(e); }
+    return m;
+  }
+  function wallPanel(parent,w,h,texture,rep,x,y,z,rotY){
+    const t=texture.clone(); t.needsUpdate=true; t.repeat.set(rep,1);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshStandardMaterial({map:t, roughness:.75, metalness:.1}));
+    m.position.set(x,y,z); m.rotation.y=rotY; m.receiveShadow=true; parent.add(m); return m;
+  }
+
+  // ---- foundation (Golen reference type): ring beam, 8 columns, brick infill ----
+  function foundation(x0,z0,ghost,withSteps){
+    const g=new THREE.Group(); g.position.set(x0-OFF,0,z0-OFF);
+    const LF=L+2*OFF, BF=B+2*OFF, yB=-(COL_H-F_TOP), mc=ghost?M.ghostC:M.concrete, mb=ghost?M.ghostB:M.brick;
+    const sh={shadow:!ghost};
+    box(g,LF,BEAM,BEAM,mc,0,yB-BEAM,0,sh); box(g,LF,BEAM,BEAM,mc,0,yB-BEAM,BF-BEAM,sh);
+    box(g,BEAM,BEAM,BF-2*BEAM,mc,0,yB-BEAM,BEAM,sh); box(g,BEAM,BEAM,BF-2*BEAM,mc,LF-BEAM,yB-BEAM,BEAM,sh);
+    [0,BF-BEAM].forEach(z=>{
+      COL_X.forEach(x=>{ box(g,BEAM,COL_H,BEAM,mc,x,yB,z,sh); if(!ghost) box(g,0.3,0.012,0.3,M.steel,x+0.025,F_TOP,z+0.025,{edges:false}); });
+      for(let i=0;i<3;i++){ const xa=COL_X[i]+BEAM, w=COL_X[i+1]-xa; box(g,w,COL_H,BEAM,mb,xa,yB,z,{uv:[w/0.52,COL_H/0.3],shadow:!ghost}); }
+    });
+    [0,LF-BEAM].forEach(x=> box(g,BEAM,COL_H,BF-2*BEAM,mb,x,yB,BEAM,{uv:[(BF-2*BEAM)/0.52,COL_H/0.3],shadow:!ghost}));
+    if(withSteps){ box(g,0.3,0.3,1.6,mc,-0.3,0,BF/2-0.8,sh); box(g,0.3,0.15,1.6,mc,-0.6,0,BF/2-0.8,sh); }
+    return g;
+  }
+  const gFound=new THREE.Group(); scene.add(gFound);
+  const fBess=foundation(X0,Z_BESS,false,true), fPcs=foundation(X0,Z_SKID,true,false);
+  fBess.userData.obj='fbess'; fPcs.userData.obj='fpcs'; gFound.add(fBess); gFound.add(fPcs);
+
+  // ---- what is behind the doors (schematic interiors) ----
+  const T={
+    racks: tex(128,256,(g,w,h)=>{ g.fillStyle='#161d24'; g.fillRect(0,0,w,h);
+      for(let r=0;r<9;r++) for(let c=0;c<2;c++){ const x=8+c*60, y=8+r*27; g.fillStyle='#59646e'; g.fillRect(x,y,52,22); g.fillStyle='#737f8a'; g.fillRect(x+3,y+3,46,5);
+        g.fillStyle='#3fbf7f'; g.fillRect(x+44,y+14,4,4); g.fillStyle='#2a333c'; g.fillRect(x+4,y+12,30,2); g.fillRect(x+4,y+16,30,2); } }),
+    cab: tex(128,256,(g,w,h)=>{ g.fillStyle='#232c35'; g.fillRect(0,0,w,h); g.fillStyle='#c5ccd2'; g.fillRect(10,12,108,232); g.fillStyle='#232c35';
+      g.fillRect(22,26,36,22); g.fillStyle='#7fd0e0'; g.fillRect(25,29,30,16);
+      for(let r=0;r<5;r++){ g.fillStyle='#39434d'; g.fillRect(20,70+r*34,88,22); for(let c=0;c<6;c++){ g.fillStyle='#e7ebee'; g.fillRect(25+c*14,74+r*34,9,14); g.fillStyle='#b23a2e'; g.fillRect(27+c*14,78+r*34,5,5);} } }),
+    trafo: tex(256,256,(g,w,h)=>{ g.fillStyle='#161d24'; g.fillRect(0,0,w,h); g.fillStyle='#6d7882'; g.fillRect(48,86,160,140); g.fillStyle='#55606a';
+      for(let x=52;x<206;x+=11) g.fillRect(x,96,5,122); g.fillStyle='#8a959f'; g.fillRect(40,74,176,14);
+      [84,128,172].forEach(x=>{ g.fillStyle='#9a5a34'; g.fillRect(x-7,30,14,46); g.fillStyle='#c98a5c'; for(let y=34;y<74;y+=9) g.fillRect(x-10,y,20,4); });
+      g.fillStyle='#39434d'; g.fillRect(36,226,184,10); }),
+    pcs: tex(128,256,(g,w,h)=>{ g.fillStyle='#161d24'; g.fillRect(0,0,w,h);
+      for(let r=0;r<4;r++){ const y=10+r*60; g.fillStyle='#4d5862'; g.fillRect(10,y,108,50); g.fillStyle='#2a333c'; for(let x=16;x<112;x+=7) g.fillRect(x,y+6,3,26);
+        g.fillStyle='#c8813f'; g.fillRect(14,y+38,100,5); g.fillStyle='#3fbf7f'; g.fillRect(104,y+4,6,4); } }),
+    chill: tex(128,256,(g,w,h)=>{ g.fillStyle='#161d24'; g.fillRect(0,0,w,h); g.fillStyle='#4d5862'; g.fillRect(14,14,100,96); g.fillStyle='#39434d'; g.fillRect(14,124,100,118);
+      g.strokeStyle='#7fb2d6'; g.lineWidth=5; g.beginPath(); g.moveTo(26,236); g.lineTo(26,140); g.lineTo(100,140); g.lineTo(100,236); g.stroke();
+      g.strokeStyle='#d98a6a'; g.beginPath(); g.moveTo(44,236); g.lineTo(44,160); g.lineTo(82,160); g.lineTo(82,236); g.stroke(); }),
+    fans: tex(128,256,(g,w,h)=>{ g.fillStyle='#d5dade'; g.fillRect(0,0,w,h);
+      [[34,36],[94,36],[34,98],[94,98]].forEach(c=>{ g.fillStyle='#2a333c'; g.beginPath(); g.arc(c[0],c[1],27,0,7); g.fill(); g.strokeStyle='#8a959f'; g.lineWidth=2;
+        for(let a=0;a<6;a++){ g.beginPath(); g.moveTo(c[0],c[1]); g.lineTo(c[0]+Math.cos(a*1.047)*25,c[1]+Math.sin(a*1.047)*25); g.stroke(); }
+        g.beginPath(); g.arc(c[0],c[1],16,0,7); g.stroke(); g.fillStyle='#c5ccd2'; g.beginPath(); g.arc(c[0],c[1],6,0,7); g.fill(); });
+      g.fillStyle='#b9c0c6'; g.fillRect(10,140,108,104); g.fillStyle='#6d7882'; for(let y=150;y<236;y+=7) g.fillRect(16,y,96,3); })
+  };
+  const inside=t=>new THREE.MeshBasicMaterial({map:t, toneMapped:false});
+  const MI={racks:inside(T.racks),cab:inside(T.cab),trafo:inside(T.trafo),pcs:inside(T.pcs),chill:inside(T.chill)};
+  M.fans=new THREE.MeshStandardMaterial({map:T.fans, roughness:.8});
+
+  // ---- doors: every leaf swings on its own hinge; click a leaf to open or close it ----
+  const leaves=[], leafMeshes=[], occluders=[];
+  // (hx,hz) hinge, (dx,dz) direction of the closed leaf, (nx,nz) outward normal; o: {mat, max, inside, uv}
+  function leaf(parent,hx,y,hz,w,h,dx,dz,nx,nz,o){
+    o=o||{};
+    const g=new THREE.Group(); g.position.set(hx,y,hz);
+    const base=Math.atan2(-dz,dx); g.rotation.y=base;
+    const sign=Math.sign(dz*nx-dx*nz)||1; // (d × n).y; the outward side of the leaf is local z = -sign
+    const m=box(g,w,h,0.04,o.mat||M.door,0,0,-0.02,{shadow:false});
+    const hb=box(g,0.03,h*0.5,0.03,M.frame,w-0.12,h*0.25,-sign*0.035-0.015,{edges:false,shadow:false}); // handle bar
+    parent.add(g);
+    if(o.inside){ // opening behind the leaf, 3 mm proud of the wall so it only shows once the leaf swings away
+      const pg=new THREE.PlaneGeometry(w,h);
+      if(o.uv){ const uv=pg.attributes.uv; for(let i=0;i<uv.count;i++) uv.setX(i, o.uv[0]+uv.getX(i)*(o.uv[1]-o.uv[0])); } // one picture across a double door
+      const q=new THREE.Mesh(pg, o.inside);
+      q.position.set(hx+dx*w/2-nx*0.017, y+h/2, hz+dz*w/2-nz*0.017); q.rotation.y=Math.atan2(nx,nz); parent.add(q);
+    }
+    const rec={g,base,sign,max:o.max||Math.PI/2,t:0,a:0,rival:null};
+    m.userData.leaf=rec; hb.userData.leaf=rec; leafMeshes.push(m,hb); leaves.push(rec); return rec;
+  }
+  // leaves hinged side by side on neighbouring doors cannot both pass 90 degrees
+  function rivals(a,b){ a.rival=b; b.rival=a; }
+
+  // ---- BESS container ----
+  const gCont=new THREE.Group(); scene.add(gCont);
+  const bess=new THREE.Group(); bess.position.set(X0,F_TOP,Z_BESS); gCont.add(bess); bess.userData.obj='bess';
+  function rails(g,bodyMat){
+    box(g,L,0.16,B+0.02,M.frame,0,0,-0.01,{edges:false});
+    box(g,L+0.01,0.118,B+0.02,M.frame,-0.005,H-0.12,-0.01,{edges:false});
+    box(g,L-0.3,0.004,B-0.3,bodyMat,0.15,H-0.002,0.15,{edges:false,shadow:false}); // roof skin inside the top rail
+    [[0,0],[L-0.16,0],[0,B-0.16],[L-0.16,B-0.16]].forEach(p=>{
+      box(g,0.16,H-0.004,0.16,M.frame,p[0]+(p[0]?0.005:-0.005),0,p[1]+(p[1]?0.005:-0.005),{edges:false});
+    });
+  }
+  occluders.push(box(bess,L,H,B,M.body,0,0,0)); rails(bess,M.body);
+  const bTex=corrTex(222);
+  wallPanel(bess,L-0.34,H-0.3,bTex,34,L/2,H/2+0.02,-0.004,Math.PI);          // north wall (faces PCS block)
+  wallPanel(bess,B-0.34,H-0.3,bTex,13,L+0.004,H/2+0.02,B/2,Math.PI/2);       // east end
+  const DH=2.42, DY=0.2, A120=Math.PI*2/3;
+  // south side: three double doors (leaves 881 / 881 / 884.5), hinges and "> 120 deg" from the Golen layout
+  const sd=[[0.570,2.311],[2.361,4.104],[4.153,5.933]].map(p=>{
+    const w=(p[1]-p[0])/2-0.004;
+    return [leaf(bess,p[0],DY,B+0.02,w,DH,1,0,0,1,{max:A120,inside:MI.racks}), leaf(bess,p[1],DY,B+0.02,w,DH,-1,0,0,1,{max:A120,inside:MI.racks})];
+  });
+  rivals(sd[0][1],sd[1][0]); rivals(sd[1][1],sd[2][0]);
+  // west end: electrical area (865, opens 120 deg) and liquid-cooling unit (1251, opens > 120 deg)
+  leaf(bess,-0.02,DY,0.143,0.865,DH,0,1,-1,0,{max:A120,inside:MI.cab});
+  leaf(bess,-0.02,DY,2.276,1.245,DH,0,-1,-1,0,{max:A120,mat:M.fans,inside:MI.chill});
+
+  // ---- PCS + transformer block: enclosed LV / HV + transformer part, open frame with the PCS cabinet ----
+  const skid=new THREE.Group(); skid.position.set(X0,F_TOP,Z_SKID); gCont.add(skid); skid.userData.obj='pcs';
+  const LE=3.119, PX0=3.166, PX1=6.013, PZ0=0.549, PZ1=1.812;
+  occluders.push(box(skid,LE,H-0.28,B,M.bodySkid,0,0.16,0)); rails(skid,M.bodySkid);
+  [[LE-0.12,0],[LE-0.12,B-0.12]].forEach(p=> box(skid,0.12,H-0.28,0.12,M.frame,p[0],0.16,p[1]+(p[1]?0.005:-0.005),{edges:false}));
+  box(skid,L-LE,0.02,B-0.06,M.steel,LE,0.16,0.03,{edges:false});               // deck of the open part
+  occluders.push(box(skid,PX1-PX0,2.25,PZ1-PZ0,M.body,PX0,0.18,PZ0));           // PCS cabinet
+  const sTex=corrTex(206);
+  wallPanel(skid,B-0.3,H-0.3,sTex,13,LE+0.004,H/2+0.02,B/2,Math.PI/2);         // inner end wall of the enclosure
+  wallPanel(skid,0.98,H-0.3,sTex,6,0.69,H/2+0.02,-0.004,Math.PI);              // LV side wall
+  wallPanel(skid,1.2,H-0.3,sTex,7,0.80,H/2+0.02,B+0.004,0);                    // HV side wall
+  // west end: LV / HV compartment doors (leaf widths scaled from the Golen layout, angle not given)
+  leaf(skid,-0.02,DY,0.06,1.155,DH,0,1,-1,0,{inside:MI.cab});
+  leaf(skid,-0.02,DY,B-0.06,1.155,DH,0,-1,-1,0,{inside:MI.cab});
+  // transformer compartment: louvred double doors on both long sides
+  [[1.215,2.800,0.79,-0.02,-1],[1.420,2.845,0.712,B+0.02,1]].forEach(p=>{
+    const first=p[4]>0?[0,0.5]:[0.5,1], second=p[4]>0?[0.5,1]:[0,0.5];
+    leaf(skid,p[0],DY,p[3],p[2],DH,1,0,0,p[4],{mat:M.louver,inside:MI.trafo,uv:first});
+    leaf(skid,p[1],DY,p[3],p[2],DH,-1,0,0,p[4],{mat:M.louver,inside:MI.trafo,uv:second});
+  });
+  // PCS cabinet: four doors on each face, set back from the frame edge
+  [3.166,3.894,4.622,5.343].forEach(x=>{
+    leaf(skid,x,0.3,PZ0-0.02,0.67,2.05,1,0,0,-1,{inside:MI.pcs});
+    leaf(skid,x,0.3,PZ1+0.02,0.67,2.05,1,0,0,1,{inside:MI.pcs});
+  });
+
+  // ---- ground and site zone ----
+  // ground with a real opening over the cable channel, so the inside shows when the cover slabs are lifted
+  const rectShape=(w,d)=>{ const sh=new THREE.Shape(); sh.moveTo(-w/2,-d/2); sh.lineTo(w/2,-d/2); sh.lineTo(w/2,d/2); sh.lineTo(-w/2,d/2); sh.closePath(); return sh; };
+  const rectHole=(x0,x1,z0,z1)=>{ const h=new THREE.Path(); h.moveTo(x0,-z0); h.lineTo(x0,-z1); h.lineTo(x1,-z1); h.lineTo(x1,-z0); h.closePath(); return h; };
+  const gSh=rectShape(W,D); gSh.holes.push(rectHole(X0+L/2-0.3,X0+L/2+0.3,Z_SKID+B+OFF,Z_BESS-OFF));
+  const ground=new THREE.Mesh(new THREE.ShapeGeometry(gSh), M.ground);
+  ground.rotation.x=-Math.PI/2; ground.position.y=0; ground.receiveShadow=true; ground.renderOrder=2; scene.add(ground); ground.userData.obj='site';
+  const aSh=rectShape(W+16,D+16); aSh.holes.push(rectHole(-W/2,W/2,-D/2,D/2));
+  const apron=new THREE.Mesh(new THREE.ShapeGeometry(aSh), M.apron);
+  apron.rotation.x=-Math.PI/2; apron.position.y=-0.012; apron.receiveShadow=true; apron.renderOrder=1; scene.add(apron); apron.userData.obj='site';
+
+  const gZone=new THREE.Group(); scene.add(gZone);
+  (function(){ const y=0.02, p=[[-W/2,-D/2],[W/2,-D/2],[W/2,D/2],[-W/2,D/2],[-W/2,-D/2]].map(a=>new THREE.Vector3(a[0],y,a[1]));
+    const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), M.zone); l.computeLineDistances(); gZone.add(l); })();
+
+  // ---- painted labels: the text is part of the model, so it stays put when the view turns ----
+  const DISP='"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif', MONO='"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace';
+  const PPM=120, MAXA=renderer.capabilities.getMaxAnisotropy(), plates=[];
+  const css=(n,fb)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||fb;
+  // lines: [{t, em (metres), mono, w, muted}]; opts: {num, pad, maxW, sit}
+  function plate(lines,opts){
+    opts=opts||{};
+    const cv=document.createElement('canvas'), g=cv.getContext('2d');
+    const tex=new THREE.CanvasTexture(cv); tex.anisotropy=MAXA;
+    const mat=new THREE.MeshBasicMaterial({map:tex, toneMapped:false, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,1), mat);
+    const targets=[mesh]; mesh.twins=targets;
+    const fontOf=l=>(l.w||500)+' '+Math.round(l.em*PPM)+'px '+(l.mono?MONO:DISP);
+    function draw(){
+      const pad=(opts.pad==null?0.08:opts.pad)*PPM, numW=opts.num?Math.round(lines[0].em*PPM*1.9):0;
+      let tw=0, th=0;
+      lines.forEach(l=>{ g.font=fontOf(l); tw=Math.max(tw,g.measureText(l.t).width); th+=l.em*PPM*1.2; });
+      const w=Math.ceil(tw+2*pad+numW), h=Math.ceil(th+2*pad);
+      cv.width=w; cv.height=h;
+      const fg=css('--ink','#16212c');
+      g.fillStyle=css('--panel','#f9fafb'); g.fillRect(0,0,w,h);
+      g.strokeStyle=fg; g.globalAlpha=.4; g.lineWidth=3; g.strokeRect(1.5,1.5,w-3,h-3); g.globalAlpha=1;
+      let x=pad;
+      if(opts.num){
+        g.fillStyle=css('--accent','#a85200'); g.fillRect(0,0,numW-pad*0.4,h);
+        g.fillStyle=css('--on-accent','#fff'); g.font='500 '+Math.round(h*0.62)+'px '+MONO; g.textAlign='center'; g.textBaseline='middle';
+        g.fillText(opts.num,(numW-pad*0.4)/2,h/2+h*0.03); x=numW+pad*0.4;
+      }
+      g.textAlign='left'; g.textBaseline='alphabetic';
+      let y=pad;
+      lines.forEach(l=>{ g.font=fontOf(l); g.fillStyle=l.muted?css('--muted','#56646f'):fg; y+=l.em*PPM*1.2; g.fillText(l.t,x,y-l.em*PPM*0.3); });
+      const k=opts.maxW?Math.min(1,opts.maxW/(w/PPM)):1;
+      targets.forEach(m=>{ m.scale.set(w/PPM*k,h/PPM*k,1); if(opts.sit!=null) m.position.y=opts.sit+h/PPM*k/2; }); tex.needsUpdate=true;
+    }
+    draw(); plates.push(draw); return mesh;
+  }
+  // lying on a horizontal surface; turn=0 reads from the south, turn=-90deg reads from the west
+  function flat(mesh,parent,x,y,z,turn){ mesh.rotation.x=-Math.PI/2; mesh.rotation.z=turn||0; mesh.position.set(x,y,z); parent.add(mesh); return mesh; }
+  // standing plate, readable from both sides
+  function upright(mesh,parent,x,y,z,yaw){
+    mesh.rotation.y=yaw; mesh.position.set(x,y,z); parent.add(mesh);
+    const back=mesh.clone(); back.rotation.y=yaw+Math.PI; back.scale.copy(mesh.scale); parent.add(back); mesh.twins.push(back); return mesh;
+  }
+  // name board standing on a roof edge and facing outward, so the unit is named from every side
+  function board(parent,n,title,maxW,x,z,yaw){
+    const m=plate([{t:title,em:0.5,w:600}],{num:n,pad:0.08,maxW:maxW,sit:H+0.02});
+    m.rotation.y=yaw; m.position.x=x; m.position.z=z; parent.add(m); return m;
+  }
+  function boards(parent,n,long,short){
+    board(parent,n,long,5.6,L/2,B-0.02,0); board(parent,n,long,5.6,L/2,0.02,Math.PI);
+    board(parent,n,short,2.2,0.02,B/2,-Math.PI/2); board(parent,n,short,2.2,L-0.02,B/2,Math.PI/2);
+  }
+
+  const tagsBess=new THREE.Group(), tagsSkid=new THREE.Group(), tagsFound=new THREE.Group();
+  bess.add(tagsBess); skid.add(tagsSkid); gFound.add(tagsFound);
+  const yR=H+0.012;
+  flat(plate([{t:'Контейнер BESS',em:0.62,w:600},{t:'5 015 кВт·год · ≈ 43 т',em:0.3,mono:true,muted:true}],{num:'1',pad:0.12,maxW:5.4}),tagsBess,L/2,yR,B/2);
+  boards(tagsBess,'1','Контейнер BESS','BESS');
+  flat(plate([{t:'Блок PCS + трансформатор',em:0.5,w:600},{t:'1 725 кВт · 6 кВ · ≈ 17 т',em:0.28,mono:true,muted:true}],{num:'2',pad:0.12,maxW:5.4}),tagsSkid,L/2,yR,B/2-0.2);
+  boards(tagsSkid,'2','Блок PCS + трансформатор','PCS');
+  [['LV / HV',0.6],['Трансформатор',2.13],['PCS',4.59]].forEach(a=> flat(plate([{t:a[0],em:0.25,w:600}],{pad:0.06,maxW:1.9}),tagsSkid,a[1],yR,B-0.36));
+  flat(plate([{t:'Фундамент блока PCS',em:0.3,w:600},{t:'показано умовно',em:0.3}],{pad:0.1}),tagsFound,X1+2.6,0.06,Z_SKID+B/2).userData.obj='fpcs';
+  flat(plate([{t:'Кабельний простір',em:0.36,w:600},{t:'5458 × 1838, глибина 1800',em:0.26,mono:true,muted:true}],{pad:0.1}),tagsFound,X0+L/2,-(COL_H-F_TOP)+0.03,Z_BESS+B/2).userData.obj='fbess';
+
+  // ---- cable channel between the two foundations (own preliminary sizing, not from the Golen drawings) ----
+  const gChan=new THREE.Group(); scene.add(gChan); gChan.userData.obj='chan';
+  const CH={w:0.6,d:0.45,t:0.1,cov:0.08,top:0.02};                        // inner width and depth, wall, cover slab, cover top level
+  const xc=X0+L/2, zA=Z_SKID+B+OFF, zB=Z_BESS-OFF, chL=zB-zA;             // 4.9 m between the foundation faces
+  const yIn=CH.top-CH.cov, yFl=yIn-CH.d;                                  // underside of the covers, channel floor
+  box(gChan,CH.w+2*CH.t,CH.t,chL,M.concrete,xc-CH.w/2-CH.t,yFl-CH.t,zA,{uv:[1,6]});
+  [xc-CH.w/2-CH.t,xc+CH.w/2].forEach(x=> box(gChan,CH.t,CH.d,chL,M.concrete,x,yFl,zA,{uv:[1,6]}));
+  const gCov=new THREE.Group(); gChan.add(gCov);
+  const mCov=new THREE.MeshStandardMaterial({color:0xc9cdd0,roughness:.95});
+  for(let i=0;i<10;i++) box(gCov,CH.w+2*CH.t,CH.cov,chL/10-0.012,mCov,xc-CH.w/2-CH.t,yIn,zA+i*chL/10+0.006);
+  // openings through the brick infill of both foundations, lintel above each
+  const mHole=new THREE.MeshBasicMaterial({color:0x161d24});
+  [zA-BEAM-0.004,zB-0.004].forEach(z=>{
+    box(gChan,CH.w,CH.d,BEAM+0.008,mHole,xc-CH.w/2,yFl,z,{edges:false,shadow:false});
+    box(gChan,CH.w+0.3,0.12,BEAM+0.008,M.concrete,xc-CH.w/2-0.15,yIn,z);
+  });
+  box(gChan,0.1,0.012,chL,M.steel,xc-CH.w/2,yFl+0.248,zA,{edges:false,shadow:false});                       // shelf for the small cables
+  box(gChan,0.04,0.005,chL+2*(BEAM+0.5),new THREE.MeshStandardMaterial({color:0x9fb23a,roughness:.7}),xc+0.24,yFl+0.001,zA-BEAM-0.5,{edges:false,shadow:false}); // earthing strip
+  // cables: straight runs joined by rounded corners
+  const gCab=new THREE.Group(); gChan.add(gCab);
+  const cabMat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
+  const mPos=cabMat(0xc0392b), mNeg=cabMat(0x1f2d3a), mAux=cabMat(0x7b8690), mCtl=cabMat(0x8e6fbf), mCom=cabMat(0x2e9e6b);
+  function cable(pts,r,mat,rad){
+    const P=pts.map(p=>new THREE.Vector3(p[0],p[1],p[2])), cp=new THREE.CurvePath(); let prev=P[0];
+    for(let i=1;i<P.length-1;i++){
+      const a=P[i].clone().sub(P[i-1]).normalize(), b=P[i+1].clone().sub(P[i]).normalize();
+      const p1=P[i].clone().addScaledVector(a,-rad), p2=P[i].clone().addScaledVector(b,rad);
+      cp.add(new THREE.LineCurve3(prev,p1)); cp.add(new THREE.QuadraticBezierCurve3(p1,P[i],p2)); prev=p2;
+    }
+    cp.add(new THREE.LineCurve3(prev,P[P.length-1]));
+    const m=new THREE.Mesh(new THREE.TubeGeometry(cp,96,r,8,false),mat); m.receiveShadow=true; gCab.add(m); return m;
+  }
+  const yDC=yFl+0.02, yShelf=yFl+0.275, yUp=F_TOP+0.2;
+  // 8 DC cables, 4 per pole, one layer: PCS cabinet -> channel -> electrical area of the BESS container
+  for(let i=0;i<8;i++){ const d=-0.14+0.04*i, zS=Z_SKID+1.75-(0.14-d), zN=Z_BESS+0.55+(d+0.14);
+    cable([[X0+4.6,yUp,zS],[X0+4.6,yDC,zS],[xc+d,yDC,zS],[xc+d,yDC,zN],[X0+0.42,yDC,zN],[X0+0.42,yUp,zN]],0.0165,i%2?mNeg:mPos,0.3); }
+  // auxiliary supply, control and communication cables on the shelf: LV compartment -> channel -> BESS
+  [[-0.225,0.014,mAux],[-0.255,0.008,mCtl],[-0.275,0.006,mCom],[-0.289,0.006,mCom]].forEach(a=>{ const d=a[0], zS=Z_SKID+0.62-(d+0.289), zN=Z_BESS+0.40+(d+0.289);
+    cable([[X0+0.6,yUp,zS],[X0+0.6,yShelf,zS],[xc+d,yShelf,zS],[xc+d,yShelf,zN],[X0+0.62,yShelf,zN],[X0+0.62,yUp,zN]],a[1],a[2],0.2); });
+  const tagsChan=new THREE.Group(); gChan.add(tagsChan);
+  (function(){ const m=plate([{t:'Кабельний канал 600 × 450',em:0.32,w:600},{t:'L = 4900 · попередній розрахунок',em:0.24,mono:true,muted:true}],{pad:0.1});
+    flat(m,tagsChan,xc+CH.w/2+CH.t+0.25+m.scale.x/2,0.06,(zA+zB)/2); })();
+
+  // ---- dimensions: lines on the ground, numbers lying along them ----
+  const gDim=new THREE.Group(); scene.add(gDim); gDim.userData.obj='site';
+  const dimPts=[];
+  const V=(x,y,z)=>new THREE.Vector3(x,y,z), yG=0.03, yT=0.06;
+  function seg(a,b){ dimPts.push(a.x,a.y,a.z,b.x,b.y,b.z); }
+  const num=t=>plate([{t:t,em:0.5,mono:true,w:500}],{pad:0.07});
+  function dim(a,b,txt){
+    seg(a,b);
+    const ns=Math.abs(a.z-b.z)>Math.abs(a.x-b.x), t=ns?V(0.2,0,0):V(0,0,0.2);
+    [a,b].forEach(p=> seg(p.clone().sub(t), p.clone().add(t)));
+    flat(num(txt),gDim,(a.x+b.x)/2,yT,(a.z+b.z)/2,ns?-Math.PI/2:0);
+  }
+  const zc=Z_BESS+B/2, xe=X1+2.6, zs=Z_BESS+B+1.6;
+  dim(V(-W/2,yG,D/2+1.2),V(W/2,yG,D/2+1.2),'16058');
+  dim(V(W/2+1.2,yG,-D/2),V(W/2+1.2,yG,D/2),'19876');
+  dim(V(-W/2,yG,zs),V(X0,yG,zs),'5000');
+  dim(V(X1,yG,zc-0.6),V(W/2,yG,zc-0.6),'5000');
+  dim(V(xe,yG,-D/2),V(xe,yG,Z_SKID),'5000');
+  dim(V(xe,yG,Z_SKID+B),V(xe,yG,Z_BESS),'5000');
+  dim(V(xe,yG,Z_BESS+B),V(xe,yG,D/2),'5000');
+  dim(V(X0,yG,zs),V(X1,yG,zs),'6058');
+  dim(V(X0-1.7,yG,Z_BESS),V(X0-1.7,yG,Z_BESS+B),'2438');
+  // levels: a vertical line at the south-east corner of the BESS foundation, plates facing south-west
+  const xl=X1+0.4, zl=Z_BESS+B+0.4, YAW=-Math.PI/4, q=Math.SQRT1_2;
+  seg(V(xl,-(COL_H-F_TOP)-BEAM,zl),V(xl,F_TOP,zl));
+  // near/far staggering keeps neighbouring levels (0,300 apart) from covering each other
+  [[F_TOP,'+0,300',0],[0,'0,000',1],[-(COL_H-F_TOP),'−1,500',0],[-(COL_H-F_TOP)-BEAM,'−1,850',1]].forEach(p=>{
+    const m=plate([{t:p[1],em:0.3,mono:true,w:500}],{pad:0.05}), wd=m.scale.x, r=0.16+p[2]*(wd+0.12)+wd/2;
+    seg(V(xl-0.14*q,p[0],zl-0.14*q),V(xl+(r-wd/2)*q,p[0],zl+(r-wd/2)*q));
+    upright(m,gDim,xl+r*q,p[0],zl+r*q,YAW);
+  });
+  (function(){ const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(dimPts,3)); gDim.add(new THREE.LineSegments(g,M.dim)); })();
+  // container height travels with the container
+  const hDim=new THREE.Group(); bess.add(hDim);
+  (function(){ const x=L+0.4, z=B+0.4, pts=[V(x,0,z),V(x,H,z),V(x-0.14*q,0,z-0.14*q),V(x+0.14*q,0,z+0.14*q),V(x-0.14*q,H,z-0.14*q),V(x+0.14*q,H,z+0.14*q)];
+    hDim.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),M.dim));
+    const m=plate([{t:'2896',em:0.42,mono:true,w:500}],{pad:0.06}), half=m.scale.x/2+0.16;
+    upright(m,hDim,x+half*q,H/2,z+half*q,YAW); })();
+
+  // ---- theme ----
+  function applyTheme(){
+    const cs=getComputedStyle(document.documentElement), c=n=>new THREE.Color(cs.getPropertyValue(n).trim()||'#888');
+    scene.background=c('--scene-sky'); M.ground.color=c('--scene-ground'); M.apron.color=c('--scene-apron');
+    M.dim.color=c('--scene-line'); M.zone.color=c('--scene-line'); M.hover.color=c('--accent'); M.zoneHot.color=c('--accent');
+    plates.forEach(d=>d());
+  }
+  applyTheme();
+  // repaint once the web fonts are in, so plate widths match the final lettering
+  if(document.fonts&&document.fonts.load){
+    Promise.all([document.fonts.load('600 40px "IBM Plex Sans Condensed"','Блок PCS'),document.fonts.load('500 40px "IBM Plex Sans Condensed"','умовно'),
+      document.fonts.load('500 40px "IBM Plex Mono"','5000 кВт'),document.fonts.load('400 40px "IBM Plex Mono"','кВт')]).then(()=>plates.forEach(d=>d())).catch(()=>{});
+  }
+  new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});
+  if(window.matchMedia){ const mq=matchMedia('(prefers-color-scheme: dark)'); (mq.addEventListener?mq.addEventListener.bind(mq,'change'):mq.addListener.bind(mq))(applyTheme); }
+
+  // ---- state ----
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const st={lift:0,liftT:0};
+  const bc=V(X0+L/2,0,Z_BESS+B/2);
+  const VIEWS={
+    iso:{p:[-13.5,10.5,18.5],t:[0.6,-0.6,1.0]},
+    top:{p:[0,118,0.05],t:[0,0,0],fov:13},
+    south:{p:[bc.x-1.5,3.4,D/2+11],t:[bc.x,1.2,Z_BESS]},
+    west:{p:[-W/2-13,4.2,2.5],t:[0,1.0,1.2]},
+    found:{p:[bc.x-11.5,6.4,bc.z+14.5],t:[bc.x-0.3,1.9,bc.z]},
+    chan:{p:[-5.2,8.6,1.4],t:[0.3,-0.4,0.05]}
+  };
+  let cam=null;
+  // narrow viewports (phones) need the camera further back to keep the whole site in frame
+  function fit(){ const a=viewer.clientWidth/Math.max(1,viewer.clientHeight); return Math.max(1, 1.3/a); }
+  function go(name){
+    const v=VIEWS[name]; if(!v) return;
+    const t=V.apply(null,v.t), p=V.apply(null,v.p).sub(t).multiplyScalar(fit()).add(t), f=v.fov||38;
+    if(reduce){ camera.position.copy(p); controls.target.copy(t); camera.fov=f; camera.updateProjectionMatrix(); cam=null; }
+    else cam={p0:camera.position.clone(),t0:controls.target.clone(),f0:camera.fov,p1:p,t1:t,f1:f,s:performance.now()};
+    document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===name?'true':'false'));
+    if(name==='found'){ setLift(3.2); setGround('glass'); }
+  }
+  function setLift(v){ st.liftT=v; $('lift').value=v; $('lift-out').textContent=v.toFixed(1).replace('.',',')+' м'; if(reduce) st.lift=v; }
+  let groundMode='glass';
+  function setGround(mode){
+    groundMode=mode;
+    ground.visible=apron.visible=mode!=='off';
+    const solid=mode==='solid';
+    [M.ground,M.apron].forEach(m=>{ m.transparent=!solid; m.opacity=solid?1:0.6; m.depthWrite=solid; m.needsUpdate=true; });
+    document.querySelectorAll('#ground button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.ground===mode?'true':'false'));
+  }
+  $('views').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) go(b.dataset.view); });
+  $('ground').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setGround(b.dataset.ground); });
+  $('lift').addEventListener('input',e=>setLift(parseFloat(e.target.value)));
+  $('chk-containers').addEventListener('change',e=>{ gCont.visible=e.target.checked; });
+  $('chk-found').addEventListener('change',e=>{ gFound.visible=e.target.checked; });
+  $('chk-dims').addEventListener('change',e=>{ gDim.visible=hDim.visible=e.target.checked; });
+  $('chk-tags').addEventListener('change',e=>{ tagsBess.visible=tagsSkid.visible=tagsFound.visible=tagsChan.visible=e.target.checked; legend.hidden=!e.target.checked; });
+  $('chk-zone').addEventListener('change',e=>{ gZone.visible=e.target.checked; });
+  $('chk-chan').addEventListener('change',e=>{ gChan.visible=e.target.checked; });
+  $('chk-cov').addEventListener('change',e=>{ gCov.visible=e.target.checked; });
+  function doorsAll(v){ leaves.forEach(l=>{ l.t=v; }); doorState(); }
+  function doorState(){ const n=leaves.filter(l=>l.t).length;
+    $('doors-open').setAttribute('aria-pressed',n===leaves.length?'true':'false'); $('doors-close').setAttribute('aria-pressed',n===0?'true':'false');
+    $('doors-out').textContent=n?('відчинено '+n+' з '+leaves.length):'усі зачинені'; }
+  $('doors-open').addEventListener('click',()=>doorsAll(1));
+  $('doors-close').addEventListener('click',()=>doorsAll(0));
+  // ---- clicking the model: open the drawing of the object, or (in door mode) swing a door leaf ----
+  const ray=new THREE.Raycaster(), ptr=new THREE.Vector2(), cv=renderer.domElement; let down=null, mode='sheet', hovered=null;
+  const pickRoots=[gCont,gFound,gChan,ground,apron,gDim];
+  function aim(e){ const r=cv.getBoundingClientRect(); ptr.set((e.clientX-r.left)/r.width*2-1, -(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ptr,camera); }
+  function pickLeaf(e){ if(!gCont.visible) return null; aim(e);
+    const hit=ray.intersectObjects(leafMeshes.concat(occluders),false)[0]; return hit&&hit.object.userData.leaf||null; }
+  function shown(o){ for(;o;o=o.parent) if(!o.visible) return false; return true; }
+  function objOf(o){ for(;o;o=o.parent) if(o.userData&&o.userData.obj) return o.userData.obj; return null; }
+  function pickObj(e){ aim(e); let site=null;
+    for(const h of ray.intersectObjects(pickRoots,true)){ const o=h.object; if(!o.isMesh||!shown(o)) continue; const id=objOf(o); if(!id) continue;
+      if(o===ground||o===apron){ if(groundMode==='solid') return 'site'; site='site'; continue; } // see-through ground does not hide what is under it
+      return id; }
+    return site; }
+  // what a click on each object opens: sheet, the part of the sheet to show first, a one-line explanation
+  const TARGET={
+    bess:{s:2,r:[0.03,0.40,0.56,0.80],name:'Контейнер BESS',note:'Контейнер BESS (поз. 1): план із дверима, ширини стулок, кути й зона відчинення. Фундамент контейнера — на аркуші 3.'},
+    pcs:{s:2,r:[0.03,0.03,0.56,0.42],name:'Блок PCS + трансформатор',note:'Блок PCS + трансформатор (поз. 2): відсіки, двері та шафи PCS у відкритій рамі. Розміри дверей приблизні, зняті з масштабу креслення Golen.'},
+    fbess:{s:3,r:null,name:'Фундамент контейнера BESS',note:'Фундамент контейнера BESS: план, розрізи 1–1 і 2–2, вузол опирання, обсяги.'},
+    fpcs:{s:3,r:null,name:'Фундамент блока PCS (умовний)',note:'Окремого креслення фундаменту блока PCS немає: Golen його не надав. На аркуші — фундамент контейнера BESS, тип якого в моделі повторено умовно.'},
+    chan:{s:1,r:[0.72,0.41,0.995,0.86],name:'Кабельний канал',note:'Кабельний канал між блоками: переріз із розкладкою кабелів. Це попередній розрахунок, не дані Golen; на плані цього ж аркуша канал показано між фундаментами.'},
+    site:{s:1,r:null,name:'Майданчик',note:'Майданчик: розміщення обох блоків, відступи 5000 мм і схема стропування.'}
+  };
+  const SHEET_NAME={1:'План розміщення',2:'Схема відчинення дверей',3:'Фундамент контейнера BESS',4:'3D-вигляди'};
+  // outline shown around the object under the mouse
+  function outline(parent,w,h,d,x,y,z){ const l=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,d)),M.hover);
+    l.position.set(x+w/2,y+h/2,z+d/2); l.renderOrder=20; l.visible=false; parent.add(l); return l; }
+  const HL={ bess:outline(bess,L+0.12,H+0.12,B+0.12,-0.06,-0.06,-0.06), pcs:outline(skid,L+0.12,H+0.12,B+0.12,-0.06,-0.06,-0.06),
+    fbess:outline(fBess,L+2*OFF+0.1,COL_H+BEAM+0.1,B+2*OFF+0.1,-0.05,-(COL_H-F_TOP)-BEAM-0.05,-0.05),
+    fpcs:outline(fPcs,L+2*OFF+0.1,COL_H+BEAM+0.1,B+2*OFF+0.1,-0.05,-(COL_H-F_TOP)-BEAM-0.05,-0.05),
+    chan:outline(gChan,CH.w+2*CH.t+0.1,CH.d+CH.t+CH.cov+0.1,chL+0.1,xc-CH.w/2-CH.t-0.05,yFl-CH.t-0.05,zA-0.05) };
+  const HINT0=$('hint').textContent;
+  function hover(id){ if(id===hovered) return; hovered=id;
+    for(const k in HL) HL[k].visible=(k===id);
+    gZone.children.forEach(l=>{ l.material=(id==='site')?M.zoneHot:M.zone; });
+    $('hint').textContent=id?(TARGET[id].name+' → аркуш '+TARGET[id].s+' «'+SHEET_NAME[TARGET[id].s]+'»'):HINT0;
+    cv.style.cursor=id?'pointer':''; }
+  function setMode(m){ mode=m; hover(null); cv.style.cursor='';
+    document.querySelectorAll('#mode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m?'true':'false'));
+    $('mode-tip').textContent=m==='sheet'?'Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик.':'Клацніть на стулку, щоб відчинити або зачинити її.';
+    $('hint').textContent=m==='sheet'?HINT0:'Клацніть на двері, щоб відчинити · тягніть, щоб обертати'; }
+  $('mode').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
+  cv.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
+  cv.addEventListener('pointerup',e=>{ if(!down) return; const d=Math.hypot(e.clientX-down[0],e.clientY-down[1]); down=null; if(d>6) return;
+    if(mode==='door'){ const l=pickLeaf(e); if(l){ l.t=l.t?0:1; doorState(); } return; }
+    const id=pickObj(e); if(id){ const t=TARGET[id]; openSheet(t.s,t.r,t.note); } });
+  cv.addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse'||e.buttons) return;
+    if(mode==='door') cv.style.cursor=pickLeaf(e)?'pointer':''; else hover(pickObj(e)); });
+  cv.addEventListener('pointerleave',()=>{ if(mode==='sheet') hover(null); });
+  $('sheets').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) openSheet(+b.dataset.sheet,null,''); });
+
+  // ---- drawing viewer: sheet image with pan and zoom ----
+  const sv=$('sheetview'), stage=$('sv-stage'), img=$('sv-img'), V2={s:1,x:0,y:0,min:0.05}; let svOpen=false, svSheet=0, svRegion=null;
+  function place(){ img.style.transform='translate('+V2.x.toFixed(1)+'px,'+V2.y.toFixed(1)+'px) scale('+V2.s.toFixed(4)+')'; }
+  function fitTo(r){ const W0=img.naturalWidth, H0=img.naturalHeight, sw=stage.clientWidth, sh=stage.clientHeight; if(!W0||!sw) return;
+    const full=Math.min(sw/W0,sh/H0)*0.97; V2.min=full*0.6;
+    r=r||[0,0,1,1]; const rw=(r[2]-r[0])*W0, rh=(r[3]-r[1])*H0;
+    V2.s=Math.min(sw/rw,sh/rh)*0.97; V2.x=(sw-rw*V2.s)/2-r[0]*W0*V2.s; V2.y=(sh-rh*V2.s)/2-r[1]*H0*V2.s; place(); }
+  function zoomAt(k,cx,cy){ const s=Math.max(V2.min,Math.min(4,V2.s*k)); k=s/V2.s; V2.x=cx-(cx-V2.x)*k; V2.y=cy-(cy-V2.y)*k; V2.s=s; place(); }
+  function openSheet(n,region,note){
+    svRegion=region; $('sv-note').textContent=note||''; $('sv-note').hidden=!note;
+    document.querySelectorAll('#sv-tabs button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.sheet===n?'true':'false'));
+    if(!svOpen){ svOpen=true; sv.hidden=false; document.documentElement.style.overflow='hidden'; hover(null); $('sv-back').focus(); }
+    if(svSheet!==n){ svSheet=n; $('sv-load').hidden=false; img.style.visibility='hidden'; img.alt='Аркуш '+n+'. '+SHEET_NAME[n]; img.src='sheets/sheet-'+n+'.png'; }
+    else fitTo(region);
+  }
+  function closeSheet(){ if(!svOpen) return; svOpen=false; sv.hidden=true; document.documentElement.style.overflow=''; cv.focus&&cv.focus(); }
+  img.addEventListener('load',()=>{ $('sv-load').hidden=true; img.style.visibility=''; fitTo(svRegion); });
+  img.addEventListener('error',()=>{ $('sv-load').hidden=false; $('sv-load').textContent='Не вдалося завантажити аркуш. Спробуйте ще раз.'; });
+  $('sv-back').addEventListener('click',closeSheet);
+  $('sv-tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) openSheet(+b.dataset.sheet,null,''); });
+  $('sv-fit').addEventListener('click',()=>fitTo(null));
+  $('sv-in').addEventListener('click',()=>zoomAt(1.35,stage.clientWidth/2,stage.clientHeight/2));
+  $('sv-out').addEventListener('click',()=>zoomAt(1/1.35,stage.clientWidth/2,stage.clientHeight/2));
+  document.addEventListener('keydown',e=>{ if(svOpen&&e.key==='Escape') closeSheet(); });
+  stage.addEventListener('wheel',e=>{ e.preventDefault(); const r=stage.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY*0.0015),e.clientX-r.left,e.clientY-r.top); },{passive:false});
+  const pts=new Map(); let pinch=0;
+  stage.addEventListener('pointerdown',e=>{ pts.set(e.pointerId,[e.clientX,e.clientY]); try{stage.setPointerCapture(e.pointerId);}catch(_){} stage.classList.add('drag'); pinch=0; });
+  stage.addEventListener('pointermove',e=>{ const p=pts.get(e.pointerId); if(!p) return; const nx=e.clientX, ny=e.clientY;
+    if(pts.size===1){ V2.x+=nx-p[0]; V2.y+=ny-p[1]; place(); }
+    pts.set(e.pointerId,[nx,ny]);
+    if(pts.size===2){ const a=[...pts.values()], d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]), r=stage.getBoundingClientRect();
+      if(pinch) zoomAt(d/pinch,(a[0][0]+a[1][0])/2-r.left,(a[0][1]+a[1][1])/2-r.top); pinch=d; } });
+  const up=e=>{ pts.delete(e.pointerId); pinch=0; if(!pts.size) stage.classList.remove('drag'); };
+  stage.addEventListener('pointerup',up); stage.addEventListener('pointercancel',up);
+  if(window.ResizeObserver) new ResizeObserver(()=>{ if(svOpen) fitTo(svRegion); }).observe(stage);
+
+  controls.addEventListener('start',()=>{ cam=null; document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed','false')); });
+
+  // ---- sizing and loop ----
+  function resize(){ const w=viewer.clientWidth, h=viewer.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(viewer); else window.addEventListener('resize',resize);
+  resize();
+  controls.target.set.apply(controls.target,VIEWS.iso.t);
+  camera.position.set.apply(camera.position,VIEWS.iso.p).sub(controls.target).multiplyScalar(fit()).add(controls.target);
+  setGround('glass');
+
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(svOpen) return;
+    if(cam){ let k=Math.min(1,(now-cam.s)/700); k=k*k*(3-2*k); camera.position.lerpVectors(cam.p0,cam.p1,k); controls.target.lerpVectors(cam.t0,cam.t1,k); camera.fov=cam.f0+(cam.f1-cam.f0)*k; camera.updateProjectionMatrix(); if(k>=1) cam=null; }
+    st.lift+=(st.liftT-st.lift)*0.18; if(Math.abs(st.liftT-st.lift)<0.002) st.lift=st.liftT;
+    gCont.position.y=st.lift;
+    for(const l of leaves){
+      const lim=(l.rival&&l.rival.t)?Math.min(l.max,Math.PI/2):l.max, to=l.t*lim;
+      l.a=reduce?to:l.a+(to-l.a)*0.14; if(Math.abs(to-l.a)<0.002) l.a=to;
+      l.g.rotation.y=l.base+l.sign*l.a;
+    }
+    controls.update();
+    renderer.render(scene,camera);
+  }
+  requestAnimationFrame(frame);
+  // test hook for static captures
+  doorState();
+  window.__model={go,setLift,setGround,st,camera,controls,VIEWS,doorsAll,leaves,openSheet,closeSheet,setMode};
+})();
+</script>
+</body>
+</html>
