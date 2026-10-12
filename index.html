@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="ГалКат, площадка 20: 3D-модель розміщення УЗЕ 1,725 МВт / 5 МВт·год, фундамент, кабельний канал і креслення. Ескіз за довідковими кресленнями виробника.">
+<meta name="description" content="ГалКат, площадка 20: 3D-модель розміщення УЗЕ 1,725 МВт / 5 МВт·год, фундамент з армуванням, кабельний канал і креслення. Ескіз за довідковими кресленнями виробника.">
 <style>
 :root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 html,body{margin:0}
@@ -20,6 +20,7 @@ img{max-width:100%}
   --accent:#a85200; --accent-soft:#f6e3cf; --on-accent:#ffffff;
   --scene-sky:#dbe3ea; --scene-ground:#98a08c; --scene-apron:#b4bbab; --scene-line:#16212c;
   --tag-bg:rgba(249,250,251,.92); --ghost:#dfae74; --chan:#c9cdd0;
+  --rebar:#3b4148; --rebar-new:#c45f17;
   --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -30,6 +31,7 @@ img{max-width:100%}
     --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
     --scene-sky:#18222b; --scene-ground:#4a5048; --scene-apron:#353b36; --scene-line:#e4eaef;
     --tag-bg:rgba(24,33,42,.92); color-scheme:dark;
+    --rebar:#c3ccd4; --rebar-new:#ff9a45;
   }
 }
 :root[data-theme="dark"]{
@@ -37,6 +39,7 @@ img{max-width:100%}
   --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
   --scene-sky:#18222b; --scene-ground:#4a5048; --scene-apron:#353b36; --scene-line:#e4eaef;
   --tag-bg:rgba(24,33,42,.92); color-scheme:dark;
+  --rebar:#c3ccd4; --rebar-new:#ff9a45;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
@@ -56,6 +59,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(22px,3.2vw,30px)
 .legend small{margin-left:8px;color:var(--muted);font-family:var(--f-mono);font-size:11.5px;white-space:nowrap}
 .legend .sw{flex:none;width:21px;height:13px;background:var(--ghost);border:1px dashed var(--ink)}
 .legend .sw.ch{background:var(--chan);border-style:solid}
+.legend .sw.rb{border:0;background:linear-gradient(var(--rebar),var(--rebar)) 0 3px/100% 3px no-repeat,linear-gradient(var(--rebar-new),var(--rebar-new)) 0 8px/100% 3px no-repeat}
 .legend .u{margin-left:auto;color:var(--muted);font-size:12px}
 .hint{position:absolute;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);bottom:8px;font-size:12px;color:var(--muted);background:var(--tag-bg);padding:2px 8px;pointer-events:none}
 .fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
@@ -104,6 +108,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
 </style>
 </head>
 <body>
+
 <div class="wrap">
   <header>
     <h1>Площадка 20 · УЗЕ 1,725 МВт / 5 МВт·год</h1>
@@ -121,6 +126,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <div class="row"><span class="n">2</span><span><b>Блок PCS + трансформатор</b><small>1 725 кВт · 6 кВ · ≈ 17 т</small></span></div>
         <div class="row"><span class="sw"></span><span>фундамент блока PCS показано умовно</span></div>
         <div class="row"><span class="sw ch"></span><span>кабельний канал: попередній розрахунок</span></div>
+        <div class="row" id="lg-rebar" hidden><span class="sw rb"></span><span>арматура: темна — за Golen, помаранчева — пропозиція</span></div>
         <div class="u">Розміри в мм, позначки рівнів у м</div>
       </div>
     </div>
@@ -134,6 +140,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <button type="button" id="view-south" data-view="south" aria-pressed="false">З боку дверей</button>
           <button type="button" id="view-west" data-view="west" aria-pressed="false">З торця</button>
           <button type="button" id="view-found" data-view="found" aria-pressed="false">Фундамент</button>
+          <button type="button" id="view-rebar" data-view="rebar" aria-pressed="false">Арматура</button>
           <button type="button" id="view-chan" data-view="chan" aria-pressed="false">Канал</button>
         </div>
       </div>
@@ -142,6 +149,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <div class="checks">
           <label><input type="checkbox" id="chk-containers" checked> Контейнери</label>
           <label><input type="checkbox" id="chk-found" checked> Фундаменти</label>
+          <label><input type="checkbox" id="chk-rebar"> Арматура</label>
           <label><input type="checkbox" id="chk-dims" checked> Розміри</label>
           <label><input type="checkbox" id="chk-tags" checked> Підписи</label>
           <label><input type="checkbox" id="chk-zone" checked> Межа зони</label>
@@ -155,7 +163,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <button type="button" id="mode-sheet" data-mode="sheet" aria-pressed="true">Відкриває креслення</button>
           <button type="button" id="mode-door" data-mode="door" aria-pressed="false">Відчиняє двері</button>
         </div>
-        <p class="tip" id="mode-tip">Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик.</p>
+        <p class="tip" id="mode-tip">Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик. З увімкненою арматурою фундамент і канал ведуть на аркуш армування.</p>
       </div>
       <div>
         <h2>Креслення</h2>
@@ -163,7 +171,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <button type="button" id="open-1" data-sheet="1">1 · План</button>
           <button type="button" id="open-2" data-sheet="2">2 · Двері</button>
           <button type="button" id="open-3" data-sheet="3">3 · Фундамент</button>
-          <button type="button" id="open-4" data-sheet="4">4 · Вигляди</button>
+          <button type="button" id="open-4" data-sheet="4">4 · Армування</button>
+          <button type="button" id="open-5" data-sheet="5">5 · Вигляди</button>
         </div>
         <p class="tip"><a class="dl" href="Kreslennya_GalKat_ploshchadka_20.pdf">Завантажити всі аркуші (PDF, A3)</a></p>
       </div>
@@ -218,6 +227,18 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <dt>Армування балки</dt><dd>4Ø12, хомути Ø8/200</dd>
         <dt>Колони</dt><dd>8 шт., 350 × 350 × 1800</dd>
         <dt>Між колонами</dt><dd>цегляна кладка</dd>
+        <dt>Підготовка (рекомендовано)</dt><dd>100 мм, C8/10</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Армування (попередньо)</h2>
+      <dl>
+        <dt>Балка, за Golen</dt><dd>4Ø12 A500C, хомути Ø8 / 200</dd>
+        <dt>Колони, пропозиція</dt><dd>4Ø12, хомути Ø8 / 200 і 100</dd>
+        <dt>Кути балки</dt><dd>Г-подібні Ø12, перепуск 600</dd>
+        <dt>Сталь на 1 фундамент</dt><dd>≈ 300 кг</dd>
+        <dt>Канал, плити, перемички</dt><dd>≈ 56 кг</dd>
+        <dt>Усього на площадку</dt><dd>≈ 656 кг</dd>
       </dl>
     </section>
     <section>
@@ -240,6 +261,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <li>Частину блока з шафами PCS показано як відкриту раму з дахом: на плані Golen дверцята шаф стоять усередині контуру, за 550–625 мм від краю.</li>
         <li>Те, що видно за дверима (стійки, шафи, трансформатор), намальовано схематично.</li>
         <li>Кабельний канал і кабелі: розміри з мого попереднього розрахунку, трасу в кабельних просторах і місця вводів показано умовно. Остаточно — за переліком кабелів Golen.</li>
+        <li>Арматура: Golen задав лише 4Ø12 і хомути Ø8 з кроком 200 для балки. Армування колон, кутів, закладні деталі, канал, плити й перемички — моя пропозиція, її треба перевірити розрахунком. Бетонна підготовка 100 мм — теж рекомендація.</li>
       </ul>
     </section>
   </div>
@@ -254,7 +276,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
       <button type="button" id="sv-tab-1" data-sheet="1" aria-pressed="false">1 · План</button>
       <button type="button" id="sv-tab-2" data-sheet="2" aria-pressed="false">2 · Двері</button>
       <button type="button" id="sv-tab-3" data-sheet="3" aria-pressed="false">3 · Фундамент</button>
-      <button type="button" id="sv-tab-4" data-sheet="4" aria-pressed="false">4 · Вигляди</button>
+      <button type="button" id="sv-tab-4" data-sheet="4" aria-pressed="false">4 · Армування</button>
+      <button type="button" id="sv-tab-5" data-sheet="5" aria-pressed="false">5 · Вигляди</button>
     </div>
     <div class="sv-zoom">
       <button type="button" id="sv-out" aria-label="Зменшити">−</button>
@@ -329,6 +352,9 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     concrete: new THREE.MeshStandardMaterial({map:concTex, roughness:.95}),
     brick: new THREE.MeshStandardMaterial({map:brickTex, roughness:.95}),
     steel: new THREE.MeshStandardMaterial({color:0x4b5660, roughness:.5, metalness:.6}),
+    prep: new THREE.MeshStandardMaterial({color:0x9da2a5, roughness:1}),
+    bar: new THREE.MeshStandardMaterial({color:0x3b4148, roughness:.5, metalness:.35}),
+    barNew: new THREE.MeshStandardMaterial({color:0xc45f17, roughness:.5, metalness:.25}),
     ghostC: new THREE.MeshStandardMaterial({color:0xd99a52, roughness:.95, transparent:true, opacity:.55}),
     ghostB: new THREE.MeshStandardMaterial({color:0xc98d4a, roughness:.95, transparent:true, opacity:.32}),
     edge: new THREE.LineBasicMaterial({color:0x1d2731, transparent:true, opacity:.5}),
@@ -369,7 +395,47 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     });
     [0,LF-BEAM].forEach(x=> box(g,BEAM,COL_H,BF-2*BEAM,mb,x,yB,BEAM,{uv:[(BF-2*BEAM)/0.52,COL_H/0.3],shadow:!ghost}));
     if(withSteps){ box(g,0.3,0.3,1.6,mc,-0.3,0,BF/2-0.8,sh); box(g,0.3,0.15,1.6,mc,-0.6,0,BF/2-0.8,sh); }
+    // lean concrete under the ring beam: recommended, not on the Golen drawing
+    const P=0.1, yP=yB-BEAM-P, mp=ghost?M.ghostC:M.prep;
+    box(g,LF+2*P,P,BEAM+2*P,mp,-P,yP,-P,sh); box(g,LF+2*P,P,BEAM+2*P,mp,-P,yP,BF-BEAM-P,sh);
+    box(g,BEAM+2*P,P,BF-2*BEAM-2*P,mp,-P,yP,BEAM+P,sh); box(g,BEAM+2*P,P,BF-2*BEAM-2*P,mp,LF-BEAM-P,yP,BEAM+P,sh);
+    g.userData.cage=cage(g,LF,BF);
     return g;
+  }
+  // ---- reinforcement (sheet 4). Beam bars and stirrups after Golen; corner bars, columns, plates' anchors: proposal ----
+  const cyl=new THREE.CylinderGeometry(1,1,1,6,1,true);
+  function bars(parent,segs,r,mat){
+    const im=new THREE.InstancedMesh(cyl,mat,segs.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion(), up=new THREE.Vector3(0,1,0);
+    const a=new THREE.Vector3(), b=new THREE.Vector3(), d=new THREE.Vector3(), s=new THREE.Vector3();
+    segs.forEach((g,i)=>{ a.set(g[0],g[1],g[2]); b.set(g[3],g[4],g[5]); d.subVectors(b,a); const len=d.length();
+      q.setFromUnitVectors(up,d.divideScalar(len)); s.set(r,len+2*r,r); m4.compose(a.add(b).multiplyScalar(0.5),q,s); im.setMatrixAt(i,m4); });
+    im.instanceMatrix.needsUpdate=true; im.frustumCulled=false; im.castShadow=im.receiveShadow=false;
+    im.raycast=function(){};                       // clicks go to the (see-through) concrete around the bars
+    parent.add(im); return im;
+  }
+  function loop(arr,P){ for(let i=0;i<4;i++){ const p=P[i], q=P[(i+1)%4]; arr.push([p[0],p[1],p[2],q[0],q[1],q[2]]); } }
+  const ST_X=[], ST_Z=[], COL_Y=[-1.45,-1.25,-1.05,-0.85,-0.65,-0.45,-0.25,-0.05,0.05,0.15,0.25];
+  function cage(g,LF,BF){
+    const A=0.054, C=0.044, e=0.039, yb=-1.796, yt=-1.554, y0=-1.85+C, y1=-1.5-C, c1=BEAM-C;
+    const g12=[], g8=[], n12=[], n8=[];
+    if(!ST_X.length){ for(let i=0;i<31;i++) ST_X.push(0.05+0.2*i); ST_X.push(LF-0.05); for(let i=0;i<9;i++) ST_Z.push(BEAM+0.05+0.2*i); ST_Z.push(BF-BEAM-0.05); }
+    [A,BEAM-A,BF-BEAM+A,BF-A].forEach(z=>[yb,yt].forEach(y=> g12.push([e,y,z,LF-e,y,z])));
+    [A,BEAM-A,LF-BEAM+A,LF-A].forEach(x=>[yb,yt].forEach(y=> g12.push([x,y,e,x,y,BF-e])));
+    ST_X.forEach(x=>[0,BF-BEAM].forEach(z0=> loop(g8,[[x,y0,z0+C],[x,y0,z0+c1],[x,y1,z0+c1],[x,y1,z0+C]])));
+    ST_Z.forEach(z=>[0,LF-BEAM].forEach(x0=> loop(g8,[[x0+C,y0,z],[x0+c1,y0,z],[x0+c1,y1,z],[x0+C,y1,z]])));
+    // corner L-bars, 600 + 600, one bar diameter towards the beam axis
+    [[0,1],[LF,-1]].forEach(cx=>[[0,1],[BF,-1]].forEach(cz=>[A+0.012,BEAM-A-0.012].forEach(o=>[yb,yt].forEach(y=>{
+      const px=cx[0]+cx[1]*o, pz=cz[0]+cz[1]*o; n12.push([px,y,pz,px+cx[1]*0.6,y,pz],[px,y,pz,px,y,pz+cz[1]*0.6]); }))));
+    // columns: 4 corner bars with a 200 mm foot along the beam, stirrups at 200 / 100, anchors of the embedded plates
+    COL_X.forEach((x0,ci)=>[0,BF-BEAM].forEach(z0=>{
+      [A,BEAM-A].forEach(dx=>[A,BEAM-A].forEach(dz=>{ const x=x0+dx, z=z0+dz, dir=ci===0?1:ci===COL_X.length-1?-1:(dx<BEAM/2?-1:1);
+        n12.push([x,-1.784,z,x,0.26,z],[x,-1.784,z,x+dir*0.2,-1.784,z]); }));
+      COL_Y.forEach(y=> loop(n8,[[x0+C,y,z0+C],[x0+c1,y,z0+C],[x0+c1,y,z0+c1],[x0+C,y,z0+c1]]));
+      [0.095,0.255].forEach(ax=>[0.095,0.255].forEach(az=> n12.push([x0+ax,0.288,z0+az,x0+ax,0.13,z0+az])));
+    }));
+    const rg=new THREE.Group(); rg.visible=false; g.add(rg);
+    bars(rg,g12,0.006,M.bar); bars(rg,g8,0.004,M.bar); bars(rg,n12,0.006,M.barNew); bars(rg,n8,0.004,M.barNew);
+    return rg;
   }
   const gFound=new THREE.Group(); scene.add(gFound);
   const fBess=foundation(X0,Z_BESS,false,true), fPcs=foundation(X0,Z_SKID,true,false);
@@ -596,6 +662,25 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   // auxiliary supply, control and communication cables on the shelf: LV compartment -> channel -> BESS
   [[-0.225,0.014,mAux],[-0.255,0.008,mCtl],[-0.275,0.006,mCom],[-0.289,0.006,mCom]].forEach(a=>{ const d=a[0], zS=Z_SKID+0.62-(d+0.289), zN=Z_BESS+0.40+(d+0.289);
     cable([[X0+0.6,yUp,zS],[X0+0.6,yShelf,zS],[xc+d,yShelf,zS],[xc+d,yShelf,zN],[X0+0.62,yShelf,zN],[X0+0.62,yUp,zN]],a[1],a[2],0.2); });
+  // reinforcement of the channel, cover slabs and lintels (proposal, sheet 4)
+  const rbChan=new THREE.Group(); rbChan.visible=false; gChan.add(rbChan);
+  const rbCov=new THREE.Group(); rbCov.visible=false; gCov.add(rbCov);
+  (function(){
+    const u=[], l=[], yU=yFl-CH.t+0.05, yTop=yIn-0.03, xl=xc-CH.w/2-CH.t/2, xr=xc+CH.w/2+CH.t/2;
+    for(let i=0;i<25;i++){ const z=zA+0.05+0.2*i; u.push([xl,yTop,z,xl,yU,z],[xl,yU,z,xr,yU,z],[xr,yU,z,xr,yTop,z]); }
+    [-0.25,-0.083,0.083,0.25].forEach(d=> l.push([xc+d,yU+0.008,zA+0.03,xc+d,yU+0.008,zB-0.03]));
+    [xl+0.008,xr-0.008].forEach(x=>[-0.40,-0.20].forEach(y=> l.push([x,y,zA+0.03,x,y,zB-0.03])));
+    bars(rbChan,u,0.004,M.barNew); bars(rbChan,l,0.004,M.barNew);
+    const t=[], s=[];
+    [zA-BEAM-0.004,zB-0.004].forEach(z0=>{ [0.05,0.175,0.30].forEach(dz=> t.push([xc-0.43,yIn+0.03,z0+dz,xc+0.43,yIn+0.03,z0+dz]));
+      for(let k=0;k<5;k++){ const x=xc-0.4+0.2*k; s.push([x,yIn+0.038,z0+0.02,x,yIn+0.038,z0+0.33]); } });
+    bars(rbChan,t,0.005,M.barNew); bars(rbChan,s,0.003,M.barNew);
+    const a=[], b=[];
+    for(let i=0;i<10;i++){ const z0=zA+i*chL/10+0.006;
+      [0.04,0.173,0.306,0.438].forEach(dz=> a.push([xc-0.375,yIn+0.029,z0+dz,xc+0.375,yIn+0.029,z0+dz]));
+      [-0.36,-0.18,0,0.18,0.36].forEach(dx=> b.push([xc+dx,yIn+0.037,z0+0.024,xc+dx,yIn+0.037,z0+0.454])); }
+    bars(rbCov,a,0.004,M.barNew); bars(rbCov,b,0.004,M.barNew);
+  })();
   const tagsChan=new THREE.Group(); gChan.add(tagsChan);
   (function(){ const m=plate([{t:'Кабельний канал 600 × 450',em:0.32,w:600},{t:'L = 4900 · попередній розрахунок',em:0.24,mono:true,muted:true}],{pad:0.1});
     flat(m,tagsChan,xc+CH.w/2+CH.t+0.25+m.scale.x/2,0.06,(zA+zB)/2); })();
@@ -644,6 +729,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     const cs=getComputedStyle(document.documentElement), c=n=>new THREE.Color(cs.getPropertyValue(n).trim()||'#888');
     scene.background=c('--scene-sky'); M.ground.color=c('--scene-ground'); M.apron.color=c('--scene-apron');
     M.dim.color=c('--scene-line'); M.zone.color=c('--scene-line'); M.hover.color=c('--accent'); M.zoneHot.color=c('--accent');
+    M.bar.color=c('--rebar'); M.barNew.color=c('--rebar-new');
     plates.forEach(d=>d());
   }
   applyTheme();
@@ -665,7 +751,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     south:{p:[bc.x-1.5,3.4,D/2+11],t:[bc.x,1.2,Z_BESS]},
     west:{p:[-W/2-13,4.2,2.5],t:[0,1.0,1.2]},
     found:{p:[bc.x-11.5,6.4,bc.z+14.5],t:[bc.x-0.3,1.9,bc.z]},
-    chan:{p:[-5.2,8.6,1.4],t:[0.3,-0.4,0.05]}
+    chan:{p:[-5.2,8.6,1.4],t:[0.3,-0.4,0.05]},
+    rebar:{p:[bc.x-6.8,3.1,bc.z+6.0],t:[bc.x+0.2,-0.9,bc.z-0.3]}
   };
   let cam=null;
   // narrow viewports (phones) need the camera further back to keep the whole site in frame
@@ -677,6 +764,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     else cam={p0:camera.position.clone(),t0:controls.target.clone(),f0:camera.fov,p1:p,t1:t,f1:f,s:performance.now()};
     document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===name?'true':'false'));
     if(name==='found'){ setLift(3.2); setGround('glass'); }
+    else if(name==='rebar'){ setLift(4); setGround('off'); setRebar(true); setDims(false); }
+    else setLift(0);
   }
   function setLift(v){ st.liftT=v; $('lift').value=v; $('lift-out').textContent=v.toFixed(1).replace('.',',')+' м'; if(reduce) st.lift=v; }
   let groundMode='glass';
@@ -692,11 +781,23 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   $('lift').addEventListener('input',e=>setLift(parseFloat(e.target.value)));
   $('chk-containers').addEventListener('change',e=>{ gCont.visible=e.target.checked; });
   $('chk-found').addEventListener('change',e=>{ gFound.visible=e.target.checked; });
-  $('chk-dims').addEventListener('change',e=>{ gDim.visible=hDim.visible=e.target.checked; });
+  function setDims(on){ gDim.visible=hDim.visible=on; $('chk-dims').checked=on; }
+  $('chk-dims').addEventListener('change',e=>setDims(e.target.checked));
   $('chk-tags').addEventListener('change',e=>{ tagsBess.visible=tagsSkid.visible=tagsFound.visible=tagsChan.visible=e.target.checked; legend.hidden=!e.target.checked; });
   $('chk-zone').addEventListener('change',e=>{ gZone.visible=e.target.checked; });
   $('chk-chan').addEventListener('change',e=>{ gChan.visible=e.target.checked; });
   $('chk-cov').addEventListener('change',e=>{ gCov.visible=e.target.checked; });
+  const XRAY=[M.concrete,M.brick,M.ghostC,M.ghostB,M.prep,mCov,mHole];
+  XRAY.forEach(m=>{ m.userData.base={t:m.transparent,o:m.opacity,d:m.depthWrite}; });
+  let rebarOn=false;
+  function setRebar(on){
+    rebarOn=on; $('chk-rebar').checked=on; $('lg-rebar').hidden=!on;
+    [fBess.userData.cage,fPcs.userData.cage,rbChan,rbCov].forEach(g=>{ g.visible=on; });
+    XRAY.forEach(m=>{ const b=m.userData.base; m.transparent=on||b.t; m.opacity=on?Math.min(b.o,0.15):b.o; m.depthWrite=on?false:b.d; m.needsUpdate=true; });
+    if(on&&!gFound.visible){ gFound.visible=true; $('chk-found').checked=true; }
+    hover(null);
+  }
+  $('chk-rebar').addEventListener('change',e=>setRebar(e.target.checked));
   function doorsAll(v){ leaves.forEach(l=>{ l.t=v; }); doorState(); }
   function doorState(){ const n=leaves.filter(l=>l.t).length;
     $('doors-open').setAttribute('aria-pressed',n===leaves.length?'true':'false'); $('doors-close').setAttribute('aria-pressed',n===0?'true':'false');
@@ -720,34 +821,39 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   const TARGET={
     bess:{s:2,r:[0.03,0.40,0.56,0.80],name:'Контейнер BESS',note:'Контейнер BESS (поз. 1): план із дверима, ширини стулок, кути й зона відчинення. Фундамент контейнера — на аркуші 3.'},
     pcs:{s:2,r:[0.03,0.03,0.56,0.42],name:'Блок PCS + трансформатор',note:'Блок PCS + трансформатор (поз. 2): відсіки, двері та шафи PCS у відкритій рамі. Розміри дверей приблизні, зняті з масштабу креслення Golen.'},
-    fbess:{s:3,r:null,name:'Фундамент контейнера BESS',note:'Фундамент контейнера BESS: план, розрізи 1–1 і 2–2, вузол опирання, обсяги.'},
+    fbess:{s:3,r:null,name:'Фундамент контейнера BESS',note:'Фундамент контейнера BESS: план, розрізи 1–1 і 2–2, вузол опирання, обсяги. Армування — на аркуші 4 (або ввімкніть шар «Арматура»).'},
     fpcs:{s:3,r:null,name:'Фундамент блока PCS (умовний)',note:'Окремого креслення фундаменту блока PCS немає: Golen його не надав. На аркуші — фундамент контейнера BESS, тип якого в моделі повторено умовно.'},
     chan:{s:1,r:[0.72,0.41,0.995,0.86],name:'Кабельний канал',note:'Кабельний канал між блоками: переріз із розкладкою кабелів. Це попередній розрахунок, не дані Golen; на плані цього ж аркуша канал показано між фундаментами.'},
-    site:{s:1,r:null,name:'Майданчик',note:'Майданчик: розміщення обох блоків, відступи 5000 мм і схема стропування.'}
+    site:{s:1,r:null,name:'Майданчик',note:'Майданчик: розміщення обох блоків, відступи 5000 мм і схема стропування.'},
+    armf:{s:4,r:[0.04,0.02,0.56,0.83],name:'Армування фундаменту',note:'Армування фундаменту: план балки, каркас колони, перерізи, форми стержнів, специфікація і відомість сталі. Чорним — за кресленням Golen, помаранчевим — пропозиція.'},
+    armc:{s:4,r:[0.555,0.49,0.99,0.83],name:'Армування кабельного каналу',note:'Кабельний канал, плита П-1 і перемичка ПР-1: армування за попереднім розрахунком. Специфікація — вгорі цього аркуша.'}
   };
-  const SHEET_NAME={1:'План розміщення',2:'Схема відчинення дверей',3:'Фундамент контейнера BESS',4:'3D-вигляди'};
+  // with the reinforcement shown, the foundations and the channel lead to the reinforcement sheet
+  const tgt=id=>!rebarOn?id:(id==='fbess'||id==='fpcs')?'armf':id==='chan'?'armc':id;
+  const SHEET_NAME={1:'План розміщення',2:'Схема відчинення дверей',3:'Фундамент контейнера BESS',4:'Армування',5:'3D-вигляди'};
   // outline shown around the object under the mouse
   function outline(parent,w,h,d,x,y,z){ const l=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,d)),M.hover);
     l.position.set(x+w/2,y+h/2,z+d/2); l.renderOrder=20; l.visible=false; parent.add(l); return l; }
   const HL={ bess:outline(bess,L+0.12,H+0.12,B+0.12,-0.06,-0.06,-0.06), pcs:outline(skid,L+0.12,H+0.12,B+0.12,-0.06,-0.06,-0.06),
-    fbess:outline(fBess,L+2*OFF+0.1,COL_H+BEAM+0.1,B+2*OFF+0.1,-0.05,-(COL_H-F_TOP)-BEAM-0.05,-0.05),
-    fpcs:outline(fPcs,L+2*OFF+0.1,COL_H+BEAM+0.1,B+2*OFF+0.1,-0.05,-(COL_H-F_TOP)-BEAM-0.05,-0.05),
+    fbess:outline(fBess,L+2*OFF+0.3,COL_H+BEAM+0.2,B+2*OFF+0.3,-0.15,-(COL_H-F_TOP)-BEAM-0.15,-0.15),
+    fpcs:outline(fPcs,L+2*OFF+0.3,COL_H+BEAM+0.2,B+2*OFF+0.3,-0.15,-(COL_H-F_TOP)-BEAM-0.15,-0.15),
     chan:outline(gChan,CH.w+2*CH.t+0.1,CH.d+CH.t+CH.cov+0.1,chL+0.1,xc-CH.w/2-CH.t-0.05,yFl-CH.t-0.05,zA-0.05) };
   const HINT0=$('hint').textContent;
   function hover(id){ if(id===hovered) return; hovered=id;
     for(const k in HL) HL[k].visible=(k===id);
     gZone.children.forEach(l=>{ l.material=(id==='site')?M.zoneHot:M.zone; });
-    $('hint').textContent=id?(TARGET[id].name+' → аркуш '+TARGET[id].s+' «'+SHEET_NAME[TARGET[id].s]+'»'):HINT0;
+    const T=id&&TARGET[tgt(id)];
+    $('hint').textContent=T?(T.name+' → аркуш '+T.s+' «'+SHEET_NAME[T.s]+'»'):HINT0;
     cv.style.cursor=id?'pointer':''; }
   function setMode(m){ mode=m; hover(null); cv.style.cursor='';
     document.querySelectorAll('#mode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m?'true':'false'));
-    $('mode-tip').textContent=m==='sheet'?'Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик.':'Клацніть на стулку, щоб відчинити або зачинити її.';
+    $('mode-tip').textContent=m==='sheet'?'Клацніть на контейнер, блок PCS, фундамент, кабельний канал або майданчик. З увімкненою арматурою фундамент і канал ведуть на аркуш армування.':'Клацніть на стулку, щоб відчинити або зачинити її.';
     $('hint').textContent=m==='sheet'?HINT0:'Клацніть на двері, щоб відчинити · тягніть, щоб обертати'; }
   $('mode').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setMode(b.dataset.mode); });
   cv.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
   cv.addEventListener('pointerup',e=>{ if(!down) return; const d=Math.hypot(e.clientX-down[0],e.clientY-down[1]); down=null; if(d>6) return;
     if(mode==='door'){ const l=pickLeaf(e); if(l){ l.t=l.t?0:1; doorState(); } return; }
-    const id=pickObj(e); if(id){ const t=TARGET[id]; openSheet(t.s,t.r,t.note); } });
+    const id=pickObj(e); if(id){ const t=TARGET[tgt(id)]; openSheet(t.s,t.r,t.note); } });
   cv.addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse'||e.buttons) return;
     if(mode==='door') cv.style.cursor=pickLeaf(e)?'pointer':''; else hover(pickObj(e)); });
   cv.addEventListener('pointerleave',()=>{ if(mode==='sheet') hover(null); });
@@ -816,7 +922,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   requestAnimationFrame(frame);
   // test hook for static captures
   doorState();
-  window.__model={go,setLift,setGround,st,camera,controls,VIEWS,doorsAll,leaves,openSheet,closeSheet,setMode};
+  window.__model={go,setLift,setGround,st,camera,controls,VIEWS,doorsAll,leaves,openSheet,closeSheet,setMode,setRebar,fBess,fPcs,rbChan,rbCov};
 })();
 </script>
 </body>

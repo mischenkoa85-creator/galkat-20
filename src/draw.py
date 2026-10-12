@@ -43,6 +43,60 @@ TR_N, TR_S = (1215, 2800, 790), (1420, 2845, 712)
 SK_W = 1155
 assert sum((570, 1741, 50, 1743, 49, 1780, 125)) == L
 
+# ---- reinforcement (preliminary; beam 4Ø12 + Ø8@200 after Golen, everything else my proposal) ----
+KGM = {6: 0.222, 8: 0.395, 10: 0.617, 12: 0.888}       # kg per metre
+COVER, A_BAR = 40, 54                                   # cover to the stirrup; bar centre from the face (40 + 8 + 12/2)
+PREP = 100                                              # lean concrete under the ring beam (recommended)
+ST_OUT = BEAM - 2 * COVER                               # stirrup outer size, 270
+BEAM_ST_X = [50 + 200 * i for i in range(31)] + [LF - 50]          # stirrups of a long beam (x)
+BEAM_ST_Z = [BEAM + 50 + 200 * i for i in range(9)] + [BF - BEAM - 50]   # stirrups of a short beam (z)
+COL_ST_Y = [-1450 + 200 * i for i in range(8)] + [50, 150, 250]   # column stirrups (levels, mm)
+N_ST = 2 * len(BEAM_ST_X) + 2 * len(BEAM_ST_Z) + 8 * len(COL_ST_Y)
+# channel, cover slabs, lintels
+CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 450, 80
+SLAB_N, SLAB_L = 10, 478
+U_Z = [50 + 200 * i for i in range(25)]
+# position: (diameter, class, length mm, shape, count per unit, note)
+REBAR = [
+    ('f', '1', 12, 'A500C', 6080, '', 8, 'балка, поздовжні'),
+    ('f', '2', 12, 'A500C', 2460, '', 8, 'балка, торці'),
+    ('f', '3', 12, 'A500C', 1200, 'Г 600 × 600', 16, 'кути балки'),
+    ('f', '4', 12, 'A500C', 2240, 'Г 2040 + 200', 32, 'колони, 4 на колону'),
+    ('f', '5', 8, 'A240C', 1240, 'хомут 270 × 270', N_ST, '%d балка + %d колони' % (2 * len(BEAM_ST_X) + 2 * len(BEAM_ST_Z), 8 * len(COL_ST_Y))),
+    ('c', '6', 8, 'A500C', 1640, 'П 470 + 700 + 470', len(U_Z), 'крок 200'),
+    ('c', '7', 8, 'A500C', 4840, '', 8, '4 у дні, по 2 у стінах'),
+    ('s', '8', 8, 'A500C', 750, '', 4, 'поперечні, знизу'),
+    ('s', '9', 8, 'A500C', 430, '', 5, 'поздовжні'),
+    ('l', '10', 10, 'A500C', 860, '', 3, 'нижні'),
+    ('l', '11', 6, 'A240C', 310, '', 5, 'поперечні'),
+]
+MN_PLATE = 0.300 * 0.300 * 0.012 * 7850                # kg
+MN_ANCH = 4 * 0.230 * KGM[12]
+MN_KG = MN_PLATE + MN_ANCH
+
+
+def unit_mass(d, length):
+    return length / 1000.0 * KGM[d]
+
+
+def steel_by(group):
+    """kg by (class, diameter) for one unit of the group."""
+    out = {}
+    for g, pos, d, cl, ln, shp, n, note in REBAR:
+        if g == group:
+            out[(cl, d)] = out.get((cl, d), 0) + n * unit_mass(d, ln)
+    return out
+
+
+# concrete, m3
+V_BEAM = BEAM * BEAM * (2 * LF + 2 * (BF - 2 * BEAM)) / 1e9
+V_COLS = 8 * BEAM * BEAM * (F_TOP - COL_BOT) / 1e9
+V_PREP = PREP * ((LF + 2 * PREP) * (BF + 2 * PREP) - (LF - 2 * BEAM - 2 * PREP) * (BF - 2 * BEAM - 2 * PREP)) / 1e9
+V_CHAN = ((CH_W + 2 * CH_T) * CH_T + 2 * CH_T * CH_D) * CH_L / 1e9
+V_SLABS = SLAB_N * (CH_W + 2 * CH_T) * SLAB_L * CH_COV / 1e9
+V_LINT = 2 * 900 * BEAM * 120 / 1e9
+
+
 
 def fmt_mm(v):
     return ('%g' % v).replace('.', ',')
@@ -354,7 +408,7 @@ def frame(p, sheet_title, scale, num, total):
         p.text(x0 + 2, yy, row, 10.5, 'B')
         yy -= 5.2
     p.text(x0 + 2, y0 + 2.3, 'Джерело геометрії: Golen Power Technology, Annex 1 – Response 1 (довідкові креслення)', 5.9, col=MUTED)
-    rows = [('Стадія', 'Ескіз'), ('Масштаб', scale), ('Дата', '11.10.2026'), ('Аркуш', '%d / %d' % (num, total))]
+    rows = [('Стадія', 'Ескіз'), ('Масштаб', scale), ('Дата', '12.10.2026'), ('Аркуш', '%d / %d' % (num, total))]
     for i, (k, v) in enumerate(rows):
         yb = y0 + h_ - (i + 1) * 10
         p.text(xs + 1.5, yb + 3.6, k, 6.2, col=MUTED)
@@ -413,7 +467,7 @@ def table(p, x, y, cols, rows, size=6.8, rh=5.0, head=True):
 # =====================================================================
 def sheet_layout(c):
     p = Pen(c)
-    frame(p, ['План розміщення обладнання', 'УЗЕ на майданчику'], '1 : 100', 1, 4)
+    frame(p, ['План розміщення обладнання', 'УЗЕ на майданчику'], '1 : 100', 1, 5)
     k = 0.01
     ox, oy = 54.0, 62.0
     X = lambda x: ox + x * k
@@ -582,7 +636,7 @@ def sheet_layout(c):
                    (2, 'полиця: власні потреби 5×25…35 мм², контрольний кабель, зв’язок'),
                    (3, 'смуга заземлення 40×4'),
                    (4, 'знімна плита перекриття 80 мм'),
-                   (5, 'стінки й дно 100 мм, бетон; основа — ущільнений ґрунт')):
+                   (5, 'стінки й дно 100 мм, бетон C25, армування — аркуш 4; основа — ущільнений ґрунт')):
         p.text(rx + 72, yk, '%d —' % n_, 6.2, 'B')
         yk = p.para(rx + 78, yk, t_, 98, 6.2, lead=2.8) - 0.4
     c.showPage()
@@ -593,7 +647,7 @@ def sheet_layout(c):
 # =====================================================================
 def sheet_doors(c):
     p = Pen(c)
-    frame(p, ['Схема відчинення дверей', 'Контейнер BESS і блок PCS'], '1 : 50', 2, 4)
+    frame(p, ['Схема відчинення дверей', 'Контейнер BESS і блок PCS'], '1 : 50', 2, 5)
     k = 0.02
     ox = 64.0
     X = lambda x: ox + x * k
@@ -733,7 +787,7 @@ def sheet_doors(c):
 # =====================================================================
 def sheet_foundation(c):
     p = Pen(c)
-    frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 4)
+    frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 5)
     k = 1 / 40.0
 
     # ------------------------------------------------ plan
@@ -798,8 +852,9 @@ def sheet_foundation(c):
     Z = lambda z: Y0 + z * k
     p.view_title(ox - 22, 176.5, '1–1', 'М 1 : 40 (по осі поздовжньої стіни)')
     gl, gr = X(-900), X(LF + 500)
-    # compacted base under the ring beam
-    p.compact(X(-250), X(LF + 250), Z(BEAM_BOT))
+    # lean concrete (recommended) and compacted base under the ring beam
+    p.compact(X(-250), X(LF + 250), Z(BEAM_BOT - PREP))
+    p.rect(X(-PREP), Z(BEAM_BOT - PREP), (LF + 2 * PREP) * k, PREP * k, w=W_THIN, fill=(0.86, 0.87, 0.88))
     # ring beam (cut lengthwise)
     p.rc(X(0), Z(BEAM_BOT), LF * k, BEAM * k, seed=3)
     for zz in (BEAM_BOT + 45, COL_BOT - 45):
@@ -841,17 +896,18 @@ def sheet_foundation(c):
     p.leader(X(COLX[1] + 175), Z(-560), X(COLX[1] + 620), Z(-420), '', lines=['колона 350 × 350,', 'бетон C25'], size=6.3, bg=W)
     p.leader(X(4500), Z(-1000), X(4700), Z(-860), '', lines=['цегляна кладка,', 'розчин М20'], size=6.3, bg=W)
     p.leader(X(520), Z(BEAM_BOT + 170), X(760), Z(BEAM_BOT) - 9.5, 'обв’язувальна балка 350 × 350, бетон C25: 4Ø12, хомути Ø8 крок 200', size=6.3)
-    p.leader(X(3800), Z(BEAM_BOT) - 1.2, X(4020), Z(BEAM_BOT) - 9.5, 'ущільнений ґрунт, коефіцієнт ущільнення ≥ 0,94', size=6.3)
+    p.leader(X(3800), Z(BEAM_BOT - PREP / 2), X(4020), Z(BEAM_BOT) - 12.0, '', lines=['бетонна підготовка 100 мм, C8/10 (рекомендовано),', 'під нею — ґрунт, ущільнений до kу ≥ 0,94'], size=6.3)
     p.leader(X(COLX[2] + 175), Z(F_TOP) + 0.2, X(COLX[2] + 560), Z(F_TOP + 950) + 5.5, 'закладна деталь на оголовку колони', size=6.3)
     p.leader(X(-450), Z(160), X(-860), Z(F_TOP) + 9.5, 'сходинки', size=6.3)
-    p.text(X(LF / 2), Z(BEAM_BOT) - 16.5, 'Горизонтальні розміри — за планом (розріз у проєкційному зв’язку з планом).', 6.3, 'I', anchor='c', col=MUTED)
+    p.text(X(LF / 2), Z(BEAM_BOT) - 18.5, 'Горизонтальні розміри — за планом (розріз у проєкційному зв’язку з планом).', 6.3, 'I', anchor='c', col=MUTED)
     yb = Z(BEAM_BOT) - 2.4
 
     # ------------------------------------------------ section 2-2
     ox2 = 250.0
     X2 = lambda x: ox2 + x * k
     p.view_title(ox2 - 12, 176.5, '2–2', 'М 1 : 40')
-    p.compact(X2(-250), X2(BF + 250), Z(BEAM_BOT))
+    p.compact(X2(-250), X2(BF + 250), Z(BEAM_BOT - PREP))
+    p.rect(X2(-PREP), Z(BEAM_BOT - PREP), (BF + 2 * PREP) * k, PREP * k, w=W_THIN, fill=(0.86, 0.87, 0.88))
     # far end wall and far beam in elevation
     p.brick_face(X2(BEAM), Z(COL_BOT), (BF - 2 * BEAM) * k, (F_TOP - COL_BOT) * k)
     p.rect(X2(BEAM), Z(BEAM_BOT), (BF - 2 * BEAM) * k, BEAM * k, w=W_THIN, fill=(0.93, 0.935, 0.94))
@@ -860,9 +916,9 @@ def sheet_foundation(c):
     for j, xx in enumerate((0, BF - BEAM)):
         p.rc(X2(xx), Z(COL_BOT), BEAM * k, (F_TOP - COL_BOT) * k, seed=40 + j)
         p.rc(X2(xx), Z(BEAM_BOT), BEAM * k, BEAM * k, seed=50 + j)
-        p.rect(X2(xx + 40), Z(BEAM_BOT + 40), 270 * k, 270 * k, w=0.3)
-        for dx in (62, 288):
-            for dz in (62, 288):
+        p.rect(X2(xx + COVER), Z(BEAM_BOT + COVER), ST_OUT * k, ST_OUT * k, w=0.3)
+        for dx in (A_BAR, BEAM - A_BAR):
+            for dz in (A_BAR, BEAM - A_BAR):
                 p.circle(X2(xx + dx), Z(BEAM_BOT + dz), 0.42, w=0, fill=INK)
         p.line(X2(xx + 25), Z(F_TOP) + 0.18, X2(xx + 325), Z(F_TOP) + 0.18, 0.55)
     # cable supports (schematic)
@@ -915,13 +971,11 @@ def sheet_foundation(c):
         p.line(XN(ax), YN(0), XN(ax), YN(-170), 0.7)
         sgn = 1 if ax < 175 else -1
         p.arc(XN(ax) + sgn * 1.2, YN(-170), 1.2, 180 if sgn > 0 else 270, 270 if sgn > 0 else 360, w=0.7)
-    # column rebar (schematic, as on the reference detail)
-    for rx_ in (40, 310):
-        p.line(XN(rx_), YN(-300), XN(rx_), YN(-40), 0.45)
-    p.line(XN(40), YN(-40), XN(310), YN(-40), 0.45)
-    for zz in (-90, -170, -250):
-        for rx_ in (27, 323):
-            p.circle(XN(rx_), YN(zz), 0.45, w=0, fill=INK)
+    # column rebar (sheet 4): corner bars stop 40 mm under the plate, stirrups at 100 near the top
+    for rx_ in (A_BAR, BEAM - A_BAR):
+        p.line(XN(rx_), YN(-300), XN(rx_), YN(-40), 0.45, ACC)
+    for zz in (y - F_TOP for y in COL_ST_Y if y - F_TOP > -300):
+        p.line(XN(COVER), YN(zz), XN(BEAM - COVER), YN(zz), 0.3, ACC)
     # container bottom rail and wall (outer face 50 mm inside the column outer face)
     p.rect(XN(140), YN(12), 160 * kn, 160 * kn, w=W_VIS, fill=C_CONT)
     p.rect(XN(150), YN(22), 140 * kn, 140 * kn, w=W_THIN, fill=(1, 1, 1))
@@ -969,16 +1023,16 @@ def sheet_foundation(c):
         ('Бетон C25, колони 8 шт.', '1,76 м³'),
         ('Бетон разом', '3,72 м³'),
         ('Кладка, площа стін (h = 1,8 м)', '23,7 м²'),
-        ('Арматура Ø12 (без напусків)', '64 м'),
-        ('Хомути Ø8, крок 200', '≈ 80 шт.'),
+        ('Підготовка C8/10, 100 мм', fnum(V_PREP, 2) + ' м³'),
+        ('Сталь, усього (аркуш 4)', '≈ %d кг' % round(sum(steel_by('f').values()) + 8 * MN_KG)),
     ], size=6.4, rh=4.6, head=False)
 
     ny = 55.5
     col_w = 97.0
     items = [
         'Ескіз виконано за довідковим кресленням виробника (Golen, Annex 1 – Response 1, аркуш Reference Foundation Drawing of 5MWh BESS Container). Розміри в міліметрах, позначки в метрах.',
-        'Бетон C25 за позначенням виробника (орієнтовно C20/25). Балка 350 × 350: 4Ø12 поздовжні, хомути Ø8 з кроком 200. Армування колон виробник не специфікував — за розрахунком.',
-        'Основа — ущільнений ґрунт, коефіцієнт ущільнення не менше 0,94.',
+        'Бетон C25 за позначенням виробника (орієнтовно C20/25). Балка 350 × 350: 4Ø12 поздовжні, хомути Ø8 з кроком 200. Армування колон, кутів і закладні деталі виробник не задав — пропозицію наведено на аркуші 4.',
+        'Основа — ущільнений ґрунт, коефіцієнт ущільнення не менше 0,94. Під балкою рекомендую бетонну підготовку 100 мм C8/10: без неї захисний шар 40 мм не забезпечити (аркуш 4).',
         'Між колонами — цегляна кладка на розчині М20 (позначення виробника). Товщину кладки на кресленні Golen не вказано, показано умовно 350 мм.',
         'На оголовках колон — закладні деталі, раму контейнера приварити до них (вузол А). Розміри пластин і анкерів уточнити у виробника.',
         'До заведення кабелів установити кабельні опори внизу фундаменту. Отвори для вводу кабелів і відведення води з кабельного простору на кресленні Golen не показані — передбачити проєктом.',
@@ -999,11 +1053,444 @@ def sheet_foundation(c):
 
 
 # =====================================================================
-# Sheet 4: 3D views
+# Sheet 4: reinforcement of the foundation, the cable channel, slabs and lintels
+# =====================================================================
+W_BAR, W_ST = 0.5, 0.32
+
+
+def fnum(v, nd=1):
+    return ('%.*f' % (nd, v)).replace('.', ',')
+
+
+def pos_mark(p, x, y, tx, ty, txt, r=2.3, col=INK, dot=True):
+    """Position callout: leader from the bar to a numbered circle."""
+    dx, dy = x - tx, y - ty
+    d = math.hypot(dx, dy)
+    if d > r + 0.2:
+        p.line(x, y, tx + dx / d * r, ty + dy / d * r, W_HAIR + 0.03)
+    if dot:
+        p.circle(x, y, 0.3, w=0, fill=INK)
+    p.circle(tx, ty, r, w=W_THIN, col=col, fill=(1, 1, 1))
+    p.text(tx, ty - 0.95, txt, 6.6 if len(txt) < 2 else 5.6, 'B', anchor='c', col=col)
+
+
+def flag(p, x, y, tx, ty, txt, col=INK):
+    """Callout for a named item (МН-1, П-1): leader to a framed label whose left edge is at tx."""
+    w_ = p.tw(txt, 6.4, 'B') + 2.4
+    p.line(x, y, tx, ty, W_HAIR + 0.03)
+    p.circle(x, y, 0.3, w=0, fill=INK)
+    p.rect(tx, ty - 2.0, w_, 4.2, w=W_THIN, col=col, fill=(1, 1, 1))
+    p.text(tx + 1.2, ty - 0.9, txt, 6.4, 'B', col=col)
+
+
+def stirrup_sq(p, x0, y0, s, col=INK, w=W_ST, hook=1.5):
+    """Closed stirrup in section, centreline square, 135-degree hooks at the top-left corner."""
+    p.rect(x0, y0, s, s, w=w, col=col)
+    p.line(x0 + 0.55, y0 + s, x0 + 0.55 + hook * 0.72, y0 + s - hook * 0.72, w, col)
+    p.line(x0, y0 + s - 0.55, x0 + hook * 0.72, y0 + s - 0.55 - hook * 0.72, w, col)
+
+
+def vbreak(p, x, y1, y2, w=W_THIN):
+    ym = (y1 + y2) / 2
+    p.poly([(x, y1 - 1.2), (x, ym - 1.2), (x - 1.3, ym - 0.5), (x + 1.3, ym + 0.5), (x, ym + 1.2), (x, y2 + 1.2)], w)
+
+
+def spec_table(p, x, y, cols, rows, size=6.0, rh=4.5, hh=5.2):
+    """Table with a header row and full-width group rows ('g', text). y = top. Returns the bottom."""
+    wt = sum(w_ for _, w_, _ in cols)
+    p.rect(x, y - hh, wt, hh, w=0, fill=(0.93, 0.94, 0.95))
+    xx = x
+    for t, w_, an in cols:
+        lines = t.split('\n')
+        for i, ln in enumerate(lines):
+            yy = y - hh / 2 - 0.9 + (len(lines) - 1) * 1.15 - i * 2.3
+            p.text(xx + w_ / 2, yy, ln, size - 0.3, 'B', anchor='c')
+        xx += w_
+    yy = y - hh
+    for r in rows:
+        if r[0] == 'g':
+            p.rect(x, yy - rh, wt, rh, w=0, fill=(0.965, 0.97, 0.975))
+            p.text(x + 1.4, yy - rh + 1.5, r[1], size, 'B')
+        else:
+            bold = r[0] == 'b'
+            vals = r[1:] if bold else r
+            xx = x
+            for (t, w_, an), v in zip(cols, vals):
+                f = 'B' if bold else 'R'
+                if an == 'c':
+                    p.text(xx + w_ / 2, yy - rh + 1.5, v, size, f, anchor='c')
+                elif an == 'r':
+                    p.text(xx + w_ - 1.2, yy - rh + 1.5, v, size, f, anchor='r')
+                else:
+                    p.text(xx + 1.2, yy - rh + 1.5, v, size, f)
+                if (t, w_, an) != cols[-1]:
+                    p.line(xx + w_, yy, xx + w_, yy - rh, W_THIN)
+                xx += w_
+        p.line(x, yy - rh, x + wt, yy - rh, W_THIN)
+        yy -= rh
+    xx = x
+    for t, w_, an in cols[:-1]:
+        xx += w_
+        p.line(xx, y, xx, y - hh, W_THIN)
+    p.line(x, y - hh, x + wt, y - hh, W_VIS)
+    p.rect(x, yy, wt, y - yy, w=W_VIS)
+    return yy
+
+
+def sheet_rebar(c):
+    p = Pen(c)
+    frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', 4, 5)
+    W = (1, 1, 1)
+    G = ACC                                       # bars Golen did not specify (my proposal)
+
+    # ------------------------------------------------ ring beam plan, 1:40
+    k = 1 / 40.0
+    ox, oy = 46.0, 220.0
+    X = lambda x: ox + x * k
+    Y = lambda z: oy + z * k
+    p.view_title(26, 286.5, 'Армування обв’язувальної балки', 'М 1 : 40 · план на рівні балки')
+    p.rect(X(0), Y(0), LF * k, BF * k, w=W_THIN)
+    p.rect(X(BEAM), Y(BEAM), (LF - 2 * BEAM) * k, (BF - 2 * BEAM) * k, w=W_THIN)
+    for zz in (0, BF - BEAM):
+        for xx in COLX:
+            p.rect(X(xx), Y(zz), BEAM * k, BEAM * k, w=W_HAIR + 0.03, col=MUTED, dash=[0.8, 0.5])
+    for zz in (0, BF - BEAM):
+        for xs in BEAM_ST_X:
+            p.line(X(xs), Y(zz + COVER), X(xs), Y(zz + BEAM - COVER), W_HAIR + 0.06)
+    for xx in (0, LF - BEAM):
+        for zs in BEAM_ST_Z:
+            p.line(X(xx + COVER), Y(zs), X(xx + BEAM - COVER), Y(zs), W_HAIR + 0.06)
+    e = 39
+    for zz in (A_BAR, BEAM - A_BAR, BF - BEAM + A_BAR, BF - A_BAR):
+        p.line(X(e), Y(zz), X(LF - e), Y(zz), W_BAR)
+    for xx in (A_BAR, BEAM - A_BAR, LF - BEAM + A_BAR, LF - A_BAR):
+        p.line(X(xx), Y(e), X(xx), Y(BF - e), W_BAR)
+    sh = 0.75                                     # L-bars drawn shifted towards the beam axis
+    for cx, sx in ((0, 1), (LF, -1)):
+        for cz, sz in ((0, 1), (BF, -1)):
+            for o, sg in ((A_BAR, 1), (BEAM - A_BAR, -1)):
+                px, pz = X(cx + sx * o) + sx * sg * sh, Y(cz + sz * o) + sz * sg * sh
+                p.poly([(px + sx * 600 * k, pz), (px, pz), (px, pz + sz * 600 * k)], W_BAR - 0.08, G)
+    for zz in (0, BF - BEAM):
+        for xx in COLX:
+            for a_ in (A_BAR, BEAM - A_BAR):
+                for b_ in (A_BAR, BEAM - A_BAR):
+                    p.circle(X(xx + a_), Y(zz + b_), 0.42, w=0, fill=G)
+    # explanations inside the ring
+    xm = X(LF / 2)
+    p.text(xm, Y(1330), 'Балка 350 × 350: 4Ø12 A500C (поз. 1, 2), хомути Ø8 A240C (поз. 5) з кроком 200', 6.4, anchor='c')
+    p.text(xm, Y(1330) - 3.4, 'У кутах — Г-подібні стержні поз. 3, перепуск 600; точки — випуски колон поз. 4', 6.4, anchor='c')
+    p.line(xm - 46, Y(1330) - 7.6, xm - 40, Y(1330) - 7.6, W_BAR)
+    p.text(xm - 38.8, Y(1330) - 8.3, 'за кресленням Golen', 6.2)
+    p.line(xm + 2, Y(1330) - 7.6, xm + 8, Y(1330) - 7.6, W_BAR, G)
+    p.text(xm + 9.2, Y(1330) - 8.3, 'пропозиція (Golen не задав)', 6.2, col=G)
+    # callouts
+    pos_mark(p, X(4900), Y(BF - BEAM + A_BAR), X(4900), Y(1960), '1')
+    pos_mark(p, X(LF - BEAM + A_BAR), Y(1500), X(5480), Y(1500), '2')
+    pos_mark(p, X(LF - BEAM + A_BAR) + 0.75, Y(BF - BEAM + A_BAR - 420), X(5480), Y(1960), '3', col=G)
+    pos_mark(p, X(COLX[2] + BEAM - A_BAR), Y(BF - BEAM + A_BAR), X(3500), Y(1960), '4', col=G)
+    pos_mark(p, X(1050), Y(BEAM - COVER), X(1050), Y(700), '5')
+    # section 1-1 across the south beam
+    xs1 = X(1150)
+    for ya_, yb_ in ((Y(0) - 4.6, Y(0) - 1.0), (Y(BEAM) + 1.0, Y(BEAM) + 4.6)):
+        p.line(xs1, ya_, xs1, yb_, 0.7)
+    for yy in (Y(0) - 3.8, Y(BEAM) + 3.8):
+        p.line(xs1, yy, xs1 - 3.0, yy, W_VIS)
+        p.poly([(xs1 - 2.0, yy - 0.8), (xs1 - 3.6, yy), (xs1 - 2.0, yy + 0.8)], w=W_THIN, fill=INK, close=True)
+    p.text(xs1 + 2.0, Y(0) - 4.6, '1', 9, 'B', anchor='c')
+    p.text(xs1 + 2.0, Y(BEAM) + 2.8, '1', 9, 'B', anchor='c')
+    # dimensions
+    edges = [0, 350, 2000, 2350, 3808, 4158, 5808, 6158]
+    for a_, b_ in zip(edges[:-1], edges[1:]):
+        p.dim_h(X(a_), X(b_), Y(0), Y(0) - 9, str(b_ - a_), size=6.6)
+    p.dim_h(X(0), X(LF), Y(0), Y(0) - 15.5, '6158', size=6.6)
+    for a_, b_ in ((0, 350), (350, 2188), (2188, 2538)):
+        p.dim_v(Y(a_), Y(b_), X(LF) + 1.5, X(LF) + 7.5, str(b_ - a_), size=6.6)
+    p.dim_v(Y(0), Y(BF), X(LF) + 1.5, X(LF) + 13.5, '2538', size=6.6)
+    p.dim_h(X(LF - A_BAR - 600), X(LF - A_BAR), Y(BF), Y(BF) + 4.2, '600', size=6.2)
+
+    # ------------------------------------------------ column cage, 1:20 (cut along the beam)
+    kk = 1 / 20.0
+    ex0, ey0 = 66.0, 60.0
+    XE = lambda x: ex0 + x * kk
+    YE = lambda y: ey0 + (y + 1950) * kk
+    p.view_title(26, 196.5, 'Каркас колони', 'М 1 : 20 · розріз уздовж балки')
+    bl, br = -440, 780
+    p.rect(XE(bl), YE(-1950), (br - bl) * kk, PREP * kk, w=0, fill=(0.89, 0.90, 0.91))
+    p.line(XE(bl), YE(-1950), XE(br), YE(-1950), W_THIN)
+    p.compact(XE(bl), XE(br), YE(-1950), depth=2.0)
+    p.line(XE(bl), YE(-1850), XE(br), YE(-1850), W_THIN)
+    p.line(XE(bl), YE(-1500), XE(0), YE(-1500), W_THIN)
+    p.line(XE(350), YE(-1500), XE(br), YE(-1500), W_THIN)
+    for xb in (bl, br):
+        vbreak(p, XE(xb), YE(-1950), YE(-1500))
+    p.rect(XE(0), YE(-1500), BEAM * kk, (F_TOP + 1500) * kk, w=W_THIN)
+    p.line(XE(-320), YE(0), XE(0), YE(0), W_HAIR + 0.04, MUTED, dash=[2.0, 0.8, 0.4, 0.8])
+    p.line(XE(350), YE(0), XE(670), YE(0), W_HAIR + 0.04, MUTED, dash=[2.0, 0.8, 0.4, 0.8])
+    for yy in (-1850 + A_BAR, -1500 - A_BAR):
+        p.line(XE(bl + 25), YE(yy), XE(br - 25), YE(yy), W_BAR)
+    beam_st = [x - COLX[1] for x in BEAM_ST_X if bl < x - COLX[1] < br]
+    for xs in beam_st:
+        p.line(XE(xs), YE(-1850 + COVER), XE(xs), YE(-1500 - COVER), W_ST)
+    p.poly([(XE(A_BAR - 200), YE(-1784)), (XE(A_BAR), YE(-1784)), (XE(A_BAR), YE(260))], W_BAR, G)
+    p.poly([(XE(BEAM - A_BAR + 200), YE(-1784)), (XE(BEAM - A_BAR), YE(-1784)), (XE(BEAM - A_BAR), YE(260))], W_BAR, G)
+    for yy in COL_ST_Y:
+        p.line(XE(COVER), YE(yy), XE(BEAM - COVER), YE(yy), W_ST, G)
+    p.rect(XE(25), YE(288), 300 * kk, 12 * kk, w=W_THIN, fill=(0.25, 0.28, 0.32))
+    for ax, sg in ((95, 1), (255, -1)):
+        p.poly([(XE(ax), YE(288)), (XE(ax), YE(130)), (XE(ax + sg * 45), YE(95))], 0.35, G)
+    # section 2-2 marks
+    ys2 = YE(-760)
+    for xa_, xb_ in ((XE(0) - 4.6, XE(0) - 1.0), (XE(350) + 1.0, XE(350) + 4.6)):
+        p.line(xa_, ys2, xb_, ys2, 0.7)
+    for xx in (XE(0) - 3.8, XE(350) + 3.8):
+        p.line(xx, ys2, xx, ys2 - 3.0, W_VIS)
+        p.poly([(xx - 0.8, ys2 - 2.0), (xx, ys2 - 3.6), (xx + 0.8, ys2 - 2.0)], w=W_THIN, fill=INK, close=True)
+    p.text(XE(0) - 3.8, ys2 + 1.2, '2', 9, 'B', anchor='c')
+    p.text(XE(350) + 3.8, ys2 + 1.2, '2', 9, 'B', anchor='c')
+    # stirrup spacing chain and column height, left
+    xd = XE(0) - 7.5
+    chain = [(250, 300, '50'), (-50, 250, '3×100'), (-1450, -50, '7×200 = 1400'), (-1500, -1450, '50')]
+    for a_, b_, t in chain:
+        p.dim_v(YE(a_), YE(b_), XE(0), xd, t if b_ - a_ > 100 else '', size=6.2)
+    p.text(xd - 1.6, YE(275) - 1.0, '50', 6.0, anchor='r')
+    p.text(xd - 1.6, YE(-1475) - 1.0, '50', 6.0, anchor='r')
+    p.dim_v(YE(-1500), YE(300), XE(0), xd - 6.5, '1800', size=6.2)
+    # levels
+    lx = XE(br) + 5.5
+    for zz, t in ((F_TOP, '+0,300'), (0, '0,000'), (-1500, '−1,500'), (-1850, '−1,850')):
+        x_from = XE(350) + 1.0 if zz >= -1500 else XE(br) + 1.0
+        p.line(x_from, YE(zz), lx - 2.5, YE(zz), W_HAIR + 0.02, MUTED, dash=[0.6, 0.9])
+        p.level(lx, YE(zz), t, shelf=10.5, size=6.4)
+    p.line(XE(bl) - 1.0, YE(-1950), XE(bl) - 13.0, YE(-1950), W_HAIR + 0.02, MUTED, dash=[0.6, 0.9])
+    p.level(XE(bl) - 14.0, YE(-1950), '−1,950', shelf=10.5, size=6.4)
+    # callouts
+    pos_mark(p, XE(BEAM - A_BAR), YE(-980), XE(640), YE(-1080), '4', col=G)
+    pos_mark(p, XE(BEAM - COVER), YE(-650), XE(640), YE(-560), '5', col=G)
+    pos_mark(p, XE(560), YE(-1500 - A_BAR), XE(640), YE(-1250), '1')
+    pos_mark(p, XE(beam_st[0]), YE(-1680), XE(-300), YE(-1250), '5')
+    flag(p, XE(300), YE(294), XE(470), YE(560), 'МН-1', col=G)
+    p.text(XE(BEAM / 2), YE(-1700) - 0.6, 'балка', 6.0, anchor='c', col=MUTED, bg=W)
+    p.text(XE(-250), YE(-1950) + 0.9, 'підготовка C8/10', 5.8, anchor='c', col=MUTED)
+
+    # ------------------------------------------------ sections 1:10
+    k10 = 0.1
+
+    def section(x0, y0, beam):
+        S = lambda x: x0 + x * k10
+        T = lambda y: y0 + y * k10
+        colr = INK if beam else G
+        if beam:
+            p.rect(S(-100), T(-100), 550 * k10, 100 * k10, w=W_THIN, fill=(0.89, 0.90, 0.91))
+            p.compact(S(-130), S(480), T(-100), depth=1.8)
+            p.brick(S(0), T(350), 35, 9.0, outline=W_THIN)
+            p.breakline(S(0), S(350), T(440), W_THIN)
+        p.rect(S(0), T(0), 35, 35, w=W_VIS)
+        stirrup_sq(p, S(COVER + 4), T(COVER + 4), (ST_OUT - 8) * k10, INK if beam else G)
+        for a_ in (A_BAR, BEAM - A_BAR):
+            for b_ in (A_BAR, BEAM - A_BAR):
+                p.circle(S(a_), T(b_), 0.6, w=0, fill=colr)
+        yb_ = (T(-100) - 2.6) if beam else (T(0) - 1.0)
+        for a_, b_ in ((0, 40), (40, 310), (310, 350)):
+            p.dim_h(S(a_), S(b_), yb_, yb_ - 4.6, str(b_ - a_), size=6.0)
+        p.dim_h(S(0), S(350), yb_, yb_ - 10.0, '350', size=6.2)
+        xl_ = S(-100) - 1.0 if beam else S(0) - 1.0
+        if beam:
+            p.dim_v(T(-100), T(0), xl_, xl_ - 5.0, '', size=6.0)
+            p.text(xl_ - 5.75, T(-50) - 6.0, '100', 6.0, anchor='c', rot=90)
+        p.dim_v(T(0), T(350), xl_, xl_ - 5.0, '350', size=6.2)
+        n1 = '1' if beam else '4'
+        pos_mark(p, S(BEAM - A_BAR), T(BEAM - A_BAR), S(350) + 6.0, T(BEAM - A_BAR) + 3.0, n1, col=colr)
+        pos_mark(p, S(BEAM - COVER - 4), T(150), S(350) + 6.0, T(150), '5', col=colr)
+    p.view_title(128, 196.5, '1–1', 'М 1 : 10')
+    section(140.0, 151.0, True)
+    p.view_title(128, 121.5, '2–2', 'М 1 : 10')
+    section(140.0, 80.0, False)
+
+    # ------------------------------------------------ bar shapes
+    sx = 187.0
+    p.view_title(sx, 196.5, 'Форми стержнів')
+    p.text(sx, 192.4, 'без масштабу, розміри в мм', 6.0, col=MUTED)
+
+    def slabel(y, n, txt, col=INK):
+        p.circle(sx + 2.2, y + 0.8, 2.0, w=W_THIN, col=col, fill=W)
+        p.text(sx + 2.2, y - 0.05, n, 6.0, 'B', anchor='c', col=col)
+        p.text(sx + 5.6, y, txt, 6.2)
+    slabel(185.5, '3', 'Ø12 A500C, L = 1200', G)
+    p.poly([(sx + 5, 181), (sx + 5, 165), (sx + 21, 165)], W_BAR, G)
+    p.text(sx + 3.6, 173, '600', 6.0, anchor='c', rot=90)
+    p.text(sx + 13, 162.4, '600', 6.0, anchor='c')
+    slabel(156.5, '5', 'Ø8 A240C, L = 1240')
+    stirrup_sq(p, sx + 5, 139.5, 13, INK, W_ST + 0.05, 2.2)
+    p.text(sx + 11.5, 136.6, '270', 6.0, anchor='c')
+    p.text(sx + 20.6, 146, '270', 6.0, anchor='c', rot=90)
+    p.text(sx + 23, 141, 'гаки 135°, 80', 5.8, col=MUTED)
+    slabel(130.5, '4', 'Ø12 A500C, L = 2240', G)
+    p.poly([(sx + 7, 126.5), (sx + 7, 104), (sx + 13, 104)], W_BAR, G)
+    p.text(sx + 5.6, 115, '2040', 6.0, anchor='c', rot=90)
+    p.text(sx + 10, 101.4, '200', 6.0, anchor='c')
+    p.text(sx + 16, 112, 'у колону', 5.8, col=MUTED)
+    p.text(sx + 16, 109.2, 'лапка — у балку', 5.8, col=MUTED)
+    slabel(94.5, '6', 'Ø8 A500C, L = 1640', G)
+    p.poly([(sx + 5, 90), (sx + 5, 79), (sx + 27, 79), (sx + 27, 90)], W_BAR, G)
+    p.text(sx + 3.6, 84.5, '470', 6.0, anchor='c', rot=90)
+    p.text(sx + 16, 76.4, '700', 6.0, anchor='c')
+    p.text(sx + 16, 82, 'канал', 5.8, anchor='c', col=MUTED)
+    p.rect(sx, 66.0, p.tw('МН-1', 6.0, 'B') + 2.2, 4.0, w=W_THIN, col=G, fill=W)
+    p.text(sx + 1.1, 67.1, 'МН-1', 6.0, 'B', col=G)
+    p.text(sx + 10.6, 67.1, 'лист 300 × 300 × 12', 6.2)
+    p.rect(sx + 5, 60.6, 18, 1.0, w=W_THIN, fill=(0.25, 0.28, 0.32))
+    for ax, sg in ((sx + 8.5, 1), (sx + 19.5, -1)):
+        p.poly([(ax, 60.6), (ax, 55.6), (ax + sg * 1.6, 54.4)], 0.35, G)
+    p.text(sx + 25, 57.4, '4 анкери Ø12,', 5.8, col=MUTED)
+    p.text(sx + 25, 54.8, 'L = 230', 5.8, col=MUTED)
+
+    # ------------------------------------------------ specification
+    rx = 236.0
+    p.text(rx, 286.5, 'Специфікація арматури', 8.6, 'B')
+    p.text(rx + p.tw('Специфікація арматури', 8.6, 'B') + 2.5, 286.5, 'кількість і маса — на 1 виріб', 6.6, col=MUTED)
+    D = 'ДСТУ 3760:2019'
+    rows = [('g', 'Фундамент контейнера, на 1 шт. (усього 2: BESS і PCS — умовно)')]
+    groups = {'c': 'Кабельний канал, монолітний, L = 4900, 1 шт.',
+              's': 'Плита перекриття П-1, 800 × 478 × 80, на 1 шт. (усього %d)' % SLAB_N,
+              'l': 'Перемичка ПР-1 над вводом каналу, 900 × 350 × 120, на 1 шт. (усього 2)'}
+    last = 'f'
+    for g, pos, d, cl, ln, shp, n, note in REBAR:
+        if g != last:
+            if last == 'f':
+                rows.append(('МН-1', '—', 'лист 300×300×12 С245, анкери 4Ø12 A500C, L = 230', '8', fnum(MN_KG, 2), 'уточнити в Golen'))
+            rows.append(('g', groups[g]))
+            last = g
+        name = 'Ø%d %s, L = %d' % (d, cl, ln) + ((' (%s)' % shp) if shp else '')
+        rows.append((pos, D, name, str(n), fnum(unit_mass(d, ln), 2), note))
+    yb = spec_table(p, rx, 280.0, [('Поз.', 10, 'c'), ('Позначення', 22, 'l'), ('Найменування', 69, 'l'), ('К-сть', 12, 'c'),
+                                   ('Маса од., кг', 18, 'c'), ('Примітка', 46, 'l')], rows, size=6.0, rh=4.4)
+
+    # ------------------------------------------------ steel and concrete summary
+    f = steel_by('f')
+    ch, sl, li = steel_by('c'), steel_by('s'), steel_by('l')
+    cols_ = [('A500C', 12), ('A500C', 10), ('A500C', 8), ('A240C', 8), ('A240C', 6)]
+
+    def row(name, st, mn, conc, mult=1, bold=False):
+        vals = [st.get(k_, 0) * mult for k_ in cols_]
+        tot = sum(vals) + mn * mult
+        cells = [fnum(v) if v else '—' for v in vals] + [fnum(mn * mult) if mn else '—', fnum(tot), conc]
+        return ((('b', name) if bold else (name,)) + tuple(cells)), vals + [mn * mult, tot]
+    r1, v1 = row('Фундамент BESS', f, 8 * MN_KG, fnum(V_BEAM + V_COLS, 2) + ' C25')
+    r2, v2 = row('Фундамент PCS (умовно)', f, 8 * MN_KG, fnum(V_BEAM + V_COLS, 2) + ' C25')
+    r3 = ('Бетонна підготовка, 2 шт.', '—', '—', '—', '—', '—', '—', '—', fnum(2 * V_PREP, 2) + ' C8/10')
+    r4, v4 = row('Кабельний канал', ch, 0, fnum(V_CHAN, 2) + ' C25')
+    r5, v5 = row('Плити П-1, %d шт.' % SLAB_N, sl, 0, fnum(V_SLABS, 2) + ' C25', SLAB_N)
+    r6, v6 = row('Перемички ПР-1, 2 шт.', li, 0, fnum(V_LINT, 2) + ' C25', 2)
+    tot = [sum(v[i] for v in (v1, v2, v4, v5, v6)) for i in range(7)]
+    c25 = 2 * (V_BEAM + V_COLS) + V_CHAN + V_SLABS + V_LINT
+    r7 = ('b', 'Разом') + tuple(fnum(v) for v in tot) + (fnum(c25 + 2 * V_PREP, 2),)
+    ys = yb - 7.0
+    p.text(rx, ys, 'Відомість витрати сталі й бетону', 8.6, 'B')
+    p.text(rx + p.tw('Відомість витрати сталі й бетону', 8.6, 'B') + 2.5, ys, 'сталь у кг, бетон у м³', 6.6, col=MUTED)
+    yb2 = spec_table(p, rx, ys - 2.5, [('Елемент', 40, 'l'), ('Ø12\nA500C', 15, 'r'), ('Ø10\nA500C', 14, 'r'), ('Ø8\nA500C', 14, 'r'),
+                                       ('Ø8\nA240C', 14, 'r'), ('Ø6\nA240C', 13, 'r'), ('Закладні\nМН-1', 16, 'r'), ('Сталь\nразом', 17, 'r'),
+                                       ('Бетон', 34, 'r')], [r1, r2, r3, r4, r5, r6, r7], size=6.0, rh=4.4, hh=7.0)
+    p.text(rx, yb2 - 3.6, 'Бетон: C25 — %s м³, підготовка C8/10 — %s м³. Маса сталі — без відходів і в’язального дроту.' % (fnum(c25, 2), fnum(2 * V_PREP, 2)), 6.0, col=MUTED)
+
+    # ------------------------------------------------ cable channel, 1:10
+    kc = 0.1
+    cx0, ct = 254.0, 132.0
+    XC = lambda x: cx0 + x * kc
+    YC = lambda y: ct + y * kc
+    p.view_title(rx, 143.5, 'Кабельний канал: армування', 'М 1 : 10 · кабелі не показано')
+    for xa, xb in ((-60, 0), (800, 860)):
+        p.line(XC(xa), YC(-20), XC(xb), YC(-20), W_THIN)
+    p.compact(XC(-40), XC(840), YC(-630), depth=1.8)
+    p.poly([(XC(0), YC(-630)), (XC(800), YC(-630)), (XC(800), YC(-80)), (XC(700), YC(-80)), (XC(700), YC(-530)),
+            (XC(100), YC(-530)), (XC(100), YC(-80)), (XC(0), YC(-80))], W_VIS, fill=(0.95, 0.955, 0.96), close=True)
+    p.rect(XC(0), YC(-80), 80, 8, w=W_VIS, fill=(0.95, 0.955, 0.96))
+    p.poly([(XC(50), YC(-110)), (XC(50), YC(-580)), (XC(750), YC(-580)), (XC(750), YC(-110))], W_BAR, G)
+    for xx in (150, 317, 483, 650):
+        p.circle(XC(xx), YC(-572), 0.42, w=0, fill=G)
+    for xx in (58, 742):
+        for yy in (-420, -220):
+            p.circle(XC(xx), YC(yy), 0.42, w=0, fill=G)
+    p.line(XC(25), YC(-51), XC(775), YC(-51), W_BAR - 0.1, G)
+    for xx in (40, 220, 400, 580, 760):
+        p.circle(XC(xx), YC(-43), 0.42, w=0, fill=G)
+    pos_mark(p, XC(750), YC(-330), XC(830), YC(-300), '6', col=G)
+    pos_mark(p, XC(483), YC(-572), XC(483), YC(-430), '7', col=G)
+    pos_mark(p, XC(58), YC(-420), XC(250), YC(-330), '7', col=G)
+    pos_mark(p, XC(310), YC(-51), XC(310), YC(80), '8', col=G)
+    pos_mark(p, XC(580), YC(-43), XC(620), YC(80), '9', col=G)
+    flag(p, XC(700), YC(-30), XC(840), YC(-30) + 0.9, 'П-1')
+    yb_ = YC(-630) - 2.4
+    for a_, b_ in ((0, 100), (100, 700), (700, 800)):
+        p.dim_h(XC(a_), XC(b_), yb_, yb_ - 4.6, str(b_ - a_), size=6.0)
+    p.dim_h(XC(0), XC(800), yb_, yb_ - 9.6, '800', size=6.2)
+    xl_ = XC(-60) - 0.8
+    for a_, b_ in ((-630, -530), (-530, -80), (-80, 0)):
+        p.dim_v(YC(a_), YC(b_), xl_, xl_ - 4.6, str(b_ - a_), size=6.0)
+    p.dim_v(YC(-630), YC(0), xl_, xl_ - 9.6, '630', size=6.2)
+
+    # ------------------------------------------------ slab П-1, plan 1:20
+    ks = 0.05
+    px0, py0 = 352.0, 104.0
+    XS = lambda x: px0 + x * ks
+    YS = lambda z: py0 + z * ks
+    p.view_title(347, 143.5, 'Плита П-1', 'М 1 : 20 · план')
+    p.rect(XS(0), YS(0), 800 * ks, SLAB_L * ks, w=W_VIS)
+    for zz in (40, 173, 306, 438):
+        p.line(XS(25), YS(zz), XS(775), YS(zz), W_BAR - 0.1, G)
+    for xx in (40, 220, 400, 580, 760):
+        p.line(XS(xx), YS(24), XS(xx), YS(454), W_ST, G)
+    pos_mark(p, XS(130), YS(306), XS(130), YS(SLAB_L) + 6.0, '8', col=G)
+    pos_mark(p, XS(580), YS(390), XS(650), YS(SLAB_L) + 6.0, '9', col=G)
+    p.dim_h(XS(0), XS(800), YS(0), YS(0) - 5.0, '800', size=6.2)
+    p.dim_v(YS(0), YS(SLAB_L), XS(800), XS(800) + 5.0, str(SLAB_L), size=6.2)
+
+    # ------------------------------------------------ lintel ПР-1, section 1:10
+    kl = 0.1
+    lx0, ly0 = 358.0, 72.0
+    XL = lambda z: lx0 + z * kl
+    YL = lambda y: ly0 + y * kl
+    p.view_title(347, 94.5, 'Перемичка ПР-1', 'М 1 : 10 · переріз')
+    p.brick(XL(0), YL(120), 35, 6.0, outline=W_THIN)
+    p.breakline(XL(0), XL(350), YL(180), W_THIN)
+    p.rect(XL(0), YL(0), 35, 12, w=W_VIS, fill=(0.95, 0.955, 0.96))
+    p.line(XL(20), YL(38), XL(330), YL(38), W_ST, G)
+    for zz in (50, 175, 300):
+        p.circle(XL(zz), YL(30), 0.5, w=0, fill=G)
+    pos_mark(p, XL(300), YL(30), XL(350) + 6.0, YL(-10), '10', col=G)
+    pos_mark(p, XL(240), YL(38), XL(350) + 6.0, YL(110), '11', col=G)
+    p.dim_h(XL(0), XL(350), YL(0), YL(0) - 4.6, '350', size=6.2)
+    p.dim_v(YL(0), YL(120), XL(0), XL(0) - 4.6, '120', size=6.2)
+    p.text(XL(175), YL(0) - 9.6, 'над отвором 600 × 450 у кладці', 5.8, anchor='c', col=MUTED)
+
+    # ------------------------------------------------ notes
+    items = [
+        'Чорним — армування балки за кресленням Golen (4Ø12, хомути Ø8 з кроком 200). Помаранчевим — те, чого Golen не задав: кутові стержні, колони, закладні деталі, а також канал, плити й перемички (мій попередній розрахунок). Усе перевірити розрахунком проєктувальника.',
+        'Арматура за ДСТУ 3760:2019: A500C — поздовжня, A240C — хомути й Ø6. Бетон C25 (≈ C20/25), підготовка — C8/10.',
+        'Захисний шар до хомутів 40 мм — лише з бетонною підготовкою 100 мм під балкою. Якщо бетонувати просто по ґрунту, захисний шар знизу потрібен 70–75 мм, і переріз 350 × 350 стає затісним.',
+        'Стержні балки не стикувати по довжині; у кутах — Г-подібні стержні поз. 3 з перепуском 600 мм (50d). Хомути замкнені, з гаками 135°.',
+        'Випуски колон поз. 4 заводити в каркас балки до нижніх стержнів, лапкою 200 мм уздовж балки. Шов між балкою та колонами очистити й зробити шорстким.',
+        'Закладні МН-1 виставити на +0,300 за нівеліром до бетонування колон. Розміри пластин і анкерів погодити з Golen.',
+        'Плити П-1 лежать на стінках каналу насухо, їх можна виготовити заздалегідь. Канал проходить під зоною дверей трансформатора, тож плити мають витримувати прохід людей.',
+        'Маса в специфікації — без відходів на різання й в’язального дроту; на замовлення додати 3–5 %.',
+    ]
+    ny, col_w = 50.0, 97.0
+    p.text(25, ny, 'Примітки', 8.6, 'B')
+    y1, xcol = ny - 4.4, 25.0
+    for i, s in enumerate(items, 1):
+        if i == 5:
+            xcol, y1 = 25.0 + col_w + 5, ny - 4.4
+        p.text(xcol, y1, '%d.' % i, 6.2)
+        y1 = p.para(xcol + 3.8, y1, s, col_w - 3.8, 6.2, lead=2.75) - 0.6
+    c.showPage()
+
+
+# =====================================================================
+# Sheet 5: 3D views
 # =====================================================================
 def sheet_views(c, img_dir):
     p = Pen(c)
-    frame(p, ['Загальний вигляд', '3D-модель майданчика і фундаменту'], 'без масштабу', 4, 4)
+    frame(p, ['Загальний вигляд', '3D-модель майданчика і фундаменту'], 'без масштабу', 5, 5)
     p.view_title(26, 286.5, 'Загальний вигляд (3D-модель)')
 
     from reportlab.lib.utils import ImageReader
@@ -1019,13 +1506,23 @@ def sheet_views(c, img_dir):
     img('q_open.png', 222, 152, 190, 'б) Усі двері відчинені: BESS — з довгого боку та з торця, блок PCS — з торця і з обох довгих боків.')
     img('q_open_pcs.png', 26, 53, 132, 'в) Блок PCS із зовнішнього боку: шафи PCS у відкритій рамі, двері трансформатора.')
     img('q_found.png', 164, 53, 132, 'г) Фундаменти й кабельний канал без ґрунту, плити каналу знято.')
-    notes(p, 303, 139, 'Що на моделі показано умовно', [
+    img('q_rebar.png', 302, 53, 110, 'д) Арматура (аркуш 4), бетон умовно прозорий.')
+    items = [
         'Фундамент блока PCS (помаранчевий, напівпрозорий): Golen дав креслення лише для контейнера BESS.',
         'Відкрита рама з дахом над шафами PCS, висота шаф і дверей.',
         'Те, що видно за дверима, товщина кладки, ширина сходинок.',
         'Кабельний канал і кабелі в ньому: попередній розрахунок, траса в кабельних просторах умовна.',
-        'Інтерактивна модель, де двері відчиняються клацанням, надається окремо.',
-    ], width=108)
+        'Арматура: темна — за кресленням Golen, помаранчева — пропозиція (Golen не задав).',
+        'Інтерактивна модель (двері, шари, арматура, перехід до креслень): mischenkoa85-creator.github.io/galkat-20',
+    ]
+    ny = 43.0
+    p.text(25, ny, 'Що на моделі показано умовно', 8.6, 'B')
+    y1, xcol = ny - 4.4, 25.0
+    for i, t in enumerate(items, 1):
+        if i == 4:
+            xcol, y1 = 25.0 + 104, ny - 4.4
+        p.text(xcol, y1, '%d.' % i, 6.4)
+        y1 = p.para(xcol + 3.8, y1, t, 96.0, 6.4, lead=2.85) - 0.6
     c.showPage()
 
 
@@ -1038,6 +1535,7 @@ if __name__ == '__main__':
     sheet_layout(c)
     sheet_doors(c)
     sheet_foundation(c)
+    sheet_rebar(c)
     sheet_views(c, img_dir)
     c.save()
     print('saved', out)
