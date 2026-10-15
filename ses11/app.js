@@ -47,7 +47,8 @@
   st.code = LS.get('ses11.code') || '';
   try { st.me = JSON.parse(LS.get('ses11.me') || 'null'); } catch (e) { st.me = null; }
   const role = () => st.me ? st.me.role : '';
-  const canReport = () => !!API && (role() === 'адмін' || role() === 'виконавець');
+  const PREVIEW = !API;
+  const canReport = () => PREVIEW || role() === 'адмін' || role() === 'виконавець';
   const canStock = () => !!API && (role() === 'адмін' || role() === 'комірник');
 
   /* ---------------- api ---------------- */
@@ -208,7 +209,8 @@
   function route() {
     const h = (location.hash || '#/').slice(1);
     const p = h.split('/').filter(Boolean);
-    if (p[0] === 'd' && O[p[1]]) return { r: 'roof', o: p[1], t: p[2] || (canReport() ? 'zvit' : 'plan') };
+    if (p[0] === 'd' && O[p[1]]) return { r: 'roof', o: p[1], t: p[2] || (canReport() && !PREVIEW ? 'zvit' : 'plan') };
+    if (p[0] === 'zvit') return { r: 'zv' };
     if (p[0] === 'analityka') return { r: 'an' };
     if (p[0] === 'pogoda') return { r: 'wx' };
     if (p[0] === 'metod') return { r: 'me' };
@@ -217,8 +219,8 @@
   window.addEventListener('hashchange', () => { hideTip(); render(); window.scrollTo({ top: 0, behavior: 'auto' }); });
 
   function renderShell(rt) {
-    const map = { home: 'home', roof: 'home', an: 'an', wx: 'wx', me: 'me' };
-    for (const a of document.querySelectorAll('#nav a')) { if (a.dataset.r === map[rt.r]) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
+    const map = { home: 'home', roof: rt.t === 'zvit' && canReport() ? 'zv' : 'home', zv: 'zv', an: 'an', wx: 'wx', me: 'me' };
+    for (const a of document.querySelectorAll('#nav a')) { if (a.dataset.r === 'zv') a.hidden = !canReport(); if (a.dataset.r === map[rt.r]) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
     $('who').innerHTML = st.me ? '<span class="who-n"><b>' + esc(st.me.name) + '</b><span class="who-r"> · ' + esc(st.me.role) + '</span></span><button class="btn ghost" type="button" id="logout" style="padding:4px 8px">Вийти</button>' : (API ? '' : '<span class="who-badge">без сервера</span>');
     const lo = $('logout'); if (lo) lo.onclick = () => logout();
   }
@@ -226,17 +228,18 @@
   function render() {
     const rt = route(); renderShell(rt);
     if (API && !st.code) { view.innerHTML = loginHtml(); bindLogin(); return; }
-    const banner = !API ? '<div class="banner">Сервер звітів ще не підключено. Сайт показує генплан, плани дахів, обсяги й погоду; звіти, фото і склад з’являться після підключення таблиці Google.</div>' : (st.loadErr ? '<div class="banner" data-kind="warn">' + esc(st.loadErr) + ' <button class="btn" type="button" id="retry">Оновити</button></div>' : (!st.loaded ? '<div class="banner">Завантажую звіти…</div>' : ''));
+    const banner = !API ? '<div class="banner">Сервер звітів ще не підключено. Форму звіту можна переглянути й заповнити, але записати її поки не вийде: звіти, фото і склад запрацюють після підключення таблиці Google.</div>' : (st.loadErr ? '<div class="banner" data-kind="warn">' + esc(st.loadErr) + ' <button class="btn" type="button" id="retry">Оновити</button></div>' : (!st.loaded ? '<div class="banner">Завантажую звіти…</div>' : ''));
     let html = '';
     if (rt.r === 'home') html = homeHtml();
     else if (rt.r === 'roof') html = roofHtml(rt);
+    else if (rt.r === 'zv') html = pickHtml();
     else if (rt.r === 'an') html = analyticsHtml();
     else if (rt.r === 'wx') html = weatherHtml();
     else html = methodHtml();
     const ae = document.activeElement; const fid = ae && ae.id;
     view.innerHTML = banner + html;
     const rb = $('retry'); if (rb) rb.onclick = () => load();
-    if (rt.r === 'home') bindHome();
+    if (rt.r === 'home' || rt.r === 'zv') bindHome();
     else if (rt.r === 'roof') bindRoof(rt);
     else if (rt.r === 'an') bindAnalytics();
     if (fid && $(fid) && document.activeElement !== $(fid)) { try { $(fid).focus({ preventScroll: true }); } catch (e) { } }
@@ -258,7 +261,7 @@
 
   /* ---------------- home: genplan ---------------- */
   const LABEL = { '7': { x: 1094, y: 52, ext: true }, '9': { x: 728, y: 700, ext: true, anchor: 'start', lx: 716, ly: 726 } };
-  function mapSvg(m) {
+  function mapSvg(m, toForm) {
     const g = D.geom;
     let s = '<svg viewBox="0 14 1250 1030" role="img" aria-label="Генплан площадки 11: дахи залиті кольором за готовністю">';
     for (const b of g.buildings) s += '<path class="bld" d="' + b + '"/>';
@@ -297,17 +300,30 @@
     const tileH = tiles.map(x => '<div class="tile"><div class="lbl">' + x[0] + '</div><div class="val num">' + x[1] + '</div><div class="of">' + x[2] + '</div>' + (x[3] != null ? meter(x[3]) : '') + '</div>').join('');
     const todayBy = {}; for (const r of st.data.reports) if (r.d === t) todayBy[r.o] = (todayBy[r.o] || 0) + 1;
     const cards = OBJS.map(o => { const p = sumPct(m, [o]); const c = CLS.find(x => x.id === o.cls); return '<a class="rcard" href="#/d/' + o.id + '"><span class="t"><b>' + objName(o) + '</b><span>' + pctTxt(p) + '</span></span>' + meter(p) + '<span class="s">' + (o.id === 'S' ? 'траси, щити DC, BESS, РП, ПНР' : fmt(o.modules) + ' модулів · ' + esc(c ? c.name.toLowerCase() : '')) + '</span>' + (todayBy[o.id] ? '<span class="today">сьогодні звітів: ' + todayBy[o.id] + '</span>' : '') + '</a>'; }).join('');
-    return '<section class="card"><div class="kpis home">' + tileH + '</div></section>' +
+    const cta = canReport() ? '<a class="cta" href="#/zvit"><span><b>Внести звіт за сьогодні</b><span>виберіть дах — відкриються лише його роботи</span></span><i aria-hidden="true">→</i></a>' : '';
+    return cta + '<section class="card"><div class="kpis home">' + tileH + '</div></section>' +
       '<section class="card map"><div class="card-h"><h2>Генплан площадки 11</h2><p>Натисніть на дах, щоб відкрити його план, специфікацію і роботи</p></div><div class="map-wrap" id="map">' + mapSvg(m) + '</div><p class="small muted map-hint">Генплан можна гортати пальцем убік.</p><div class="legend"><span>Готовність даху:</span><span class="ramp">' + [0, 1, 2, 3, 4, 5].map(i => '<i style="background:var(--s' + i + ');' + (i === 0 ? 'outline:1px solid var(--line-2);outline-offset:-1px' : '') + '"></i>').join('') + '</span><span>0 % → 100 %, крок 20 %</span></div></section>' +
       '<section class="card"><div class="card-h"><h2>Дахи і загальна частина</h2></div><div class="roofs">' + cards + '</div></section>';
   }
   function bindHome() {
     const host = $('map'); if (!host) return;
     if (host.scrollWidth > host.clientWidth + 2) { host.scrollLeft = st.mapX != null ? st.mapX : (host.scrollWidth - host.clientWidth) / 2; host.addEventListener('scroll', () => { st.mapX = host.scrollLeft; }, { passive: true }); }
-    host.addEventListener('click', e => { const t = e.target.closest('[data-o]'); if (t) location.hash = '#/d/' + t.dataset.o; });
-    host.addEventListener('keydown', e => { const t = e.target.closest && e.target.closest('[data-o]'); if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); location.hash = '#/d/' + t.dataset.o; } });
+    const suf = route().r === 'zv' ? '/zvit' : '';
+    host.addEventListener('click', e => { const t = e.target.closest('[data-o]'); if (t) location.hash = '#/d/' + t.dataset.o + suf; });
+    host.addEventListener('keydown', e => { const t = e.target.closest && e.target.closest('[data-o]'); if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); location.hash = '#/d/' + t.dataset.o + suf; } });
     host.addEventListener('mousemove', e => { const t = e.target.closest('[data-o]'); if (!t) return hideTip(); const o = O[t.dataset.o]; const m = agg(); const gs = o.id === 'S' ? S_G : ROOF_G; showTip('<b>' + objName(o) + ' — ' + pctTxt(sumPct(m, [o])) + '</b><br>' + gs.filter(g => worksOf(o).some(w => W[w].g === g)).map(g => GNAME[g] + ': ' + pctTxt(sumPct(m, [o], [g]))).join('<br>'), e.clientX, e.clientY); });
     host.addEventListener('mouseleave', hideTip);
+  }
+
+  /* ---------------- report: pick a roof ---------------- */
+  function pickHtml() {
+    if (!canReport()) { if (!st.me) return '<section class="card"><div class="empty">Завантажую…</div></section>'; location.hash = '#/'; return ''; }
+    const m = agg(); const t = today();
+    const last = {}; const todayN = {};
+    for (const r of st.data.reports) { if (!last[r.o] || r.d > last[r.o]) last[r.o] = r.d; if (r.d === t) todayN[r.o] = (todayN[r.o] || 0) + 1; }
+    const btn = o => { const p = sumPct(m, [o]); const c = CLS.find(x => x.id === o.cls); return '<a class="rcard pick" href="#/d/' + o.id + '/zvit"><span class="t"><b>' + objName(o) + '</b><span>' + pctTxt(p) + '</span></span>' + meter(p) + '<span class="s">' + (o.id === 'S' ? 'траси, щити DC, BESS, заземлення, ПНР' : fmt(o.modules) + ' модулів · ' + esc(c ? c.name.toLowerCase() : '')) + '</span>' + (todayN[o.id] ? '<span class="today">сьогодні звітів: ' + todayN[o.id] + '</span>' : last[o.id] ? '<span class="s">останній звіт ' + dLabel(last[o.id]) + '</span>' : '') + '</a>'; };
+    return '<section class="card"><div class="card-h"><h1 style="font-size:24px">Звіт за день</h1><p>' + longDate(t) + '</p></div><p class="ink2" style="margin-bottom:14px">Виберіть дах. Відкриється форма лише з роботами цього даху: вкажіть, скільки зроблено, додайте фото і натисніть «Записати».</p><div class="roofs picks">' + OBJS.map(btn).join('') + '</div></section>' +
+      '<section class="card map"><div class="card-h"><h2>Або виберіть на генплані</h2></div><div class="map-wrap" id="map">' + mapSvg(m, true) + '</div></section>';
   }
 
   /* ---------------- roof screen ---------------- */
@@ -324,7 +340,7 @@
     else if (t === 'plan') body = planTabHtml(o, m);
     else if (t === 'spec') body = specHtml(o, m);
     else body = histHtml(o);
-    return '<div class="crumb"><a href="#/">← Генплан</a></div>' +
+    return '<div class="crumb"><a href="#/">← Генплан</a>' + (canReport() ? '<span class="muted">·</span><a href="#/zvit">Інший дах</a>' : '') + '</div>' +
       '<section class="card"><div class="roofhead"><div><h1>' + objName(o) + '</h1><div class="dayfacts" style="margin-top:6px">' + facts + '</div></div><div class="dp num">' + pctTxt(p) + '<small>готовність</small></div></div>' + meter(p) +
       '<nav class="subtabs" style="margin-top:14px" aria-label="Розділи об’єкта">' + tabs.map(x => '<a href="#/d/' + o.id + '/' + x[0] + '"' + (x[0] === t ? ' aria-current="page"' : '') + '>' + x[1] + '</a>').join('') + '</nav></section>' + body;
   }
@@ -348,10 +364,16 @@
       s += '</div>';
     }
     const ph = st.photos[o.id] || [];
-    return '<form class="card" id="rep" autocomplete="off"><div class="rep-top"><div class="fld"><label for="rDate">Дата</label><input type="date" id="rDate" value="' + esc(st.rDate) + '" max="' + today() + '" required></div><p class="small muted" style="max-width:52ch">Вкажіть, скільки зроблено за день, бігунком або числом. Болти, притиски, конектори й провід списуються самі.</p></div>' + s +
+    const pre = PREVIEW ? '<div class="banner" style="margin-bottom:12px">Перегляд форми: сервер звітів ще не підключено, тому кнопка «Записати» поки нічого не збереже.</div>' : '';
+    return '<form class="card" id="rep" autocomplete="off">' + pre + '<div class="rep-top"><div class="fld"><label for="rDate">Дата</label><input type="date" id="rDate" value="' + esc(st.rDate) + '" max="' + today() + '" required></div><p class="small muted" style="max-width:52ch">Вкажіть, скільки зроблено за день, бігунком або числом. Болти, притиски, конектори й провід списуються самі.</p></div><div id="already">' + alreadyHtml(o) + '</div>' + s +
       '<div class="rep-grp">Фото і примітка</div><div class="photos-in"><label class="filebtn">Додати фото<input type="file" id="rFiles" accept="image/*" multiple></label><div class="thumbs" id="thumbs">' + ph.map((p, i) => '<figure><img src="' + p.url + '" alt="Фото ' + (i + 1) + '"><button type="button" data-rm="' + i + '" aria-label="Прибрати фото">✕</button></figure>').join('') + '</div><p class="small muted">До 8 фото. Вони стискаються на телефоні й зберігаються на Google Диску в папці «' + esc(objName(o)) + '» за датою звіту.</p></div>' +
       '<div class="fld" style="margin-top:10px"><label for="rNote">Примітка</label><input type="text" id="rNote" maxlength="300" value="' + esc(st.note[o.id] || '') + '" placeholder="ділянка, ряди, зауваження"></div>' +
       '<div class="sumbar"><span class="sum" id="rSum">Нічого не вибрано</span><button class="btn primary" type="submit" id="rSave">Записати за ' + dShort(st.rDate) + '</button></div><div class="hint" id="rHint" aria-live="polite"></div></form>';
+  }
+  function alreadyHtml(o) {
+    const rs = st.data.reports.filter(r => r.o === o.id && r.d === st.rDate).sort((a, b) => a.at.localeCompare(b.at));
+    if (!rs.length) return '';
+    return '<div class="already"><b>Уже внесено за ' + dShort(st.rDate) + ':</b>' + rs.map(r => '<div class="dlist">' + Object.keys(r.items).map(w => '<span class="dpill">' + esc(wshort(o, w)) + ' <b>' + (r.items[w] > 0 ? '+' : '') + fmt(r.items[w], 2) + '</b> ' + esc(unitOf(o, w)) + '</span>').join('') + (r.crane ? '<span class="dpill">Кран <b>' + fmt(r.crane, 1) + '</b> маш.-год</span>' : '') + (r.photos ? '<span class="dpill">Фото <b>' + r.photos + '</b></span>' : '') + '<span class="small muted">' + esc(r.by) + (r.at ? ', ' + esc(r.at.slice(11, 16)) : '') + '</span></div>').join('') + '<p class="small muted">Вносьте лише те, що зроблено понад це, інакше обсяг задвоїться.</p></div>';
   }
   function reportItems(o) { const dr = draft(o.id); const items = {}; for (const w of worksOf(o)) { const v = Number(String(dr[w] == null ? '' : dr[w]).replace(',', '.')); if (isFinite(v) && v !== 0) items[w] = Math.round(v * 1000) / 1000; } return items; }
   function updateSum(o) {
@@ -383,7 +405,7 @@
       const t = e.target; const dr = draft(o.id);
       if (t.id === 'rCrane') { st.crane[o.id] = t.value; return updateSum(o); }
       if (t.id === 'rNote') { st.note[o.id] = t.value; return; }
-      if (t.id === 'rDate') { st.rDate = t.value || today(); $('rSave').textContent = 'Записати за ' + dShort(st.rDate); return; }
+      if (t.id === 'rDate') { st.rDate = t.value || today(); $('rSave').textContent = 'Записати за ' + dShort(st.rDate); const al = $('already'); if (al) al.innerHTML = alreadyHtml(o); return; }
       const mm = /^(rg|nm)-(.+)$/.exec(t.id); if (!mm) return; const w = mm[2];
       if (mm[1] === 'rg') { dr[w] = t.value === '0' ? '' : t.value; const n = $('nm-' + w); if (n) n.value = dr[w]; }
       else { dr[w] = t.value; const r = $('rg-' + w); const v = Number(String(t.value).replace(',', '.')); if (r && isFinite(v)) r.value = Math.max(0, Math.min(Number(r.max), v)); }
@@ -400,12 +422,14 @@
       e.preventDefault(); if (st.busy) return; const h = $('rHint'); h.className = 'hint';
       const items = reportItems(o); const crane = Number(String(st.crane[o.id] || '').replace(',', '.')) || 0; const photos = st.photos[o.id] || [];
       if (!Object.keys(items).length && !(crane > 0) && !photos.length) { h.className = 'hint err'; h.textContent = 'Вкажіть хоча б одну дію, кран або додайте фото.'; return; }
+      if (PREVIEW) { h.className = 'hint err'; h.textContent = 'Це перегляд: сервер звітів ще не підключено, звіт не збережено. Після підключення таблиці Google форма записуватиме звіти й фото.'; return; }
       st.busy = true; $('rSave').disabled = true; h.textContent = photos.length ? 'Надсилаю звіт і ' + photos.length + ' фото…' : 'Надсилаю звіт…';
       try {
         const j = await api('report', { d: st.rDate, o: o.id, items, crane, note: st.note[o.id] || '', photos: photos.map(p => ({ b64: p.b64, mime: p.mime })) });
         st.rDraft[o.id] = {}; delete st.crane[o.id]; st.photos[o.id] = []; st.note[o.id] = '';
-        toast('Звіт записано' + (j.photos ? ', фото: ' + j.photos : '') + '.');
+        toast('Звіт по ' + objName(o).replace('Дах', 'даху') + ' записано' + (j.photos ? ', фото: ' + j.photos : '') + '.');
         await load();
+        const al = $('already'); if (al) al.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
       } catch (err) { h.className = 'hint err'; h.textContent = errText(err) + ' Дані форми збережено — натисніть «Записати» ще раз.'; }
       finally { st.busy = false; const b = $('rSave'); if (b) b.disabled = false; }
     });
