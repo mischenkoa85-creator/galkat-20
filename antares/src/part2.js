@@ -6,9 +6,19 @@ const nf=(v,d)=>Number(v).toLocaleString('uk-UA',{minimumFractionDigits:d||0,max
 const D2R=Math.PI/180, R2D=180/Math.PI;
 
 // ---------- tabs
+// нижня панель керування: свій набір елементів для кожної вкладки, її можна сховати
+const DOCKN={model:['Шари макета','вмикайте й вимикайте групи елементів'],build:['Монтаж','кроки, перемотування, показ по черзі'],node:['Вузол','вигляд, розбір на елементи'],sun:['Сонце','дата, час, затінення'],find:['Зауваження','фільтр за важливістю']};
+let dockOpen=true;
+try{ const v=localStorage.getItem('ant-dock'); dockOpen = v===null ? true : v==='1'; }catch(e){ dockOpen=true; }
+function dockSet(open){ dockOpen=open; const d=$('#dock'); d.classList.toggle('closed',!open); $('#dockhandle').setAttribute('aria-expanded',String(open)); $('#dockar').textContent=open?'▾':'▴'; $('#docktxt').textContent=open?'Сховати':'Показати'; try{ localStorage.setItem('ant-dock',open?'1':'0'); }catch(e){} }
+function dockSync(tab){ const has=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $('#dock').hidden=!has; $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); if(has){ $('#dockname').textContent=DOCKN[tab][0]; $('#dockhint').textContent=DOCKN[tab][1]; } }
+$('#dockhandle').addEventListener('click',()=>dockSet(!dockOpen));
+$$('#layers label').forEach(l=>{ const s=l.querySelector('.src'); if(s) l.title=s.textContent; });
+dockSet(dockOpen); dockSync('model');
 $$('.tabs button').forEach(b => b.addEventListener('click', () => {
   $$('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
   $$('.pane').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
+  dockSync(b.dataset.tab);
   try { localStorage.setItem('ant-tab', b.dataset.tab); } catch(e) {}
 }));
 try { const t = localStorage.getItem('ant-tab'); if (t) { const b = document.querySelector('.tabs [data-tab="'+t+'"]'); if (b) b.click(); } } catch(e) {}
@@ -403,7 +413,7 @@ const _p=new THREE.Vector3(), overlap=(r,L)=>L.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1
 function liveTags(){ const out=[]; for(const a of TAGS){ let p=a, vis=true; while(p&&p!==scene){ if(!p.visible) vis=false; p=p.parent; } if(p&&vis) out.push(a); } return out; }
 function drawTags(){ const live=liveTags(), placed=new Set();
   if(tagsOn&&OW){ const vr=canvas.getBoundingClientRect(), block=[];
-    ['.hud','.compass','#stepbar','#sunread'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
+    ['.hud','.compass'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
     const items=[];
     live.forEach(a=>{ const t=a.userData.tag; a.getWorldPosition(_p); const dist=_p.distanceTo(camera.position); if(dist>t.far) return;
       _p.project(camera); if(_p.z>1) return; const x=(_p.x+1)/2*OW, y=(1-_p.y)/2*OH; if(x<3||y<3||x>OW-3||y>OH-3) return; items.push({t,x,y,dist}); });

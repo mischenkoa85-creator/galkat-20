@@ -49,7 +49,7 @@ button,input,select{font:inherit;color:inherit}
 .compass{position:absolute;right:12px;top:12px;width:58px;height:58px;border-radius:50%;background:var(--panel);border:1px solid var(--rule);display:grid;place-items:center}
 .compass svg{width:46px;height:46px}
 .compass small{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10px;color:var(--ink-2);white-space:nowrap}
-.sunread{position:absolute;left:12px;bottom:12px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:6px 10px;font-family:var(--f-mono);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;max-width:calc(100% - 24px)}
+.sunread{font-family:var(--f-mono);font-size:12px;display:flex;gap:6px 14px;flex-wrap:wrap}
 .sunread b{font-weight:500;color:var(--sun)}
 .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;max-width:280px;white-space:pre-line}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-family:var(--f-mono);font-size:12px;text-align:center;padding:16px}
@@ -135,7 +135,7 @@ table.spec td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:n
 .stepnav button:disabled{opacity:.4;cursor:default}
 details{margin:8px 0;border-top:1px solid var(--rule-2);padding-top:6px}
 summary{cursor:pointer;font-weight:600;font-size:13px;padding:4px 0}
-.stepbar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:4px;max-width:calc(100% - 24px);font-size:13px}
+.stepbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px}
 .stepbar span{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .stepbar button{border:1px solid var(--rule);background:var(--paper);border-radius:3px;width:32px;height:30px;cursor:pointer;flex:none}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink-2);margin:6px 0}
@@ -197,6 +197,40 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .glegend i{display:inline-block;width:14px;height:3px;background:var(--s1);margin-right:5px;vertical-align:3px}
 .glegend i.b{height:10px;background:var(--sun);opacity:.45;vertical-align:-1px}
 .gtip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;white-space:pre;line-height:1.35}
+/* ---- нижня панель керування */
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0}
+.stage .view{flex:1 1 0}
+.dock{flex:none;border-top:1px solid var(--rule);background:var(--panel)}
+.dock[hidden]{display:none}
+.dockhead{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:6px 14px;cursor:pointer;text-align:left;font-size:12.5px}
+.dockhead b{font-family:var(--f-display);font-weight:500;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);flex:none}
+.dockhint{color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dockact{margin-left:auto;color:var(--ink-2);white-space:nowrap;flex:none}
+.dockact i{font-style:normal}
+.dockact u{text-decoration:none}
+.dockhead:hover .dockact{color:var(--cobalt)}
+.dockbody{padding:8px 14px 12px;max-height:38svh;overflow:auto;border-top:1px solid var(--rule-2)}
+.dock.closed .dockbody{display:none}
+.dock .layers{display:flex;flex-wrap:wrap;gap:5px;border:0}
+.dock .layers label{border:1px solid var(--rule);border-radius:3px;padding:3px 8px;gap:6px;font-size:12px;background:var(--paper)}
+.dock .layers label:has(input:checked){border-color:var(--cobalt)}
+.dock .layers input{width:14px;height:14px}
+.dock .layers .src{display:none}
+.dock .stepchips{margin:0 0 8px}
+.dock .sbgrow{flex:1 1 260px;padding:0}
+.dock .stepbar span{flex:1 1 180px;white-space:normal;padding:0 4px}
+.sunctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.sunctl .row,.sunctl .chk,.sunctl .legend,.sunctl .chips{margin:0}
+.sunctl .row:has(#time){flex:1 1 300px}
+.dock .sunread{padding-top:8px}
+.nodectl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.nodectl .seg{margin:0;flex:none}
+.nodeexp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;flex:1 1 360px}
+.nodeexp .row{margin:0;flex:1 1 260px}
+.dock .filter{margin:0}
+.dock .small{margin:0}
+@media (max-width: 860px){ .dockbody{max-height:34svh} .dockhint{display:none} }
+
 @media (max-width: 860px){
   .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 58svh auto;height:auto;min-height:100%}
   .side{border-left:0;border-top:1px solid var(--rule)}
@@ -215,6 +249,7 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
     <span class="code">РП 2025/12-07 · АБ / ЕТР / БЗ · 2026</span>
   </header>
 
+  <div class="stage">
   <section class="view" aria-label="3D-макет">
     <canvas id="gl"></canvas>
     <div id="lbl" aria-hidden="true"><svg></svg></div>
@@ -230,25 +265,13 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
     <div class="compass" title="Північ прийнято по осі К"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
       <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-2)"/>
       <text x="0" y="-9" text-anchor="middle" font-size="8" font-family="var(--f-mono)" fill="var(--panel)" font-weight="600">Пн</text></svg><small>умовно</small></div>
-    <div class="sunread" id="sunread"></div>
     <div class="tip" id="tip" hidden></div>
-    <div class="stepbar" id="stepbar" hidden><button id="sbprev" aria-label="Попередній крок">◀</button><span id="sbtxt"></span><button id="sbnext" aria-label="Наступний крок">▶</button><button id="sbexit" title="Готовий об'єкт" aria-label="Показати готовий об'єкт">✕</button>
-      <div class="sbgrow" id="sbgrow"><button id="sbplay" aria-label="Показати монтаж по черзі" title="Показати монтаж по черзі">▶</button><input type="range" id="sbprog" min="0" max="1000" value="1000" aria-label="Хід монтажу на цьому кроці"><output id="sbpct">100 %</output></div></div>
   </section>
 
-  <aside class="side">
-    <div class="tabs" role="tablist">
-      <button role="tab" aria-selected="true" data-tab="model" id="t-model">Макет</button>
-      <button role="tab" aria-selected="false" data-tab="build" id="t-build">Монтаж</button>
-      <button role="tab" aria-selected="false" data-tab="node" id="t-node">Вузол</button>
-      <button role="tab" aria-selected="false" data-tab="sun" id="t-sun">Сонце</button>
-      <button role="tab" aria-selected="false" data-tab="find" id="t-find">Аналіз</button>
-      <button role="tab" aria-selected="false" data-tab="data" id="t-data">Дані</button>
-    </div>
-
-    <div class="pane" data-pane="model">
-      <p class="hint">Клацніть на макеті по модулю, трикутнику чи баласту — на вкладці «Вузол» він розбереться на елементи з рахунком кріплення.</p>
-      <h2>Шари</h2>
+  <div class="dock" id="dock" aria-label="Керування">
+    <button class="dockhead" id="dockhandle" aria-expanded="true" aria-controls="dockbody"><b id="dockname">Керування</b><span class="dockhint" id="dockhint"></span><span class="dockact"><i id="dockar">▾</i> <u id="docktxt">Сховати</u></span></button>
+    <div class="dockbody" id="dockbody">
+      <div class="dp" data-dock="model">
       <div class="layers" id="layers">
         <label><input type="checkbox" id="L-bld" checked><span class="sw" style="background:#d4d8d4"></span>Цех, склад, ТП (масиви)<span class="src">АБ арк. 6–7</span></label>
         <label><input type="checkbox" id="L-obs" checked><span class="sw" style="background:#aec6d6"></span>Зенітні ліхтарі й вентшахти<span class="src" id="obs-src">ЕТР арк. 2</span></label>
@@ -265,6 +288,60 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
         <label><input type="checkbox" id="L-axes" checked><span class="sw" style="background:var(--cobalt)"></span>Осі 1–17 / А–К<span class="src">ЕТР арк. 2</span></label>
         <label><input type="checkbox" id="L-tags" checked><span class="sw" style="background:#fff"></span>Виноски<span class="src">без накладань</span></label>
       </div>
+
+      </div>
+      <div class="dp" data-dock="build" hidden>
+        <div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div>
+        <div class="stepbar" id="stepbar" hidden><button id="sbprev" aria-label="Попередній крок">◀</button><span id="sbtxt"></span><button id="sbnext" aria-label="Наступний крок">▶</button><button id="sbexit" title="Готовий об'єкт" aria-label="Показати готовий об'єкт">✕</button>
+      <div class="sbgrow" id="sbgrow"><button id="sbplay" aria-label="Показати монтаж по черзі" title="Показати монтаж по черзі">▶</button><input type="range" id="sbprog" min="0" max="1000" value="1000" aria-label="Хід монтажу на цьому кроці"><output id="sbpct">100 %</output></div></div>
+      </div>
+      <div class="dp" data-dock="node" hidden>
+        <p class="small" id="node-ctl-empty">Клацніть на макеті по модулю, трикутнику чи баласту — тут з’являться перемикачі вузла.</p>
+        <div class="nodectl" id="node-ctl" hidden>
+          <div class="seg" role="group" aria-label="Вигляд вузла">
+            <button data-nv="exp" aria-pressed="true">Розбір</button><button data-nv="dwg" aria-pressed="false">Креслення</button><button data-nv="wire" aria-pressed="false">Розводка</button>
+          </div>
+          <div class="nodeexp" id="nodeexp">
+            <div class="row"><label for="nodee">Зібрано</label><input type="range" id="nodee" min="0" max="100" value="0" aria-label="Розбирання вузла"><span>Розібрано</span></div>
+            <div class="chips"><button id="nodeplay">▶ Розібрати і зібрати</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="dp" data-dock="sun" hidden>
+        <div class="sunctl">
+      <div class="row"><label for="date">Дата</label><input type="date" id="date"></div>
+      <div class="chips" id="dchips">
+        <button data-d="12-21">21 грудня</button><button data-d="03-20">20 березня</button><button data-d="06-21">21 червня</button><button data-d="09-23">23 вересня</button>
+      </div>
+      <div class="row"><label for="time">Час</label><input type="range" id="time" min="240" max="1320" step="5" value="780"><output id="timeo" for="time">13:00</output></div>
+      <div class="chips"><button id="play">▶ Прокрутити день</button></div>
+      <label class="chk"><input type="checkbox" id="shadeOn" checked>Фарбувати затінені модулі</label>
+      <div class="legend"><span><i style="background:#e0711b"></i>центр модуля в тіні</span><span><i style="background:#e9c46a"></i>частково</span></div>
+
+        </div>
+        <div class="sunread" id="sunread"></div>
+      </div>
+      <div class="dp" data-dock="find" hidden>
+        <div class="filter" id="filter">
+        <button data-f="all" class="on">Усі</button><button data-f="c">Критично</button><button data-f="w">Суттєво</button><button data-f="n">Уточнити</button>
+      </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <aside class="side">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="model" id="t-model">Макет</button>
+      <button role="tab" aria-selected="false" data-tab="build" id="t-build">Монтаж</button>
+      <button role="tab" aria-selected="false" data-tab="node" id="t-node">Вузол</button>
+      <button role="tab" aria-selected="false" data-tab="sun" id="t-sun">Сонце</button>
+      <button role="tab" aria-selected="false" data-tab="find" id="t-find">Аналіз</button>
+      <button role="tab" aria-selected="false" data-tab="data" id="t-data">Дані</button>
+    </div>
+
+    <div class="pane" data-pane="model">
+      <p class="hint">Клацніть на макеті по модулю, трикутнику чи баласту — на вкладці «Вузол» він розбереться на елементи з рахунком кріплення. Шари вмикаються в панелі під макетом.</p>
       <h2>Прив'язка</h2>
       <dl class="kv">
         <dt>Основа</dt><dd>Вектори PDF: ЕТР арк. 2 (модулі, стрінги, траси), ЕТР арк. 3 (зрівнювання, заземлення УЗЕ), БЗ арк. 2 (щогли, дріт, спуски), АБ арк. 2–7</dd>
@@ -277,8 +354,7 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 
     <div class="pane" data-pane="build" hidden>
       <p class="lead">Покроковий монтаж за кресленнями АБ, ЕТР і БЗ. Кількості з макета пораховані за геометрією креслень, поруч — цифри специфікації та кошторису. Червоним позначено зауваження з аналізу.</p>
-      <p class="hint">Кожен крок збирається по черзі — повзунок унизу макета перемотує. Клік по модулю, трикутнику чи баласту розбирає вузол на вкладці «Вузол».</p>
-      <div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div>
+      <p class="hint">Кроки й повзунок — у панелі під макетом: кожен крок збирається по черзі, повзунок перемотує. Клік по модулю, трикутнику чи баласту розбирає вузол на вкладці «Вузол».</p>
       <div id="stepbody"></div>
     </div>
 
@@ -288,13 +364,8 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
       <div id="node-body" hidden>
         <h3 class="steph" id="node-title"></h3>
         <p class="small" id="node-sub"></p>
-        <div class="seg" role="group" aria-label="Вигляд вузла">
-          <button data-nv="exp" aria-pressed="true">Розбір</button><button data-nv="dwg" aria-pressed="false">Креслення</button><button data-nv="wire" aria-pressed="false">Розводка</button>
-        </div>
         <div data-nview="exp">
           <div class="nodewrap" id="nodewrap"><canvas id="nodecv"></canvas><div id="nodebadges"></div><div class="nodehint">тягніть — обертати · коліщатко — масштаб</div></div>
-          <div class="row"><label for="nodee">Зібрано</label><input type="range" id="nodee" min="0" max="100" value="0" aria-label="Розбирання вузла"><span>Розібрано</span></div>
-          <div class="chips"><button id="nodeplay">▶ Розібрати і зібрати</button></div>
           <h4>Склад вузла</h4>
           <div id="nodetable"></div>
         </div>
@@ -305,15 +376,7 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
     </div>
 
     <div class="pane" data-pane="sun" hidden>
-      <h2>Дата і час (Київ)</h2>
-      <div class="row"><label for="date">Дата</label><input type="date" id="date"></div>
-      <div class="chips" id="dchips">
-        <button data-d="12-21">21 грудня</button><button data-d="03-20">20 березня</button><button data-d="06-21">21 червня</button><button data-d="09-23">23 вересня</button>
-      </div>
-      <div class="row"><label for="time">Час</label><input type="range" id="time" min="240" max="1320" step="5" value="780"><output id="timeo" for="time">13:00</output></div>
-      <div class="chips"><button id="play">▶ Прокрутити день</button></div>
-      <label class="chk"><input type="checkbox" id="shadeOn" checked>Фарбувати затінені модулі</label>
-      <div class="legend"><span><i style="background:#e0711b"></i>центр модуля в тіні</span><span><i style="background:#e9c46a"></i>частково</span></div>
+      <p class="hint">Дата, час і розфарбування — у панелі під макетом.</p>
       <h2>Генерація станції зараз</h2>
       <div id="gen"></div>
       <h2>Положення сонця і тіні</h2>
@@ -330,9 +393,6 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 
     <div class="pane" data-pane="find" hidden>
       <div class="sum" id="sum"></div>
-      <div class="filter" id="filter">
-        <button data-f="all" class="on">Усі</button><button data-f="c">Критично</button><button data-f="w">Суттєво</button><button data-f="n">Уточнити</button>
-      </div>
       <div id="finds"></div>
       <div class="good"><h3>Що в проєкті узгоджено</h3><ul>
         <li>Розкладка ЕТР арк. 2 сходиться зі специфікацією: 1 440 модулів, 80 стрінгів, по 180 модулів на кожен з 8 ЩР-PV.</li>

@@ -49,14 +49,14 @@ $('#sbprog').addEventListener('input',e=>{ stopGrow(); setProg(+e.target.value/1
 function applyStep(){
   const s=STEP;
   Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); });
-  if(s===0){ applyLayers(); $('#stepbar').hidden=true; $('#sunread').hidden=false; }
+  if(s===0){ applyLayers(); $('#stepbar').hidden=true; }
   else {
     Object.keys(SV).forEach(n=>{ G[n].visible=s>=SV[n][0]&&s<=SV[n][1]; });
     G.bld.visible=true; G.obs.visible=true; G.axes.visible=$('#L-axes').checked;
     (HL[s]||[]).forEach(k=>{ if(MAT[k]&&MAT[k].emissive) MAT[k].emissive.set(0x3a2a00); });
     roofHeat=s===1; colorRoof();
     setGroundOpacity(s===9||s===10?0.32:1); setTpOpacity(s===12?0.35:1); setPvOpacity(s===7?0.3:1);
-    $('#stepbar').hidden=false; $('#sunread').hidden=true; $('#sbgrow').hidden=!GROW[s];
+    $('#stepbar').hidden=false; $('#sbgrow').hidden=!GROW[s];
     $('#sbtxt').textContent=`Крок ${s} з ${NS} · ${STEPS[s-1]}`;
   }
   colorModules(effMode()); growAll();
@@ -235,7 +235,7 @@ $('#play').addEventListener('click',()=>{ if(playing){ cancelAnimationFrame(play
   $('#play').textContent='■ Зупинити'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+10; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
 
 // ---------- layers
-const exitSteps=()=>{ if(STEP){ stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $('#sunread').hidden=false; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };
+const exitSteps=()=>{ if(STEP){ stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };
 ['#L-bld','#L-obs','#L-pv','#L-bal','#L-heat','#L-lps','#L-zones','#L-down','#L-bond','#L-dc','#L-ac','#L-ess','#L-axes'].forEach(id=>$(id).addEventListener('change',()=>{ exitSteps(); applyLayers(); colorModules(effMode()); requestRender(); }));
 $('#L-tags').addEventListener('change',e=>{ tagsOn=e.target.checked; requestRender(); });
 

@@ -219,11 +219,11 @@ function nodeWiring(m){ const n=strLen[m.b+'.'+m.s], ms=BOARD_MS(m.b), pad=D.pad
   return svg+NT(L); }
 
 // ---------- open / switch views
-function nodeView(v){ NODE.view=v; $$('.seg [data-nv]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.nv===v))); $$('[data-nview]').forEach(d=>{ d.hidden=d.dataset.nview!==v; }); if(v==='exp'){ nodeResize(); nNeed=true; } }
+function nodeView(v){ NODE.view=v; $$('.seg [data-nv]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.nv===v))); $$('[data-nview]').forEach(d=>{ d.hidden=d.dataset.nview!==v; }); $('#nodeexp').hidden=v!=='exp'; if(v==='exp'){ nodeResize(); nNeed=true; } }
 $$('.seg [data-nv]').forEach(b=>b.addEventListener('click',()=>nodeView(b.dataset.nv)));
 $('#t-node').addEventListener('click',()=>{ nNeed=true; setTimeout(nodeResize,30); });
 function openNode(m,kind){ if(!nodeInit()){ $('#node-empty').textContent='WebGL недоступний — розбір вузла не відкрити.'; $('#t-node').click(); return; }
-  NODE.m=m; NODE.kind=kind||'pv'; $('#t-node').click(); $('#node-empty').hidden=true; $('#node-body').hidden=false;
+  NODE.m=m; NODE.kind=kind||'pv'; $('#t-node').click(); $('#node-empty').hidden=true; $('#node-body').hidden=false; $('#node-ctl').hidden=false; $('#node-ctl-empty').hidden=true;
   const R=m.part==='R';
   $('#node-title').innerHTML=`<span>Вузол</span>Модуль ${m.i+1} · ЩР-PV(${m.b}) · стрінг ${m.s}`;
   $('#node-sub').textContent=R?`Дах цеху · ряд ${nodeRank[m.Y.toFixed(1)]} з ${rowsMap.size} (Y = ${nf(m.Y,1)} м), відрізок з ${m.seg.length} модулів, позиція ${m.j+1}, ухил ряду ${nf(Math.abs(m.roll),1)}°`:`Склад · скат ${m.slope}° · ${m.land?'альбомно':'портрет'} · X = ${nf(m.X,1)} м, Y = ${nf(m.Y,1)} м`;
