@@ -339,42 +339,10 @@ const ugIM=inst(new THREE.BoxGeometry(1,0.04,0.025),MAT.strip,ugM,G.downUG);
 // ---------- ESS pads: foundations, frame, earthing (essF / essUG), equipment and canopy (essE)
 MAT.cont=lam(0xdde3e6); MAT.contD=lam(0x55646e);
 const essCab=[], essContTags=[]; let ESSV='cab'; grp('essC');
-function essVisApply(){ essCab.forEach(m=>{ if(ESSV!=='cab') m.visible=false; }); }
 const SLP=[0.5,2.105,2.71,3.315,4.37,5.425,6.48,7.535,8.59];
 const essTags=[];
-D.pads.forEach(p=>{ const alongY=p.axis==='y';
-  const cu=alongY?(p.y0+p.y1)/2:(p.x0+p.x1)/2, cv=alongY?(p.x0+p.x1)/2:(p.y0+p.y1)/2;
-  // local (u along the long side, v across, v>0 = away from the building)
-  const away = alongY ? 1 : 1;
-  const L2W=(u,v)=>alongY?[cv+v*away,cu+u]:[cu+u,cv+v*away];
-  const bxUV=(u0,u1,v0,v1,z0,z1,mat,par)=>{ const a=L2W(u0,v0), b=L2W(u1,v1); return boxXY(Math.min(a[0],b[0]),Math.max(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[1],b[1]),z0,z1,mat,par); };
-  const len=(alongY?p.y1-p.y0:p.x1-p.x0), wid=(alongY?p.x1-p.x0:p.y1-p.y0);
-  info(bxUV(-len/2,len/2,-wid/2,wid/2,-0.25,-0.005,MAT.cushion,G.essF),`${p.id}: ущільнена піщано-щебенева подушка 250 мм\nмайданчик ${nf(len,1)} × ${nf(wid,1)} м (ЕТР арк. 2)`);
-  SLP.forEach(u=>{ info(bxUV(u-4.545-0.15,u-4.545+0.15,-0.8,0.8,0,0.45,MAT.sleeper,G.essF),'Лежень залізобетонний ЛЖ-16, 430 кг\n9 шт на групу (серія 3.407.1-157)'); });
-  [-0.675,0.675].forEach(v=>bxUV(-4.545,4.545,v-0.032,v+0.032,0.45,0.61,MAT.frame,G.essF));
-  [-4.545,4.545].forEach(u=>bxUV(u-0.032,u+0.032,-0.675,0.675,0.45,0.61,MAT.frame,G.essF));
-  const FM=[[-4.725,1.1,2.75],[0,1.1,2.75],[4.725,1.1,2.75],[-4.725,-1.1,3.0],[4.725,-1.1,3.0]];
-  FM.forEach(([u,v,h])=>{ info(bxUV(u-0.175,u+0.175,v-0.175,v+0.175,-1.2,0.2,MAT.fm,G.essF),'Фундамент ФМ-1, бетон С20/25 F100\nзакладна З-1, болти М16×600'); bxUV(u-0.3,u+0.3,v-0.3,v+0.3,-1.3,-1.2,MAT.fm,G.essF);
-    essCab.push(info(bxUV(u-0.06,u+0.06,v-0.06,v+0.06,0.2,0.2+h,MAT.col,G.essE),`Стійка навісу □120×120×4, h = ${nf(h,2)} м`)); });
-  const hAt=v=>0.2+2.75+(1.1-v)/2.2*0.25+0.04;
-  [-1.1,0,1.1].forEach(v=>essCab.push(bxUV(-4.69,4.69,v-0.04,v+0.04,hAt(v)-0.04,hAt(v)+0.04,MAT.col,G.essE)));
-  // sloped profiled sheet ПС-20 2500×9750
-  const sh=new THREE.Mesh(new THREE.BoxGeometry(alongY?2.5:9.75,0.02,alongY?9.75:2.5),MAT.sheet); const mid=L2W(0,0); sh.position.set(mid[0],hAt(0)+0.06,-mid[1]);
-  if(alongY) sh.rotation.z=-Math.atan(0.25/2.2); else sh.rotation.x=-Math.atan(0.25/2.2);
-  sh.castShadow=true; sh.receiveShadow=true; G.essE.add(sh); essCab.push(sh); info(sh,`${p.id}: навіс з профнастилу ПС-20, 9,75 × 2,5 м\nстійки 3,0 / 2,75 м`); bMeshes.push(sh);
-  // cabinets (positions straight from ЕТР арк. 2)
-  const top=0.61, Hc=1.85;
-  p.gal.forEach((g,i)=>essCab.push(info(boxXY(g[0],g[1],g[2],g[3],top,top+Hc,MAT.gal,G.essE),`${p.id}: Galaxy261L №${i+1}\nLFP 261 кВт·год, рідинне охолодження, IP54`)));
-  p.sm.forEach(g=>info(boxXY(g[0],g[1],g[2],g[3],top,top+1.2,MAT.sm,G.essE),`${p.id}: пристрій обмеження генерації SM / щит керування`));
-  const mp=p.mps; essCab.push(info(boxXY(mp[0],mp[1],mp[2],mp[3],top,top+Hc,MAT.mps,G.essE),`${p.id}: шафа мікромережі FFD POWER 500 кВт\nSTS · PCS · IT 500 кВА · 10 MPPT · EMS\n${nf(p.kwp,1)} кВтп → ${p.tp}`));
-  // варіант: контейнер LES-H20-1205W500C-PS-EU (габарит 20 ft прийнято, уточнити за паспортом)
-  { const c=info(bxUV(-3.03,3.03,-1.22,1.22,0.61,0.61+2.896,MAT.cont,G.essC),`${p.id}: контейнер LES-H20-1205W500C-PS-EU\n500 кВт / ≈1 205 кВт·год, 768 В, 12 PV-входів\nSTS за комплектацією; габарит 20 ft прийнято, уточнити за паспортом\n${nf(p.kwp,1)} кВтп → ${p.tp}`);
-    bxUV(-3.03,3.03,1.215,1.23,0.9,2.5,MAT.contD,G.essC); bxUV(-3.03,3.03,-1.23,-1.215,0.9,2.5,MAT.contD,G.essC); bxUV(3.02,3.04,-0.9,0.9,0.9,2.7,MAT.contD,G.essC); }
-  // ЩР-PV and ЩР-АКБ: on the facade for MS-1/2, on a stand for MS-3
-  p.pv.forEach((b,i)=>{ const X=(b[0]+b[1])/2, Y=(b[2]+b[3])/2; const m=alongY?boxXY(96.66,96.82,Y-0.25,Y+0.25,1.15,1.75,MAT.boxPV,G.essE):boxXY(X-0.25,X+0.25,120.05,120.21,1.15,1.75,MAT.boxPV,G.essE); info(m,`${p.pvn[i]} · WRP18-3\n10 ОПН T1+T2, 20 запобіжників gPV 25 А / 1000 В`); });
-  const a=p.akb, Xa=(a[0]+a[1])/2, Ya=(a[2]+a[3])/2; info(alongY?boxXY(96.66,97.06,Ya-0.5,Ya+0.5,0.9,1.7,MAT.boxAKB,G.essE):boxXY(Xa-0.5,Xa+0.5,120.05,120.45,0.9,1.7,MAT.boxAKB,G.essE),`${p.akbn} · GT 80-100-40 IP66\n5 роз’єднувачів + NH2 gPV 250 А / 1000 В`);
-  if(!alongY){ [[31.85,120.3],[36.2,120.3]].forEach(q=>boxXY(q[0]-0.04,q[0]+0.04,q[1]-0.04,q[1]+0.04,0,1.9,MAT.col,G.essE)); }
-  const t=new THREE.Object3D(); const c=L2W(0,0); t.position.set(c[0],top+Hc+0.3,-c[1]); G.essE.add(t); essTags.push([t,p]); });
+/*ESS3D*/
+buildEssPads();
 // ESS earthing: rods d16 L = 4,5 m and strip 40×4 at −0,7 m
 const essRodM=D.rods.map(r=>new THREE.Matrix4().makeTranslation(r[0],-0.7-2.25,-r[1]));
 const essRodIM=info(inst(new THREE.CylinderGeometry(0.025,0.025,4.5,6),MAT.rod,essRodM,G.essUG),'Стрижневий заземлювач d16, L = 4,5 м (G-16/45)\nконтур УЗЕ');
@@ -472,6 +440,7 @@ function setEssVariant(v){ ESSV=v; $$('#essvar button').forEach(b=>b.setAttribut
   essTagObjs.forEach(([o,p])=>{ const t=o.userData.tag; t.text=essTagText(p); t.cur=null; });
   applyStep(); requestRender(); }
 $$('#essvar button').forEach(b=>b.addEventListener('click',()=>setEssVariant(b.dataset.ev)));
+$$('#essview button').forEach(b=>b.addEventListener('click',()=>setEssXray(b.dataset.xv==='in')));
 { const m=roofMasts[20]; addTag(G.lps,W(m[0],m[1],surfZ(m[0],m[1])+4.0),'Блискавкоприймач М-04/40 · 4 м',{pri:3,far:120}); }
 ropeTag.add(tag('Тросовий перехід DC: склад → цех',{pri:8,line:'#b85c00'}));
 addTag(G.ac,W(97.1,56,TRAY_H+0.1),'Кабельрост 400×100 на фасаді',{pri:6,far:160,line:'#a32222'});

@@ -308,6 +308,7 @@ function orientDecals(){ const a=controls.getAzimuthalAngle(); const k=Math.roun
 function loop(){ requestAnimationFrame(loop); if(controls.update()) need=true; if(!need) return; need=false;
   needle.style.transform=`rotate(${(controls.getAzimuthalAngle()*180/Math.PI).toFixed(1)}deg)`; orientDecals(); renderer.render(scene,camera); drawTags(); }
 applyTheme(); applyLayers(); applyStep(); updateSun(); resize(); goView('over',true); loop();
+window.__ant={camera,controls,goView,setStep,requestRender};
 // ---------- links: #build, #sun, #find, #data, #s1…#s12, #plan, #ess …
 function readHash(){ const k=location.hash.slice(1); if(!k) return; const tabs=['model','build','node','sun','find','data'];
   if(/^s\d+$/.test(k)&&+k.slice(1)>=1&&+k.slice(1)<=NS){ $('#t-build').click(); setStep(+k.slice(1)); }
