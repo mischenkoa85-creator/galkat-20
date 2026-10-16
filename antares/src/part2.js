@@ -95,7 +95,7 @@ sun.shadow.mapSize.set(SMAP,SMAP); const sc=sun.shadow.camera; sc.left=-105; sc.
 scene.add(sun); scene.add(sun.target); sun.target.position.set(CEN[0],0,-CEN[1]);
 
 const G={}; function grp(n,parent){ const g=new THREE.Group(); g.name=n; (parent||scene).add(g); G[n]=g; return g; }
-['ground','bld','obs','axes','layout','mats','tri','conn','ball','pv','spoil','whpv','dc','bond','lps','zones','down','downUG','essF','essUG','essE','ac'].forEach(n=>grp(n));
+['ground','bld','obs','axes','layout','mats','tri','conn','ball','fix','pv','spoil','whpv','dc','bond','lps','zones','down','downUG','essF','essUG','essE','ac'].forEach(n=>grp(n));
 const W=(X,Y,h)=>new THREE.Vector3(X,h,-Y);
 const _M=new THREE.Matrix4(), _Q=new THREE.Quaternion(), _S=new THREE.Vector3(), _V=new THREE.Vector3();
 const XA=new THREE.Vector3(1,0,0), ZA=new THREE.Vector3(0,0,1), UP=new THREE.Vector3(0,1,0);
@@ -128,7 +128,7 @@ const MAT={
   ground:lam(0xb9beb6), wall:lam(0xdadcd6,{side:THREE.DoubleSide}), roof:lam(0xffffff,{vertexColors:true,side:THREE.DoubleSide}),
   lan:std(0xb4cbd9,0.1,0.25,{transparent:true,opacity:0.82}), obs:std(0x9aa3a8,0.6,0.45),
   whWall:lam(0xd2d4cc,{side:THREE.DoubleSide}), whRoof:std(0x8d989e,0.45,0.55,{side:THREE.DoubleSide}), tp:lam(0xd9d1c1,{side:THREE.DoubleSide}),
-  tri:std(0xb9c0c4,0.75,0.35), ball:lam(0x9d9a93), mat:lam(0x2c2c2c), conn:std(0xa8b0b5,0.75,0.35), spoil:std(0xc2c8cb,0.5,0.5,{side:THREE.DoubleSide}),
+  tri:std(0xd2d8dc,0.4,0.5), ball:lam(0x9d9a93), mat:lam(0x2c2c2c), conn:std(0xa8b0b5,0.75,0.35), spoil:std(0xc2c8cb,0.5,0.5,{side:THREE.DoubleSide}),
   block:lam(0x5c6166), alu:std(0xdfe5e8,0.85,0.3), mbase:lam(0x9b978f), holder:lam(0x8f8b84),
   k682:lam(0x34424a), dwire:lam(0x1f2a30), strip:std(0x9aa3a8,0.7,0.4), rod:std(0x9aa3a8,0.7,0.4),
   cushion:lam(0xc9b68c), sleeper:lam(0xaaa69d), frame:std(0x56626b,0.6,0.5), fm:lam(0xa9a39a), col:std(0x7f8a90,0.5,0.5),
@@ -140,9 +140,9 @@ const LINE={wire:new THREE.LineBasicMaterial({color:0x5fc2e0}), dc:new THREE.Lin
 
 // ---------- helpers
 function bx(w,h,d,x,y,z,rx){ const g=new THREE.BoxGeometry(w,h,d); if(rx) g.rotateX(rx); g.translate(x||0,y||0,z||0); return g; }
-function merge(list){ const gs=list.map(g=>g.index?g.toNonIndexed():g); let n=0; gs.forEach(g=>n+=g.attributes.position.count);
-  const p=new Float32Array(n*3), q=new Float32Array(n*3); let o=0; gs.forEach(g=>{ p.set(g.attributes.position.array,o*3); q.set(g.attributes.normal.array,o*3); o+=g.attributes.position.count; });
-  const m=new THREE.BufferGeometry(); m.setAttribute('position',new THREE.BufferAttribute(p,3)); m.setAttribute('normal',new THREE.BufferAttribute(q,3)); return m; }
+function merge(list){ const gs=list.map(g=>g.index?g.toNonIndexed():g); let n=0; gs.forEach(g=>n+=g.attributes.position.count); const hasUv=gs.every(g=>g.attributes.uv);
+  const p=new Float32Array(n*3), q=new Float32Array(n*3), u=hasUv?new Float32Array(n*2):null; let o=0; gs.forEach(g=>{ p.set(g.attributes.position.array,o*3); q.set(g.attributes.normal.array,o*3); if(hasUv) u.set(g.attributes.uv.array,o*2); o+=g.attributes.position.count; });
+  const m=new THREE.BufferGeometry(); m.setAttribute('position',new THREE.BufferAttribute(p,3)); m.setAttribute('normal',new THREE.BufferAttribute(q,3)); if(hasUv) m.setAttribute('uv',new THREE.BufferAttribute(u,2)); return m; }
 function inst(geo, mat, mats, parent, cast){ const im=new THREE.InstancedMesh(geo,mat,Math.max(1,mats.length)); im.count=mats.length; mats.forEach((m,i)=>im.setMatrixAt(i,m)); im.castShadow=cast!==false; im.receiveShadow=true; im.frustumCulled=false; im.instanceMatrix.needsUpdate=true; parent.add(im); return im; }
 function box(w,h,d,mat,x,y,z,parent){ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; if(parent) parent.add(m); return m; }
 function boxXY(X0,X1,Y0,Y1,z0,z1,mat,parent){ return box(Math.abs(X1-X0),z1-z0,Math.abs(Y1-Y0),mat,(X0+X1)/2,(z0+z1)/2,-(Y0+Y1)/2,parent); }
@@ -252,22 +252,74 @@ const RSTAT={n:rollAbs.length, g5:rollAbs.filter(a=>a>5).length, g10:rollAbs.fil
 window.__k7=()=>{ const a=$('#f-k7a'); if(!a) return; a.textContent=`${RSTAT.g5} з ${RSTAT.n} (${Math.round(RSTAT.g5/RSTAT.n*100)} %)`; $('#f-k7b').textContent=`${RSTAT.g10} (${Math.round(RSTAT.g10/RSTAT.n*100)} %)`; $('#f-k7c').textContent=`${nf(RSTAT.max,1)}°`; };
 window.__k7();
 
-// ---------- ballast system on the shop roof (RUDNIK BalZn15): per row segment 2n+1 triangles
-const triGeo=merge([bx(0.04,0.03,1.568,0,0.021,0), bx(0.04,0.13,0.04,0,0.1,0.63), bx(0.04,0.44,0.04,0,0.25,-0.63), bx(0.04,0.03,1.302,0,0.3,0,Math.atan2(0.33,1.26))]);
-const triM=[], balM=[], matM=[], conM=[], spoM=[], layoutPairs=[], triMod=[], balMod=[], matMod=[], conMod=[], spoMod=[];
-const HALF=1.2075;
+// ---------- ballast system on the shop roof (RUDNIK BalZn15): per row segment 2n+1 triangles.
+// Геометрія за АБ арк. 6 і приміткам до неї: перфоровані U-профілі, база лежить на двох блоках по краях (300 / 970 / 300),
+// блок 300×300×60 на мату 3 мм, гвинт R-LX через основу трикутника в блок, сполучники через один трикутник, спойлер-профнастил.
+const HALF=1.2075, Y0=0.063, PW=0.045, PH=0.04, PT=0.003, ZB=0.784, ZS=-0.52, BZ=0.635, ST=Math.tan(TILT), SC=Math.cos(TILT);
+const Mr=new THREE.Matrix4().makeTranslation(0,HC,0).multiply(new THREE.Matrix4().makeRotationX(TILT));   // рамка модуля / верхнього профілю
+const ywAt=(z,d)=>HC-z*ST+d/SC;                                                                          // висота площини на відстані d від серединної площини модуля
+const PERF_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,64,64);
+  x.globalCompositeOperation='destination-out'; x.beginPath(); x.ellipse(32,32,19,9,0,0,Math.PI*2); x.fill();
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=4; return t; })();
+MAT.perf=std(0xd2d8dc,0.4,0.5,{map:PERF_TEX,alphaTest:0.5,side:THREE.DoubleSide});
+MAT.fix=std(0xe6eaec,0.9,0.2); MAT.clamp=std(0xe9edef,0.85,0.25);
+function cylG(r,h,seg,ax,x,y,z){ const g=new THREE.CylinderGeometry(r,r,h,seg); if(ax==='x') g.rotateZ(Math.PI/2); else if(ax==='z') g.rotateX(Math.PI/2); g.translate(x,y,z); return g; }
+function perfWall(len,h){ const g=new THREE.PlaneGeometry(len,h), uv=g.attributes.uv; for(let i=0;i<uv.count;i++) uv.setX(i,uv.getX(i)*len/0.05); g.rotateY(Math.PI/2); return g; }   // лежить уздовж z у площині x=0
+function plateGeo(pts,xa){ const g=new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1]))),{depth:0.003,bevelEnabled:false}); g.rotateY(-Math.PI/2); g.translate(xa+0.003,0,0); return g; }
+function boltX(y,z,xo){ const L=2*(xo+0.0045); return [cylG(0.004,L,6,'x',0,y,z), cylG(0.0075,0.005,6,'x',xo+0.0025,y,z), cylG(0.0075,0.005,6,'x',-xo-0.0025,y,z)]; }
+const SOUTH_PLATE=[[0.33,0.075],[0.70,0.075],[0.70,0.105],[0.50,0.153],[0.33,0.178]];
+const MT=(()=>{ const sol=[], perf=[], fx=[];
+  // база: U-профіль 45×40, стінки з прорізами, зверху відбортовка
+  sol.push(bx(PW,PT,2*ZB,0,Y0+PT/2,0));
+  [-1,1].forEach(s=>{ perf.push(perfWall(2*ZB,PH-PT).translate(s*PW/2,Y0+PT+(PH-PT)/2,0)); sol.push(bx(0.008,PT,2*ZB,s*(PW/2-0.004),Y0+PH-PT/2,0)); });
+  // верхній (похилий) профіль 1160 мм під модулем, U донизу
+  const RL=1.16, rl=bx(PW,PT,RL,0,-0.0175-PT/2,0).applyMatrix4(Mr); sol.push(rl);
+  [-1,1].forEach(s=>{ perf.push(perfWall(RL,PH-PT).translate(s*PW/2,-0.0175-PT-(PH-PT)/2,0).applyMatrix4(Mr)); sol.push(bx(0.008,PT,RL,s*(PW/2-0.004),-0.0175-PH+PT/2,0).applyMatrix4(Mr)); });
+  // північна стійка (U, вкладена між стінками бази і верхнього профілю)
+  const yb=Y0+PT, yt=ywAt(ZS,-0.0175-PT)-0.0004, Lv=yt-yb, ym=(yb+yt)/2;
+  sol.push(bx(0.039,Lv,PT,0,ym,ZS-0.0165));
+  [-1,1].forEach(s=>{ perf.push(perfWall(Lv,0.033).rotateX(-Math.PI/2).translate(s*0.0195,ym,ZS+0.0015)); sol.push(bx(0.008,Lv,PT,s*0.0155,ym,ZS+0.0165)); });
+  // косинки з обох боків на південному вузлі
+  sol.push(plateGeo(SOUTH_PLATE,PW/2), plateGeo(SOUTH_PLATE,-PW/2-0.003));
+  // болти М8: північний нижній і верхній, два південних
+  const bolts=[[Y0+0.02,ZS,PW/2],[ywAt(ZS,-0.0175-PT-(PH-PT)/2),ZS,PW/2],[ywAt(0.46,-0.0175-PT-(PH-PT)/2),0.46,PW/2+0.003],[Y0+0.03,0.62,PW/2+0.003]];
+  bolts.forEach(b=>boltX(b[0],b[1],b[2]).forEach(g=>fx.push(g)));
+  return {tri:merge(sol), perf:merge(perf), fix:merge(fx), bolts:bolts.map(b=>merge(boltX(b[0],b[1],b[2]))), boltPos:bolts}; })();
+// сполучник: перфорована смуга по північній грані стійок + два болти
+const CONN_L=HALF+0.04, CONN_Z=ZS-0.0165-PT/2-0.0004;
+const conGeo=(()=>{ const g=new THREE.PlaneGeometry(CONN_L,0.04), uv=g.attributes.uv; for(let i=0;i<uv.count;i++) uv.setX(i,uv.getX(i)*CONN_L/0.05); g.translate(0,0.2,CONN_Z); return g; })();
+const conFixGeo=merge([-1,1].flatMap(s=>[cylG(0.0075,0.005,6,'z',s*HALF/2,0.2,CONN_Z-0.0025), cylG(0.0115,0.0015,10,'z',s*HALF/2,0.2,CONN_Z-0.0008)]));
+const scrGeo=merge([cylG(0.0125,0.0015,10,'y',0,0.00075,0), cylG(0.008,0.007,6,'y',0,0.005,0)]);
+// спойлер-профнастил Vitr 240×2450: трапецієвидні хвилі, висить з верхнього краю модуля, 4 саморізи
+const SP_P=2.45/28, SP_A=0.014;
+const spoGeo=(()=>{ const pr=[[0,0],[0.2,1],[0.5,1],[0.7,0],[1,0]], pos=[], H=0.24; const push=(a,b,c)=>pos.push(...a,...b,...c);
+  for(let k=0;k<28;k++) for(let j=0;j<4;j++){ const x0=-1.225+(k+pr[j][0])*SP_P, x1=-1.225+(k+pr[j+1][0])*SP_P, z0=pr[j][1]*SP_A, z1=pr[j+1][1]*SP_A;
+    push([x0,0,z0],[x1,0,z1],[x1,-H,z1]); push([x0,0,z0],[x1,-H,z1],[x0,-H,z0]); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pos),3)); g.computeVertexNormals();
+  const heads=[-1.0,-0.4,0.4,1.0].map(x=>{ const xs=-1.225+SP_P*Math.round((x+1.225-0.35*SP_P)/SP_P)+0.35*SP_P; return cylG(0.0065,0.005,6,'z',xs,-0.035,SP_A+0.0025); });
+  return merge([g,...heads]); })();
+const clampGeo=merge([bx(0.05,0.006,0.04,0,0.0205,0), cylG(0.0075,0.006,6,'y',0,0.027,0)]);
+const triM=[], balM=[], matM=[], scrM=[], conM=[], spoM=[], clpM=[], layoutPairs=[], triMod=[], balMod=[], matMod=[], conMod=[], spoMod=[], clpMod=[];
+const Tm=(M,x,y,z)=>M.clone().multiply(new THREE.Matrix4().makeTranslation(x,y,z));
 SEGS.forEach(seg=>{ const Y=seg[0].Y, x0=seg[0].X-HALF, n=seg.length; seg.forEach((m,j)=>{ m.seg=seg; m.j=j; });
-  for(let k=0;k<=2*n;k++){ const X=x0+k*HALF, a=Math.atan(roofK(X)), q=new THREE.Quaternion().setFromAxisAngle(ZA,a), base=W(X,Y,roofZ(X));
-    const M=new THREE.Matrix4().compose(base,q,new THREE.Vector3(1,1,1)); triM.push(M); triMod.push(seg[Math.min(k>>1,n-1)]);
-    [-0.5,0.5].forEach(dz=>{ balM.push(M.clone().multiply(new THREE.Matrix4().makeTranslation(0,0.066,dz))); matM.push(M.clone().multiply(new THREE.Matrix4().makeTranslation(0,0.003,dz))); balMod.push(seg[Math.min(k>>1,n-1)]); matMod.push(seg[Math.min(k>>1,n-1)]); });
-    if(k%2===0&&k<2*n){ conMod.push(seg[k>>1]); const Xm=X+HALF/2, am=Math.atan(roofK(Xm)); conM.push(new THREE.Matrix4().compose(W(Xm,Y,roofZ(Xm)),new THREE.Quaternion().setFromAxisAngle(ZA,am),new THREE.Vector3(1,1,1)).multiply(new THREE.Matrix4().makeTranslation(0,0.05,-0.72))); } }
+  for(let k=0;k<=2*n;k++){ const X=x0+k*HALF, a=Math.atan(roofK(X)), q=new THREE.Quaternion().setFromAxisAngle(ZA,a), base=W(X,Y,roofZ(X)), mod=seg[Math.min(k>>1,n-1)];
+    const M=new THREE.Matrix4().compose(base,q,new THREE.Vector3(1,1,1)); triM.push(M); triMod.push(mod);
+    [-BZ,BZ].forEach(dz=>{ balM.push(Tm(M,0,0.033,dz)); matM.push(Tm(M,0,0.0015,dz)); scrM.push(Tm(M,0,Y0+PT,dz)); balMod.push(mod); matMod.push(mod); });
+    [-1,1].forEach(s=>{ clpM.push(M.clone().multiply(Mr).multiply(new THREE.Matrix4().makeTranslation(0,0,s*0.636))); clpMod.push(mod); });
+    if(k%2===0&&k<2*n){ conMod.push(seg[k>>1]); const Xm=X+HALF/2, am=Math.atan(roofK(Xm)); conM.push(new THREE.Matrix4().compose(W(Xm,Y,roofZ(Xm)),new THREE.Quaternion().setFromAxisAngle(ZA,am),new THREE.Vector3(1,1,1))); } }
   seg.forEach(m=>{ spoMod.push(m); const a=Math.atan(roofK(m.X)); const M=new THREE.Matrix4().compose(W(m.X,Y,roofZ(m.X)),new THREE.Quaternion().setFromAxisAngle(ZA,a),new THREE.Vector3(1,1,1));
-    spoM.push(M.multiply(new THREE.Matrix4().makeTranslation(0,0.27,-0.69)).multiply(new THREE.Matrix4().makeRotationX(17.5*D2R))); });
+    spoM.push(M.multiply(new THREE.Matrix4().makeTranslation(0,0.455,-0.628)).multiply(new THREE.Matrix4().makeRotationX(17.5*D2R))); });
   const xa=x0, xb=x0+2*n*HALF; [Y+0.65,Y-0.65].forEach(yy=>{ pairsOf(route(xa,yy,xb,yy,0.04,0),layoutPairs); }); });
-const triIM=inst(triGeo,MAT.tri,triM,G.tri), balIM=inst(new THREE.BoxGeometry(0.3,0.06,0.3),MAT.ball,balM,G.ball), matIM=inst(new THREE.BoxGeometry(0.32,0.006,0.32),MAT.mat,matM,G.mats,false),
-      conIM=inst(new THREE.BoxGeometry(HALF,0.03,0.04),MAT.conn,conM,G.conn), spoIM=inst(new THREE.BoxGeometry(2.45,0.4,0.004),MAT.spoil,spoM,G.spoil);
-info(triIM,'Трикутник BalZn15-1568.1470 «Південь 15°», Zn\nстоїть перпендикулярно до покрівлі'); info(balIM,'Баласт B300300-60 бетонний, ≈13 кг\n2 на трикутник, гвинти R-LX до основи'); info(spoIM,'Спойлер-профнастил Vitr-240×2450 Zn\nвітровий щиток з півночі, 1 на модуль'); info(conIM,'Сполучник Bal15 Zn — через один трикутник');
-triIM.userData.mods=triMod; balIM.userData.mods=balMod; matIM.userData.mods=matMod; conIM.userData.mods=conMod; spoIM.userData.mods=spoMod; [triIM,balIM,conIM,spoIM].forEach(im=>{ im.userData.node=true; });
+const triIM=inst(MT.tri,MAT.tri,triM,G.tri), triPerfIM=inst(MT.perf,MAT.perf,triM,G.tri,false),
+      balIM=inst(new THREE.BoxGeometry(0.3,0.06,0.3),MAT.ball,balM,G.ball), matIM=inst(new THREE.BoxGeometry(0.32,0.003,0.32),MAT.mat,matM,G.mats,false),
+      conIM=inst(conGeo,MAT.perf,conM,G.conn,false), spoIM=inst(spoGeo,MAT.spoil,spoM,G.spoil),
+      scrIM=inst(scrGeo,MAT.fix,scrM,G.fix,false), triFixIM=inst(MT.fix,MAT.fix,triM,G.fix,false), conFixIM=inst(conFixGeo,MAT.fix,conM,G.fix,false),
+      clampIM=inst(clampGeo,MAT.clamp,clpM,G.pv);
+info(triIM,'Трикутник BalZn15-1568.1470 «Південь 15°», Zn\nбаза, стійка й верхній профіль — U 45×40 з прорізами'); info(triPerfIM,'Стінки профілів трикутника з прорізами'); info(balIM,'Баласт B300300-60 бетонний, ≈13 кг\nпо краях бази (300 / 970 / 300), на мату 3 мм'); info(matIM,'Мат гумовий 320×320×3 під баластом');
+info(spoIM,'Спойлер-профнастил Vitr-240×2450 Zn\nвітровий щиток з півночі, 1 на модуль'); info(conIM,'Сполучник Bal15 Zn — через один трикутник\nдва болти М8 на стійки');
+info(scrIM,'Гвинт R-LX 6,3×5×50 через основу трикутника в блок\nотвір Ø5–5,5 мм, момент 3–4 Н·м'); info(triFixIM,'Болти М8 вузлів трикутника: стійка–база, стійка–профіль, косинки\nмомент 2,5–3,3 Н·м'); info(conFixIM,'Болти М8 сполучника'); info(clampIM,'Притиск W35 / Z33 з болтом М8\nна довгій стороні рами модуля, над трикутником');
+triIM.userData.mods=triMod; triPerfIM.userData.mods=triMod; triFixIM.userData.mods=triMod; balIM.userData.mods=balMod; matIM.userData.mods=matMod; scrIM.userData.mods=balMod; conIM.userData.mods=conMod; conFixIM.userData.mods=conMod; spoIM.userData.mods=spoMod; clampIM.userData.mods=clpMod;
+[triIM,triPerfIM,balIM,conIM,spoIM,scrIM,triFixIM,conFixIM,clampIM].forEach(im=>{ im.userData.node=true; });
 segLines(layoutPairs,LINE.layout,G.layout);
 // warehouse mounting blocks (Light_P50-310) under module corners
 const blkM=[]; WH_ORDER.forEach(m=>{ const sl=SLOPE[m.part]*D2R, q=new THREE.Quaternion().setFromAxisAngle(XA,sl);

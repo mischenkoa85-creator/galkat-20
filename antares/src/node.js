@@ -5,8 +5,8 @@ const nodeRank={}; [...rowsMap.keys()].sort((a,b)=>a-b).forEach((k,i)=>{ nodeRan
 let nR=null, nS=null, nCam=null, nCtl=null, nRoot=null, nGuide=null, nNeed=true;
 const NMAT={};
 function nodeMats(){ if(NMAT.roof) return NMAT;
-  Object.assign(NMAT,{ roof:lam(0xaeb3b5), mat:lam(0x2c2c2c), tri:std(0xb9c0c4,0.75,0.35), ball:lam(0x9d9a93), conn:std(0xa8b0b5,0.75,0.35), spoil:std(0xc2c8cb,0.5,0.5,{side:THREE.DoubleSide}),
-    pvTop:MAT.pvL.clone(), frame:lam(0x3a4650), back:lam(0x2a2f33), clamp:std(0xe9edef,0.85,0.25), scrB:std(0xf0c030,0.8,0.3), scrT:std(0xe0662a,0.8,0.3), scrC:std(0x3a86d8,0.8,0.3),
+  Object.assign(NMAT,{ roof:lam(0xaeb3b5), mat:lam(0x2c2c2c), tri:MAT.tri.clone(), perf:MAT.perf.clone(), perfC:MAT.perf.clone(), ball:lam(0x9d9a93), conn:std(0xa8b0b5,0.75,0.35), spoil:std(0xc2c8cb,0.5,0.5,{side:THREE.DoubleSide}),
+    pvTop:MAT.pvL.clone(), frame:lam(0x3a4650), back:lam(0x2a2f33), clamp:MAT.clamp.clone(), scrB:std(0xf0c030,0.8,0.3), scrT:std(0xe0662a,0.8,0.3), scrC:std(0x3a86d8,0.8,0.3),
     blk:lam(0x5c6166), seal:lam(0x151515), gofra:lam(0x23282b), cabP:lam(0xff8c1a), cabM:lam(0x111111), bond:lam(0x2fc24a), jb:lam(0x1d2124), prof:lam(0x8d989e) });
   NMAT.pvTop.transparent=false; NMAT.pvTop.opacity=1; NMAT.pvTop.depthWrite=true; return NMAT; }
 
@@ -37,27 +37,25 @@ function nodeBuild(m){ nodeMats(); const M=NMAT;
   const xs=[-HALF,0,HALF];
   if(m.part==='R'){
     add('roof',nMesh(new THREE.BoxGeometry(3.3,0.02,2.3),M.roof,0,-0.01,0));
-    const gMat=new THREE.BoxGeometry(0.32,0.006,0.32), gBal=new THREE.BoxGeometry(0.3,0.06,0.3);
+    const gMat=new THREE.BoxGeometry(0.32,0.003,0.32), gBal=new THREE.BoxGeometry(0.3,0.06,0.3);
     xs.forEach(x=>{
-      [-0.5,0.5].forEach(z=>{
-        add('mat',nMesh(gMat,M.mat,x,0.003,z),V3(0,0.14,0));
-        add('ball',nMesh(gBal,M.ball,x,0.066,z),V3(0,0.82,0));
-        add('scrB',nScrew(M.scrB,x,0.1,z),V3(0,1.12,0)); });
-      add('tri',nMesh(triGeo,M.tri,x,0,0),V3(0,0.3,0));
-      [-0.62,0,0.62].forEach(z=>add('scrT',nScrew(M.scrT,x,0.05,z),V3(0,0.56,0))); });
-    const cg=nMesh(new THREE.BoxGeometry(HALF,0.03,0.04),M.conn,-HALF/2,0.05,-0.72); add('conn',cg,V3(0,0.55,-0.25));
-    [-HALF/2-0.45,-HALF/2+0.45].forEach(x=>add('scrC',nScrew(M.scrC,x,0.085,-0.72),V3(0,0.75,-0.25)));
-    const sp=nMesh(new THREE.BoxGeometry(2.45,0.4,0.004),M.spoil,0,0.27,-0.69); sp.rotation.x=17.5*D2R; add('spoil',sp,V3(0,0.45,-0.5));
+      [-BZ,BZ].forEach(z=>{
+        add('mat',nMesh(gMat,M.mat,x,0.0015,z),V3(0,0.14,0));
+        add('ball',nMesh(gBal,M.ball,x,0.033,z),V3(0,0.82,0));
+        add('scrB',nMesh(scrGeo,M.scrB,x,Y0+PT,z),V3(0,1.1,0)); });
+      const tg=new THREE.Group(); tg.position.set(x,0,0); tg.add(new THREE.Mesh(MT.tri,M.tri)); tg.add(new THREE.Mesh(MT.perf,M.perf)); add('tri',tg,V3(0,0.3,0));
+      MT.bolts.forEach(bg=>add('scrT',nMesh(bg,M.scrT,x,0,0),V3(0.55,0,0))); });
+    add('conn',nMesh(conGeo,M.perfC,-HALF/2,0,0),V3(0,0.15,-0.45)); add('scrC',nMesh(conFixGeo,M.scrC,-HALF/2,0,0),V3(0,0.15,-0.8));
+    const sp=nMesh(spoGeo,M.spoil,0,0.455,-0.628); sp.rotation.x=17.5*D2R; add('spoil',sp,V3(0,0.35,-0.55));
     // module on the 15° tilt with its own junction box and cable leads
     const mg=new THREE.Group(); mg.position.set(0,HC,0); mg.rotation.x=TILT; mg.add(nPvMesh(PV_L,PV_W));
     mg.add(nMesh(new THREE.BoxGeometry(0.14,0.02,0.1),M.jb,0.45,-PV_T/2-0.012,-0.25));
     mg.add(nTube(V3(0.45,-0.04,-0.25),V3(1.46,-0.04,-0.25),0.007,M.cabP)); mg.add(nTube(V3(0.45,-0.04,-0.28),V3(-1.46,-0.04,-0.28),0.007,M.cabM));
     add('pv',mg,V3(0,1.4,0));
-    xs.forEach(x=>{ const cx=x===0?0:Math.sign(x)*1.19; [-1,1].forEach(s=>{ const pt=V3(cx,PV_T/2+0.014,s*(PV_W/2-0.025)).applyEuler(mg.rotation).add(mg.position);
-      const c=nMesh(new THREE.BoxGeometry(0.06,0.026,0.05),M.clamp,pt.x,pt.y,pt.z); c.rotation.x=TILT; add('clamp',c,V3(0,1.95,0)); }); });
-    // string cable in the corrugated tube under the upper profile; bonding wire along the bases
-    const gf=new THREE.Group(); gf.position.set(0,0.52,-0.72); gf.add(nTube(V3(-1.35,0,0),V3(1.35,0,0),0.022,M.gofra)); gf.add(nTube(V3(-1.5,0,0),V3(1.5,0,0),0.009,M.cabP)); add('cab',gf,V3(0,0.95,-0.35));
-    const bg=new THREE.Group(); bg.position.set(0,0.05,0.8); bg.add(nTube(V3(-1.5,0,0),V3(1.5,0,0),0.008,M.bond)); [-1.0,1.0].forEach(x=>bg.add(nMesh(new THREE.BoxGeometry(0.06,0.014,0.035),M.bond,x,0.012,0))); add('bond',bg,V3(0,0.22,0.5));
+    xs.forEach(x=>[-1,1].forEach(s=>{ const cg=new THREE.Group(); cg.position.set(0,HC,0); cg.rotation.x=TILT; cg.add(nMesh(clampGeo,M.clamp,x,0,s*0.636)); add('clamp',cg,V3(0,1.95,0)); }));
+    // string cable in the corrugated tube under the upper profile; bonding wire across the bases
+    const gf=new THREE.Group(); gf.position.set(0,ywAt(-0.40,-0.09),-0.40); gf.add(nTube(V3(-1.35,0,0),V3(1.35,0,0),0.022,M.gofra)); gf.add(nTube(V3(-1.5,0,0),V3(1.5,0,0),0.009,M.cabP)); add('cab',gf,V3(0,0.95,-0.35));
+    const bg=new THREE.Group(); bg.position.set(0,Y0+PH+0.014,0.70); bg.add(nTube(V3(-1.5,0,0),V3(1.5,0,0),0.008,M.bond)); [-1.0,1.0].forEach(x=>bg.add(nMesh(new THREE.BoxGeometry(0.06,0.014,0.035),M.bond,x,0.012,0))); add('bond',bg,V3(0,0.4,0.5));
   } else {
     const wg=new THREE.Group(); wg.rotation.x=m.slope*D2R; nRoot.add(wg);
     const Wd=m.land?PV_W:PV_L, Ld=m.land?PV_L:PV_W, du=Ld/2-0.3, dv=Wd/2-0.25;
@@ -91,6 +89,7 @@ function nodeTween(to,ms,done){ cancelAnimationFrame(NODE.tw); const from=NODE.e
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){ nodeSetE(to); if(done) done(); return; }
   const tick=n=>{ const u=Math.min(1,(n-t0)/ms); nodeSetE(from+(to-from)*u); if(u<1) NODE.tw=requestAnimationFrame(tick); else if(done) done(); }; NODE.tw=requestAnimationFrame(tick); }
 $('#nodee').addEventListener('input',e=>{ cancelAnimationFrame(NODE.tw); nodeSetE(+e.target.value/100); });
+$('#nodezoom').addEventListener('click',()=>{ if(!nCam||!NODE.m||NODE.m.part!=='R') return; cancelAnimationFrame(NODE.tw); nodeSetE(0.35); nCam.position.set(0.95,0.62,1.25); nCtl.target.set(0,0.2,-0.12); nCtl.update(); nNeed=true; });
 $('#nodeplay').addEventListener('click',()=>{ nodeTween(1,1700,()=>setTimeout(()=>nodeTween(0,1500),700)); });
 function nodeHL(id){ NODE.hl=id; const set=(mat,on)=>{ if(mat&&mat.emissive) mat.emissive.setHex(on?0x6a4800:0x000000); };
   NODE.parts.forEach(p=>p.obj.traverse(o=>{ if(o.material) (Array.isArray(o.material)?o.material:[o.material]).forEach(mm=>set(mm,id&&p.id===id)); }));
@@ -101,14 +100,14 @@ function nodeRows(m){ const R=m.part==='R';
   if(R) return [
    ['pv','Фотомодуль Shinefar SF-M21/G132710, 710 Вт, 2384×1303×35','1','1 260','Лежить на верхніх полицях трьох трикутників під кутом 15°, притиснутий з довгих сторін'],
    ['clamp','Притиски W35 / Z33 з кріпленням А2','6 позицій','2 520 + 3 232','За спец. разом 5 752 ≈ 2 на трикутник; гайка М8, 2,5–3,3 Н·м'],
-   ['tri','Трикутник BalZn15-1568.1470 «Південь 15°», Zn','3 (2 спільні)','2 698','Стоїть на матах; 3 метизи на трикутник'],
+   ['tri','Трикутник BalZn15-1568.1470 «Південь 15°», Zn','3 (2 спільні)','2 698','База, стійка й верхній профіль — перфоровані U 45×40; база лежить на двох блоках'],
    ['conn','Сполучник Bal15 Zn Spol-15Zn-700','1','1 953','Через один трикутник, 2 метизи'],
-   ['ball','Баласт B300300-60.Zn бетонний, ≈ 13 кг','6 (≈ 78 кг)','5 396','2 на трикутник; блок прикручують до основи трикутника'],
-   ['mat','Мат гумовий 320×320×3','6','5 396','2 на трикутник, між покрівлею й основою'],
-   ['spoil','Спойлер-профнастил Vitr-240×2450 Zn','1','1 260','Вітровий щиток з півночі'],
-   ['scrT','Метизи кріплення трикутників, поз. 1.10','9','8 094','3 на трикутник; отвори Ø5–6,5 мм (АБ арк. 6)'],
+   ['ball','Баласт B300300-60.Zn бетонний, ≈ 13 кг','6 (≈ 78 кг)','5 396','2 на трикутник, по краях бази (300 / 970 / 300); прикручений до основи'],
+   ['mat','Мат гумовий 320×320×3','6','5 396','2 на трикутник, між покрівлею й блоком'],
+   ['spoil','Спойлер-профнастил Vitr-240×2450 Zn','1','1 260','Висить із верхнього краю модуля з півночі; довжина = модуль + 50–60 мм'],
+   ['scrT','Метизи кріплення трикутників, поз. 1.10 (болти М8)','12 у макеті','8 094','У макеті 4 болти на трикутник, у специфікації ≈ 3; 2,5–3,3 Н·м'],
    ['scrC','Метизи кріплення сполучників, поз. 1.9','2','3 906','2 на сполучник'],
-   ['scrB','Метизи кріплення баластів R-LX 6,3×5×50, поз. 1.8','6','5 396','1 на блок, момент 3–4 Н·м'],
+   ['scrB','Гвинти R-LX 6,3×5×50 до баласту, поз. 1.8','6','5 396','1 на блок крізь основу трикутника, ≈ 50 мм у бетон; отвір Ø5–5,5 мм; 3–4 Н·м'],
    ['cab','Кабель стрінга H1Z2Z2-K 1×6 у гофротрубі d40','вздовж ряду','23,1 км','Під верхнім профілем ряду; UV-стійка гофра'],
    ['bond','Провід зрівнювання ПВ-3 1×6, наконечники DT(G)-6','вздовж ряду','2 100 м','Рама модуля → контур, з двох сторін ряду']];
   return [
@@ -129,7 +128,7 @@ function nodeNotes(m){ const R=m.part==='R', n=strLen[m.b+'.'+m.s], out=[];
     out.push(`Ряд стоїть на покрівлі з ухилом ${nf(Math.abs(m.roll),1)}° вздовж арки — трикутник нахилено разом з нею.`);
     if(Math.abs(m.roll)>10) out.push(['c',`<b>К7.</b> Ухил понад 10°: баласт RUDNIK розрахований на плаский дах, розрахунку на зсув немає.`]);
     else if(Math.abs(m.roll)>5) out.push(['w',`<b>К7.</b> Ухил понад 5°: розрахунку баласту на зсув немає.`]);
-    out.push('Місця метизів на макеті схематичні: на кресленнях виробника їх не наведено, кількість взято зі специфікації АБ арк. 8.'); }
+    out.push('Профілі, блоки, мати й місця метизів відтворено за вузлами АБ арк. 6 (перерізи А-А, Б-Б) і примітками до них схематично: переріз U 45×40 з прорізами, косинки й місця болтів — за типовим виконанням, точні деталі треба уточнити у виробника. Кількість метизів — зі специфікації АБ арк. 8.'); }
   else { out.push('Кріпильних гвинтів блоків до профнастилу в переліку поз. 2.1–2.4 окремо не наведено; у специфікації 640 блоків на 180 модулів (3,6 на модуль), у макеті — 4 на модуль.'); out.push(['n','<b>У5.</b> Ціну кріплення складу обґрунтовано ресурсом баластної системи 15° для модуля 2278×1134.']); }
   $('#nodenotes').innerHTML=NT(out); }
 
@@ -141,19 +140,25 @@ function nodeDrawing(m){ const R=m.part==='R', N=NODE.num; const bn=(id,x,y)=>N[
   const tx=(z,y,t,c)=>{ const a=P(z,y); return `<text class="${c||''}" x="${f(a[0])}" y="${f(a[1])}" text-anchor="middle">${t}</text>`; };
   let sec='';
   if(R){ const th=TILT, T=PV_T, W=PV_W, cy=HC; const rot=(b,y)=>[y*Math.sin(th)+b*Math.cos(th), cy+y*Math.cos(th)-b*Math.sin(th)];
-    const q=[[-W/2,-T/2],[W/2,-T/2],[W/2,T/2],[-W/2,T/2]].map(([b,y])=>rot(b,y)).map(p=>P(p[0],p[1]).map(f).join(',')).join(' ');
+    const pp=pts=>pts.map(p=>P(p[0],p[1]).map(f).join(',')).join(' ');
+    const q=[[-W/2,-T/2],[W/2,-T/2],[W/2,T/2],[-W/2,T/2]].map(([b,y])=>rot(b,y)); const rt=PW/2;
     sec+=rc(-0.9,-0.06,0.9,0,'rf')+ln(-0.9,0,0.9,0,'ln');
-    [0.5,-0.5].forEach(z=>{ sec+=rc(z-0.16,0,z+0.16,0.006,'gr')+rc(z-0.15,0.036,z+0.15,0.096,'gr'); });
-    sec+=rc(-0.784,0.006,0.784,0.036,'ln')+rc(0.61,0.036,0.65,0.165,'ln')+rc(-0.65,0.036,-0.61,0.47,'ln')+ln(0.63,0.135,-0.63,0.465,'th');
-    sec+=`<polygon class="bl" points="${q}"/>`;
-    [-1,1].forEach(s=>{ const p=rot(s*(W/2-0.025),T/2+0.014), a=P(p[0],p[1]); sec+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="3.4" fill="var(--ink)"/>`; });
-    sec+=ln(-0.75,0.08,-0.63,0.46,'th')+rc(-0.74,0.035,-0.70,0.065,'gr');
-    const g1=P(-0.70,0.54); sec+=`<circle cx="${f(g1[0])}" cy="${f(g1[1])}" r="4.6" fill="#23282b"/><circle cx="${f(g1[0])}" cy="${f(g1[1])}" r="1.8" fill="#ff8c1a"/>`;
-    const g2=P(0.8,0.045); sec+=`<circle cx="${f(g2[0])}" cy="${f(g2[1])}" r="3" fill="#2fc24a"/>`;
-    [0.5,-0.5].forEach(z=>{ sec+=ln(z,0.1,z,0.034,'th'); }); sec+=ln(0,0.05,0,0.012,'th');
-    sec+=ln(-0.784,-0.11,0.784,-0.11,'dm')+ln(-0.784,-0.085,-0.784,-0.135,'dm')+ln(0.784,-0.085,0.784,-0.135,'dm')+tx(0,-0.19,'1568 (основа трикутника)','t2');
+    [-BZ,BZ].forEach(z=>{ sec+=rc(z-0.16,0,z+0.16,0.003,'gr')+rc(z-0.15,0.003,z+0.15,0.063,'gr'); sec+=ln(z,Y0+PT+0.006,z,0.013,'th'); });
+    // база, північна стійка, верхній профіль і косинка
+    sec+=rc(-ZB,Y0,ZB,Y0+PH,'ln');
+    const yb=Y0+PT, yt=ywAt(ZS,-0.0175-PT)-0.0004; sec+=rc(ZS-0.018,yb,ZS+0.018,yt,'ln');
+    sec+=`<polygon class="ln" points="${pp([rot(-0.58,-0.0175),rot(0.58,-0.0175),rot(0.58,-0.0175-PH),rot(-0.58,-0.0175-PH)])}"/>`;
+    sec+=`<polygon class="gr" fill-opacity=".6" points="${pp(SOUTH_PLATE)}"/>`;
+    sec+=`<polygon class="bl" points="${pp(q)}"/>`;
+    [-1,1].forEach(s=>{ const p=rot(s*0.636,T/2+0.0235-0.0175+0.0), a=P(p[0],p[1]); sec+=`<rect x="${f(a[0]-4)}" y="${f(a[1]-2.5)}" width="8" height="4" fill="var(--ink)"/>`; });
+    MT.boltPos.forEach(b=>{ const a=P(b[1],b[0]); sec+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="3" fill="#e0662a" stroke="var(--ink)" stroke-width=".6"/>`; });
+    sec+=rc(ZS-0.02,0.18,ZS-0.017,0.22,'gr');
+    sec+=ln(-0.628,0.455,-0.628-0.24*Math.sin(17.5*D2R),0.455-0.24*Math.cos(17.5*D2R),'ln');
+    const g1=P(ZS+0.12,ywAt(ZS+0.12,-0.09)); sec+=`<circle cx="${f(g1[0])}" cy="${f(g1[1])}" r="4.6" fill="#23282b"/><circle cx="${f(g1[0])}" cy="${f(g1[1])}" r="1.8" fill="#ff8c1a"/>`;
+    const g2=P(0.70,Y0+PH+0.014); sec+=`<circle cx="${f(g2[0])}" cy="${f(g2[1])}" r="3" fill="#2fc24a"/>`;
+    sec+=ln(-ZB,-0.11,ZB,-0.11,'dm')+ln(-ZB,-0.085,-ZB,-0.135,'dm')+ln(-BZ+0.15,-0.095,-BZ+0.15,-0.125,'dm')+ln(BZ-0.15,-0.095,BZ-0.15,-0.125,'dm')+ln(ZB,-0.085,ZB,-0.135,'dm')+tx(-0.634,-0.065,'300','t2')+tx(0,-0.065,'970','t2')+tx(0.634,-0.065,'300','t2')+tx(0,-0.2,'1568 (основа трикутника)','t2');
     const a15=P(0.55,0.15); sec+=`<text class="t2" x="${f(a15[0]+6)}" y="${f(a15[1]-4)}">15°</text>`;
-    sec+=bn('pv',...P(0,0.74-0.3))+bn('clamp',...P(0.69,0.31))+bn('tri',...P(0.0,0.2))+bn('conn',...P(-0.88,0.05))+bn('ball',...P(0.5,0.19))+bn('mat',...P(0.5,-0.03))+bn('spoil',...P(-0.86,0.46))+bn('scrB',...P(-0.5,0.19))+bn('scrT',...P(0,0.1))+bn('cab',...P(-0.84,0.62))+bn('bond',...P(0.8,0.13));
+    sec+=bn('pv',...P(0,0.74-0.3))+bn('clamp',...P(0.69,0.31))+bn('tri',...P(0.12,0.25))+bn('conn',...P(ZS-0.09,0.2))+bn('ball',...P(BZ+0.06,0.1))+bn('mat',...P(BZ+0.06,-0.04))+bn('spoil',...P(-0.76,0.34))+bn('scrB',...P(-BZ,0.1))+bn('scrT',...P(ZS+0.07,0.41))+bn('cab',...P(-0.28,0.33))+bn('bond',...P(0.82,0.13));
   } else { const sl=m.slope*D2R, Wd=m.land?PV_W:PV_L, Ld=m.land?PV_L:PV_W, dv=Wd/2-0.25, T=PV_T;
     const rot=(b,y)=>[b,y];
     const poly=pts=>pts.map(p=>{ const r=rot(p[0],p[1]); return P(r[0],r[1]).map(f).join(','); }).join(' ');
@@ -174,15 +179,15 @@ function nodeDrawing(m){ const R=m.part==='R', N=NODE.num; const bn=(id,x,y)=>N[
   let pl='';
   if(R){ const xs=[-HALF,0,HALF];
     pl+=r2(-PV_L/2,-PV_W/2,PV_L/2,PV_W/2,'bl','fill-opacity=".38"');
-    xs.forEach(x=>{ pl+=l2(x,-0.784,x,0.784,'th'); [-0.5,0.5].forEach(z=>{ pl+=r2(x-0.16,z-0.16,x+0.16,z+0.16,'rf','stroke-dasharray="3 2"')+r2(x-0.15,z-0.15,x+0.15,z+0.15,'gr','fill-opacity=".55"'); const a=g(x,z); pl+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.6" fill="#f0c030" stroke="var(--ink)" stroke-width=".6"/>`; });
-      [-0.62,0,0.62].forEach(z=>{ const a=g(x+0.07,z); pl+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.2" fill="#e0662a" stroke="var(--ink)" stroke-width=".6"/>`; });
-      [-1,1].forEach(s=>{ const cx=x===0?0:Math.sign(x)*1.19; pl+=r2(cx-0.03,s*(PV_W/2-0.025)-0.025,cx+0.03,s*(PV_W/2-0.025)+0.025,'ln','style="fill:var(--ink)"'); }); });
-    pl+=r2(-HALF,-0.74,0,-0.70,'gr')+[-HALF/2-0.45,-HALF/2+0.45].map(x=>{ const a=g(x,-0.72); return `<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.4" fill="#3a86d8" stroke="var(--ink)" stroke-width=".6"/>`; }).join('');
-    pl+=l2(-1.225,-0.69,1.225,-0.69,'th')+l2(-1.35,-0.76,1.35,-0.76,'cb')+l2(-1.5,0.8,1.5,0.8,'bd');
+    xs.forEach(x=>{ pl+=r2(x-PW/2,-ZB,x+PW/2,ZB,'th','fill="none"'); [-BZ,BZ].forEach(z=>{ pl+=r2(x-0.16,z-0.16,x+0.16,z+0.16,'rf','stroke-dasharray="3 2"')+r2(x-0.15,z-0.15,x+0.15,z+0.15,'gr','fill-opacity=".55"'); const a=g(x,z); pl+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.8" fill="#f0c030" stroke="var(--ink)" stroke-width=".6"/>`; });
+      MT.boltPos.forEach((b,i)=>{ const a=g(x+(i===0?-0.045:0.045),b[1]); pl+=`<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.2" fill="#e0662a" stroke="var(--ink)" stroke-width=".6"/>`; });
+      [-1,1].forEach(s=>{ pl+=r2(x-0.025,s*0.636-0.02,x+0.025,s*0.636+0.02,'ln','style="fill:var(--ink)"'); }); });
+    pl+=r2(-HALF-0.02,-0.56,0.02,-0.53,'gr')+[-HALF,0].map(x=>{ const a=g(x,-0.545); return `<circle cx="${f(a[0])}" cy="${f(a[1])}" r="2.4" fill="#3a86d8" stroke="var(--ink)" stroke-width=".6"/>`; }).join('');
+    pl+=r2(-1.225,-0.70,1.225,-0.628,'gr','fill-opacity=".25"')+l2(-1.35,-0.40,1.35,-0.40,'cb')+l2(-1.5,0.7,1.5,0.7,'bd');
     pl+=l2(-PV_L/2,-1.0,PV_L/2,-1.0,'dm')+l2(-PV_L/2,-1.04,-PV_L/2,-0.96,'dm')+l2(PV_L/2,-1.04,PV_L/2,-0.96,'dm')+t2(0,-1.06,'2384','t2');
     pl+=l2(1.55,-PV_W/2,1.55,PV_W/2,'dm')+l2(1.51,-PV_W/2,1.59,-PV_W/2,'dm')+l2(1.51,PV_W/2,1.59,PV_W/2,'dm')+`<text class="t2" transform="translate(${f(g(1.64,0)[0])},${f(g(1.64,0)[1])}) rotate(90)" text-anchor="middle">1303</text>`;
     pl+=l2(0,0.98,HALF,0.98,'dm')+l2(0,0.94,0,1.02,'dm')+l2(HALF,0.94,HALF,1.02,'dm')+t2(HALF/2,1.1,'1207,5 · крок опор','t2')+`<text class="t2" x="8" y="280">крок рядів 2100 (поперек)</text>`;
-    pl+=bn2('pv',0.55,0.05)+bn2('clamp',-0.66,0.60)+bn2('tri',-HALF+0.12,0.35)+bn2('conn',-HALF/2,-0.72+0.0)+bn2('ball',-0.34,0.5)+bn2('mat',0.36,-0.5)+bn2('spoil',0.9,-0.69)+bn2('scrT',0.0+0.07,-0.37)+bn2('scrC',-HALF/2+0.45,-0.72)+bn2('scrB',0.18,0.5)+bn2('cab',1.2,-0.8)+bn2('bond',1.2,0.8);
+    pl+=bn2('pv',0.55,0.05)+bn2('clamp',-0.66,0.64)+bn2('tri',-HALF+0.15,0.2)+bn2('conn',-HALF/2,-0.545)+bn2('ball',-0.34,0.64)+bn2('mat',0.36,-0.7)+bn2('spoil',0.9,-0.665)+bn2('scrT',0.075,-0.4)+bn2('scrC',-HALF+0.1,-0.60)+bn2('scrB',0.18,0.64)+bn2('cab',1.2,-0.4)+bn2('bond',1.2,0.7);
   } else { const Ld=m.land?PV_L:PV_W, Wd=m.land?PV_W:PV_L, du=Ld/2-0.3, dv=Wd/2-0.25, sc=Math.min(1,2.9/Ld);
     const G2=(x,z)=>[px+x*S2*sc,py+z*S2*sc*(Wd>Ld?0.62:1)]; const rr2=(x0,z0,x1,z1,c,x)=>{ const a=G2(x0,z0), b=G2(x1,z1); return `<rect class="${c}" ${x||''} x="${f(Math.min(a[0],b[0]))}" y="${f(Math.min(a[1],b[1]))}" width="${f(Math.abs(b[0]-a[0]))}" height="${f(Math.abs(b[1]-a[1]))}"/>`; };
     pl+=rr2(-Ld/2,-Wd/2,Ld/2,Wd/2,'bl','fill-opacity=".38"');
@@ -230,11 +235,11 @@ function openNode(m,kind){ if(!nodeInit()){ $('#node-empty').textContent='WebGL 
   nodeBg(); nodeMats(); nodeBuild(m); nodeTable(m); nodeNotes(m);
   $('[data-nview="dwg"]').innerHTML=nodeDrawing(m); $('[data-nview="wire"]').innerHTML=nodeWiring(m);
   nodeView('exp'); nodeFrame(); nodeSetE(0); nodeResize();
-  const want={pv:'pv',tri:'tri',ball:'ball',mat:'mat',conn:'conn',spoil:'spoil'}[NODE.kind];
+  const want={pv:'pv',tri:'tri',ball:'ball',mat:'mat',conn:'conn',spoil:'spoil',scrT:'scrT',scrB:'scrB',scrC:'scrC',clamp:'clamp'}[NODE.kind];
   setTimeout(()=>{ nodeTween(1,1700); },250); if(want&&NODE.ids.includes(want)) nodeHL(want); else nodeHL(null);
   if(matchMedia('(max-width: 860px)').matches) $('[data-pane="node"]').scrollIntoView({behavior:'smooth',block:'start'}); }
 function openNodeFromHit(hit){ const o=hit.object, id=hit.instanceId; let m=null, kind='pv';
   if(o.userData.list){ m=o.userData.list[id]; }
-  else if(o.userData.mods){ m=o.userData.mods[id]; kind=o===triIM?'tri':o===balIM?'ball':o===spoIM?'spoil':o===conIM?'conn':'mat'; }
+  else if(o.userData.mods){ m=o.userData.mods[id]; kind=o===triIM||o===triPerfIM?'tri':o===triFixIM?'scrT':o===scrIM?'scrB':o===balIM?'ball':o===spoIM?'spoil':o===conIM?'conn':o===conFixIM?'scrC':o===clampIM?'clamp':'mat'; }
   if(m) openNode(m,kind); }
 window.__dbg=Object.assign(window.__dbg||{},{openNode,NODE});
