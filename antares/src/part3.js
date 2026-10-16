@@ -244,6 +244,7 @@ function updateSun(){
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
   { seasLabel(); const tm=$('#timeo').textContent; $('#sunread').innerHTML=`<b class="sr-t">${tm}</b>${genChip()}`;
     $('#sunx').innerHTML = s.el>0 ? `висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b><br>у тіні ${full} · частково ${part}` : 'сонце під горизонтом'; }
+  { const sh=$('#shl'); if(sh){ const on=$('#shadeOn').checked; sh.innerHTML= s.el<=0 ? `<span>Сонце сіло — модулі не працюють</span><button id="shnoon">☀ 12:00</button>` : on ? `<span><i style="background:#2a4a8f"></i>працюють</span><span><i style="background:#e9c46a"></i>частково в тіні (${part})</span><span><i style="background:#e0711b"></i>в тіні (${full})</span>` : `<span>Показ тіней вимкнено (⋯ → Тіні)</span>`; const b=$('#shnoon'); if(b) b.onclick=()=>{ timeIn.value=720; updateSun(); }; } }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
@@ -252,7 +253,7 @@ function updateSun(){
   requestRender(); }
 dateIn.addEventListener('input',()=>updateSun());
 timeIn.addEventListener('input',updateSun);
-$('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); });
+$('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); updateSun(); });
 const SEAS3=[['Зима','12-21'],['Весна','03-20'],['Літо','06-21'],['Осінь','09-23']];
 const seasOf=d=>{ const m=+(d||'2026-06-01').slice(5,7); return m===12||m<3?0:m<6?1:m<9?2:3; };
 function seasLabel(){ $('#season').textContent=SEAS3[seasOf(dateIn.value)][0]; }

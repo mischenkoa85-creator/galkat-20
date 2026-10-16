@@ -222,6 +222,7 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .sunrow{display:flex;align-items:center;gap:6px}
 .sunrow .sunread{flex:1 1 auto;min-width:0;flex-wrap:nowrap;gap:2px 8px;align-items:baseline}
 .sunrow .sunread .sr-x{display:none}
+.shl{font-size:12px;line-height:1.4;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:2px 0 4px}.shl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}.shl button{font:inherit;font-size:12px;padding:1px 8px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer}
 .sunx{display:none;font-family:var(--f-mono);font-size:11.5px;line-height:1.5}
 .dp.more .sunx{display:block}
 .sunx b{font-weight:500;color:var(--sun)}
@@ -393,6 +394,7 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
           <button id="season" class="pbtn sbtn" title="Сезон: натискайте, щоб перемикати Зима → Весна → Літо → Осінь" aria-label="Сезон">Осінь</button>
           <button id="sunmore" class="pbtn" aria-expanded="false" aria-label="Додатково: дата, тіні" title="Додатково: дата, висота й азимут, тіні">⋯</button>
         </div>
+        <div class="shl" id="shl"></div>
         <div class="sunx" id="sunx"></div>
         <div class="sunctl">
           <div class="row rtime"><button id="play" class="pbtn" aria-label="Пуск / пауза" title="Пуск / пауза">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><button id="speed" class="pbtn" title="Швидкість програвання" aria-label="Швидкість">×1</button><output id="timeo" for="time">13:00</output></div>

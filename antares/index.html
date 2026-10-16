@@ -222,6 +222,7 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .sunrow{display:flex;align-items:center;gap:6px}
 .sunrow .sunread{flex:1 1 auto;min-width:0;flex-wrap:nowrap;gap:2px 8px;align-items:baseline}
 .sunrow .sunread .sr-x{display:none}
+.shl{font-size:12px;line-height:1.4;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin:2px 0 4px}.shl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}.shl button{font:inherit;font-size:12px;padding:1px 8px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer}
 .sunx{display:none;font-family:var(--f-mono);font-size:11.5px;line-height:1.5}
 .dp.more .sunx{display:block}
 .sunx b{font-weight:500;color:var(--sun)}
@@ -393,6 +394,7 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
           <button id="season" class="pbtn sbtn" title="Сезон: натискайте, щоб перемикати Зима → Весна → Літо → Осінь" aria-label="Сезон">Осінь</button>
           <button id="sunmore" class="pbtn" aria-expanded="false" aria-label="Додатково: дата, тіні" title="Додатково: дата, висота й азимут, тіні">⋯</button>
         </div>
+        <div class="shl" id="shl"></div>
         <div class="sunx" id="sunx"></div>
         <div class="sunctl">
           <div class="row rtime"><button id="play" class="pbtn" aria-label="Пуск / пауза" title="Пуск / пауза">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><button id="speed" class="pbtn" title="Швидкість програвання" aria-label="Швидкість">×1</button><output id="timeo" for="time">13:00</output></div>
@@ -1695,6 +1697,7 @@ function updateSun(){
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
   { seasLabel(); const tm=$('#timeo').textContent; $('#sunread').innerHTML=`<b class="sr-t">${tm}</b>${genChip()}`;
     $('#sunx').innerHTML = s.el>0 ? `висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b><br>у тіні ${full} · частково ${part}` : 'сонце під горизонтом'; }
+  { const sh=$('#shl'); if(sh){ const on=$('#shadeOn').checked; sh.innerHTML= s.el<=0 ? `<span>Сонце сіло — модулі не працюють</span><button id="shnoon">☀ 12:00</button>` : on ? `<span><i style="background:#2a4a8f"></i>працюють</span><span><i style="background:#e9c46a"></i>частково в тіні (${part})</span><span><i style="background:#e0711b"></i>в тіні (${full})</span>` : `<span>Показ тіней вимкнено (⋯ → Тіні)</span>`; const b=$('#shnoon'); if(b) b.onclick=()=>{ timeIn.value=720; updateSun(); }; } }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
@@ -1703,7 +1706,7 @@ function updateSun(){
   requestRender(); }
 dateIn.addEventListener('input',()=>updateSun());
 timeIn.addEventListener('input',updateSun);
-$('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); });
+$('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); updateSun(); });
 const SEAS3=[['Зима','12-21'],['Весна','03-20'],['Літо','06-21'],['Осінь','09-23']];
 const seasOf=d=>{ const m=+(d||'2026-06-01').slice(5,7); return m===12||m<3?0:m<6?1:m<9?2:3; };
 function seasLabel(){ $('#season').textContent=SEAS3[seasOf(dateIn.value)][0]; }
