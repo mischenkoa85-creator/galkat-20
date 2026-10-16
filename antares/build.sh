@@ -8,6 +8,6 @@ p3=open('src/part3.js').read()
 extra=''.join(open('src/'+f).read()+'\n' for f in ['node.js','energy.js','note.js'] if os.path.exists('src/'+f))
 i=p3.rindex('})();')
 p3=p3[:i]+extra+p3[i:]
-open('index.html','w').write(p1+'<script>\n'+open('src/part2.js').read().replace('/*ESS3D*/',open('src/ess3d.js').read())+p3+'</script>\n')
+open('index.html','w').write(p1+'<script>\n'+open('src/part2.js').read().replace('/*ESS3D*/',open('src/ess3d.js').read()).replace('/*SITE3D*/',open('src/site3d.js').read())+p3+'</script>\n')
 print('built index.html')
 PY

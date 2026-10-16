@@ -127,13 +127,13 @@ const std=(c,m,r,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,metal
 const MAT={
   ground:lam(0xb9beb6), wall:lam(0xdadcd6,{side:THREE.DoubleSide}), roof:lam(0xffffff,{vertexColors:true,side:THREE.DoubleSide}),
   lan:std(0xb4cbd9,0.1,0.25,{transparent:true,opacity:0.82}), obs:std(0x9aa3a8,0.6,0.45),
-  whWall:lam(0xd2d4cc,{side:THREE.DoubleSide}), whRoof:std(0x8d989e,0.45,0.55,{side:THREE.DoubleSide}), tp:lam(0xd9d1c1,{side:THREE.DoubleSide}),
+  whWall:lam(0xd2d4cc,{side:THREE.DoubleSide}), whRoof:std(0xa4685a,0.35,0.6,{side:THREE.DoubleSide}), tp:lam(0xd9d1c1,{side:THREE.DoubleSide}),
   tri:std(0xd2d8dc,0.4,0.5), ball:lam(0x9d9a93), mat:lam(0x2c2c2c), conn:std(0xa8b0b5,0.75,0.35), spoil:std(0xc2c8cb,0.5,0.5,{side:THREE.DoubleSide}),
-  block:lam(0x5c6166), alu:std(0xdfe5e8,0.85,0.3), mbase:lam(0x9b978f), holder:lam(0x8f8b84),
+  block:lam(0x5c6166), alu:std(0xdfe5e8,0.3,0.45), mbase:lam(0x9b978f), holder:lam(0x8f8b84),
   k682:lam(0x34424a), dwire:lam(0x1f2a30), strip:std(0x9aa3a8,0.7,0.4), rod:std(0x9aa3a8,0.7,0.4),
   cushion:lam(0xc9b68c), sleeper:lam(0xaaa69d), frame:std(0x56626b,0.6,0.5), fm:lam(0xa9a39a), col:std(0x7f8a90,0.5,0.5),
   sheet:std(0x9aa6ad,0.5,0.5,{side:THREE.DoubleSide}), gal:lam(0xe7eaec), mps:lam(0x8796a3), sm:lam(0xb7c0c6), boxPV:lam(0xdfe3e6), boxAKB:lam(0x6d7f8c),
-  tray:std(0xb5bcc0,0.6,0.4), cable:lam(0xc0392b), trough:lam(0xa7a39b), mast6:std(0xdfe5e8,0.85,0.3)
+  tray:std(0xb5bcc0,0.6,0.4), cable:lam(0xc0392b), trough:lam(0xa7a39b), mast6:std(0xdfe5e8,0.3,0.45)
 };
 const LINE={wire:new THREE.LineBasicMaterial({color:0x5fc2e0}), dc:new THREE.LineBasicMaterial({color:0xff8c1a}), bond:new THREE.LineBasicMaterial({color:0x2fc24a}),
   zone:new THREE.LineBasicMaterial({color:0xd0453a,transparent:true,opacity:0.6}), rope:new THREE.LineBasicMaterial({color:0x30363a}), down:new THREE.LineBasicMaterial({color:0x5fc2e0}), layout:new THREE.LineBasicMaterial({color:0x2446a3})};
@@ -344,28 +344,31 @@ const bondLen=D.bond.reduce((s,q)=>s+Math.hypot(q[2]-q[0],q[3]-q[1]),0);
 // ---------- lightning protection: masts, wire on holders, protection zones
 const roofMasts=D.masts.filter(m=>m[2]===4), groundMasts=D.masts.filter(m=>m[2]===6);
 const mBaseM=[], mRodM=[], mTipM=[];
-roofMasts.forEach(m=>{ const z=surfZ(m[0],m[1]); mBaseM.push(new THREE.Matrix4().makeTranslation(m[0],z+0.07,-m[1])); mRodM.push(new THREE.Matrix4().makeTranslation(m[0],z+0.14+1.43,-m[1])); mTipM.push(new THREE.Matrix4().makeTranslation(m[0],z+3.0+0.5,-m[1])); });
+roofMasts.forEach(m=>{ const z=surfZ(m[0],m[1]); mBaseM.push(new THREE.Matrix4().makeTranslation(m[0],z+0.07,-m[1])); mRodM.push(new THREE.Matrix4().makeTranslation(m[0],z+0.14,-m[1])); mTipM.push(new THREE.Matrix4().makeTranslation(m[0],z+0.14+3.86,-m[1])); });
 const mbaseIM=info(inst(new THREE.CylinderGeometry(0.24,0.26,0.14,16),MAT.mbase,mBaseM,G.lps),'Бетонна основа 32 кг блискавкоприймача М-04/40');
-const rodIM=inst(new THREE.CylinderGeometry(0.035,0.035,2.86,8),MAT.alu,mRodM,G.lps); info(rodIM,'Блискавкоприймач М-04/40, L = 4,0 м\nшпиль Ø16 + Ø10 (на макеті товщий), зона захисту R 9,9 м');
-const mtipIM=inst(new THREE.CylinderGeometry(0.022,0.022,1.0,8),MAT.alu,mTipM,G.lps);
+const mastGeo=(()=>{ const L=[]; const cy=(r,h,y,s)=>L.push(new THREE.CylinderGeometry(r,r,h,s||10).translate(0,y,0));
+  cy(0.11,0.012,0.006,16); [[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([a,b])=>{ L.push(new THREE.CylinderGeometry(0.011,0.011,0.012,6).translate(a*0.075,0.018,b*0.075)); L.push(new THREE.BoxGeometry(0.012,0.1,0.045).translate(a*0.04,0.06,b*0.0)); L.push(new THREE.BoxGeometry(0.045,0.1,0.012).translate(0,0.06,b*0.04)); });
+  cy(0.034,1.3,0.66); cy(0.05,0.07,1.3); cy(0.024,1.3,1.95); cy(0.036,0.06,2.6); cy(0.014,1.26,3.23,8); return merge(L); })();
+const rodIM=inst(mastGeo,MAT.alu,mRodM,G.lps); info(rodIM,'Блискавкоприймач М-04/40, L = 4,0 м\nшпиль Ø16 + Ø10 (на макеті товщий), зона захисту R 9,9 м');
+const mtipIM=inst(new THREE.ConeGeometry(0.016,0.14,8).translate(0,0.07,0),MAT.alu,mTipM,G.lps);
 // two 6 m masts on tripods at MS-3
 groundMasts.forEach(m=>{ const g=new THREE.Group(); g.position.set(m[0],0,-m[1]); G.lps.add(g);
   for(let k=0;k<3;k++){ const a=k*2*Math.PI/3; const f=box(0.03,1.6,0.03,MAT.alu,Math.cos(a)*0.45,0.75,Math.sin(a)*0.45,g); f.rotation.set(Math.sin(a)*0.33,0,-Math.cos(a)*0.33); box(0.3,0.15,0.3,MAT.mbase,Math.cos(a)*0.85,0.075,Math.sin(a)*0.85,g); }
-  const mm=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,6,8),MAT.mast6); mm.position.y=3.0; mm.castShadow=true; g.add(mm); info(mm,'Блискавкоприймач М-05/60 на тринозі, L = 6,0 м\nзахист групи MS-3'); });
+  const mm=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,6,8),MAT.mast6); mm.position.y=3.0; mm.castShadow=true; g.add(mm); [1.6,3.2,4.8].forEach(y=>{ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.07,10),MAT.alu); c.position.y=y; g.add(c); }); const sp=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.35,8),MAT.alu); sp.position.y=6.17; g.add(sp); info(mm,'Блискавкоприймач М-05/60 на тринозі, L = 6,0 м\nзахист групи MS-3'); });
 // wire Ø8 on concrete holders H-303
 const wirePairs=[], wireLen=D.wire.reduce((s,q)=>s+Math.hypot(q[2]-q[0],q[3]-q[1]),0), holdStep=Math.max(0.5,wireLen/3200);
 const holdM=[];
 D.wire.forEach(s=>{ pairsOf(route(s[0],s[1],s[2],s[3],0.13,0.1),wirePairs); const L=Math.hypot(s[2]-s[0],s[3]-s[1]), n=Math.max(1,Math.round(L/holdStep));
-  for(let i=0;i<=n;i++){ const t=i/n, X=s[0]+(s[2]-s[0])*t, Y=s[1]+(s[3]-s[1])*t, z=surfZ(X,Y); if(z===null) continue; holdM.push(new THREE.Matrix4().makeTranslation(X,z+0.055,-Y)); } });
+  for(let i=0;i<=n;i++){ const t=i/n, X=s[0]+(s[2]-s[0])*t, Y=s[1]+(s[3]-s[1])*t, z=surfZ(X,Y); if(z===null) continue; holdM.push(new THREE.Matrix4().makeTranslation(X,z,-Y)); } });
 const wireLine=segLines(wirePairs,LINE.wire,G.lps);
-const holdIM=info(inst(new THREE.CylinderGeometry(0.06,0.08,0.11,8),MAT.holder,holdM,G.lps,false),'Тримач дроту H-303 з бетоном\nна смузі ПВХ-мембрани К-303');
+const holdIM=info(inst(merge([new THREE.CylinderGeometry(0.075,0.085,0.05,8).translate(0,0.025,0), new THREE.CylinderGeometry(0.011,0.011,0.08,6).translate(0,0.09,0), new THREE.CylinderGeometry(0.022,0.022,0.035,8).translate(0,0.13,0)]),MAT.holder,holdM,G.lps,false),'Тримач дроту H-303 з бетоном\nна смузі ПВХ-мембрани К-303');
 // protection zones R = 9,9 m at module level
 const zonePairs=[]; roofMasts.forEach(m=>{ let prev=null; for(let k=0;k<=72;k++){ const a=k/72*Math.PI*2, X=m[0]+9.9*Math.cos(a), Y=m[1]+9.9*Math.sin(a); const z=surfZ(X,Y); const v=W(X,Y,(z===null?roofZ(Math.max(0,Math.min(96,X))):z)+0.62); if(prev) zonePairs.push(prev,v); prev=v; } });
 segLines(zonePairs,LINE.zone,G.zones);
 
 // ---------- down conductors, test joints K-682, strip W-25×4, rods G-16/30
 const CENTRES=[['R',48.2,48],['A',63.5,-21.5],['B',85.8,-19],['C1',122,-15.5],['C2',150.6,-15.5]];
-const downPairs=[], downM=[], k682M=[], stripM=[], rodM=[], stripUG=[];
+const downPairs=[], downM=[], k682M=[], stripM=[], rodM=[], stripUG=[], clipM=[], peM=[], wellM=[];
 D.down.forEach(p=>{ let top=0; for(const dx of [-0.6,0,0.6]) for(const dy of [-0.6,0,0.6]){ const z=surfZ(p[0]+dx,p[1]+dy); if(z!==null&&z>top) top=z; }
   let best=null; const onShop=p[0]>=SHOP[0]-0.3&&p[0]<=SHOP[1]+0.3&&p[1]>=SHOP[2]-0.3&&p[1]<=SHOP[3]+0.3;
   CENTRES.forEach(c=>{ if(onShop!==(c[0]==='R')) return; const d=Math.hypot(p[0]-c[1],p[1]-c[2]); if(!best||d<best.d) best={c,d}; });
@@ -376,15 +379,15 @@ D.down.forEach(p=>{ let top=0; for(const dx of [-0.6,0,0.6]) for(const dy of [-0
   const L=Math.hypot(ox,oy)||1; ox/=L; oy/=L;
   const X=p[0]+ox*0.06, Y=p[1]+oy*0.06;
   downPairs.push(W(X,Y,top),W(X,Y,0.9)); downM.push(new THREE.Matrix4().compose(W(X,Y,(top+0.9)/2),new THREE.Quaternion(),new THREE.Vector3(1,top-0.9,1)));
-  k682M.push(new THREE.Matrix4().makeTranslation(X,0.75,-Y));
+  k682M.push(new THREE.Matrix4().makeTranslation(X,0.75,-Y)); peM.push(new THREE.Matrix4().makeTranslation(X,1.4,-Y)); for(let h=2.0;h<top-0.4;h+=1.2) clipM.push(new THREE.Matrix4().makeTranslation(X,h,-Y));
   stripM.push(new THREE.Matrix4().compose(W(X,Y,0.3),new THREE.Quaternion(),new THREE.Vector3(1,1,1)));
   const gx=p[0]+ox*1.5, gy=p[1]+oy*1.5;
-  stripUG.push([p[0],p[1],gx,gy]); rodM.push(new THREE.Matrix4().makeTranslation(gx,-2.0,-gy)); });
+  stripUG.push([p[0],p[1],gx,gy]); rodM.push(new THREE.Matrix4().makeTranslation(gx,-2.0,-gy)); wellM.push(new THREE.Matrix4().makeTranslation(gx,0,-gy)); });
 const downLine=segLines(downPairs,LINE.down,G.down);
-const downIM=info(inst(new THREE.BoxGeometry(0.07,1,0.07),MAT.dwire,downM,G.down),'Спуск: дріт алюмінієвий Ø8 по фасаду (на макеті товщий)\nтримачі H-033 / H-016 / H-081');
-const k682IM=info(inst(new THREE.BoxGeometry(0.36,0.46,0.24),MAT.k682,k682M,G.down),'Коробка контрольного з’єднання К-682\nзлучник C-032');
-const stripIM=inst(new THREE.BoxGeometry(0.06,0.6,0.06),MAT.strip,stripM,G.down);
-const rodIM2=info(inst(new THREE.CylinderGeometry(0.025,0.025,3.0,6),MAT.rod,rodM,G.downUG),'Стрижневий заземлювач G-16/30, L = 3,0 м\nзабивається вібромолотом з насадкою G-160');
+const downIM=info(inst(new THREE.BoxGeometry(0.036,1,0.036),MAT.dwire,downM,G.down),'Спуск: дріт алюмінієвий Ø8 по фасаду (на макеті товщий)\nтримачі H-033 / H-016 / H-081');
+const k682IM=info(inst(merge([new THREE.BoxGeometry(0.36,0.46,0.24), new THREE.BoxGeometry(0.4,0.035,0.28).translate(0,0.25,0), new THREE.CylinderGeometry(0.03,0.03,0.12,8).translate(0,0.3,0), new THREE.CylinderGeometry(0.03,0.03,0.12,8).translate(0,-0.3,0)]),MAT.k682,k682M,G.down),'Коробка контрольного з’єднання К-682\nзлучник C-032');
+const stripIM=inst(new THREE.CylinderGeometry(0.014,0.014,0.6,6),MAT.strip,stripM,G.down);
+const rodIM2=info(inst(merge([new THREE.CylinderGeometry(0.025,0.025,3.0,8), new THREE.BoxGeometry(0.1,0.09,0.1).translate(0,1.455,0), new THREE.ConeGeometry(0.025,0.14,8).translate(0,-1.57,0).rotateX(Math.PI)]),MAT.rod,rodM,G.downUG),'Стрижневий заземлювач G-16/30, L = 3,0 м\nзабивається вібромолотом з насадкою G-160');
 const ugM=stripUG.map(s=>{ const L=Math.hypot(s[2]-s[0],s[3]-s[1]), a=Math.atan2(-(s[3]-s[1]),s[2]-s[0]); return new THREE.Matrix4().compose(W((s[0]+s[2])/2,(s[1]+s[3])/2,-0.5),new THREE.Quaternion().setFromAxisAngle(UP,a),new THREE.Vector3(L,1,1)); });
 const ugIM=inst(new THREE.BoxGeometry(1,0.04,0.025),MAT.strip,ugM,G.downUG);
 
@@ -401,6 +404,7 @@ const essRodIM=info(inst(new THREE.CylinderGeometry(0.025,0.025,4.5,6),MAT.rod,e
 const esM=D.strip.map(s=>{ const L=Math.hypot(s[2]-s[0],s[3]-s[1]), a=Math.atan2(-(s[3]-s[1]),s[2]-s[0]); return new THREE.Matrix4().compose(W((s[0]+s[2])/2,(s[1]+s[3])/2,-0.7),new THREE.Quaternion().setFromAxisAngle(UP,a),new THREE.Vector3(L,1,1)); });
 const essStripIM=info(inst(new THREE.BoxGeometry(1,0.05,0.03),MAT.strip,esM,G.essUG),'Смуга сталева 40×4 на глибині 0,7 м\nконтур заземлення УЗЕ');
 const essStripLen=D.strip.reduce((s,q)=>s+Math.hypot(q[2]-q[0],q[3]-q[1]),0);
+/*SITE3D*/
 
 // ---------- AC lines to the substations: cable tray on the facades, troughs Л-17-8 under the road
 const TRAY_H=2.6;

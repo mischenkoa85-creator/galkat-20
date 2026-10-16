@@ -32,8 +32,8 @@ const GROW={
  6:p=>{ setCnt(whL,p); setCnt(whP,p); setCnt(blockIM,p); },
  7:p=>{ drw(dcLine,p); },
  8:p=>{ drw(bondLine,p); },
- 9:p=>{ const a=Math.min(1,p/0.5), b=Math.max(0,(p-0.5)/0.5); setCnt(mbaseIM,a); setCnt(rodIM,a); setCnt(mtipIM,a); setCnt(holdIM,b); drw(wireLine,b); },
- 10:p=>{ setCnt(downIM,p); setCnt(k682IM,p); setCnt(stripIM,p); setCnt(rodIM2,p); setCnt(ugIM,p); drw(downLine,p); },
+ 9:p=>{ const a=Math.min(1,p/0.5), b=Math.max(0,(p-0.5)/0.5); setCnt(mbaseIM,a); setCnt(rodIM,a); setCnt(mtipIM,a); setCnt(holdIM,b); setCnt(wireIM,b); drw(wireLine,b); },
+ 10:p=>{ setCnt(downIM,p); setCnt(k682IM,p); setCnt(stripIM,p); setCnt(rodIM2,p); setCnt(ugIM,p); setCnt(clipIM,p); setCnt(peIM,p); setCnt(wellIM,p); drw(downLine,p); },
  11:p=>{ kids(G.essF,Math.min(1,p/0.75)); const b=Math.max(0,(p-0.75)/0.25); setCnt(essRodIM,b); setCnt(essStripIM,b); },
  12:p=>{ kids(G.essE,p); kids(G.essC,p); essVisApply(); },
  13:p=>{ kids(G.ac,p); }
@@ -166,8 +166,8 @@ $('#t-build').addEventListener('click',()=>{ if(!STEP) setStep(1); });
 
 // ---------- theme
 function applyTheme(){ const bg=new THREE.Color(css('--scene')||'#dce4e6'); scene.background=bg; scene.fog=new THREE.Fog(bg, 260, 700);
-  const dk=isDark(); hemi.intensity=dk?0.4:0.5; MAT.ground.color.set(dk?0x3b4245:0xb9beb6); MAT.wall.color.set(dk?0x6c7377:0xffffff);
-  MAT.whWall.color.set(dk?0x5d6468:0xd2d4cc); MAT.tp.color.set(dk?0x6a665e:0xd9d1c1); colorRoof(); requestRender(); }
+  const dk=isDark(); hemi.intensity=dk?0.4:0.5; MAT.ground.color.set(dk?0x2f3b33:0x8aa07e); MAT.wall.color.set(dk?0x7a7566:0xf6e7c6);
+  MAT.whWall.color.set(dk?0x56636d:0xb4c4d2); MAT.tp.color.set(dk?0x6e5a4b:0xc19a7c); colorRoof(); requestRender(); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
@@ -244,7 +244,7 @@ function updateSun(){
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
   { seasLabel(); const tm=$('#timeo').textContent; $('#sunread').innerHTML=`<b class="sr-t">${tm}</b>${genChip()}`;
     $('#sunx').innerHTML = s.el>0 ? `висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b><br>у тіні ${full} · частково ${part}` : 'сонце під горизонтом'; }
-  { const sh=$('#shl'); if(sh){ const on=$('#shadeOn').checked; sh.innerHTML= s.el<=0 ? `<span>Сонце сіло — модулі не працюють</span><button id="shnoon">☀ 12:00</button>` : on ? `<span><i style="background:#2a4a8f"></i>працюють</span><span><i style="background:#e9c46a"></i>частково в тіні (${part})</span><span><i style="background:#e0711b"></i>в тіні (${full})</span>` : `<span>Показ тіней вимкнено (⋯ → Тіні)</span>`; const b=$('#shnoon'); if(b) b.onclick=()=>{ timeIn.value=720; updateSun(); }; } }
+  { const sh=$('#shl'); if(sh){ const on=$('#shadeOn').checked; sh.innerHTML= s.el<=0 ? `<span>Сонце сіло</span><button id="shnoon">☀ 12:00</button>` : on ? `<span><i style="background:#2a4a8f"></i>працюють</span><span><i style="background:#e9c46a"></i>частково ${part}</span><span><i style="background:#e0711b"></i>в тіні ${full}</span>` : `<span>Показ тіней вимкнено (⋯ → Тіні)</span>`; const b=$('#shnoon'); if(b) b.onclick=()=>{ timeIn.value=720; updateSun(); }; } }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
