@@ -570,3 +570,45 @@ img { max-width: 100%; }
   .appbar-top .qpill { order: 3; margin: 0 0 4px; }
 }
 @media (max-width: 560px) { .toast { bottom: auto; top: calc(10px + env(safe-area-inset-top, 0px)); } }
+
+/* склад (кроки 1–2): надходження, видача, повернення, брак, зберігання, залишки — телефон 390 px */
+.skf { display: grid; gap: 12px; }
+.skrow, .skadd { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+.skrow .fld, .skadd .fld { flex: 1 1 140px; }
+.skrow .grow, .skadd .grow { flex: 1 1 220px; }
+.skadd .wide { flex-basis: 100%; }
+.skf .fld input, .skf .fld select { min-height: 48px; font-size: 16px; width: 100%; }
+.skadd .btn { min-height: 48px; font-size: 15px; font-weight: 600; }
+.skf textarea, .stock textarea.ser { width: 100%; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 15px; resize: vertical; min-width: 0; }
+.stock textarea.ser { display: block; margin-top: 6px; font-size: 14px; }
+.stock.sk input, .stock.sk textarea { font-size: 16px; }
+.stock.sk input[type=number] { width: 84px; min-height: 44px; }
+.stock .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.stock .sub b { font-weight: 650; }
+.stock tr.lim td { background: color-mix(in srgb, var(--bad) 9%, transparent); }
+.stock.sk th { white-space: normal; }
+.stock.sk td.nm { overflow-wrap: anywhere; }
+.stock.zal .nm { min-width: 170px; }
+.stock.brt .ph { display: none; }
+.neg { color: var(--bad); font-weight: 700; }
+.neg-t { display: block; font-size: 11.5px; color: var(--bad); font-weight: 650; white-space: nowrap; }
+.warn-t { color: var(--warn); font-weight: 650; }
+.stock .flag:empty { display: none; }
+.who-badge.own-g { border-color: var(--warn); color: var(--warn); font-weight: 600; margin-left: 4px; }
+.skwhy { border: 2px solid var(--bad); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; background: color-mix(in srgb, var(--bad) 6%, var(--panel)); }
+.skwhy b { color: var(--bad); }
+.sign { display: block; width: 100%; max-width: 600px; height: 140px; border: 2px dashed var(--line-2); border-radius: 12px; background: #fff; touch-action: none; margin-top: 4px; }
+.skbar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; }
+.skf .periods, .skbar .periods { flex-wrap: wrap; }
+.skf .periods button, .skbar .periods button { min-height: 44px; display: inline-flex; align-items: center; }
+.iss .it .sn { display: block; font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.place .card-h h2 { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .stock.sk .nm { min-width: 0; }
+  .stock.zal .nm { min-width: 140px; }
+  .stock.brt .wd { display: none; }
+  .stock.brt .nm { min-width: 0; }
+  .stock.brt .ph { display: inline; }
+  .stock.sk input[type=number] { width: 72px; }
+  .subtabs a { padding: 8px 12px; }
+}

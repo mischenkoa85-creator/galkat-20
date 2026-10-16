@@ -1,8 +1,8 @@
 /* Service worker журналу СЕС площадки 11: оболонка застосунку відкривається без зв’язку.
    Звіти й фото сюди не потрапляють — вони чекають у черзі IndexedDB (app.js) і надсилаються POST-запитом напряму.
    Після зміни файлів сайту збільште номер у CACHE і ?v= в index.html. */
-const CACHE = 'ses11-v3';
-const SHELL = ['./', './index.html', './app.css?v=3', './config.js?v=3', './data.js?v=3', './app.js?v=3', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'ses11-v4';
+const SHELL = ['./', './index.html', './app.css?v=4', './config.js?v=4', './data.js?v=4', './app.js?v=4', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
