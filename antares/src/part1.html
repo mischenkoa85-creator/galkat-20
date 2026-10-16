@@ -225,6 +225,18 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .sunx{display:none;font-family:var(--f-mono);font-size:11.5px;line-height:1.5}
 .dp.more .sunx{display:block}
 .sunx b{font-weight:500;color:var(--sun)}
+.dp[data-dock="build"]{width:min(260px,100%);gap:4px}
+#stepbar,.ctx #stepbar{gap:4px;flex-wrap:nowrap}
+.ctx #stepbar span{flex:1 1 0;white-space:nowrap;padding:0 2px;font-size:12.5px}
+#stepbar button{width:auto}
+.bx .stepchips .done{display:none}
+#stepbar span{flex:1 1 auto;min-width:0;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+#stepbar .pbtn,#bplay{min-width:30px;width:auto;height:28px;padding:0 6px}
+#bspeed{min-width:36px;height:28px;padding:0 4px;font-size:12px}
+.bx{display:none;flex-direction:column;gap:6px}
+.dp.more .bx{display:flex}
+.bx .stepchips{flex-wrap:wrap;overflow:visible}
+#sbexit{width:auto;align-self:flex-start;padding:0 10px;font-size:12px}
 .sbtn{min-width:52px;padding:0 6px;height:28px;font-size:12px}
 #speed{min-width:36px;height:28px;padding:0 4px;font-size:12px}
 .sunctl .row.rtime{flex:1 1 100%;gap:6px}
@@ -357,9 +369,10 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
         </div>
       </div>
       <div class="dp" data-dock="build" hidden>
-        <div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div>
-        <div class="stepbar" id="stepbar" hidden><button id="sbprev" aria-label="Попередній крок">◀</button><span id="sbtxt"></span><button id="sbnext" aria-label="Наступний крок">▶</button><button id="sbexit" title="Готовий об'єкт" aria-label="Показати готовий об'єкт">✕</button>
-      <div class="sbgrow" id="sbgrow"><button id="sbplay" aria-label="Показати монтаж по черзі" title="Показати монтаж по черзі">▶</button><input type="range" id="sbprog" min="0" max="1000" value="1000" aria-label="Хід монтажу на цьому кроці"><output id="sbpct">100 %</output></div></div>
+        <div class="sunrow stepbar" id="stepbar"><button id="sbprev" class="pbtn" aria-label="Попередній крок">◀</button><span id="sbtxt">Готовий об’єкт</span><button id="sbnext" class="pbtn" aria-label="Наступний крок">▶</button><button id="bmore" class="pbtn" aria-expanded="false" aria-label="Додатково: усі кроки" title="Усі кроки">⋯</button></div>
+        <div class="sunctl"><div class="row rtime"><button id="bplay" class="pbtn" aria-label="Пуск / пауза будівництва" title="Показати все будівництво (≈1,5 хв) / пауза">▶</button><input type="range" id="bprog" min="0" max="1000" value="1000" aria-label="Хід будівництва"><button id="bspeed" class="pbtn" title="Швидкість" aria-label="Швидкість">×1</button></div></div>
+        <div class="bx"><div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div><button id="sbexit" class="pbtn" title="Готовий об'єкт" aria-label="Показати готовий об'єкт">Готовий об’єкт</button></div>
+        <div class="sbgrow" id="sbgrow" hidden style="display:none"><button id="sbplay">▶</button><input type="range" id="sbprog" min="0" max="1000" value="1000"><output id="sbpct">100 %</output></div>
       </div>
       <div class="dp" data-dock="node" hidden>
         <p class="small" id="node-ctl-empty">Клацніть на макеті по модулю, трикутнику чи баласту — тут з’являться перемикачі вузла.</p>

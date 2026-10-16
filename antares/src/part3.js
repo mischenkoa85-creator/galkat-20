@@ -38,7 +38,7 @@ const GROW={
  12:p=>{ kids(G.ac,p); }
 };
 function growAll(){ for(let s=2;s<=NS;s++){ const f=GROW[s]; if(f) f(s===STEP?PROG:1); } requestRender(); }
-function setProg(p){ PROG=Math.max(0,Math.min(1,p)); if(STEP&&GROW[STEP]) GROW[STEP](PROG); $('#sbprog').value=Math.round(PROG*1000); $('#sbpct').textContent=Math.round(PROG*100)+' %'; requestRender(); }
+function setProg(p){ PROG=Math.max(0,Math.min(1,p)); syncB(); if(STEP&&GROW[STEP]) GROW[STEP](PROG); $('#sbprog').value=Math.round(PROG*1000); $('#sbpct').textContent=Math.round(PROG*100)+' %'; requestRender(); }
 function stopGrow(){ cancelAnimationFrame(growRaf); growing=false; const b=$('#sbplay'); if(b) b.textContent='▶'; }
 function playGrow(from){ stopGrow(); if(!STEP||!GROW[STEP]) return;
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){ setProg(1); return; }
@@ -46,10 +46,24 @@ function playGrow(from){ stopGrow(); if(!STEP||!GROW[STEP]) return;
   const tick=n=>{ const p=Math.min(1,from+(n-t0)/dur); setProg(p); if(p<1) growRaf=requestAnimationFrame(tick); else stopGrow(); }; growRaf=requestAnimationFrame(tick); }
 $('#sbplay').addEventListener('click',()=>{ if(growing){ stopGrow(); } else playGrow(PROG>=0.999?0:PROG); });
 $('#sbprog').addEventListener('input',e=>{ stopGrow(); setProg(+e.target.value/1000); });
+// ---------- автопрогравання всього будівництва: 12 кроків за ≈90 с (×1), рух камери і наростання елементів
+const TOUR_MS=90000; let tourRaf=0, touring=false, BSPD=1;
+function syncB(){ const b=$('#bprog'); if(!b) return; const t=STEP?((STEP-1)+PROG)/NS:1; b.value=Math.round(t*1000); }
+function stopTour(){ cancelAnimationFrame(tourRaf); touring=false; const b=$('#bplay'); if(b) b.textContent='▶'; }
+function tourTo(t){ t=Math.max(0,Math.min(1,t)); const s=Math.min(NS,Math.floor(t*NS)+1), p=Math.min(1,t*NS-(s-1));
+  if(s!==STEP){ STEP=s; PROG=GROW[s]?0:1; applyStep(); goView('s'+s); }
+  if(GROW[s]) setProg(p); else syncB(); }
+function playTour(from){ stopTour(); stopGrow(); touring=true; $('#bplay').textContent='⏸'; let t=from, last=performance.now();
+  const tick=n=>{ t+= (n-last)/(TOUR_MS/BSPD); last=n; if(t>=1){ tourTo(1); stopTour(); return; } tourTo(t); tourRaf=requestAnimationFrame(tick); };
+  tourTo(t); tourRaf=requestAnimationFrame(tick); }
+$('#bplay').addEventListener('click',()=>{ if(touring){ stopTour(); return; } const cur=STEP?((STEP-1)+PROG)/NS:1; playTour(cur>=0.995?0:cur); });
+$('#bprog').addEventListener('input',e=>{ const was=touring; stopTour(); stopGrow(); tourTo(+e.target.value/1000); if(was) playTour(+e.target.value/1000); });
+$('#bspeed').addEventListener('click',()=>{ BSPD=BSPD>=4?1:BSPD*2; $('#bspeed').textContent='×'+BSPD; });
+$('#bmore').addEventListener('click',()=>{ const d=$('.dp[data-dock="build"]'), o=!d.classList.contains('more'); d.classList.toggle('more',o); $('#bmore').setAttribute('aria-expanded',String(o)); requestRender(); });
 function applyStep(){
   const s=STEP;
   Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); });
-  if(s===0){ applyLayers(); $('#stepbar').hidden=true; }
+  if(s===0){ applyLayers(); $('#sbtxt').textContent='Готовий об’єкт'; }
   else {
     Object.keys(SV).forEach(n=>{ G[n].visible=s>=SV[n][0]&&s<=SV[n][1]; });
     G.essC.visible=G.essC.visible&&ESSV==='cont';
@@ -57,14 +71,13 @@ function applyStep(){
     (HL[s]||[]).forEach(k=>{ if(MAT[k]&&MAT[k].emissive) MAT[k].emissive.set(0x3a2a00); });
     roofHeat=s===1; colorRoof();
     setGroundOpacity(s===9||s===10?0.32:1); setTpOpacity(s===12?0.35:1); setPvOpacity(s===7?0.3:1);
-    $('#stepbar').hidden=false; $('#sbgrow').hidden=!GROW[s];
-    $('#sbtxt').textContent=`Крок ${s} з ${NS} · ${STEPS[s-1]}`;
+    $('#sbtxt').textContent=`${s}/${NS} · ${STEPS[s-1]}`; $('#sbtxt').title=STEPS[s-1];
   }
   colorModules(effMode()); growAll();
   $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===s)));
-  renderStep(); requestRender();
+  syncB(); renderStep(); requestRender();
 }
-function setStep(s, cam){ STEP=Math.max(0,Math.min(NS,s)); stopGrow(); PROG=(STEP&&GROW[STEP])?0:1; applyStep(); if(cam!==false) goView(STEP?'s'+STEP:'over'); if(STEP&&GROW[STEP]) playGrow(0); }
+function setStep(s, cam){ stopTour(); STEP=Math.max(0,Math.min(NS,s)); stopGrow(); PROG=(STEP&&GROW[STEP])?0:1; applyStep(); if(cam!==false) goView(STEP?'s'+STEP:'over'); if(STEP&&GROW[STEP]) playGrow(0); }
 
 // ---------- step panels
 const TB=(head,rows)=>`<div class="tw"><table class="spec"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td${typeof c==='number'||/^[\d\s ,.−+×/%–≈]+$/.test(String(c))?' class="n"':''}>${typeof c==='number'?nf(c):c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
@@ -141,7 +154,7 @@ function renderStep(){ const s=STEP, el=$('#stepbody');
   $$('#stepbody [data-go]').forEach(b=>b.addEventListener('click',()=>setStep(+b.dataset.go))); }
 $('#stepchips').innerHTML=STEPS.map((t,i)=>`<button data-s="${i+1}" aria-pressed="false" title="${t}">${i+1}</button>`).join('')+`<button data-s="0" aria-pressed="true" class="done">Готовий об’єкт</button>`;
 $$('#stepchips button').forEach(b=>b.addEventListener('click',()=>setStep(+b.dataset.s)));
-$('#sbprev').addEventListener('click',()=>setStep(Math.max(1,STEP-1)));
+$('#sbprev').addEventListener('click',()=>setStep(STEP?Math.max(1,STEP-1):NS));
 $('#sbnext').addEventListener('click',()=>setStep(Math.min(NS,STEP+1)));
 $('#sbexit').addEventListener('click',()=>setStep(0));
 $('#t-build').addEventListener('click',()=>{ if(!STEP) setStep(1); });
@@ -246,7 +259,7 @@ $('#play').addEventListener('click',()=>{ if(playing){ playStop(); return; }
   $('#play').textContent='⏸'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+5*SPD; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
 
 // ---------- layers
-const exitSteps=()=>{ if(STEP){ stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };
+const exitSteps=()=>{ if(STEP){ stopTour(); stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };
 ['#L-bld','#L-obs','#L-pv','#L-bal','#L-heat','#L-lps','#L-zones','#L-down','#L-bond','#L-dc','#L-ac','#L-ess','#L-axes'].forEach(id=>$(id).addEventListener('change',()=>{ exitSteps(); applyLayers(); colorModules(effMode()); requestRender(); }));
 $('#L-tags').addEventListener('change',e=>{ tagsOn=e.target.checked; requestRender(); });
 
