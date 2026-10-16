@@ -143,6 +143,37 @@ def main():
         else:
             info.append('зберігання, дах %s: CSV = специфікація, %d позицій' % (roof, len(plan)))
 
+    # 5. довідник сервера (Code.gs, блок CATALOG) = data.js: власник, тип обліку, потреба об’єктів, ключі старих «Видач»
+    gs = path.replace('data.js', 'apps-script/Code.gs')
+    try:
+        src = open(gs, encoding='utf-8').read()
+        a = src.index('const CATALOG = {')
+        b = src.index('/* END CATALOG */')
+        body = src[a + len('const CATALOG = '):b].strip().rstrip(';')
+        for k in ('items', 'need', 'legacy'):
+            body = body.replace('\n  %s: ' % k, '\n  "%s": ' % k)
+        cat = json.loads(body)
+        for c, it in items.items():
+            x = cat['items'].get(c)
+            if not x or x[0] != ('g' if it['owner'] == 'customer' else 'c') or x[1] != ('s' if it['track'] == 'serial' else 'q'):
+                bad.append('Code.gs CATALOG: позиція %s не збігається з data.js' % c)
+        if set(cat['items']) != set(items):
+            bad.append('Code.gs CATALOG: інший набір позицій')
+        for o in D['objects']:
+            want = {}
+            for r in o['spec']:
+                c = S['specMap'][o['id']][r[0]]
+                want[c] = want.get(c, 0) + r[5]
+            if o['spec'] and cat['need'].get(o['id']) != want:
+                bad.append('Code.gs CATALOG: потреба об’єкта %s ≠ специфікації' % o['id'])
+            if S['specMap'].get(o['id']) and cat['legacy'].get(o['id']) != S['specMap'][o['id']]:
+                bad.append('Code.gs CATALOG: ключі старих «Видач» об’єкта %s' % o['id'])
+        if cat['need'].get('S') != {next(c for c, i in items.items() if i['name'].startswith('Щит захисту DC')): 2}:
+            bad.append('Code.gs CATALOG: потреба щитків DC загальної частини')
+        info.append('Code.gs CATALOG = data.js: %d позицій, потреба %d об’єктів' % (len(cat['items']), len(cat['need'])))
+    except (OSError, ValueError) as e:
+        bad.append('Code.gs CATALOG не прочитано: %s' % e)
+
     print()
     print('Рядків специфікацій: %d; виробів: %d; вкладені вироби: %s' % (total_rows, len(prods), ', '.join('%s «%s»' % (n, prods[n]['name']) for n in nested) or '—'))
     print('Норма втрат: 0 %% для всіх %d складових' % sum(len(p['parts']) for p in prods.values()))

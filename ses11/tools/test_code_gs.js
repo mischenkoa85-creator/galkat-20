@@ -7,212 +7,272 @@ const { makeServer, oldSpreadsheet } = require('./gas_mock');
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log('ok  ' + name); };
 const ADM = '111111', KOM = '222222', IVAN = '333333', ZAM = '444444', OLEG = '555555';
+const z2 = x => String(x).padStart(2, '0');
+const now = new Date(); const TODAY = now.getFullYear() + '-' + z2(now.getMonth() + 1) + '-' + z2(now.getDate());
+const col = (S, sheet, name) => S.ss.rows(sheet)[0].indexOf(name);
 
-const S = makeServer(oldSpreadsheet());
+/* стара таблиця (версія 16.10) + власні колонки власника праворуч: «Телефон» у «Доступи», «Коментар» у «Звіти» */
+const OLD = oldSpreadsheet();
+OLD['Доступи'][0].push('Телефон'); OLD['Доступи'][3].push('+380671112233');
+OLD['Звіти'][0].push('Коментар'); OLD['Звіти'][1].push('мій коментар');
+const S = makeServer(OLD);
 const before = JSON.parse(JSON.stringify({ z: S.ss.rows('Звіти'), v: S.ss.rows('Видачі'), d: S.ss.rows('Доступи') }));
 
-t('ensureSheets_ на старій таблиці: нові аркуші, старі рядки без змін', () => {
-  const r = S.call(ADM, 'login');
-  assert.strictEqual(r.ok, true);
-  for (const n of ['Номенклатура', 'Надходження', 'Рух', 'Серійні']) assert.ok(S.ss.getSheetByName(n), n);
-  assert.deepStrictEqual(S.ss.rows('Надходження')[0].slice(0, 10), ['ID документа', 'Дата', 'Постачальник / накладна', 'Позиція', 'Найменування', 'Кількість', 'Од.', 'Власник', 'Серійні номери', 'Фото']);
-  assert.deepStrictEqual(S.ss.rows('Рух')[0].slice(0, 12), ['ID документа', 'Дата', 'Тип', 'Звідки', 'Куди', 'Дах', 'Позиція', 'Найменування', 'Кількість', 'Серійні номери', 'Причина', 'Хто']);
-  assert.deepStrictEqual(S.ss.rows('Серійні')[0], ['Серійний номер', 'Позиція', 'Статус', 'Місце', 'Дах', 'Останній документ', 'Змінено']);
-  /* старі аркуші: заголовок дописано праворуч, рядки даних не змінено */
-  assert.strictEqual(S.ss.rows('Доступи')[0][5], 'Бригада');
-  assert.strictEqual(S.ss.rows('Звіти')[0][12], 'Бригада');
-  assert.deepStrictEqual(S.ss.rows('Звіти').slice(1).map(r => r.slice(0, 12)).map(r => JSON.stringify(r)), before.z.slice(1).map(r => JSON.stringify(r)));
+t('1. ensureSheets_ на старій таблиці: нові аркуші під блокуванням, старі рядки без змін, stockStart', () => {
+  S.clearEvents();
+  assert.strictEqual(S.call(ADM, 'login').ok, true);
+  assert.ok(S.events().includes('lock'), 'створення аркушів — під LockService');
+  for (const nm of ['Номенклатура', 'Надходження', 'Рух', 'Серійні']) assert.ok(S.ss.getSheetByName(nm), nm);
+  assert.strictEqual(S.ss.rows('Номенклатура').length, 47, 'дзеркало довідника — 46 позицій');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(S.ss.rows('Видачі'))), before.v);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(S.ss.rows('Доступи').slice(1))), before.d.slice(1));
-  assert.strictEqual(S.ss.getSheetByName('Налаштування').rows.length, 4, 'налаштування не дописуються в наявний аркуш');
-  /* другий запуск нічого не дублює */
-  S.call(ADM, 'login');
+  const set = Object.fromEntries(S.ss.rows('Налаштування').slice(1).map(r => [r[0], r[1]]));
+  assert.strictEqual(set.stockStart, TODAY, 'stockStart = день першого запуску');
+  assert.strictEqual(S.ss.rows('Налаштування').length, 5, 'дописано лише рядок stockStart');
+  /* повторний запит: усе готове — блокування для аркушів не береться */
+  S.clearEvents(); S.call(ADM, 'login');
+  assert.deepStrictEqual(S.events(), []);
   assert.strictEqual(S.ss.sheets.length, 10);
-  assert.strictEqual(S.ss.rows('Доступи')[0].length, 6);
 });
-/* бригада Івана — у новій колонці */
-S.ss.getSheetByName('Доступи').rows[3][5] = 'Бригада 1';
 
-t('auth: бригада виконавця з колонки «Бригада», інакше — ім’я', () => {
+t('1. гонка першого запиту: повторна перевірка всередині блокування, рядок під заголовком не губиться', () => {
+  const E = makeServer({ 'Аркуш1': [] });
+  /* поки запит чекав на блокування, інший запит створив аркуші й записав рядок у «Рух» */
+  E.opts.onLock = () => { E.ctx.createSheets_(E.ss); E.ss.getSheetByName('Рух').rows.push(['V1', '2026-10-17', 'видача']); };
+  assert.strictEqual(E.call('000000', 'login').error, 'bad_code');
+  assert.strictEqual(E.ss.sheets.filter(s => s.name === 'Рух').length, 1);
+  assert.deepStrictEqual(E.ss.rows('Рух').map(r => r[0]), ['ID документа', 'V1']);
+  assert.strictEqual(E.ss.rows('Налаштування').filter(r => r[0] === 'stockStart').length, 1);
+});
+
+t('3. «Бригада» — за назвою заголовка, після останньої колонки; «Телефон» і «Коментар» не чіпаються', () => {
+  assert.strictEqual(col(S, 'Доступи', 'Бригада'), 6);
+  assert.strictEqual(col(S, 'Звіти', 'Бригада'), 13);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(S.ss.rows('Доступи').slice(1).map(r => r.slice(0, 6)))), before.d.slice(1).map(r => r.slice(0, 6)));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(S.ss.rows('Звіти')[1].slice(0, 13))), before.z[1].slice(0, 13));
+  /* без значення в «Бригада» бригада = ім’я, а не телефон із колонки 6 */
+  assert.strictEqual(S.call(IVAN, 'login').me.brigade, 'Іван');
+  S.ss.getSheetByName('Доступи').rows[3][col(S, 'Доступи', 'Бригада')] = 'Бригада 1';
   assert.strictEqual(S.call(IVAN, 'login').me.brigade, 'Бригада 1');
-  S.ss.getSheetByName('Доступи').rows.push(['666666', 'Степан', 'виконавець', 'так', '']);
-  assert.strictEqual(S.call('666666', 'login').me.brigade, 'Степан');
-  assert.strictEqual(S.call(KOM, 'login').me.brigade, undefined);
   assert.strictEqual(S.call(OLEG, 'login').error, 'bad_code');
+  const r = S.call(IVAN, 'report', { cid: 'cREPORT00001', d: TODAY, o: '6', items: { tri: 10 } });
+  assert.strictEqual(r.ok, true);
+  const last = S.ss.rows('Звіти').slice(-1)[0];
+  assert.strictEqual(last[13], 'Бригада 1'); assert.ok(last[12] === undefined || last[12] === '', '«Коментар» нового рядка не заповнено');
+  assert.deepStrictEqual(S.call(KOM, 'data').data.reports.map(x => x.br), ['Бригада 1', 'Бригада 1']);
 });
 
-const rec = (cid, extra) => Object.assign({ cid, d: '2026-10-17', doc: 'ТОВ «Постачальник», ВН №15', lines: [
-  { c: 'EL01', q: 3, name: 'Модуль LONGI', unit: 'шт', owner: 'ГАЛ-КАТ', serials: ['LR001', 'LR002', 'LR003'] },
-  { c: 'MK01', q: 100, name: 'Балка 1250', unit: 'шт', owner: 'підрядник' }] }, extra || {});
-
-t('receipt: права — лише комірник і адмін', () => {
-  assert.strictEqual(S.call(IVAN, 'receipt', rec('cRECEIPT0001')).error, 'forbidden');
-  assert.strictEqual(S.call(ZAM, 'receipt', rec('cRECEIPT0001')).error, 'forbidden');
-  assert.strictEqual(S.ss.rows('Надходження').length, 1);
+t('2. формули й автотипи: апостроф для = + - @, читання повертає оригінал; текстові колонки — «@»', () => {
+  const note = '=HYPERLINK("http://x","y")';
+  assert.strictEqual(S.call(IVAN, 'report', { cid: 'cREPORT00002', d: TODAY, o: '6', items: { pv: 1 }, note }).ok, true);
+  assert.strictEqual(S.ss.rows('Звіти').slice(-1)[0][8], "'" + note);
+  assert.strictEqual(S.call(KOM, 'data').data.reports.find(x => x.cid === 'cREPORT00002').n, note);
+  const rc = S.call(KOM, 'receipt', { cid: 'cRECEIPT0001', d: TODAY, doc: '+380 ТОВ «Постачальник», ВН 3/10', lines: [
+    { c: 'EL01', q: 3, name: '@модуль', serials: ['LR001', 'LR002', '00123'] }, { c: 'MK01', q: 100, owner: 'ГАЛ-КАТ' }] });
+  assert.strictEqual(rc.ok, true, JSON.stringify(rc));
+  const row = S.ss.rows('Надходження')[1];
+  assert.strictEqual(row[2], "'+380 ТОВ «Постачальник», ВН 3/10"); assert.strictEqual(row[4], "'@модуль");
+  const sr = S.call(KOM, 'stockRead').stock.receipts[0];
+  assert.strictEqual(sr.doc, '+380 ТОВ «Постачальник», ВН 3/10'); assert.strictEqual(sr.lines[0].name, '@модуль');
+  assert.deepStrictEqual(sr.lines[0].serials, ['LR001', 'LR002', '00123']);
+  assert.strictEqual(S.ss.rows('Серійні')[3][0], '00123');
+  const f = nm => S.ss.getSheetByName(nm).formats.map(x => x[0] + x[1]);
+  for (const c of ['A:A@', 'B:B@']) assert.ok(f('Серійні').includes(c), 'Серійні ' + c);
+  for (const c of ['C:C@', 'I:I@']) assert.ok(f('Надходження').includes(c), 'Надходження ' + c);
+  for (const c of ['J:J@', 'K:K@', 'P:P@']) assert.ok(f('Рух').includes(c), 'Рух ' + c);
+  /* setup() ставить формат «@» і на текстові колонки старих аркушів (примітка, акт) */
+  S.ctx.setup();
+  assert.ok(f('Звіти').includes('I:I@') && f('Видачі').includes('K:K@'));
 });
 
-let recId;
-t('receipt: запис, серійні у «Серійні», фото накладної на Диск', () => {
-  const r = S.call(KOM, 'receipt', rec('cRECEIPT0001', { photos: [{ b64: Buffer.from('jpg').toString('base64'), mime: 'image/jpeg' }] }));
-  assert.strictEqual(r.ok, true, JSON.stringify(r)); recId = r.id;
-  const rows = S.ss.rows('Надходження');
-  assert.strictEqual(rows.length, 3);
-  assert.strictEqual(rows[1][3], 'EL01'); assert.strictEqual(rows[1][7], 'ГАЛ-КАТ'); assert.strictEqual(rows[1][8], 'LR001\nLR002\nLR003');
-  assert.ok(/^https:\/\/drive/.test(rows[1][9]));
-  assert.strictEqual(rows[1][12], 'cRECEIPT0001');
-  const ser = S.ss.rows('Серійні').slice(1);
-  assert.deepStrictEqual(ser.map(r => [r[0], r[1], r[2], r[3]]), [['LR001', 'EL01', 'склад', 'склад'], ['LR002', 'EL01', 'склад', 'склад'], ['LR003', 'EL01', 'склад', 'склад']]);
+t('7. власник — з довідника сервера, не з запиту', () => {
+  assert.strictEqual(S.ss.rows('Надходження')[2][7], 'підрядник', 'MK01 з owner «ГАЛ-КАТ» від клієнта — все одно підрядник');
+  assert.strictEqual(S.ss.rows('Надходження')[1][7], 'ГАЛ-КАТ');
 });
 
-t('receipt: повтор із тим самим cid — dup, без нових рядків', () => {
-  const r = S.call(KOM, 'receipt', rec('cRECEIPT0001'));
-  assert.deepStrictEqual([r.ok, r.dup, r.id], [true, true, recId]);
+t('receipt/move: права — лише комірник і адмін', () => {
+  for (const code of [IVAN, ZAM]) {
+    assert.strictEqual(S.call(code, 'receipt', { cid: 'cRECEIPTX001', d: TODAY, lines: [{ c: 'MK01', q: 1 }] }).error, 'forbidden');
+    assert.strictEqual(S.call(code, 'move', { cid: 'cMOVEX000001', d: TODAY, type: 'брак', from: 'склад', to: 'брак', reason: 'x', lines: [{ c: 'MK01', q: 1 }] }).error, 'forbidden');
+  }
+});
+
+t('receipt: повтор cid — dup; дубль серійного; порожньо; погана дата', () => {
+  const d = S.call(KOM, 'receipt', { cid: 'cRECEIPT0001', d: TODAY, lines: [{ c: 'MK01', q: 1 }] });
+  assert.deepStrictEqual([d.ok, d.dup], [true, true]);
   assert.strictEqual(S.ss.rows('Надходження').length, 3);
-  assert.strictEqual(S.ss.rows('Серійні').length, 4);
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0002', d: TODAY, lines: [{ c: 'EL01', q: 1, serials: ['LR001'] }] }).error, 'serial_dup');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0003', d: TODAY, lines: [] }).error, 'empty');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0004', d: '17.10', lines: [{ c: 'MK01', q: 1 }] }).error, 'bad_date');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0005', d: TODAY, lines: [{ c: 'MK01', q: -1 }] }).error, 'bad_qty');
 });
 
-t('receipt: перевірки — дубль серійного, кількість ≠ серійних, порожньо, погана дата', () => {
-  assert.strictEqual(S.call(KOM, 'receipt', rec('cRECEIPT0002')).error, 'serial_dup');
-  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0003', d: '2026-10-17', lines: [{ c: 'EL01', q: 2, owner: 'ГАЛ-КАТ', serials: ['X1001'] }] }).error, 'serial_count');
-  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0004', d: '2026-10-17', lines: [] }).error, 'empty');
-  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0005', d: '17.10', lines: [{ c: 'MK01', q: 1 }] }).error, 'bad_date');
-  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0006', d: '2026-10-17', lines: [{ c: 'MK01', q: -1 }] }).error, 'bad_qty');
-  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0007', d: '2026-10-17', lines: [{ c: 'MK 01', q: 1 }] }).error, 'bad_item');
+t('8. позиції: невідомий код, серійні обов’язкові й дорівнюють кількості', () => {
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0006', d: TODAY, lines: [{ c: 'ZZ99', q: 1 }] }).error, 'bad_item');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0007', d: TODAY, lines: [{ c: 'EL01', q: 2 }] }).error, 'serial_count');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0008', d: TODAY, lines: [{ c: 'EL01', q: 2, serials: ['X1001'] }] }).error, 'serial_count');
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0009', d: TODAY, lines: [{ c: 'MK01', q: 1, serials: ['X1002'] }] }).error, 'serial_count');
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000090', d: TODAY, type: 'видача', from: 'склад', to: 'бригада: Бригада 1', o: '6', lines: [{ c: 'EL01', q: 1 }] }).error, 'serial_count');
   assert.strictEqual(S.ss.rows('Надходження').length, 3);
 });
 
 const BR = 'бригада: Бригада 1';
-const issue = (cid, extra) => Object.assign({ cid, d: '2026-10-17', type: 'видача', from: 'склад', to: BR, o: '6', lines: [
-  { c: 'EL01', q: 2, owner: 'ГАЛ-КАТ', serials: ['LR001', 'LR002'] }, { c: 'MK01', q: 50, owner: 'підрядник' }] }, extra || {});
+const issue = (cid, extra) => Object.assign({ cid, d: TODAY, type: 'видача', from: 'склад', to: BR, o: '6', lines: [
+  { c: 'EL01', q: 2, serials: ['LR001', 'LR002'] }, { c: 'MK01', q: 50 }] }, extra || {});
 
-t('move: права і перевірки місць', () => {
-  assert.strictEqual(S.call(IVAN, 'move', issue('cMOVE0000001')).error, 'forbidden');
-  assert.strictEqual(S.call(ZAM, 'move', issue('cMOVE0000001')).error, 'forbidden');
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { type: 'продаж' })).error, 'bad_type');
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { from: 'бригада: X' })).error, 'bad_place');
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { o: '' })).error, 'bad_object');
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { lines: [{ c: 'MK01', q: 999, owner: 'підрядник', over: true }] })).error, 'need_reason');
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { lines: [{ c: 'EL01', q: 1, owner: 'ГАЛ-КАТ', serials: ['NOPE1'] }] })).error, 'serial_unknown');
+t('5. бригада «куди» — лише з «Доступи» або вже наявна в «Русі»', () => {
+  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { to: 'бригада: Невідома' })).error, 'bad_place');
+  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { to: 'бригада: Олег' })).error, 'bad_place', 'вимкнений виконавець — не бригада');
   assert.strictEqual(S.ss.rows('Рух').length, 1);
 });
 
 let issueId;
-t('move видача: рядки, серійні → бригада, повтор cid — dup', () => {
+t('12. підпис на Диск до блокування; розмір підпису обмежено', () => {
+  const big = { b64: 'A'.repeat(300 * 1024) };
+  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000001', { sign: big })).error, 'bad_request');
+  S.clearEvents();
   const r = S.call(KOM, 'move', issue('cMOVE0000001', { sign: { b64: Buffer.from('png').toString('base64') } }));
   assert.strictEqual(r.ok, true, JSON.stringify(r)); issueId = r.id;
-  assert.ok(/^https:\/\/drive/.test(r.sign));
-  const rows = S.ss.rows('Рух');
-  assert.strictEqual(rows.length, 3);
-  assert.deepStrictEqual(rows[1].slice(2, 9), ['видача', 'склад', BR, '6', 'EL01', '', 2]);
-  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(r => [r[0], r]));
-  assert.deepStrictEqual([ser.LR001[2], ser.LR001[3], ser.LR001[4], ser.LR001[5]], ['бригада', BR, '6', issueId]);
-  assert.strictEqual(ser.LR003[2], 'склад');
-  const d = S.call(KOM, 'move', issue('cMOVE0000001'));
-  assert.deepStrictEqual([d.dup, d.id], [true, issueId]);
-  assert.strictEqual(S.ss.rows('Рух').length, 3);
-  /* той самий модуль удруге видати не можна — він уже в бригади */
-  assert.strictEqual(S.call(KOM, 'move', issue('cMOVE0000002', { lines: [{ c: 'EL01', q: 1, owner: 'ГАЛ-КАТ', serials: ['LR001'] }] })).error, 'serial_state');
+  const ev = S.events(); assert.ok(ev.indexOf('file') >= 0 && ev.indexOf('file') < ev.indexOf('lock'), 'файл — до блокування: ' + ev.join(','));
+  assert.ok(/^https:\/\/drive/.test(S.ss.rows('Рух')[1][12]));
 });
 
-t('move понад ліміт — з причиною проходить', () => {
-  const r = S.call(KOM, 'move', issue('cMOVE0000003', { lines: [{ c: 'MK01', q: 5, owner: 'підрядник', over: true }], reason: 'заміна браку' }));
+t('5. бригада, що лишилась лише в «Русі», приймається', () => {
+  S.ss.getSheetByName('Доступи').rows[3][col(S, 'Доступи', 'Бригада')] = 'Бригада 2';
+  const r = S.call(KOM, 'move', { cid: 'cMOVE0000002', d: TODAY, type: 'повернення', from: BR, to: 'склад', o: '6', lines: [{ c: 'MK01', q: 5 }] });
+  assert.strictEqual(r.ok, true, JSON.stringify(r));
+  S.ss.getSheetByName('Доступи').rows[3][col(S, 'Доступи', 'Бригада')] = 'Бригада 1';
+});
+
+t('8. наявність і ліміт даху рахує сервер; понад — лише з причиною (інакше bad_request)', () => {
+  /* на складі 100 − 50 + 5 = 55 балок; ліміт даху 6: 656 − 45 = 611 */
+  let r = S.call(KOM, 'move', issue('cMOVE0000003', { lines: [{ c: 'MK01', q: 60 }] }));
+  assert.deepStrictEqual([r.error, /^over_limit: MK01: є 55/.test(r.message)], ['bad_request', true], JSON.stringify(r));
+  r = S.call(KOM, 'move', issue('cMOVE0000003', { o: '5', lines: [{ c: 'MK01', q: 1 }] }));
+  assert.ok(r.error === 'bad_request' && /ліміт 0/.test(r.message), 'балки на даху 5 немає в потребі: ' + JSON.stringify(r));
+  r = S.call(KOM, 'move', { cid: 'cMOVE0000004', d: TODAY, type: 'повернення', from: BR, to: 'склад', lines: [{ c: 'MK01', q: 999 }] });
+  assert.strictEqual(r.error, 'bad_request', 'повернути більше, ніж видано — лише з причиною');
+  r = S.call(KOM, 'move', issue('cMOVE0000003', { lines: [{ c: 'MK01', q: 60 }], reason: 'заміна браку' }));
   assert.strictEqual(r.ok, true);
   assert.strictEqual(S.ss.rows('Рух').slice(-1)[0][10], 'заміна браку');
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000005', d: TODAY, type: 'брак', from: BR, to: 'брак', lines: [{ c: 'MK01', q: 1 }] }).error, 'need_reason');
 });
 
-t('move повернення, брак, передача на зберігання, інвентаризація', () => {
-  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000004', d: '2026-10-17', type: 'повернення', from: BR, to: 'склад', o: '6', lines: [{ c: 'MK01', q: 5, owner: 'підрядник' }, { c: 'EL01', q: 1, owner: 'ГАЛ-КАТ', serials: ['LR002'] }] }).ok, true);
-  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000005', d: '2026-10-17', type: 'брак', from: BR, to: 'брак', lines: [{ c: 'MK01', q: 1, owner: 'підрядник' }] }).error, 'need_reason');
-  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000005', d: '2026-10-17', type: 'брак', from: BR, to: 'брак', reason: 'погнута', lines: [{ c: 'MK01', q: 1, owner: 'підрядник' }] }).ok, true);
-  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000006', d: '2026-10-17', type: 'передача на зберігання', from: 'склад', to: 'зберігання ГАЛ-КАТ', o: '10', act: 'АКТ-1', lines: [{ c: 'MK01', q: 20, owner: 'підрядник' }, { c: 'EL01', q: 1, owner: 'ГАЛ-КАТ', serials: ['LR003'] }] }).ok, true);
-  assert.strictEqual(S.call(ADM, 'move', { cid: 'cMOVE0000007', d: '2026-10-17', type: 'інвентаризація', from: 'склад', reason: 'перерахунок', lines: [{ c: 'MK01', q: -2, owner: 'підрядник' }] }).ok, true);
-  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(r => [r[0], r]));
-  assert.deepStrictEqual([ser.LR002[2], ser.LR002[3]], ['склад', 'склад']);
-  assert.deepStrictEqual([ser.LR003[2], ser.LR003[3], ser.LR003[4]], ['зберігання', 'зберігання ГАЛ-КАТ', '10']);
+t('6. «Початкові залишки»: нові серійні в місці; дубль серійного — відмова', () => {
+  const r = S.call(KOM, 'move', { cid: 'cMOVE0000006', d: TODAY, type: 'початкові залишки', from: BR, lines: [{ c: 'MK02', q: 10 }, { c: 'EL01', q: 1, serials: ['OPEN001'] }] });
+  assert.strictEqual(r.ok, true, JSON.stringify(r));
+  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.deepStrictEqual([ser.OPEN001[2], ser.OPEN001[3]], ['бригада', BR]);
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000007', d: TODAY, type: 'початкові залишки', from: 'склад', lines: [{ c: 'EL01', q: 1, serials: ['00123'] }] }).error, 'serial_dup');
+  const b = S.call(KOM, 'stockRead').stock;
+  assert.strictEqual(b.bal[BR].MK02, 10);
+  assert.strictEqual(b.cfg.stockStart, TODAY);
 });
 
-t('stock (читання): комірник — усе; залишки за документами', () => {
-  const r = S.call(KOM, 'stock');
+t('move повернення, брак, зберігання, інвентаризація; серійні за місцями', () => {
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000008', d: TODAY, type: 'повернення', from: BR, to: 'склад', o: '6', lines: [{ c: 'EL01', q: 1, serials: ['LR002'] }] }).ok, true);
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000009', d: TODAY, type: 'брак', from: BR, to: 'брак', reason: 'погнута', lines: [{ c: 'MK01', q: 1 }] }).ok, true);
+  assert.strictEqual(S.call(KOM, 'move', { cid: 'cMOVE0000010', d: TODAY, type: 'передача на зберігання', from: 'склад', to: 'зберігання ГАЛ-КАТ', o: '10', act: '-АКТ-1', reason: 'склад у мінусі — надходження ще не внесено', lines: [{ c: 'MK01', q: 20 }, { c: 'EL01', q: 1, serials: ['00123'] }] }).ok, true);
+  assert.strictEqual(S.ss.rows('Рух').slice(-1)[0][15], "'-АКТ-1");
+  assert.strictEqual(S.call(ADM, 'move', { cid: 'cMOVE0000011', d: TODAY, type: 'інвентаризація', from: 'склад', reason: 'перерахунок', lines: [{ c: 'MK01', q: -2 }] }).ok, true);
+  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.deepStrictEqual([ser.LR001[3], ser.LR002[3], ser['00123'][3], ser['00123'][4]], [BR, 'склад', 'зберігання ГАЛ-КАТ', '10']);
+  const b = S.call(KOM, 'stockRead').stock.bal;
+  /* склад MK01: 100 − 50 + 5 − 60 − 20 − 2 = −27 (видача 60 — з причиною); бригада: 50 − 5 + 60 − 1 = 104 */
+  assert.deepStrictEqual([b['склад'].MK01, b[BR].MK01, b['зберігання ГАЛ-КАТ'].MK01, b['брак'].MK01], [-27, 104, 20, 1]);
+});
+
+t('11. stockRead — читання; stock — лише запис старого формату з об’єктом items', () => {
+  assert.strictEqual(S.call(KOM, 'stockRead').ok, true);
+  assert.strictEqual(S.call(KOM, 'stock').error, 'bad_request');
+  assert.strictEqual(S.call(KOM, 'stock', { items: 'm1' }).error, 'bad_request');
+  assert.strictEqual(S.call(KOM, 'stock', { items: [] }).error, 'bad_request');
+  assert.strictEqual(S.call(KOM, 'stock', { items: null }).error, 'bad_request');
+  const r = S.call(KOM, 'stock', { cid: 'cLEGACY00001', d: TODAY, o: '6', items: { e1: { q: 3, name: '=Модуль' }, m2: { q: 4, name: 'Лага' } } });
   assert.strictEqual(r.ok, true);
-  const b = r.stock.bal;
-  /* склад MK01: +100 −50 −5 +5 −20 −2 = 28; бригада: 50 + 5 − 5 − 1 = 49; зберігання 20; брак 1 */
-  assert.strictEqual(b['склад'].MK01, 28);
-  assert.strictEqual(b[BR].MK01, 49);
-  assert.strictEqual(b['зберігання ГАЛ-КАТ'].MK01, 20);
-  assert.strictEqual(b['брак'].MK01, 1);
-  /* модулі: склад 3 −2 +1 −1 = 1; бригада 1; зберігання 1 */
-  assert.deepStrictEqual([b['склад'].EL01, b[BR].EL01, b['зберігання ГАЛ-КАТ'].EL01], [1, 1, 1]);
-  assert.strictEqual(r.stock.receipts.length, 1);
-  assert.strictEqual(r.stock.moves.length, 6);
-  assert.ok(r.stock.brigades.includes('Бригада 1'));
-  assert.ok(!r.stock.brigades.includes('Олег'), 'вимкнений код не дає бригади');
+  assert.strictEqual(S.call(KOM, 'stock', { cid: 'cLEGACY00001', d: TODAY, o: '6', items: { m1: { q: 3 } } }).dup, true);
+  assert.strictEqual(S.call(IVAN, 'stock', { cid: 'cLEGACY00002', d: TODAY, o: '6', items: { m1: { q: 3 } } }).error, 'forbidden');
+  assert.strictEqual(S.ss.rows('Видачі').slice(-1)[0][4], 'Лага');
+  assert.strictEqual(S.ss.rows('Видачі').slice(-2)[0][4], "'=Модуль");
 });
 
-t('stock: виконавець бачить лише рух своєї бригади', () => {
-  const r = S.call(IVAN, 'stock');
-  assert.strictEqual(r.stock.receipts.length, 0);
-  assert.ok(r.stock.moves.length > 0 && r.stock.moves.every(m => m.from === BR || m.to === BR));
-  assert.deepStrictEqual(Object.keys(r.stock.bal), [BR]);
-  assert.deepStrictEqual(r.stock.brigades, ['Бригада 1']);
-  assert.ok(r.stock.serials.every(s => s.place === BR));
-  const other = S.call('666666', 'stock');
-  assert.strictEqual(other.stock.moves.length, 0);
-  assert.deepStrictEqual(other.stock.bal, {});
-});
-
-t('stock: замовник — давальницькі завжди, підрядника — за налаштуванням', () => {
-  let r = S.call(ZAM, 'stock');
-  const owners = s => [...new Set([].concat(...s.receipts.map(x => x.lines), ...s.moves.map(x => x.lines)).map(l => l.owner))];
-  assert.deepStrictEqual(owners(r.stock), ['ГАЛ-КАТ']);
-  assert.strictEqual(r.stock.cfg.customerSeesContractorStock, false);
-  assert.strictEqual(r.stock.cfg.contractorVisible, false);
-  assert.strictEqual(r.stock.bal['склад'].MK01, undefined);
-  assert.strictEqual(r.stock.bal['склад'].EL01, 1);
+t('7. замовник: старі «Видачі» і склад — давальницькі завжди, підрядника — за налаштуванням', () => {
+  const keys = () => S.call(ZAM, 'data').data.stock.map(x => Object.keys(x.items).join(',')).join('|');
+  assert.strictEqual(keys(), 'e1', 'm1, m2 (підрядника) приховано, e1 (модуль) видно');
+  let s = S.call(ZAM, 'stockRead').stock;
+  assert.ok(s.receipts.every(x => x.lines.every(l => l.owner === 'ГАЛ-КАТ')) && s.moves.every(x => x.lines.every(l => l.owner === 'ГАЛ-КАТ')));
+  assert.strictEqual(s.bal['склад'].MK01, undefined);
+  assert.strictEqual(s.cfg.contractorVisible, false);
   S.ss.getSheetByName('Налаштування').rows.push(['customerSeesContractorStock', 'так', '']);
-  r = S.call(ZAM, 'stock');
-  assert.deepStrictEqual(owners(r.stock).sort(), ['ГАЛ-КАТ', 'підрядник']);
-  assert.strictEqual(r.stock.bal['склад'].MK01, 28);
-  assert.strictEqual(r.stock.cfg.contractorVisible, true);
+  assert.strictEqual(keys(), 'm1|e1,m2');
+  s = S.call(ZAM, 'stockRead').stock;
+  assert.strictEqual(s.bal['склад'].MK01, -27);
   S.ss.getSheetByName('Налаштування').rows.pop();
+  assert.strictEqual(S.call(KOM, 'data').data.stock.length, 2, 'комірник бачить усе');
 });
 
-t('stock з items — старий запис у «Видачі» працює як раніше', () => {
-  const r = S.call(KOM, 'stock', { cid: 'cLEGACY00001', d: '2026-10-17', o: '10', type: 'зберігання ГАЛ-КАТ', act: 'А-2', items: { m1: { q: 3, name: 'Балка' } } });
-  assert.strictEqual(r.ok, true);
-  assert.strictEqual(S.call(KOM, 'stock', { cid: 'cLEGACY00001', d: '2026-10-17', o: '10', items: { m1: { q: 3 } } }).dup, true);
-  assert.strictEqual(S.call(IVAN, 'stock', { cid: 'cLEGACY00002', d: '2026-10-17', o: '10', items: { m1: { q: 3 } } }).error, 'forbidden');
-  assert.strictEqual(S.ss.rows('Видачі').length, 3);
+t('stockRead: виконавець бачить лише рух своєї бригади', () => {
+  const r = S.call(IVAN, 'stockRead').stock;
+  assert.strictEqual(r.receipts.length, 0);
+  assert.ok(r.moves.length > 0 && r.moves.every(m => m.from === BR || m.to === BR));
+  assert.deepStrictEqual(Object.keys(r.bal), [BR]);
+  assert.ok(r.serials.every(x => x.place === BR));
 });
 
-t('report: пише бригаду автора; data віддає br і для старих звітів', () => {
-  const r = S.call(IVAN, 'report', { cid: 'cREPORT00001', d: '2026-10-17', o: '6', items: { tri: 10 } });
-  assert.strictEqual(r.ok, true);
-  assert.strictEqual(S.ss.rows('Звіти').slice(-1)[0][12], 'Бригада 1');
-  const d = S.call(KOM, 'data').data;
-  assert.deepStrictEqual(d.reports.map(x => [x.by, x.br]), [['Іван', 'Бригада 1'], ['Іван', 'Бригада 1']]);
-  assert.strictEqual(S.call(KOM, 'report', { cid: 'cREPORT00002', d: '2026-10-17', o: '6', items: { tri: 1 } }).error, 'forbidden');
+t('10. атомарність: серійні пишуться першими; обрив перед рядками документа виправляється при повторі', () => {
+  S.ss.getSheetByName('Рух').failOnce = 'обрив зв’язку з таблицею';
+  const req = issue('cMOVE0000012', { lines: [{ c: 'EL01', q: 1, serials: ['LR001'] }], from: BR, to: 'склад', type: 'повернення' });
+  const r1 = S.call(KOM, 'move', req);
+  assert.strictEqual(r1.error, 'server');
+  let ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.strictEqual(ser.LR001[3], 'склад', 'серійні вже переписано, документа ще немає');
+  assert.ok(!S.ss.rows('Рух').some(x => x[16] === 'cMOVE0000012'));
+  const r2 = S.call(KOM, 'move', req);
+  assert.strictEqual(r2.ok, true, JSON.stringify(r2));
+  ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.deepStrictEqual([ser.LR001[3], ser.LR001[5]], ['склад', r2.id]);
+  /* dup: «Серійні» зіпсовано вручну — повтор того самого cid їх відновлює */
+  S.ss.getSheetByName('Серійні').rows.splice(1);
+  const r3 = S.call(KOM, 'move', req);
+  assert.deepStrictEqual([r3.ok, r3.dup, r3.id], [true, true, r2.id]);
+  ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.deepStrictEqual(Object.keys(ser).sort(), ['00123', 'LR001', 'LR002', 'OPEN001']);
+  assert.strictEqual(ser.LR001[5], r2.id);
 });
 
-t('delete: комірник — власні документи складу; «Серійні» перебудовуються', () => {
+t('12. завеликі фото — bad_request; фото накладної — на Диск до блокування', () => {
+  const big = [{ b64: 'A'.repeat(2.9e6), mime: 'image/jpeg' }];
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0010', d: TODAY, lines: [{ c: 'MK01', q: 1 }], photos: big }).error, 'bad_request');
+  assert.strictEqual(S.call(IVAN, 'report', { cid: 'cREPORT00003', d: TODAY, o: '6', items: { tri: 1 }, photos: big }).error, 'bad_request');
+  S.clearEvents();
+  assert.strictEqual(S.call(KOM, 'receipt', { cid: 'cRECEIPT0011', d: TODAY, lines: [{ c: 'MK02', q: 5 }], photos: [{ b64: Buffer.from('jpg').toString('base64') }] }).ok, true);
+  const ev = S.events(); assert.ok(ev.indexOf('file') >= 0 && ev.indexOf('file') < ev.indexOf('lock'), ev.join(','));
+});
+
+t('9. видалення: документ, на серійні якого посилається пізніший рух, — відмова', () => {
+  const recId = S.ss.rows('Надходження')[1][0];
+  const d1 = S.call(ADM, 'delete', { kind: 'receipts', id: recId });
+  assert.strictEqual(d1.error, 'in_use', JSON.stringify(d1));
+  assert.strictEqual(S.call(ADM, 'delete', { kind: 'moves', id: issueId }).error, 'in_use', 'видачу LR001/LR002 далі повертали');
   assert.strictEqual(S.call(IVAN, 'delete', { kind: 'moves', id: issueId }).error, 'forbidden');
-  assert.strictEqual(S.call(KOM, 'delete', { kind: 'moves', id: issueId }).ok, true);
-  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(r => [r[0], r]));
-  /* без видачі: LR001 на складі; LR002 «повернення» з бригади не застосовується; LR003 — на зберіганні */
-  assert.deepStrictEqual([ser.LR001[2], ser.LR001[3]], ['склад', 'склад']);
-  assert.deepStrictEqual([ser.LR003[2], ser.LR003[3]], ['зберігання', 'зберігання ГАЛ-КАТ']);
-  assert.strictEqual(S.call(ADM, 'delete', { kind: 'receipts', id: recId }).ok, true);
-  assert.strictEqual(S.ss.rows('Серійні').length, 1);
+  /* останній рух LR001 можна видалити — серійний повертається в бригаду */
+  const lastId = S.ss.rows('Рух').find(x => x[16] === 'cMOVE0000012')[0];
+  assert.strictEqual(S.call(KOM, 'delete', { kind: 'moves', id: lastId }).ok, true);
+  const ser = Object.fromEntries(S.ss.rows('Серійні').slice(1).map(x => [x[0], x]));
+  assert.strictEqual(ser.LR001[3], BR);
+  /* надходження без серійних видаляється */
+  const plain = S.ss.rows('Надходження').find(x => x[12] === 'cRECEIPT0011')[0];
+  assert.strictEqual(S.call(KOM, 'delete', { kind: 'receipts', id: plain }).ok, true);
 });
 
-t('setup на порожній таблиці: усі аркуші, налаштування за замовчуванням, код адміністратора', () => {
+t('setup на порожній таблиці: усі аркуші, налаштування, stockStart, довідник, код адміністратора', () => {
   const E = makeServer({ 'Аркуш1': [] });
   E.ctx.setup();
   assert.deepStrictEqual(E.ss.sheets.map(s => s.name), ['Доступи', 'Звіти', 'Видачі', 'Налаштування', 'Норми', 'Обсяги', 'Номенклатура', 'Надходження', 'Рух', 'Серійні']);
   const set = Object.fromEntries(E.ss.rows('Налаштування').slice(1).map(r => [r[0], r[1]]));
-  assert.strictEqual(set.acceptance, 'foreman');
-  assert.strictEqual(set.customerSeesContractorStock, 'ні');
+  assert.deepStrictEqual([set.acceptance, set.customerSeesContractorStock, set.stockStart], ['foreman', 'ні', TODAY]);
   assert.ok(/^\d{6}$/.test(E.ss.rows('Доступи')[1][0]));
-  assert.ok(E.ss.getSheetByName('Серійні').formats.some(f => f[0] === 'A:A' && f[1] === '@'), 'серійні — як текст');
+  assert.deepStrictEqual(E.ss.rows('Доступи')[0], ['Код', 'Ім’я', 'Роль', 'Активний', 'Примітка', 'Бригада']);
+  assert.strictEqual(E.ss.rows('Номенклатура').find(r => r[0] === 'EL01')[4], 'ГАЛ-КАТ');
 });
 
 console.log('\nУсі тести Code.gs пройшли: ' + n);

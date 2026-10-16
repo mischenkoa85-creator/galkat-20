@@ -18,6 +18,7 @@ class Range {
     return out;
   }
   setValues(v) {
+    if (this.sh.failOnce) { const m = this.sh.failOnce; this.sh.failOnce = null; throw new Error(m); }
     if (v.length !== this.nr || v.some(r => r.length !== this.nc)) throw new Error('setValues: розмір ' + v.length + '×' + (v[0] || []).length + ' ≠ ' + this.nr + '×' + this.nc + ' (' + this.sh.name + ')');
     for (let i = 0; i < this.nr; i++) {
       const row = this.sh.rows[this.r - 1 + i] || (this.sh.rows[this.r - 1 + i] = []);
@@ -35,6 +36,7 @@ class Range {
 class Sheet {
   constructor(name, rows) { this.name = name; this.rows = (rows || []).map(r => r.slice()); this.formats = []; this.writes = 0; }
   getName() { return this.name; }
+  getMaxRows() { return Math.max(1000, this.rows.length); }
   getLastRow() { for (let i = this.rows.length - 1; i >= 0; i--) if ((this.rows[i] || []).some(v => v !== '' && v !== undefined && v !== null)) return i + 1; return 0; }
   getLastColumn() { let m = 0; for (const r of this.rows) if (r) for (let j = r.length - 1; j >= 0; j--) if (r[j] !== '' && r[j] !== undefined && r[j] !== null) { m = Math.max(m, j + 1); break; } return m; }
   getRange(a, b, c, d) {
@@ -58,11 +60,12 @@ class Spreadsheet {
 }
 
 let folderSeq = 0;
+let EVENTS = [];
 class Folder {
   constructor(name) { this.name = name; this.id = 'F' + (++folderSeq); this.folders = []; this.files = []; }
   getFoldersByName(n) { const list = this.folders.filter(f => f.name === n); let i = 0; return { hasNext: () => i < list.length, next: () => list[i++] }; }
   createFolder(n) { const f = new Folder(n); this.folders.push(f); return f; }
-  createFile(blob) { const f = { name: blob.name, mime: blob.mime, size: blob.bytes.length, trashed: false, setTrashed(v) { this.trashed = v; } }; this.files.push(f); return f; }
+  createFile(blob) { EVENTS.push('file'); const f = { name: blob.name, mime: blob.mime, size: blob.bytes.length, trashed: false, setTrashed(v) { this.trashed = v; } }; this.files.push(f); return f; }
   getUrl() { return 'https://drive.google.com/drive/folders/' + this.id; }
 }
 
@@ -86,7 +89,7 @@ function makeServer(sheets, opts) {
     console,
     SpreadsheetApp: { openById: () => ss },
     DriveApp: { getFolderById: id => drive[id] || (drive[id] = new Folder('root:' + id)) },
-    LockService: { getScriptLock: () => ({ waitLock() { }, releaseLock() { } }) },
+    LockService: { getScriptLock: () => ({ waitLock() { EVENTS.push('lock'); if (opts.onLock) { const f = opts.onLock; opts.onLock = null; f(); } }, releaseLock() { EVENTS.push('unlock'); } }) },
     Utilities: {
       formatDate,
       base64Decode: b => Array.from(Buffer.from(String(b), 'base64')),
@@ -101,7 +104,8 @@ function makeServer(sheets, opts) {
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } }).getContent());
   const call = (code, action, payload) => post(Object.assign({ action, code }, payload || {}));
   const evalIn = src => vm.runInContext(src, ctx);
-  return { ss, drive, log, ctx, post, call, evalIn };
+  EVENTS = [];
+  return { ss, drive, log, ctx, post, call, evalIn, opts, events: () => EVENTS, clearEvents: () => { EVENTS.length = 0; } };
 }
 
 /* таблиця так, як її залишила версія 16.10.2026: старі заголовки, кілька рядків даних */

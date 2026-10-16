@@ -7,13 +7,16 @@
     однакові набори для різних дахів зливаються в один виріб; допускається вкладеність (виріб у виробі);
   - відповідність «рядок специфікації даху → код номенклатури» (stock.specMap);
   - перелік на зберігання ГАЛ-КАТ для дахів 10–11 з CSV (stock.storagePlan);
-  - налаштування проєкту в meta: acceptance, customerSeesContractorStock, hiddenWorks.
+  - налаштування проєкту в meta: acceptance, customerSeesContractorStock, hiddenWorks;
+  - блок CATALOG у apps-script/Code.gs (між маркерами BEGIN/END CATALOG): власник і облік позицій, потреба об’єктів,
+    ключі старих «Видач» — сервер за ним перевіряє позиції, ліміти й видимість для замовника.
 
 Решта data.js не змінюється (перевіряється побайтно). Повторний запуск дає той самий результат.
 
 Запуск (без cd, абсолютні шляхи):
   C:/Python314/python.exe -I -X utf8 D:/галкат/10_Код/galkat-20/ses11/tools/build_stock.py ^
-      D:/галкат/10_Код/galkat-20/ses11/data.js D:/галкат/08_Склад/Матеріали_відкладених_дахів_на_зберігання_ГАЛ-КАТ.csv
+      D:/галкат/10_Код/galkat-20/ses11/data.js D:/галкат/08_Склад/Матеріали_відкладених_дахів_на_зберігання_ГАЛ-КАТ.csv ^
+      D:/галкат/10_Код/galkat-20/ses11/apps-script/Code.gs
 Перевірка: ses11/tools/check_bom.py.
 """
 import csv
@@ -232,9 +235,55 @@ def build(D, csv_path):
     return D
 
 
+CAT_BEGIN = '/* BEGIN CATALOG'
+CAT_END = '/* END CATALOG */'
+
+
+def server_catalog(D):
+    """Довідник для сервера (Code.gs): власник і тип обліку позицій, потреба об’єктів, ключі старих «Видач»."""
+    st = D['stock']
+    items = {it['code']: ['g' if it['owner'] == 'customer' else 'c', 's' if it['track'] == 'serial' else 'q',
+                          it['name'] + (' ' + it['size'] if it['size'] else ''), it['unit']] for it in st['items']}
+    need, legacy = {}, {}
+    for o in D['objects']:
+        n = {}
+        for r in o['spec']:
+            c = st['specMap'][o['id']][r[0]]
+            n[c] = n.get(c, 0) + r[5]
+        for a, (pid, coef) in st['bom'].get(o['id'], {}).items():
+            if o['spec']:
+                continue
+            for ref, num, den, loss in st['products'][pid]['parts']:
+                n[ref] = n.get(ref, 0) + o['plan'][a]['q'] * num / den * coef
+        if n:
+            need[o['id']] = {c: (int(v) if v == int(v) else v) for c, v in n.items()}
+        if st['specMap'].get(o['id']):
+            legacy[o['id']] = st['specMap'][o['id']]
+    return {'items': items, 'need': need, 'legacy': legacy}
+
+
+def write_catalog(gs_path, D):
+    t = open(gs_path, encoding='utf-8', newline='').read()
+    nl = '\r\n' if '\r\n' in t else '\n'
+    a, b = t.find(CAT_BEGIN), t.find(CAT_END)
+    assert a >= 0 and b > a, 'Code.gs: немає маркерів BEGIN/END CATALOG'
+    cat = server_catalog(D)
+    block = (CAT_BEGIN + ' — згенеровано tools/build_stock.py з data.js; не редагувати вручну.' + nl +
+             '   items: код → [власник c|g, облік q|s, назва, од.]; need: об’єкт → код → потреба за проєктом; legacy: об’єкт → ключ рядка специфікації → код */' + nl +
+             'const CATALOG = {' + nl +
+             '  items: ' + json.dumps(cat['items'], ensure_ascii=False, separators=(',', ':')) + ',' + nl +
+             '  need: ' + json.dumps(cat['need'], ensure_ascii=False, separators=(',', ':')) + ',' + nl +
+             '  legacy: ' + json.dumps(cat['legacy'], ensure_ascii=False, separators=(',', ':')) + nl +
+             '};' + nl)
+    t = t[:a] + block + t[b:]
+    with open(gs_path, 'w', encoding='utf-8', newline='') as f:
+        f.write(t)
+
+
 def main():
     path = sys.argv[1] if len(sys.argv) > 1 else 'D:/галкат/10_Код/galkat-20/ses11/data.js'
     csv_path = sys.argv[2] if len(sys.argv) > 2 else 'D:/галкат/08_Склад/Матеріали_відкладених_дахів_на_зберігання_ГАЛ-КАТ.csv'
+    gs_path = sys.argv[3] if len(sys.argv) > 3 else path.replace('data.js', 'apps-script/Code.gs')
     lines, D = load(path)
     before = json.loads(json.dumps(D))
     build(D, csv_path)
@@ -251,6 +300,7 @@ def main():
     lines[1] = PREFIX + json.dumps(D, ensure_ascii=False, separators=(',', ':')) + ';'
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(lines))
+    write_catalog(gs_path, D)
     st = D['stock']
     print('номенклатура: %d позицій; виробів: %d; дахів із BOM: %d; на зберігання: %s' % (
         len(st['items']), len(st['products']), len(st['bom']), {k: len(v) for k, v in st['storagePlan'].items()}))

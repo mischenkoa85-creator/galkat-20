@@ -52,11 +52,12 @@
     /* склад (крок 2): документи з сервера (skSrv) і разом із чергою телефона (sk); чернетки форм */
     skSrv: { receipts: [], moves: [], serials: [], bal: {}, brigades: [], cfg: {} }, sk: { receipts: [], moves: [] }, skLoaded: false, skErr: '', skf: 'all',
     rc: { d: today(), doc: '', pick: '', q: '', ser: '', lines: [], photos: [] },
-    iv: { d: today(), o: '', br: '', brNew: '', q: {}, ser: {}, why: '', reason: '', sign: '' },
-    rt: { d: today(), br: '', o: '', q: {}, ser: {} },
+    iv: { d: today(), o: '', br: '', q: {}, ser: {}, why: '', reason: '', sign: '' },
+    rt: { d: today(), br: '', o: '', q: {}, ser: {}, reason: '' },
     bk: { d: today(), from: 'склад', q: {}, ser: {}, reason: '' },
     zb: { d: today(), o: '10', act: '', note: '', q: {}, init: {} },
-    zal: { v: 'place', o: '1' }
+    zal: { v: 'place', o: '1' },
+    op: { d: '', place: 'склад', pick: '', q: '', ser: '', lines: [] }
   };
   const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }, del(k) { try { localStorage.removeItem(k); } catch (e) { } } };
   st.code = LS.get('ses11.code') || '';
@@ -78,7 +79,7 @@
   async function api(action, payload) {
     const res = await fetch(API, { method: 'POST', body: JSON.stringify(Object.assign({ action, code: st.code }, payload || {})) });
     if (!res.ok) throw { error: 'http', message: 'HTTP ' + res.status };
-    const j = await res.json();
+    let j; try { j = await res.json(); } catch (e) { throw { error: 'http', message: 'сервер відповів не JSON' }; }
     if (!j.ok) throw j;
     return j;
   }
@@ -102,6 +103,10 @@
     if (c === 'serial_state') return 'Серійний номер зараз в іншому місці' + m + '.';
     if (c === 'serial_count') return 'Кількість не дорівнює числу серійних номерів.';
     if (c === 'need_reason') return 'Вкажіть причину: брак або видача понад ліміт.';
+    if (c === 'in_use') return 'Не можна видалити: серійні номери вже є в пізніших документах' + m + '.';
+    if (c === 'bad_request' && /^over_limit/.test(e.message || '')) return 'Понад ліміт даху або наявність — потрібна причина (' + String(e.message).replace(/^over_limit:\s*/, '') + ').';
+    if (c === 'bad_request') return 'Сервер не прийняв запис' + m + '.';
+    if (c === 'http') return 'Сервер тимчасово недоступний' + m + '.';
     if (c === 'server') return 'Помилка сервера: ' + (e.message || '') + '. Спробуйте ще раз.';
     return 'Немає зв’язку з сервером. Перевірте інтернет і спробуйте ще раз.';
   };
@@ -120,7 +125,7 @@
       applyData(d);
       let sk = null;
       if (canSeeStock()) {
-        try { const s = await api('stock'); sk = s.stock || {}; applyStock(sk); st.skErr = ''; }
+        try { const s = await api('stockRead'); sk = s.stock || {}; applyStock(sk); st.skErr = ''; }
         catch (e) { if (e && e.error === 'bad_code') throw e; st.skErr = errText(e); }
       }
       LS.set('ses11.cache', JSON.stringify({ t: Date.now(), code: st.code, d, sk }));
@@ -196,29 +201,56 @@
     if (QDB.db) await qPut(e); else { st.queue.push(e); mergeQueue(); qInfo(); }
     return e;
   }
+  /* Помилки сервера:
+     - постійні (PERM) — запис лишається в черзі з позначкою «не прийнято», поки людина не натисне «Повторити» або «Скасувати»;
+     - залежні від порядку чи тимчасові (RETRY: серійні, понад ліміт, збій сервера) — повтор із наростаючою паузою;
+       після QMAX невдач поспіль запис теж позначається і чекає «Повторити».
+     Невдалий запис НЕ зупиняє чергу: наступні записи (звіти) надсилаються далі. Без зв’язку — зупинка до наступної спроби.
+     Нічого не видаляється без дії людини. */
   const PERM = ['forbidden', 'bad_date', 'bad_object', 'bad_type', 'empty', 'bad_request', 'unknown_action', 'bad_id',
-    'bad_item', 'bad_qty', 'bad_place', 'bad_lines', 'bad_serial', 'serial_dup', 'serial_unknown', 'serial_state', 'serial_count', 'need_reason'];
+    'bad_item', 'bad_qty', 'bad_place', 'bad_lines', 'bad_serial', 'serial_count', 'need_reason'];
+  const RETRY = ['serial_unknown', 'serial_state', 'serial_dup', 'server', 'http'];
+  const QMAX = 5;
+  const qBackoff = () => Number(LS.get('ses11.qbackoff')) || 15000; /* мс; змінюється лише для перевірки */
+  const isRetry = e => RETRY.includes(e.error) || /^serial_(unknown|state|dup)/.test(e.error) || (e.error === 'bad_request' && /^over_limit/.test(e.message || ''));
+  let qTimer = 0;
+  async function qSave(q) { try { await qTx('readwrite', s => s.put(q)); } catch (x) { } }
   async function flush() {
-    if (!API || !st.code || st.flushing || !st.queue.some(q => !q.err)) { qInfo(); return; }
+    if (!API || !st.code || st.flushing || !st.queue.some(q => !q.err && !(q.next > Date.now()))) { qInfo(); qSchedule(); return; }
     st.flushing = true; qInfo(); let sent = 0, kinds = {};
     try {
       for (const q of st.queue.slice()) {
-        if (q.err) continue;
+        if (q.err || q.next > Date.now()) continue;
         try { const j = await api(q.kind, Object.assign({ cid: q.cid }, q.body)); accepted(q, j); await qDel(q.cid); sent++; kinds[q.kind] = (kinds[q.kind] || 0) + 1; }
         catch (e) {
           if (e && e.error === 'bad_code') { st.flushing = false; logout(); return; }
+          if (!e || !e.error) break; /* немає зв’язку — повторю пізніше тим самим cid */
           q.tries = (q.tries || 0) + 1;
-          if (e && PERM.includes(e.error)) { q.err = errText(e); try { await qTx('readwrite', s => s.put(q)); } catch (x) { } mergeQueue(); continue; }
-          break; /* немає зв’язку — повторю пізніше тим самим cid */
+          if (isRetry(e) || !PERM.includes(e.error)) {
+            q.fails = (q.fails || 0) + 1; q.last = errText(e);
+            if (q.fails >= QMAX) { q.err = errText(e) + ' Спроб: ' + q.fails + '.'; q.next = 0; }
+            else q.next = Date.now() + qBackoff() * Math.pow(2, q.fails - 1);
+          } else q.err = errText(e);
+          await qSave(q); mergeQueue(); continue;
         }
       }
     } finally { st.flushing = false; }
-    qInfo();
+    qInfo(); qSchedule();
     if (sent) {
       const nsk = (kinds.stock || 0) + (kinds.receipt || 0) + (kinds.move || 0);
       toast(kinds.report ? 'Надіслано звітів: ' + kinds.report + (nsk ? ', документів складу: ' + nsk : '') + '.' : 'Документи складу надіслано: ' + nsk + '.');
       await load(true);
     }
+  }
+  /* наступна спроба для записів на паузі */
+  function qSchedule() {
+    clearTimeout(qTimer); const nx = st.queue.filter(q => !q.err && q.next > 0).map(q => q.next); if (!nx.length) return;
+    qTimer = setTimeout(() => { if (!st.busy) flush(); else qSchedule(); }, Math.max(50, Math.min(...nx) - Date.now() + 20));
+  }
+  /* «Повторити»: зняти позначку «не прийнято» і надіслати знову */
+  async function onRetry(b) {
+    const q = st.queue.find(x => x.cid === b.dataset.retry); if (!q) return;
+    q.err = ''; q.fails = 0; q.next = 0; q.last = ''; await qSave(q); mergeQueue(); render(); flush();
   }
   /* прийнятий сервером запис одразу стає «серверним», щоб до наступного завантаження обсяги не стрибали */
   function accepted(q, j) {
@@ -591,7 +623,8 @@
       else if (q.kind === 'receipt') what = 'надходження' + (b.doc ? ', ' + esc(b.doc) : '') + ', позицій ' + (b.lines || []).length;
       else if (q.kind === 'move') what = esc(b.type) + (isBr(b.to) ? ' → ' + esc(brName(b.to)) : isBr(b.from) ? ', ' + esc(brName(b.from)) : '') + (b.act ? ', акт ' + esc(b.act) : '') + ', позицій ' + (b.lines || []).length;
       else what = (b.type === STORE ? 'передача на зберігання' : 'видача зі складу') + (b.act ? ', акт ' + esc(b.act) : '') + ', позицій ' + Object.keys(b.items || {}).length;
-      return '<div class="it"><span class="dt">' + dShort(b.d) + '</span><span class="what"><b>' + esc(o ? objName(o) : 'Склад') + '</b> · ' + (what || 'без дій') + (q.err ? '<span class="pend bad">не прийнято: ' + esc(q.err) + '</span>' : '<span class="pend">чекає відправки</span>') + '</span><button class="btn ghost del" type="button" data-unq="' + esc(q.cid) + '">' + (st.delArm === q.cid ? 'Скасувати?' : 'Скасувати') + '</button></div>'; };
+      const pend = q.err ? '<span class="pend bad">не прийнято: ' + esc(q.err) + '</span>' : q.next > Date.now() ? '<span class="pend">повтор о ' + esc(new Date(q.next).toTimeString().slice(0, 5)) + (q.last ? ': ' + esc(q.last) : '') + '</span>' : '<span class="pend">чекає відправки</span>';
+      return '<div class="it" data-q="' + esc(q.cid) + '"><span class="dt">' + dShort(b.d) + '</span><span class="what"><b>' + esc(o ? objName(o) : 'Склад') + '</b> · ' + (what || 'без дій') + pend + '</span>' + (q.err || q.next > Date.now() ? '<button class="btn ghost del" type="button" data-retry="' + esc(q.cid) + '">Повторити</button>' : '') + '<button class="btn ghost del" type="button" data-unq="' + esc(q.cid) + '">' + (st.delArm === q.cid ? 'Скасувати?' : 'Скасувати') + '</button></div>'; };
     return '<details class="qlist" id="qlist"' + (st.open.queue ? ' open' : '') + '><summary>Черга на цьому телефоні: ' + st.queue.length + '</summary><div class="iss">' + st.queue.map(row).join('') + '</div><p class="small muted">Записи надсилаються по черзі, з тим самим номером запису, тому повторна спроба не задвоїть обсяг.</p></details>';
   }
   function reportItems(o) { const dr = draft(o.id); const items = {}; for (const w of worksOf(o)) { const v = Number(String(dr[w] == null ? '' : dr[w]).replace(',', '.')); if (isFinite(v) && v !== 0) items[w] = Math.round(v * 1000) / 1000; } return items; }
@@ -850,14 +883,18 @@
   }
   function roofCodes(oid) { const seen = new Set(); for (const r of (O[oid].spec || [])) { const c = (SK.specMap[oid] || {})[r[0]]; if (c) seen.add(c); } for (const c of Object.keys(needOf(oid)).sort(byItem)) seen.add(c); return [...seen]; }
 
+  /* stockStart — дата переходу на облік складу («Налаштування»). Звіти й старі «Видачі» раніше неї
+     не йдуть у залишки бригад і складу (лише у «вмонтовано» по дахах і в ліміти дахів); стан на цю дату — «Початкові залишки». */
+  const stockStart = () => { const v = String((st.skSrv.cfg || {}).stockStart || st.data.settings.stockStart || '').trim().slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''; };
+  const PRE = '\u0000до обліку';
   /* ПОПЕРЕДНЄ списання за звітами: обсяг дії × специфікація виробу, по дахах і бригадах.
      Баласт під трикутниками, що зараховується сам (effective), іде на бригади пропорційно до їхніх трикутників. */
   function mountedCalc() {
-    const byRoof = {}, byBr = {}; const m = agg();
+    const byRoof = {}, byBr = {}; const m = agg(); const ss0 = stockStart();
     for (const o of OBJS) {
       const bo = SK.bom[o.id]; if (!bo) continue;
       const raw = {};
-      for (const r of st.data.reports) { if (r.o !== o.id) continue; const b = r.br || NOBR; const x = raw[b] || (raw[b] = {}); for (const w in r.items) x[w] = (x[w] || 0) + r.items[w]; }
+      for (const r of st.data.reports) { if (r.o !== o.id) continue; const b = ss0 && r.d < ss0 ? PRE : (r.br || NOBR); const x = raw[b] || (raw[b] = {}); for (const w in r.items) x[w] = (x[w] || 0) + r.items[w]; }
       for (const a in bo) {
         if (!o.plan[a]) continue;
         const vol = {}; let R = 0; for (const b in raw) if (raw[b][a]) { vol[b] = raw[b][a]; R += raw[b][a]; }
@@ -867,46 +904,50 @@
           if (T > 0) { for (const b in raw) if (raw[b][drv] > 0) vol[b] = (vol[b] || 0) + extra * raw[b][drv] / T; } else vol[NOBR] = (vol[NOBR] || 0) + extra;
         }
         const f = bomFlat(o.id, a);
-        for (const b in vol) for (const c in f) { const q = vol[b] * f[c][0] / f[c][1]; add3(byRoof, o.id, c, q); add3(byBr, b, c, q); }
+        for (const b in vol) for (const c in f) { const q = vol[b] * f[c][0] / f[c][1]; add3(byRoof, o.id, c, q); if (b !== PRE) add3(byBr, b, c, q); }
       }
     }
     return { byRoof, byBr };
   }
-  /* залишки: місце → позиція; бригада → позиція → {видано, вмонтовано, повернуто, брак, інвентаризація}; дах → видано/зберігання */
+  /* залишки: place — місце → позиція (усе); doc — лише документи складу (так рахує наявність сервер);
+     бригада → позиція → {видано, вмонтовано, повернуто, брак, інвентаризація, початкові}; дах → видано / зберігання */
   function ledger() {
-    const L = { place: {}, br: {}, roofIss: {}, roofKeep: {}, rec: {}, mnt: {} };
-    const P = (p, c, q) => { if (p) add3(L.place, p, c, q); };
-    const B = (b, c, k, q) => { const m = L.br[b] || (L.br[b] = {}); const x = m[c] || (m[c] = { iss: 0, mnt: 0, ret: 0, brk: 0, inv: 0 }); x[k] = r6(x[k] + q); };
+    const L = { place: {}, doc: {}, br: {}, roofIss: {}, roofKeep: {}, rec: {}, mnt: {} };
+    const P = (p, c, q) => { if (p) { add3(L.place, p, c, q); add3(L.doc, p, c, q); } };
+    const B = (b, c, k, q) => { const m = L.br[b] || (L.br[b] = {}); const x = m[c] || (m[c] = { iss: 0, mnt: 0, ret: 0, brk: 0, inv: 0, opn: 0 }); x[k] = r6(x[k] + q); };
     for (const r of st.sk.receipts) for (const l of r.lines) { P(P_STORE, l.c, l.q); L.rec[l.c] = r6((L.rec[l.c] || 0) + l.q); }
     for (const mv of st.sk.moves) for (const l of mv.lines) {
-      if (mv.type === 'інвентаризація') { P(mv.from, l.c, l.q); if (isBr(mv.from)) B(brName(mv.from), l.c, 'inv', l.q); continue; }
+      if (mv.type === 'інвентаризація' || mv.type === 'початкові залишки') { P(mv.from, l.c, l.q); if (isBr(mv.from)) B(brName(mv.from), l.c, mv.type === 'інвентаризація' ? 'inv' : 'opn', l.q); continue; }
       P(mv.from, l.c, -l.q); P(mv.to, l.c, l.q);
       if (mv.type === 'видача') { B(brName(mv.to), l.c, 'iss', l.q); if (mv.o) add3(L.roofIss, mv.o, l.c, l.q); }
       else if (mv.type === 'повернення') { B(brName(mv.from), l.c, 'ret', l.q); if (mv.o) add3(L.roofIss, mv.o, l.c, -l.q); }
       else if (mv.type === 'брак' && isBr(mv.from)) B(brName(mv.from), l.c, 'brk', l.q);
       else if (mv.type === 'передача на зберігання' && mv.o) add3(L.roofKeep, mv.o, l.c, l.q);
     }
-    /* записи «Видачі» до модуля «Склад» (ключі рядків специфікації даху, без бригади) */
+    /* записи «Видачі» до модуля «Склад» (ключі рядків специфікації даху, без бригади): до stockStart — лише в ліміти дахів */
+    const ss0 = stockStart();
     for (const s of st.data.stock) {
-      const map = SK.specMap[s.o] || {};
+      const map = SK.specMap[s.o] || {}; const pre = ss0 && s.d < ss0;
       for (const k in s.items) {
         const c = map[k]; const q = Number(s.items[k]) || 0; if (!c || !q) continue;
-        P(P_STORE, c, -q);
-        if (s.type === STORE) { P(P_KEEP, c, q); add3(L.roofKeep, s.o, c, q); } else { P(brPlace(NOBR), c, q); B(NOBR, c, 'iss', q); add3(L.roofIss, s.o, c, q); }
+        if (s.type === STORE) { if (!pre) { add3(L.place, P_STORE, c, -q); add3(L.place, P_KEEP, c, q); } add3(L.roofKeep, s.o, c, q); }
+        else { if (!pre) { add3(L.place, P_STORE, c, -q); add3(L.place, brPlace(NOBR), c, q); B(NOBR, c, 'iss', q); } add3(L.roofIss, s.o, c, q); }
       }
     }
     const M = mountedCalc(); L.mnt = M.byRoof;
-    for (const b in M.byBr) for (const c in M.byBr[b]) { const q = M.byBr[b][c]; P(brPlace(b), c, -q); B(b, c, 'mnt', q); }
+    for (const b in M.byBr) for (const c in M.byBr[b]) { const q = M.byBr[b][c]; add3(L.place, brPlace(b), c, -q); B(b, c, 'mnt', q); }
     return L;
   }
-  const brBal = x => r6(x.iss - x.mnt - x.ret - x.brk + x.inv);
+  const brBal = x => r6(x.iss - x.mnt - x.ret - x.brk + x.inv + x.opn);
+  const docAvail = (L, place, c) => (L.doc[place] || {})[c] || 0;
+  const placeLabel = p => p === P_STORE ? 'Склад' : p === P_KEEP ? 'На зберіганні ГАЛ-КАТ' : 'Бригада ' + brName(p);
   function brigadeList(L) {
     const out = []; const add = b => { if (b && b !== NOBR && !out.includes(b)) out.push(b); };
     st.skSrv.brigades.forEach(add); Object.keys(L.br).forEach(add); return out;
   }
 
   /* ---- вкладка «Склад» ---- */
-  const SK_TABS = [['zal', 'Залишки'], ['nadh', 'Надходження'], ['vyd', 'Видача'], ['pov', 'Повернення'], ['brak', 'Брак'], ['zber', 'Зберігання']];
+  const SK_TABS = [['zal', 'Залишки'], ['nadh', 'Надходження'], ['vyd', 'Видача'], ['pov', 'Повернення'], ['brak', 'Брак'], ['zber', 'Зберігання'], ['poch', 'Початкові залишки']];
   function skHtml(rt) {
     if (!canSeeStock()) { if (!st.me) return '<section class="card"><div class="empty">Завантажую…</div></section>'; location.hash = '#/'; return ''; }
     const tabs = canStock() ? SK_TABS : SK_TABS.slice(0, 1);
@@ -917,7 +958,7 @@
       (tabs.length > 1 ? '<nav class="subtabs" aria-label="Розділи складу">' + tabs.map(x => '<a href="#/sklad/' + x[0] + '"' + (x[0] === t ? ' aria-current="page"' : '') + '>' + x[1] + '</a>').join('') + '</nav>' : '') +
       (st.skErr ? '<p class="hint err" style="margin-top:8px">' + esc(st.skErr) + '</p>' : !st.skLoaded ? '<p class="small muted" style="margin-top:8px">Завантажую документи складу…</p>' : '') + '</section>';
     const L = ledger();
-    if (t === 'nadh') s += rcHtml(); else if (t === 'vyd') s += ivHtml(L, rt); else if (t === 'pov') s += rtHtml(L); else if (t === 'brak') s += bkHtml(L); else if (t === 'zber') s += zbHtml(L, rt); else s += zalHtml(L);
+    if (t === 'nadh') s += rcHtml(); else if (t === 'vyd') s += ivHtml(L, rt); else if (t === 'pov') s += rtHtml(L); else if (t === 'brak') s += bkHtml(L); else if (t === 'zber') s += zbHtml(L, rt); else if (t === 'poch') s += opHtml(L); else s += zalHtml(L);
     return s;
   }
   function itemOptions(sel) {
@@ -928,7 +969,7 @@
   const filterSeg = () => contractorVisible() ? '<div class="periods" role="group" aria-label="Власник матеріалу">' + [['all', 'Усі'], ['c', 'Підрядника'], ['g', 'Давальницькі']].map(x => '<button type="button" data-skf="' + x[0] + '" aria-pressed="' + (st.skf === x[0]) + '">' + x[1] + '</button>').join('') + '</div>' : '';
   const dateFld = (id, v, label) => '<div class="fld"><label for="' + id + '">' + label + '</label><input type="date" id="' + id + '" value="' + esc(v) + '" max="' + today() + '"></div>';
   const saveBar = (id, label, sum) => '<div class="sumbar"><span class="sum" id="' + id + 'Sum">' + sum + '</span><button class="btn primary" type="submit" id="' + id + 'Save">' + label + '</button></div><div class="hint" id="skHint" aria-live="polite"></div>';
-  const serBox = (id, v, ph) => '<textarea class="ser" id="' + id + '" rows="2" cols="8" placeholder="' + (ph || 'серійні номери — по одному в рядку (необов’язково)') + '">' + esc(v || '') + '</textarea>';
+  const serBox = (id, v, ph) => '<textarea class="ser" id="' + id + '" rows="2" cols="8" placeholder="' + (ph || 'серійні номери — по одному в рядку, стільки, скільки штук') + '">' + esc(v || '') + '</textarea>';
   /* таблиця позицій із полем кількості: розділи «підрядника» і «давальницькі» */
   function qtyTable(pfx, codes, rowFn, cols) {
     const secs = [['c', 'Матеріали підрядника', codes.filter(c => !isCust(c))], ['g', 'Давальницькі ГАЛ-КАТ — модулі, щитки DC, провід', codes.filter(isCust)]];
@@ -939,23 +980,19 @@
   }
   const qIn = (id, v, label) => '<input type="number" inputmode="decimal" step="any" min="0" id="' + id + '" value="' + esc(v == null ? '' : v) + '" placeholder="0" aria-label="' + esc(label) + '">';
 
-  /* ---- Надходження ---- */
-  function rcHtml() {
-    const f = st.rc; const it = ITEM[f.pick]; const ser = it && it.track === 'serial';
-    const lines = f.lines.map((l, i) => '<div class="it" data-c="' + esc(l.c) + '"><span class="what"><b>' + esc(itemTxt(l.c)) + '</b> — <b class="num">' + q2(l.q) + '</b> ' + esc(unitTxt(l.c)) + ownBadge(l.c) + (l.serials.length ? '<span class="sn">сер. № (' + l.serials.length + '): ' + esc(l.serials.slice(0, 4).join(', ')) + (l.serials.length > 4 ? '…' : '') + '</span>' : '') + '</span><button class="btn ghost del" type="button" data-rcrm="' + i + '">Прибрати</button></div>').join('');
-    return '<form class="card skf" id="skf" data-form="rc" autocomplete="off"><div class="card-h"><h2>Надходження на склад</h2><p>накладна, кількість, серійні номери модулів і щитків DC</p></div>' +
-      '<div class="skrow">' + dateFld('rcD', f.d, 'Дата') + '<div class="fld grow"><label for="rcDoc">Постачальник, накладна №</label><input type="text" id="rcDoc" maxlength="120" value="' + esc(f.doc) + '" placeholder="ТОВ …, ВН № … від …"></div></div>' +
-      '<div class="skadd"><div class="fld grow"><label for="rcItem">Позиція</label><select id="rcItem">' + itemOptions(f.pick) + '</select></div>' +
-      (ser ? '<div class="fld grow wide"><label for="rcSer">Серійні номери — по одному в рядку або вставте список</label>' + serBox('rcSer', f.ser, 'LR8…') + '<span class="small muted" id="rcSerN">' + serHint(f.ser) + '</span></div>'
-        : '<div class="fld"><label for="rcQ">Кількість' + (it ? ', ' + esc(it.unit) : '') + '</label>' + qIn('rcQ', f.q, 'Кількість') + '</div>') +
-      '<button class="btn" type="button" id="rcAdd">Додати в документ</button></div>' +
+  /* ---- набір рядків документа (надходження, початкові залишки): позиція → кількість або серійні номери ---- */
+  function lineBuilder(k, empty) {
+    const f = st[k]; const it = ITEM[f.pick]; const ser = it && it.track === 'serial';
+    const lines = f.lines.map((l, i) => '<div class="it" data-c="' + esc(l.c) + '"><span class="what"><b>' + esc(itemTxt(l.c)) + '</b> — <b class="num">' + q2(l.q) + '</b> ' + esc(unitTxt(l.c)) + ownBadge(l.c) + (l.serials.length ? '<span class="sn">сер. № (' + l.serials.length + '): ' + esc(l.serials.slice(0, 4).join(', ')) + (l.serials.length > 4 ? '…' : '') + '</span>' : '') + '</span><button class="btn ghost del" type="button" data-lnrm="' + k + ':' + i + '">Прибрати</button></div>').join('');
+    return '<div class="skadd"><div class="fld grow"><label for="' + k + 'Item">Позиція</label><select id="' + k + 'Item">' + itemOptions(f.pick) + '</select></div>' +
+      (ser ? '<div class="fld grow wide"><label for="' + k + 'Ser">Серійні номери — по одному в рядку або вставте список</label>' + serBox(k + 'Ser', f.ser, 'LR8…') + '<span class="small muted" id="' + k + 'SerN">' + serHint(f.ser) + '</span></div>'
+        : '<div class="fld"><label for="' + k + 'Q">Кількість' + (it ? ', ' + esc(it.unit) : '') + '</label>' + qIn(k + 'Q', f.q, 'Кількість') + '</div>') +
+      '<button class="btn" type="button" id="' + k + 'Add" data-lnadd="' + k + '">Додати в документ</button></div>' +
       (it && it.analogs ? '<p class="small muted">Аналог: ' + it.analogs.map(a => esc(itemTxt(a.code)) + ' — ' + esc(a.note)).join('; ') + '</p>' : '') +
-      '<div class="iss" id="rcLines">' + (lines || '<div class="empty">Додайте позиції накладної.</div>') + '</div>' +
-      '<div class="qphoto"><label class="galbtn">' + CAM + '<span>Фото накладної</span><input type="file" id="rcFiles" accept="image/*" multiple></label></div><div class="thumbs" id="rcThumbs">' + st.rc.photos.map((p, i) => '<figure><img src="' + p.url + '" alt="Накладна, фото ' + (i + 1) + '"><button type="button" data-rcph="' + i + '" aria-label="Прибрати фото ' + (i + 1) + '">✕</button></figure>').join('') + '</div>' +
-      saveBar('rc', 'Записати надходження', 'Позицій: <b>' + f.lines.length + '</b>') + queueHtml() + '</form>';
+      '<div class="iss" id="' + k + 'Lines">' + (lines || '<div class="empty">' + empty + '</div>') + '</div>';
   }
-  function rcAdd() {
-    const f = st.rc; const h = $('skHint'); h.className = 'hint err';
+  function lineAdd(k) {
+    const f = st[k]; const h = $('skHint'); h.className = 'hint err';
     const c = f.pick; const it = ITEM[c]; if (!it) { h.textContent = 'Виберіть позицію.'; return; }
     let q, serials = [];
     if (it.track === 'serial') {
@@ -968,40 +1005,66 @@
     } else { q = num(f.q); if (!(q > 0)) { h.textContent = 'Вкажіть кількість.'; return; } }
     f.lines.push({ c, q: r6(q), serials }); f.pick = ''; f.q = ''; f.ser = ''; render();
   }
+  const docLines = f => f.lines.map(l => ({ c: l.c, q: l.q, name: itemTxt(l.c), unit: unitTxt(l.c), owner: ownerTxt(l.c), serials: l.serials }));
+
+  /* ---- Надходження ---- */
+  function rcHtml() {
+    const f = st.rc;
+    return '<form class="card skf" id="skf" data-form="rc" autocomplete="off"><div class="card-h"><h2>Надходження на склад</h2><p>накладна, кількість, серійні номери модулів і щитків DC</p></div>' +
+      '<div class="skrow">' + dateFld('rcD', f.d, 'Дата') + '<div class="fld grow"><label for="rcDoc">Постачальник, накладна №</label><input type="text" id="rcDoc" maxlength="120" value="' + esc(f.doc) + '" placeholder="ТОВ …, ВН № … від …"></div></div>' +
+      lineBuilder('rc', 'Додайте позиції накладної.') +
+      '<div class="qphoto"><label class="galbtn">' + CAM + '<span>Фото накладної</span><input type="file" id="rcFiles" accept="image/*" multiple></label></div><div class="thumbs" id="rcThumbs">' + st.rc.photos.map((p, i) => '<figure><img src="' + p.url + '" alt="Накладна, фото ' + (i + 1) + '"><button type="button" data-rcph="' + i + '" aria-label="Прибрати фото ' + (i + 1) + '">✕</button></figure>').join('') + '</div>' +
+      saveBar('rc', 'Записати надходження', 'Позицій: <b>' + f.lines.length + '</b>') + queueHtml() + '</form>';
+  }
+
+  /* ---- Початкові залишки: стан на дату переходу на облік — склад, бригади, зберігання ---- */
+  function opHtml(L) {
+    const f = st.op; if (!f.d) f.d = stockStart() || today();
+    const places = [P_STORE].concat(brigadeList(L).map(brPlace), [P_KEEP]);
+    if (!places.includes(f.place)) f.place = P_STORE;
+    const done = st.sk.moves.filter(m => m.type === 'початкові залишки' && m.from === f.place).length;
+    return '<form class="card skf" id="skf" data-form="op" autocomplete="off"><div class="card-h"><h2>Початкові залишки</h2><p>фактичний стан на дату переходу на облік: ' + esc(stockStart() ? dLabel(stockStart()) : 'не задано') + '</p></div>' +
+      '<p class="small ink2">Звіти й видачі раніше цієї дати в залишки бригад не входять. Матеріал, що вже лежить у бригади чи на складі, внесіть тут — інакше нова робота покаже хибну перевитрату.</p>' +
+      '<div class="skrow">' + dateFld('opD', f.d, 'Дата') + '<div class="fld grow"><label for="opPlace">Місце</label><select id="opPlace">' + places.map(p => '<option value="' + esc(p) + '"' + (p === f.place ? ' selected' : '') + '>' + esc(placeLabel(p)) + '</option>').join('') + '</select></div></div>' +
+      lineBuilder('op', 'Додайте позиції, що фактично є в цьому місці.') +
+      (done ? '<p class="small muted">Для цього місця вже внесено документів: ' + done + '.</p>' : '') +
+      saveBar('op', 'Записати початкові залишки', 'Позицій: <b>' + f.lines.length + '</b>') + queueHtml() + '</form>';
+  }
 
   /* ---- Видача бригаді: дах → бригада → позиції, у межах потреби даху ---- */
   function ivRem(L, o, c) { return r6(Math.max(0, (needOf(o)[c] || 0) - ((L.roofIss[o] || {})[c] || 0))); }
   function ivFlag(L, c) {
     const f = st.iv; const q = num(f.q[c]); if (!(q > 0)) return '';
-    const rem = ivRem(L, f.o, c); const oh = (L.place[P_STORE] || {})[c] || 0; const out = [];
+    const rem = ivRem(L, f.o, c); const oh = docAvail(L, P_STORE, c); const out = [];
     if (q > rem + 1e-9) out.push('<b class="neg">понад ліміт на ' + q2(q - rem) + '</b>');
     if (q > oh + 1e-9) out.push('<span class="warn-t">на складі лише ' + q2(oh) + '</span>');
-    const n = serList(f.ser[c]).length; if (n && n !== q) out.push('<span class="warn-t">серійних ' + n + ' ≠ ' + q2(q) + '</span>');
+    const n = serList(f.ser[c]).length; if (isSerial(c) && n !== q) out.push('<span class="warn-t">серійних ' + n + ' з ' + q2(q) + '</span>');
     return out.join(' · ');
   }
-  const ivOver = L => Object.keys(st.iv.q).filter(c => num(st.iv.q[c]) > ivRem(L, st.iv.o, c) + 1e-9);
-  function ivSumTxt(L) { const n = Object.keys(st.iv.q).filter(c => num(st.iv.q[c]) > 0).length; const ov = ivOver(L).length; return 'Позицій: <b>' + n + '</b>' + (ov ? ' · <b class="neg">понад ліміт: ' + ov + '</b>' : ''); }
+  const ivIsOver = (L, c, v) => v > ivRem(L, st.iv.o, c) + 1e-9 || v > docAvail(L, P_STORE, c) + 1e-9;
+  const ivOver = L => Object.keys(st.iv.q).filter(c => ivIsOver(L, c, num(st.iv.q[c])));
+  function ivSumTxt(L) { const n = Object.keys(st.iv.q).filter(c => num(st.iv.q[c]) > 0).length; const ov = ivOver(L).length; return 'Позицій: <b>' + n + '</b>' + (ov ? ' · <b class="neg">понад ліміт або наявність: ' + ov + '</b>' : ''); }
   function ivHtml(L, rt) {
     const f = st.iv; const last = LS.get('ses11.roof');
     if (rt.o && !isDef(O[rt.o]) && SK.bom[rt.o]) f.o = rt.o;
     if (!O[f.o] || isDef(O[f.o]) || !SK.bom[f.o]) f.o = O[last] && !isDef(O[last]) ? last : '1';
     const brs = brigadeList(L); if (!f.br && brs.length) f.br = brs[0];
-    const need = needOf(f.o); const iss = L.roofIss[f.o] || {}; const sk = L.place[P_STORE] || {};
+    if (!brs.includes(f.br)) f.br = brs[0] || '';
+    const need = needOf(f.o); const iss = L.roofIss[f.o] || {}; const sk = L.doc[P_STORE] || {};
     const row = c => { const nd = need[c] || 0, is = iss[c] || 0, rem = ivRem(L, f.o, c), oh = sk[c] || 0, v = f.q[c];
-      return '<tr id="ivr-' + c + '" data-c="' + c + '"' + (num(v) > rem + 1e-9 ? ' class="lim"' : '') + '><td class="nm">' + esc(itemTxt(c)) + ownBadge(c) + '<span class="sub">потреба ' + q2(nd) + ' · видано ' + q2(is) + ' · на складі ' + negq(oh) + ' ' + esc(unitTxt(c)) + '</span><span class="flag" id="ivf-' + c + '">' + ivFlag(L, c) + '</span>' + (isSerial(c) ? serBox('ivs-' + c, f.ser[c]) : '') + '</td><td class="n rem" data-v="' + rem + '">' + q2(rem) + '</td><td class="n">' + qIn('ivq-' + c, v, 'Видати: ' + itemTxt(c)) + '</td></tr>'; };
+      return '<tr id="ivr-' + c + '" data-c="' + c + '"' + (ivIsOver(L, c, num(v)) ? ' class="lim"' : '') + '><td class="nm">' + esc(itemTxt(c)) + ownBadge(c) + '<span class="sub">потреба ' + q2(nd) + ' · видано ' + q2(is) + ' · на складі ' + negq(oh) + ' ' + esc(unitTxt(c)) + '</span><span class="flag" id="ivf-' + c + '">' + ivFlag(L, c) + '</span>' + (isSerial(c) ? serBox('ivs-' + c, f.ser[c]) : '') + '</td><td class="n rem" data-v="' + rem + '">' + q2(rem) + '</td><td class="n">' + qIn('ivq-' + c, v, 'Видати: ' + itemTxt(c)) + '</td></tr>'; };
     const over = ivOver(L).length > 0;
     return '<form class="card skf" id="skf" data-form="iv" autocomplete="off"><div class="card-h"><h2>Видача бригаді</h2><p>ліміт — потреба даху за проєктом мінус уже видане; понад ліміт — лише з причиною</p></div>' +
       '<div class="skrow">' + dateFld('ivD', f.d, 'Дата') + '<div class="fld"><label for="ivO">Дах</label><select id="ivO">' + OBJS26.filter(o => SK.bom[o.id]).map(o => '<option value="' + o.id + '"' + (o.id === f.o ? ' selected' : '') + '>' + esc(objName(o)) + '</option>').join('') + '</select></div>' +
-      '<div class="fld grow"><label for="ivBr">Бригада</label><select id="ivBr">' + brs.map(b => '<option' + (b === f.br ? ' selected' : '') + '>' + esc(b) + '</option>').join('') + '<option value="__new"' + (f.br === '__new' || !brs.length ? ' selected' : '') + '>Інша бригада…</option></select></div>' +
-      (f.br === '__new' || !brs.length ? '<div class="fld grow"><label for="ivBrNew">Назва бригади</label><input type="text" id="ivBrNew" maxlength="60" value="' + esc(f.brNew) + '" placeholder="бригадир або номер бригади"></div>' : '') + '</div>' +
+      '<div class="fld grow"><label for="ivBr">Бригада</label>' + (brs.length ? '<select id="ivBr">' + brs.map(b => '<option' + (b === f.br ? ' selected' : '') + '>' + esc(b) + '</option>').join('') + '</select>' : '<p class="hint err" id="ivNoBr">Бригад немає: впишіть бригаду виконавцю в аркуші «Доступи» (колонка «Бригада»).</p>') + '</div></div>' +
       filterSeg() + qtyTable('iv', roofCodes(f.o), row, ['Ще можна', 'Видати']) +
-      '<div class="skwhy" id="ivWhyBox"' + (over ? '' : ' hidden') + '><b>Видача понад ліміт даху — вкажіть причину</b><div class="skrow"><div class="fld"><label for="ivWhy">Причина</label><select id="ivWhy"><option value="">— виберіть —</option>' + ['заміна браку', 'втрата', 'зміна проєкту', 'інше'].map(x => '<option' + (x === f.why ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div><div class="fld grow"><label for="ivReason">Пояснення</label><input type="text" id="ivReason" maxlength="150" value="' + esc(f.reason) + '" placeholder="акт браку, що змінилось у проєкті"></div></div></div>' +
+      '<div class="skwhy" id="ivWhyBox"' + (over ? '' : ' hidden') + '><b>Понад ліміт даху або понад наявність на складі — вкажіть причину</b><div class="skrow"><div class="fld"><label for="ivWhy">Причина</label><select id="ivWhy"><option value="">— виберіть —</option>' + ['заміна браку', 'втрата', 'зміна проєкту', 'інше'].map(x => '<option' + (x === f.why ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div><div class="fld grow"><label for="ivReason">Пояснення</label><input type="text" id="ivReason" maxlength="150" value="' + esc(f.reason) + '" placeholder="акт браку, що змінилось у проєкті"></div></div></div>' +
       '<div class="fld"><span class="lab">Підпис бригадира пальцем — необов’язково</span><canvas class="sign" id="ivSign" width="600" height="160" aria-label="Поле для підпису бригадира"></canvas><div><button type="button" class="btn ghost" id="ivSignClr">Очистити підпис</button></div></div>' +
       saveBar('iv', 'Записати видачу', ivSumTxt(L)) + queueHtml() + '</form>';
   }
   function ivUpdate(c) {
     const L = ledger(); const f = st.iv;
-    if (c) { const fl = $('ivf-' + c); if (fl) fl.innerHTML = ivFlag(L, c); const tr = $('ivr-' + c); if (tr) tr.classList.toggle('lim', num(f.q[c]) > ivRem(L, f.o, c) + 1e-9); }
+    if (c) { const fl = $('ivf-' + c); if (fl) fl.innerHTML = ivFlag(L, c); const tr = $('ivr-' + c); if (tr) tr.classList.toggle('lim', ivIsOver(L, c, num(f.q[c]))); }
     const box = $('ivWhyBox'); if (box) box.hidden = !ivOver(L).length;
     const s = $('ivSum'); if (s) s.innerHTML = ivSumTxt(L);
   }
@@ -1020,6 +1083,7 @@
   }
 
   /* ---- Повернення: бригада → склад; дах — щоб повернути ліміт ---- */
+  const rtOver = L => Object.keys(st.rt.q).filter(c => num(st.rt.q[c]) > docAvail(L, brPlace(st.rt.br), c) + 1e-9);
   function rtHtml(L) {
     const f = st.rt; const brs = brigadeList(L); if (!brs.includes(f.br)) f.br = brs[0] || '';
     const m = L.br[f.br] || {}; const codes = Object.keys(m).filter(c => m[c].iss > 0 || Math.abs(brBal(m[c])) > 1e-9).sort(byItem);
@@ -1028,6 +1092,7 @@
       '<div class="skrow">' + dateFld('rtD', f.d, 'Дата') + '<div class="fld grow"><label for="rtBr">Бригада</label><select id="rtBr">' + (brs.length ? brs.map(b => '<option' + (b === f.br ? ' selected' : '') + '>' + esc(b) + '</option>').join('') : '<option value="">бригад ще немає</option>') + '</select></div>' +
       '<div class="fld"><label for="rtO">Дах (повертає ліміт)</label><select id="rtO"><option value="">не вказано</option>' + OBJS26.filter(o => SK.bom[o.id]).map(o => '<option value="' + o.id + '"' + (o.id === f.o ? ' selected' : '') + '>' + esc(objName(o)) + '</option>').join('') + '</select></div></div>' +
       filterSeg() + (codes.length ? qtyTable('rt', codes, row, ['У бригади', 'Повернути']) : '<div class="empty">У бригади немає виданих матеріалів.</div>') +
+      '<div class="skwhy" id="rtWhyBox"' + (rtOver(L).length ? '' : ' hidden') + '><b>Повертається більше, ніж видано за документами — вкажіть причину</b><div class="fld"><label for="rtReason">Причина</label><input type="text" id="rtReason" maxlength="150" value="' + esc(f.reason || '') + '" placeholder="видано до переходу на облік, помилка видачі…"></div></div>' +
       saveBar('rt', 'Записати повернення', 'Позицій: <b>' + Object.keys(f.q).filter(c => num(f.q[c]) > 0).length + '</b>') + queueHtml() + '</form>';
   }
 
@@ -1048,8 +1113,8 @@
   function zbHtml(L, rt) {
     const f = st.zb; if (rt.o && isDef(O[rt.o])) f.o = rt.o; if (!O[f.o] || !isDef(O[f.o])) f.o = (DEFR[0] || {}).id;
     if (!f.o) return '<section class="card"><div class="empty">Відкладених дахів немає.</div></section>';
-    const plan = SK.storagePlan[f.o] || {}; const kept = L.roofKeep[f.o] || {}; const sk = L.place[P_STORE] || {};
-    if (!f.init[f.o]) { f.init[f.o] = true; const q = f.q[f.o] = {}; for (const c in plan) { const rem = r6(plan[c] - (kept[c] || 0)); if (rem > 0 && !isTray(c)) q[c] = String(rem); } }
+    const plan = SK.storagePlan[f.o] || {}; const kept = L.roofKeep[f.o] || {}; const sk = L.doc[P_STORE] || {};
+    if (!f.init[f.o]) { f.init[f.o] = true; const q = f.q[f.o] = {}; for (const c in plan) { const rem = r6(plan[c] - (kept[c] || 0)); if (rem > 0 && !isTray(c) && !isSerial(c)) q[c] = String(rem); } }
     const dq = f.q[f.o] || (f.q[f.o] = {}); const ds = f.ser || (f.ser = {});
     const codes = Object.keys(plan).sort(byItem);
     const row = c => { const rem = r6(Math.max(0, plan[c] - (kept[c] || 0))); const q = num(dq[c]); const oh = sk[c] || 0;
@@ -1059,7 +1124,7 @@
       '<div class="fld"><label for="zbAct">Акт №</label><input type="text" id="zbAct" maxlength="60" value="' + esc(f.act) + '" placeholder="номер акта"></div>' +
       '<div class="fld grow"><label for="zbNote">Примітка</label><input type="text" id="zbNote" maxlength="200" value="' + esc(f.note) + '" placeholder="місце зберігання, стан, хто прийняв"></div></div>' +
       filterSeg() + qtyTable('zb', codes, row, ['Ще передати', 'Передати']) +
-      '<p class="small muted">Перелік: ' + esc(SK.storageSrc || '') + '. Лотки не передаються, доки немає рішення щодо трас дахів 1, 3, 4.</p>' +
+      '<p class="small muted">Перелік: ' + esc(SK.storageSrc || '') + '. Лотки не передаються, доки немає рішення щодо трас дахів 1, 3, 4. Модулі — лише з серійними номерами. Якщо на складі менше, ніж передаєте, — у примітці вкажіть причину.</p>' +
       saveBar('zb', 'Записати передачу на зберігання', 'Позицій: <b>' + Object.keys(dq).filter(c => num(dq[c]) > 0).length + '</b>') + queueHtml() + '</form>';
   }
 
@@ -1069,11 +1134,11 @@
     return '<section class="card place" data-place="' + esc(id) + '"><div class="card-h"><h2>' + title + '</h2><p>' + sub + '</p></div>' + (codes.length ? '<div class="scroll"><table class="stock zal"><thead><tr><th>Позиція</th><th class="n">Кількість</th></tr></thead><tbody>' + codes.map(c => '<tr data-c="' + c + '"><td class="nm">' + esc(itemTxt(c)) + ownBadge(c) + '</td><td class="n bal" data-v="' + bal[c] + '">' + negq(bal[c], bal[c] < 0 ? tag : '') + ' <span class="muted">' + esc(unitTxt(c)) + '</span></td></tr>').join('') + '</tbody></table></div>' : '<div class="empty">Порожньо.</div>') + '</section>';
   }
   function brigadeCard(L, b) {
-    const m = L.br[b] || {}; const codes = Object.keys(m).filter(c => filtOk(c) && ['iss', 'mnt', 'ret', 'brk', 'inv'].some(k => Math.abs(m[c][k]) > 1e-9)).sort(byItem);
+    const m = L.br[b] || {}; const codes = Object.keys(m).filter(c => filtOk(c) && ['iss', 'mnt', 'ret', 'brk', 'inv', 'opn'].some(k => Math.abs(m[c][k]) > 1e-9)).sort(byItem);
     const over = codes.filter(c => brBal(m[c]) < -1e-9).length;
-    return '<section class="card place" data-place="' + esc(brPlace(b)) + '"><div class="card-h"><h2>Бригада «' + esc(b) + '»</h2><p>' + (over ? '<b class="neg">перевитрата: ' + over + ' поз.</b> · ' : '') + 'залишок = видано − вмонтовано − повернуто − брак</p></div>' +
+    return '<section class="card place" data-place="' + esc(brPlace(b)) + '"><div class="card-h"><h2>Бригада «' + esc(b) + '»</h2><p>' + (over ? '<b class="neg">перевитрата: ' + over + ' поз.</b> · ' : '') + 'залишок = початковий + видано − вмонтовано − повернуто − брак</p></div>' +
       (codes.length ? '<div class="scroll"><table class="stock zal brt"><thead><tr><th>Позиція</th><th class="n wd">Видано</th><th class="n wd">Вмонт.</th><th class="n wd">Поверн.</th><th class="n wd">Брак</th><th class="n">Залишок</th></tr></thead><tbody>' +
-        codes.map(c => { const x = m[c]; const v = brBal(x); return '<tr data-c="' + c + '"' + (v < -1e-9 ? ' class="lim"' : '') + '><td class="nm">' + esc(itemTxt(c)) + ownBadge(c) + '<span class="sub">' + esc(unitTxt(c)) + '<span class="ph"> · видано ' + q2(x.iss) + ' · вмонт. ' + q2(x.mnt) + ' · поверн. ' + q2(x.ret) + ' · брак ' + q2(x.brk) + '</span>' + (x.inv ? ' · інвентаризація ' + q2(x.inv) : '') + '</span></td><td class="n wd">' + q2(x.iss) + '</td><td class="n wd">' + q2(x.mnt) + '</td><td class="n wd">' + q2(x.ret) + '</td><td class="n wd">' + q2(x.brk) + '</td><td class="n bal" data-v="' + v + '">' + negq(v, 'перевитрата') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Матеріалів не видавали.</div>') + '</section>';
+        codes.map(c => { const x = m[c]; const v = brBal(x); return '<tr data-c="' + c + '"' + (v < -1e-9 ? ' class="lim"' : '') + '><td class="nm">' + esc(itemTxt(c)) + ownBadge(c) + '<span class="sub">' + esc(unitTxt(c)) + '<span class="ph"> · видано ' + q2(x.iss) + ' · вмонт. ' + q2(x.mnt) + ' · поверн. ' + q2(x.ret) + ' · брак ' + q2(x.brk) + '</span>' + (x.opn ? ' · початковий залишок ' + q2(x.opn) : '') + (x.inv ? ' · інвентаризація ' + q2(x.inv) : '') + '</span></td><td class="n wd">' + q2(x.iss) + '</td><td class="n wd">' + q2(x.mnt) + '</td><td class="n wd">' + q2(x.ret) + '</td><td class="n wd">' + q2(x.brk) + '</td><td class="n bal" data-v="' + v + '">' + negq(v, 'перевитрата') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Матеріалів не видавали.</div>') + '</section>';
   }
   function serialCard() {
     const list = st.skSrv.serials.filter(x => filtOk(x.c)); if (!list.length) return '';
@@ -1119,7 +1184,7 @@
   const canDelDoc = x => !!API && !!st.me && !x.pending && (role() === 'адмін' || (role() === 'комірник' && x.by === st.me.name));
   function skDocLine(x, inRoof) {
     const mv = !!x.type; const kind = mv ? 'moves' : 'receipts';
-    const head = !mv ? 'Надходження' + (x.doc ? ': ' + esc(x.doc) : '') : x.type === 'видача' ? 'Видача → ' + esc(brName(x.to)) : x.type === 'повернення' ? 'Повернення від ' + esc(brName(x.from)) : x.type === 'брак' ? 'Брак · ' + esc(isBr(x.from) ? brName(x.from) : 'склад') : x.type === 'передача на зберігання' ? 'На зберігання ГАЛ-КАТ' : 'Інвентаризація · ' + esc(x.from);
+    const head = !mv ? 'Надходження' + (x.doc ? ': ' + esc(x.doc) : '') : x.type === 'видача' ? 'Видача → ' + esc(brName(x.to)) : x.type === 'повернення' ? 'Повернення від ' + esc(brName(x.from)) : x.type === 'брак' ? 'Брак · ' + esc(isBr(x.from) ? brName(x.from) : 'склад') : x.type === 'передача на зберігання' ? 'На зберігання ГАЛ-КАТ' : x.type === 'початкові залишки' ? 'Початкові залишки · ' + esc(placeLabel(x.from)) : 'Інвентаризація · ' + esc(x.from);
     const roof = mv && x.o && O[x.o] && !inRoof ? ' · ' + esc(objName(O[x.o])) : '';
     const lines = x.lines.map(l => esc(itemTxt(l.c)) + ' — <b class="num">' + q2(l.q) + '</b>' + (l.serials && l.serials.length ? ' <span class="muted">(сер. № ' + l.serials.length + ')</span>' : '')).join('; ');
     return '<div class="it"><span class="dt">' + dLabel(x.d) + '</span><span class="what"><b>' + head + '</b>' + roof + (x.act ? ' · акт ' + esc(x.act) : '') + ': ' + lines + (x.reason ? ' <span class="muted">· ' + esc(x.reason) + '</span>' : '') + (x.sign ? ' <a href="' + esc(x.sign) + '" target="_blank" rel="noopener">підпис ↗</a>' : '') + (x.photo ? ' <a href="' + esc(x.photo) + '" target="_blank" rel="noopener">накладна ↗</a>' : '') + ' <span class="muted">· ' + esc(x.by) + '</span>' + pendTag(x) + '</span>' +
@@ -1131,20 +1196,23 @@
   function skSet(path) { try { history.replaceState(null, '', '#/sklad/' + path); } catch (e) { } render(); }
   view.addEventListener('input', e => {
     if (!skOn()) return; const id = e.target.id || ''; const v = e.target.value; let m;
-    if (id === 'rcD') st.rc.d = v || today(); else if (id === 'rcDoc') st.rc.doc = v; else if (id === 'rcQ') st.rc.q = v;
-    else if (id === 'rcSer') { st.rc.ser = v; const n = $('rcSerN'); if (n) n.innerHTML = serHint(v); }
-    else if (id === 'ivD') st.iv.d = v || today(); else if (id === 'ivBrNew') st.iv.brNew = v; else if (id === 'ivReason') st.iv.reason = v;
+    if (id === 'rcD') st.rc.d = v || today(); else if (id === 'rcDoc') st.rc.doc = v; else if (id === 'opD') st.op.d = v || today();
+    else if ((m = /^(rc|op)Q$/.exec(id))) st[m[1]].q = v;
+    else if ((m = /^(rc|op)Ser$/.exec(id))) { st[m[1]].ser = v; const n = $(m[1] + 'SerN'); if (n) n.innerHTML = serHint(v); }
+    else if (id === 'ivD') st.iv.d = v || today(); else if (id === 'ivReason') st.iv.reason = v; else if (id === 'rtReason') st.rt.reason = v;
     else if ((m = /^iv([qs])-(.+)$/.exec(id))) { (m[1] === 'q' ? st.iv.q : st.iv.ser)[m[2]] = v; ivUpdate(m[2]); }
-    else if (id === 'rtD') st.rt.d = v || today(); else if ((m = /^rt([qs])-(.+)$/.exec(id))) (m[1] === 'q' ? st.rt.q : st.rt.ser)[m[2]] = v;
+    else if (id === 'rtD') st.rt.d = v || today(); else if ((m = /^rt([qs])-(.+)$/.exec(id))) { (m[1] === 'q' ? st.rt.q : st.rt.ser)[m[2]] = v; const bx = $('rtWhyBox'); if (bx) bx.hidden = !rtOver(ledger()).length; }
     else if (id === 'bkD') st.bk.d = v || today(); else if (id === 'bkReason') st.bk.reason = v; else if ((m = /^bk([qs])-(.+)$/.exec(id))) (m[1] === 'q' ? st.bk.q : st.bk.ser)[m[2]] = v;
     else if (id === 'zbD') st.zb.d = v || today(); else if (id === 'zbAct') st.zb.act = v; else if (id === 'zbNote') st.zb.note = v;
-    else if ((m = /^zb([qs])-(.+)$/.exec(id))) { if (m[1] === 'q') { st.zb.q[st.zb.o][m[2]] = v; const oh = (ledger().place[P_STORE] || {})[m[2]] || 0; const fl = $('zbf-' + m[2]); if (fl) fl.innerHTML = num(v) > oh + 1e-9 ? '<span class="warn-t">на складі лише ' + q2(oh) + '</span>' : ''; } else st.zb.ser[m[2]] = v; }
+    else if ((m = /^zb([qs])-(.+)$/.exec(id))) { if (m[1] === 'q') { st.zb.q[st.zb.o][m[2]] = v; const oh = docAvail(ledger(), P_STORE, m[2]); const fl = $('zbf-' + m[2]); if (fl) fl.innerHTML = num(v) > oh + 1e-9 ? '<span class="warn-t">на складі лише ' + q2(oh) + '</span>' : ''; } else st.zb.ser[m[2]] = v; }
     const sum = { rt: () => Object.keys(st.rt.q).filter(c => num(st.rt.q[c]) > 0).length, bk: () => Object.keys(st.bk.q).filter(c => num(st.bk.q[c]) > 0).length, zb: () => Object.keys(st.zb.q[st.zb.o] || {}).filter(c => num(st.zb.q[st.zb.o][c]) > 0).length }[id.slice(0, 2)];
     if (sum) { const el = $(id.slice(0, 2) + 'Sum'); if (el) el.innerHTML = 'Позицій: <b>' + sum() + '</b>'; }
   });
   view.addEventListener('change', e => {
     if (!skOn()) return; const id = e.target.id || ''; const v = e.target.value;
-    if (id === 'rcItem') { st.rc.pick = v; st.rc.q = ''; st.rc.ser = ''; render(); const n = $('rcSer') || $('rcQ'); if (n) n.focus(); }
+    const mi = /^(rc|op)Item$/.exec(id);
+    if (mi) { const f = st[mi[1]]; f.pick = v; f.q = ''; f.ser = ''; render(); const n = $(mi[1] + 'Ser') || $(mi[1] + 'Q'); if (n) n.focus(); }
+    else if (id === 'opPlace') { st.op.place = v; render(); }
     else if (id === 'ivO') { st.iv.o = v; st.iv.q = {}; st.iv.ser = {}; skSet('vyd/' + v); }
     else if (id === 'ivBr') { st.iv.br = v; render(); }
     else if (id === 'ivWhy') st.iv.why = v;
@@ -1158,8 +1226,8 @@
     if (!skOn()) return; const t = e.target;
     const f = t.closest('[data-skf]'); if (f) { st.skf = f.dataset.skf; render(); return; }
     const v = t.closest('[data-skv]'); if (v) { st.zal.v = v.dataset.skv; render(); return; }
-    if (t.closest('#rcAdd')) { rcAdd(); return; }
-    const rm = t.closest('[data-rcrm]'); if (rm) { st.rc.lines.splice(Number(rm.dataset.rcrm), 1); render(); return; }
+    const ad = t.closest('[data-lnadd]'); if (ad) { lineAdd(ad.dataset.lnadd); return; }
+    const rm = t.closest('[data-lnrm]'); if (rm) { const [k, i] = rm.dataset.lnrm.split(':'); st[k].lines.splice(Number(i), 1); render(); return; }
     const ph = t.closest('[data-rcph]'); if (ph) { st.rc.photos.splice(Number(ph.dataset.rcph), 1); render(); }
   });
   view.addEventListener('change', async e => {
@@ -1175,7 +1243,7 @@
       const v = num(q[c]); if (!(v > 0)) continue;
       const s = serList(ser[c]); const bad = s.filter(x => !SER_RE.test(x));
       if (bad.length) return 'Перевірте серійні номери: ' + bad.slice(0, 3).join(', ');
-      if (s.length && s.length !== v) return itemTxt(c) + ': серійних номерів ' + s.length + ', а кількість ' + q2(v) + '.';
+      if (isSerial(c) ? s.length !== v : s.length) return itemTxt(c) + (isSerial(c) ? ': потрібні серійні номери — ' + s.length + ' з ' + q2(v) + '.' : ': серійні номери лише для модулів і щитків.');
       out.push({ c, q: r6(v), name: itemTxt(c), unit: unitTxt(c), owner: ownerTxt(c), serials: s, over: !!(over && over(c, v)) });
     }
     return out.length ? out : 'Вкажіть кількість хоча б по одній позиції.';
@@ -1187,31 +1255,37 @@
     const kind = form.dataset.form; let body, msg, reset;
     if (kind === 'rc') {
       const f = st.rc; if (!f.lines.length) return err('Додайте хоча б одну позицію в документ.');
-      body = { d: f.d, doc: f.doc.trim(), lines: f.lines.map(l => ({ c: l.c, q: l.q, name: itemTxt(l.c), unit: unitTxt(l.c), owner: ownerTxt(l.c), serials: l.serials })), photos: f.photos.map(p => ({ b64: p.b64, mime: p.mime })) };
+      body = { d: f.d, doc: f.doc.trim(), lines: docLines(f), photos: f.photos.map(p => ({ b64: p.b64, mime: p.mime })) };
       msg = 'Надходження збережено'; reset = () => { st.rc = { d: f.d, doc: '', pick: '', q: '', ser: '', lines: [], photos: [] }; };
     } else if (kind === 'iv') {
-      const f = st.iv; const L = ledger(); const br = (f.br === '__new' || !f.br ? f.brNew : f.br).trim();
-      if (!br) return err('Вкажіть бригаду.');
-      const lines = draftLines(f.q, f.ser, (c, v) => v > ivRem(L, f.o, c) + 1e-9); if (typeof lines === 'string') return err(lines);
+      const f = st.iv; const L = ledger(); const br = String(f.br || '').trim();
+      if (!br || !brigadeList(L).includes(br)) return err('Виберіть бригаду зі списку.');
+      const lines = draftLines(f.q, f.ser, (c, v) => ivIsOver(L, c, v)); if (typeof lines === 'string') return err(lines);
       let reason = '';
-      if (lines.some(l => l.over)) { if (!f.why) return err('Видача понад ліміт даху: виберіть причину.'); if (f.why === 'інше' && !f.reason.trim()) return err('Поясніть причину видачі понад ліміт.'); reason = f.why + (f.reason.trim() ? ': ' + f.reason.trim() : ''); }
+      if (lines.some(l => l.over)) { if (!f.why) return err('Видача понад ліміт даху або наявність: виберіть причину.'); if (f.why === 'інше' && !f.reason.trim()) return err('Поясніть причину видачі понад ліміт.'); reason = f.why + (f.reason.trim() ? ': ' + f.reason.trim() : ''); }
       body = { type: 'видача', d: f.d, from: P_STORE, to: brPlace(br), o: f.o, lines, reason };
       if (f.sign) body.sign = { b64: f.sign.split(',')[1] };
-      msg = 'Видачу бригаді «' + br + '» збережено'; reset = () => { f.q = {}; f.ser = {}; f.why = ''; f.reason = ''; f.sign = ''; if (f.br === '__new') { f.br = br; f.brNew = ''; } };
+      msg = 'Видачу бригаді «' + br + '» збережено'; reset = () => { f.q = {}; f.ser = {}; f.why = ''; f.reason = ''; f.sign = ''; };
     } else if (kind === 'rt') {
-      const f = st.rt; if (!f.br) return err('Виберіть бригаду.');
-      const lines = draftLines(f.q, f.ser); if (typeof lines === 'string') return err(lines);
-      body = { type: 'повернення', d: f.d, from: brPlace(f.br), to: P_STORE, o: f.o, lines };
-      msg = 'Повернення збережено'; reset = () => { f.q = {}; f.ser = {}; };
+      const f = st.rt; const L = ledger(); if (!f.br) return err('Виберіть бригаду.');
+      const lines = draftLines(f.q, f.ser, (c, v) => v > docAvail(L, brPlace(f.br), c) + 1e-9); if (typeof lines === 'string') return err(lines);
+      if (lines.some(l => l.over) && !String(f.reason || '').trim()) return err('Повертається більше, ніж видано: вкажіть причину.');
+      body = { type: 'повернення', d: f.d, from: brPlace(f.br), to: P_STORE, o: f.o, lines, reason: String(f.reason || '').trim() };
+      msg = 'Повернення збережено'; reset = () => { f.q = {}; f.ser = {}; f.reason = ''; };
     } else if (kind === 'bk') {
       const f = st.bk; if (!f.reason.trim()) return err('Вкажіть причину браку.');
       const lines = draftLines(f.q, f.ser); if (typeof lines === 'string') return err(lines);
       body = { type: 'брак', d: f.d, from: f.from, to: P_SCRAP, lines, reason: f.reason.trim() };
       msg = 'Брак записано'; reset = () => { f.q = {}; f.ser = {}; f.reason = ''; };
     } else if (kind === 'zb') {
-      const f = st.zb; const lines = draftLines(f.q[f.o] || {}, f.ser || {}); if (typeof lines === 'string') return err(lines);
+      const f = st.zb; const L = ledger(); const lines = draftLines(f.q[f.o] || {}, f.ser || {}, (c, v) => v > docAvail(L, P_STORE, c) + 1e-9); if (typeof lines === 'string') return err(lines);
+      if (lines.some(l => l.over) && !f.note.trim()) return err('На складі менше, ніж передаєте: у примітці вкажіть причину.');
       body = { type: 'передача на зберігання', d: f.d, from: P_STORE, to: P_KEEP, o: f.o, act: f.act.trim(), reason: f.note.trim(), lines };
       msg = 'Передачу на зберігання збережено'; reset = () => { f.q[f.o] = {}; f.ser = {}; f.act = ''; f.note = ''; };
+    } else if (kind === 'op') {
+      const f = st.op; if (!f.lines.length) return err('Додайте хоча б одну позицію.');
+      body = { type: 'початкові залишки', d: f.d || today(), from: f.place, lines: docLines(f) };
+      msg = 'Початкові залишки записано'; reset = () => { f.lines = []; f.pick = ''; f.q = ''; f.ser = ''; };
     } else return;
     st.busy = true; const b = form.querySelector('button[type=submit]'); if (b) b.disabled = true; h.className = 'hint'; h.textContent = 'Зберігаю…';
     try {
@@ -1279,6 +1353,7 @@
   view.addEventListener('click', e => {
     const del = e.target.closest('[data-del]'); if (del) { onDelete(del); return; }
     const unq = e.target.closest('[data-unq]'); if (unq) { onUnqueue(unq); return; }
+    const rty = e.target.closest('[data-retry]'); if (rty) { onRetry(rty); return; }
     const per = e.target.closest('[data-per]'); if (per) { st.period = per.dataset.per; st.psel = null; render(); return; }
     const pk = e.target.closest('[data-pk]'); if (pk) { st.psel = pk.dataset.pk; render(); const rec = $('records'); if (rec && pk.tagName !== 'path') rec.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); return; }
     const z = e.target.closest('[data-z]'); if (z) { const img = $('img-' + z.dataset.z); if (img) img.style.width = (Number(z.dataset.k) * 100) + '%'; return; }
