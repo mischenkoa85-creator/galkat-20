@@ -1,0 +1,160 @@
+    <div class="pane note" data-pane="note" hidden>
+      <p class="lead">Попередня записка і варіанти кошторису. Усі цифри орієнтовні: вони потрібні, щоб порівняти рішення між собою, а не щоб закладати бюджет. Суми в євро без ПДВ, якщо не сказано інакше; доставка, мито, монтаж і пусконалагодження в закупівельні ціни не входять.</p>
+
+      <div class="rates" id="rates">
+        <label>1 € = <input type="number" id="rE" step="0.01" min="1" value="50.31"> ₴</label>
+        <label>1 $ = <input type="number" id="rU" step="0.01" min="1" value="44.89"> ₴</label>
+        <span class="small">курс НБУ на 12.10.2026; змініть — усі суми в євро перерахуються</span>
+        <button type="button" id="rReset">Скинути</button>
+      </div>
+
+      <h2>Висновки</h2>
+      <ol class="concl">
+        <li><b>Кошторис РП</b> — <span class="cv" data-c="UAHk" data-v="88826.191" data-f="m"></span> без ПДВ (<span class="cv" data-c="UAHk" data-v="106591.429" data-f="m"></span> з ПДВ). Устаткування — 64 % без ПДВ. Це <span class="cv" data-c="UAHk" data-v="88826.191" data-per="1022.4" data-f="e0u"></span> на 1 кВтп разом з накопичувачем.</li>
+        <li><b>Накопичувач — найбільша стаття і найбільший запас.</b> У кошторисі ≈ <span class="cv" data-c="UAHk" data-v="32300" data-f="k"></span>. Орієнтовна ринкова ціна шаф за проєктом (за вашими даними) ≈ <span class="cv" data-c="EUR" data-v="411075" data-f="k"></span> (Китай) або <span class="cv" data-c="EUR" data-v="450225" data-f="k"></span> (Європа); контейнер E-Systems із PCS, STS і EMS ≈ <span class="cv" data-c="USD" data-v="595000" data-f="k"></span>. Різниця до кошторису: від <span class="cv" data-sum="e_a0,-e_b" data-f="k"></span> (контейнер) до <span class="cv" data-sum="e_a0,-e_a1" data-f="k"></span> (шафи, Китай).</li>
+        <li><b>Панелі.</b> Кошторис закладає 7,48 ₴/Вт (≈ <span class="cv" data-c="UAH" data-v="7.48" data-f="e3"></span>/Вт). У прайсі Nota Trade на складі в Україні GCL 710 Вт — 0,134–0,145 $/Вт (≈ <span class="cv" data-c="USD" data-v="0.139" data-f="e3"></span>/Вт за контейнер): економія ≈ <span class="cv" data-sum="p_est,-p_gcl" data-f="k"></span>, але лише за умови, що модуль підходить під кріплення і стрінги.</li>
+        <li><b>Контейнерні варіанти — це переробка проєкту, а не заміна позиції.</b> PCS контейнера в пропозиціях заявлений лише для батареї (MPPT не вказано), тому фотомодулі доведеться підключати окремими мережевими інверторами (AC-зв'язок), додається STS, змінюється основа і схема. Потрібні повторна експертиза і нова редакція розділу.</li>
+        <li><b>Нова ТП проєктом не передбачена</b>: шафи і PCS на 0,4 кВ приєднуються до шин ТП-5913 і ТП-6923. Трансформатор 0,4/6 кВ у пропозиціях E-Systems/Golen — «на вибір»; його потрібно брати лише якщо точка приєднання на 6 (10) кВ. Власник ТП і дозвіл ОСР досі не підтверджені.</li>
+      </ol>
+
+      <h2>1. Кошторис РП 2025/12-06-К</h2>
+      <p class="small">Ціни на 27.03.2026, АВК-5, РЕКН. Складений за Настановою (п. 4.32, 4.38–4.40). У кошторисі затверджувач — ТОВ «АГРО-ЕТАЛОН» (залишок шаблона іншого об'єкта).</p>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Стаття</th><th class="n">тис. грн</th><th class="n">тис. €</th></tr></thead>
+        <tbody>
+          <tr><td>Будівельні роботи (гл. 1–9)</td><td class="n">25 449,068</td><td class="n"><span class="cv" data-c="UAHk" data-v="25449.068" data-f="k0"></span></td></tr>
+          <tr><td>Устаткування (гл. 1–9)</td><td class="n">55 762,404</td><td class="n"><span class="cv" data-c="UAHk" data-v="55762.404" data-f="k0"></span></td></tr>
+          <tr class="sub"><td>Разом гл. 1–9</td><td class="n">81 211,472</td><td class="n"><span class="cv" data-c="UAHk" data-v="81211.472" data-f="k0"></span></td></tr>
+          <tr><td>Технагляд 1,5 %</td><td class="n">1 218,172</td><td class="n"><span class="cv" data-c="UAHk" data-v="1218.172" data-f="k0"></span></td></tr>
+          <tr><td>Проєкт, експертиза, авторський нагляд (гл. 12)</td><td class="n">247,878</td><td class="n"><span class="cv" data-c="UAHk" data-v="247.878" data-f="k0"></span></td></tr>
+          <tr><td>Кошторисний прибуток 15 % від прямих витрат 23 135,6</td><td class="n">3 470,340</td><td class="n"><span class="cv" data-c="UAHk" data-v="3470.340" data-f="k0"></span></td></tr>
+          <tr><td>Адміністративні витрати 3 %</td><td class="n">694,068</td><td class="n"><span class="cv" data-c="UAHk" data-v="694.068" data-f="k0"></span></td></tr>
+          <tr><td>Ризики всіх учасників 2,4 %</td><td class="n">1 984,261</td><td class="n"><span class="cv" data-c="UAHk" data-v="1984.261" data-f="k0"></span></td></tr>
+          <tr class="sub"><td>Разом без ПДВ</td><td class="n">88 826,191</td><td class="n"><span class="cv" data-c="UAHk" data-v="88826.191" data-f="k0"></span></td></tr>
+          <tr><td>ПДВ 20 %</td><td class="n">17 765,238</td><td class="n"><span class="cv" data-c="UAHk" data-v="17765.238" data-f="k0"></span></td></tr>
+          <tr class="sub"><td>Всього за ЗКР</td><td class="n">106 591,429</td><td class="n"><span class="cv" data-c="UAHk" data-v="106591.429" data-f="k0"></span></td></tr>
+        </tbody></table></div>
+      <dl class="kv">
+        <dt>Праця</dt><dd>55,738 тис. люд.-год; заробітна плата 6 759,62 тис. грн; тариф 20 329,09 грн/міс (розряд 3,8) і 20 810,40 грн/міс (ПНР, розряд 4)</dd>
+        <dt>Машини</dt><dd>2 429,614 тис. грн, амортизація 44,780 тис. грн</dd>
+        <dt>Ознаки завищення</dt><dd>За аналізом ≈ 7–8 млн грн прямих витрат, з накладними і ПДВ ≈ 11–12 млн грн (≈ <span class="cv" data-c="UAHk" data-v="11500" data-f="k0"></span> тис. €): баласт, укладання модулів, гофротруба, ціни за кг/елемент/м³ замість одиниці, кабельрост 900 м проти ≈ 70 м за кресленням</dd>
+        <dt>Строк</dt><dd>У кошторисі розраховано 1,69 міс, прийнято 24 міс</dd>
+      </dl>
+
+      <h2>2. Накопичувач: варіанти</h2>
+      <p class="small">Проєкт: 3 915 кВт·год / 1,5 МВт, 3 шафи мікромережі FFD POWER 500 кВт (STS, PCS, 10 MPPT, EMS) і 15 батарей Galaxy261L. Сума в євро і €/кВт·год — для порівняння варіантів на однакових умовах: без доставки, мита й монтажу.</p>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Варіант</th><th>Склад</th><th class="n">кВт·год / МВт</th><th class="n">тис. €</th><th class="n">€/кВт·год</th><th>Джерело, статус</th></tr></thead>
+        <tbody>
+          <tr><td><b>А0</b> За кошторисом РП</td><td>Шафи FFD ×3, Galaxy ×15</td><td class="n">3 915 / 1,5</td><td class="n"><span class="cv" id="e_a0" data-c="UAHk" data-v="32300" data-f="k0"></span></td><td class="n"><span class="cv" data-c="UAHk" data-v="32300" data-per="3915" data-f="e0"></span></td><td>Аналіз РП, без ПДВ (≈)</td></tr>
+          <tr><td><b>А1</b> Шафи, Китай</td><td>Те саме або еквівалент</td><td class="n">3 915 / 1,5</td><td class="n"><span class="cv" id="e_a1" data-c="EUR" data-v="411075" data-f="k0"></span></td><td class="n">105</td><td>Ваші дані, документа немає</td></tr>
+          <tr><td><b>А2</b> Шафи, Європа</td><td>Те саме</td><td class="n">3 915 / 1,5</td><td class="n"><span class="cv" id="e_a2" data-c="EUR" data-v="450225" data-f="k0"></span></td><td class="n">115</td><td>Ваші дані, документа немає</td></tr>
+          <tr><td><b>А3</b> FOX ESS T-Max Plus</td><td>16 × 125 кВт / 241 кВт·год, DC-зв'язок, склад Україна</td><td class="n">3 856 / 2,0</td><td class="n"><span class="cv" id="e_a3" data-c="USD" data-v="662400" data-f="k0"></span></td><td class="n"><span class="cv" data-c="USD" data-v="662400" data-per="3856" data-f="e0"></span></td><td>Прайс Nota Trade 15.10, 41 400 $ за шафу, «в наявності»</td></tr>
+          <tr><td><b>Б</b> Контейнер E-Systems</td><td>1 × LBS-4180-HV-G20 + PCS з сухим трансформатором 1,5 МВт + STS + інтеграція EMS</td><td class="n">4 180 / 1,5</td><td class="n"><span class="cv" id="e_b" data-c="USD" data-v="595000" data-f="k0"></span></td><td class="n"><span class="cv" data-c="USD" data-v="595000" data-per="4180" data-f="e0"></span></td><td>Пропозиція 04.10.2026, 595 000 $ без ПДВ; виготовлення ≈ 45 днів</td></tr>
+          <tr><td><b>В</b> Контейнери Golen</td><td>2 × LBS-4180 + PCS 1,725 МВт + STS + EMS</td><td class="n">8 360 / 1,725</td><td class="n"><span class="cv" id="e_v" data-c="USD" data-v="968000" data-f="k0"></span></td><td class="n"><span class="cv" data-c="USD" data-v="968000" data-per="8360" data-f="e0"></span></td><td>Пропозиція 03.10.2026, 968 000 $ без ПДВ</td></tr>
+          <tr><td><b>Г</b> Контейнери Golen</td><td>2 × LBS-5016 + PCS 1,725 МВт + STS + EMS</td><td class="n">10 032 / 1,725</td><td class="n"><span class="cv" id="e_g" data-c="USD" data-v="1106000" data-f="k0"></span></td><td class="n"><span class="cv" data-c="USD" data-v="1106000" data-per="10032" data-f="e0"></span></td><td>Пропозиція 03.10.2026, 1 106 000 $ без ПДВ</td></tr>
+        </tbody></table></div>
+      <h4>Структура ціни контейнерних пропозицій, $ без ПДВ</h4>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Позиція</th><th class="n">Б, 4,18 МВт·год</th><th class="n">В, 8,36 МВт·год</th><th class="n">Г, 10,03 МВт·год</th></tr></thead>
+        <tbody>
+          <tr><td>Обладнання (батареї + PCS з трансформатором)</td><td class="n">485 000</td><td class="n">888 000</td><td class="n">1 026 000</td></tr>
+          <tr class="sub"><td>— із них батарейні контейнери</td><td class="n">352 000</td><td class="n">≈ 704 000</td><td class="n">≈ 842 000</td></tr>
+          <tr><td>STS або ATS (бюджетна позиція)</td><td class="n">35 000</td><td class="n">35 000</td><td class="n">35 000</td></tr>
+          <tr><td>Інтеграція EMS</td><td class="n">45 000</td><td class="n">45 000</td><td class="n">45 000</td></tr>
+          <tr class="sub"><td>Разом</td><td class="n">595 000</td><td class="n">968 000</td><td class="n">1 106 000</td></tr>
+          <tr><td>Батарея без PCS, $/кВт·год</td><td class="n">84,2</td><td class="n">≈ 84</td><td class="n">≈ 84</td></tr>
+          <tr><td>Батарея + PCS з трансформатором, $/кВт·год</td><td class="n">116,0</td><td class="n">106,2</td><td class="n">102,3</td></tr>
+        </tbody></table></div>
+      <p class="small">Рядки з «≈» — розрахункові: у пропозиції Golen окремо вказано лише суму обладнання. Якщо контейнер LBS-5016 коштує стільки ж за кВт·год, PCS із трансформатором 1,725 МВт виходить ≈ 184 000 $. Ціна «80–84 за кВт·год», яку ви називали, відповідає батарейному контейнеру без PCS, у доларах.</p>
+
+      <h4>Що додається до контейнерних варіантів (Б–Г)</h4>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Позиція</th><th>Пояснення</th><th class="n">тис. €</th></tr></thead>
+        <tbody>
+          <tr><td>Мережеві PV-інвертори</td><td>PCS контейнера працює лише з батареєю. Для 1 022 кВтп — 7 × GoodWe GW125K-GT (875 кВт AC, DC/AC ≈ 1,17), 2 819 € за шт., прайс Nota Trade, «під замовлення»</td><td class="n"><span class="cv" id="e_inv" data-c="EUR" data-v="19733" data-f="k0"></span></td></tr>
+          <tr><td>Нова основа під контейнер і скід</td><td>Не оцінено: потрібні габарити і вага, розрахунок основи (геології немає)</td><td class="n">—</td></tr>
+          <tr><td>Переробка РП, експертиза, дозвіл</td><td>Нова схема AC-зв'язку, пожежна безпека (її в проєкті немає)</td><td class="n">—</td></tr>
+          <tr><td>Доставка, мито, кран, монтаж, ПНР</td><td>У пропозиціях не включені</td><td class="n">—</td></tr>
+        </tbody></table></div>
+
+      <h2>3. Фотомодулі: список варіантів</h2>
+      <p class="small">Прайс Nota Trade від 15.10.2026, $/Вт без ПДВ, склад Україна: палета / контейнер / 5+ контейнерів. Ємність і наявність — за прайсом. Габарити і Uхх треба звірити з datasheet: стрінги з 19 модулів у мороз уже зараз перевищують 1 000 В.</p>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Модуль</th><th class="n">Вт</th><th class="n">$/Вт: палета</th><th class="n">контейнер</th><th class="n">5+ конт.</th><th class="n">1 022 кВтп, тис. €</th><th>Наявність, примітка</th></tr></thead>
+        <tbody>
+          <tr class="cur"><td><b>Shinefar SF-M21/G132710</b> (проєкт)</td><td class="n">710</td><td class="n" colspan="3">7,48 ₴/Вт ≈ <span class="cv" data-c="UAH" data-v="7.48" data-f="e3"></span>/Вт (кошторис)</td><td class="n"><span class="cv" id="p_est" data-c="UAH" data-v="7647552" data-f="k0"></span></td><td>Кошторисна ціна; кріплення RUDNIK під 2384 × 1303</td></tr>
+          <tr><td>GCL-NT12/66GDF-710W, bifacial</td><td class="n">710</td><td class="n">0,145</td><td class="n">0,139</td><td class="n">0,134</td><td class="n"><span class="cv" id="p_gcl" data-c="USD" data-v="142114" data-f="k0"></span></td><td>9 415 шт у наявності, гарантія 12/30 р. Габарит і Uхх — за datasheet</td></tr>
+          <tr><td>GCL-NT12/66GDF-715W</td><td class="n">715</td><td class="n">0,145</td><td class="n">0,139</td><td class="n">0,134</td><td class="n"><span class="cv" data-c="USD" data-v="142114" data-f="k0"></span></td><td>3 003 шт</td></tr>
+          <tr><td>GCL-NT12/66GDF-720W</td><td class="n">720</td><td class="n">0,145</td><td class="n">0,139</td><td class="n">0,134</td><td class="n"><span class="cv" data-c="USD" data-v="142114" data-f="k0"></span></td><td>843 шт: для 1 440 модулів замало</td></tr>
+          <tr><td>Renesola RS9-720NBG-E1</td><td class="n">720</td><td class="n">0,160</td><td class="n">0,140</td><td class="n">0,138</td><td class="n"><span class="cv" data-c="USD" data-v="143136" data-f="k0"></span></td><td>2 754 шт</td></tr>
+          <tr><td>Jinko JKM715N-66HL5-BDV</td><td class="n">715</td><td class="n">0,151</td><td class="n">—</td><td class="n">—</td><td class="n"><span class="cv" data-c="USD" data-v="154382" data-f="k0"></span></td><td>2 шт у наявності: лише під замовлення, за партію ціни немає</td></tr>
+          <tr><td>JA Solar JAM72D42-640/LB</td><td class="n">640</td><td class="n">0,156</td><td class="n">0,153</td><td class="n">0,150</td><td class="n"><span class="cv" data-c="USD" data-v="156427" data-f="k0"></span></td><td>2 670 шт; 72 комірки — інший формат, 1 598 шт замість 1 440, потрібне нове кріплення</td></tr>
+          <tr><td>Longi LR-8-66HGD-615</td><td class="n">615</td><td class="n">0,160</td><td class="n">0,153</td><td class="n">0,150</td><td class="n"><span class="cv" data-c="USD" data-v="156427" data-f="k0"></span></td><td>В дорозі; інший формат</td></tr>
+        </tbody></table></div>
+      <p class="small">Колонка «1 022 кВтп» рахує ту саму потужність за ціною «контейнер» (де її немає — за палету). Менше потужних модулів дає менше кріплення, але кріплення в проєкті розраховане на 2384 × 1303 мм, тому 640 і 615 Вт тягнуть за собою перерахунок баласту і шафи щитів.</p>
+
+      <h2>4. Приєднання і ТП</h2>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Варіант</th><th>Суть</th><th>Умови</th></tr></thead>
+        <tbody>
+          <tr><td><b>Т0</b> За проєктом</td><td>Шафи 0,4 кВ → шини ТП-5913 (2 × ТМЗ-2500) і ТП-6923 (ТМЗ-2500); нова ТП не потрібна</td><td>Підтвердити власника ТП і вільну потужність; повідомлення ОСР (КСР, гл. 4.12, Дод. 11); з 01.09.2026 «складна площадка» (№ 1358); лічильників ACE 6000 у проєкті немає</td></tr>
+          <tr><td><b>Т1</b> Контейнер без трансформатора</td><td>PCS на 0,4 кВ, підключення як у Т0; трансформатор 0,4/6 кВ «на вибір»</td><td>Запитати в E-Systems ціну PCS без трансформатора: у 133 000 $ він, схоже, уже закладений</td></tr>
+          <tr><td><b>Т2</b> Контейнер із трансформатором</td><td>Вихід 6 кВ (в Golen — і 10 кВ), потрібне приєднання до РУ 6 (10) кВ або нова КТП</td><td>Не оцінено: потрібні ТУ ОСР і ціна КТП. У кошторисі силових трансформаторів немає</td></tr>
+        </tbody></table></div>
+
+      <h2>5. Зведення по сценаріях</h2>
+      <p class="small">Тільки позиції, що змінюються між сценаріями: панелі, накопичувач і PV-інвертори; решта кошторису (кабелі, щити, кріплення, роботи) вважається однаковою. Сума без ПДВ.</p>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Сценарій</th><th class="n">Панелі</th><th class="n">ESS</th><th class="n">PV-інв.</th><th class="n">Разом, тис. €</th><th class="n">До кошторису</th></tr></thead>
+        <tbody>
+          <tr><td><b>1</b> Кошторис РП</td><td class="n"><span class="cv" data-ref="p_est" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_a0" data-f="k0"></span></td><td class="n">0</td><td class="n"><span class="cv" id="s1" data-sum="p_est,e_a0" data-f="k0"></span></td><td class="n">—</td></tr>
+          <tr><td><b>2</b> Проєкт, ринкові ціни (шафи Китай)</td><td class="n"><span class="cv" data-ref="p_gcl" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_a1" data-f="k0"></span></td><td class="n">0</td><td class="n"><span class="cv" id="s2" data-sum="p_gcl,e_a1" data-f="k0"></span></td><td class="n"><span class="cv" data-sum="s2,-s1" data-f="d0"></span></td></tr>
+          <tr><td><b>2а</b> Те саме, шафи Європа</td><td class="n"><span class="cv" data-ref="p_gcl" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_a2" data-f="k0"></span></td><td class="n">0</td><td class="n"><span class="cv" id="s2a" data-sum="p_gcl,e_a2" data-f="k0"></span></td><td class="n"><span class="cv" data-sum="s2a,-s1" data-f="d0"></span></td></tr>
+          <tr><td><b>3</b> FOX ESS T-Max Plus</td><td class="n"><span class="cv" data-ref="p_gcl" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_a3" data-f="k0"></span></td><td class="n">0</td><td class="n"><span class="cv" id="s3" data-sum="p_gcl,e_a3" data-f="k0"></span></td><td class="n"><span class="cv" data-sum="s3,-s1" data-f="d0"></span></td></tr>
+          <tr><td><b>4</b> Контейнер E-Systems 4,18 МВт·год</td><td class="n"><span class="cv" data-ref="p_gcl" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_b" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_inv" data-f="k0"></span></td><td class="n"><span class="cv" id="s4" data-sum="p_gcl,e_b,e_inv" data-f="k0"></span></td><td class="n"><span class="cv" data-sum="s4,-s1" data-f="d0"></span></td></tr>
+          <tr><td><b>5</b> Контейнери Golen 8,36 МВт·год</td><td class="n"><span class="cv" data-ref="p_gcl" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_v" data-f="k0"></span></td><td class="n"><span class="cv" data-ref="e_inv" data-f="k0"></span></td><td class="n"><span class="cv" id="s5" data-sum="p_gcl,e_v,e_inv" data-f="k0"></span></td><td class="n"><span class="cv" data-sum="s5,-s1" data-f="d0"></span></td></tr>
+        </tbody></table></div>
+      <p class="small">Сценарій 5 — вдвічі більша ємність, ніж у проєкті, і перекриває потребу лише якщо замовник збирається збільшувати накопичувач.</p>
+
+      <h2>6. Закупівлі, логістика і черговість</h2>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Лот</th><th>Обсяг</th><th>Вага, об'єм</th><th>Примітка</th></tr></thead>
+        <tbody>
+          <tr><td>Фотомодулі</td><td>1 440 шт, 1 022,4 кВтп</td><td>≈ 50 т; морем ≈ 3 × 40HC (≈ 620 шт на контейнер — припущення)</td><td>З складу в Україні фрахту немає; з Китаю — окремий запит</td></tr>
+          <tr><td>Баласт і мати RUDNIK</td><td>5 396 баластів 300 × 300 × 60, 2 698 трикутників</td><td>≈ 70 т баласту (13 кг/шт)</td><td>Постачальник має сам визначити кількість; розрахунку на вітер немає</td></tr>
+          <tr><td>Накопичувач</td><td>Залежно від варіанта (розділ 2)</td><td>Шафи: вагу і габарити запросити. Контейнер Golen 5 МВт·год ≈ 43 т, PCS-скід ≈ 17 т</td><td>Негабарит: потрібні трал і кран; для LBS-4180 вагу уточнити</td></tr>
+          <tr><td>PV-інвертори</td><td>7 шт 125 кВт</td><td>—</td><td>Лише контейнерні варіанти</td></tr>
+          <tr><td>Кабелі</td><td>H1Z2Z2-K 1×6 — 21,9 км; силові ПВ-3 12 × 1 × 150</td><td>Котушки</td><td>Запас 13–28 % при заявлених 5 %</td></tr>
+          <tr><td>Щити</td><td>ЩР-PV ×8, ЩР-АКБ ×3</td><td>—</td><td>Запобіжники gPV: потрібно 30 А замість 25 А</td></tr>
+          <tr><td>Блискавкозахист</td><td>51 + 2 щогли, 44 спуски</td><td>—</td><td>Стрижнів d16: 26 у специфікації, 28 на кресленні</td></tr>
+          <tr><td>Основа УЗЕ</td><td>Подушка 250 мм, 9 лежнів ЛЖ-16, РМ-1, 5 × ФМ-1, навіс 9,45 × 2,2 м</td><td>Місцеві матеріали</td><td>Під контейнер потрібна нова основа; геології немає</td></tr>
+          <tr><td>Облік</td><td>Лічильники ACE 6000, ТС</td><td>—</td><td>У специфікації й кошторисі немає; ТС 5000/5 проти 4000/5</td></tr>
+        </tbody></table></div>
+
+      <h4>Що за чим будувати</h4>
+      <div class="tblw"><table class="nt">
+        <thead><tr><th>Етап</th><th>Кроки макета</th><th>Що потрібно на об'єкті</th><th>Залежність</th></tr></thead>
+        <tbody>
+          <tr><td>0. Готовність проєкту</td><td>—</td><td>Виправлений РП, експертиза (клас CC2), повідомлення ОСР</td><td>Без цього не замовляти накопичувач і модулі</td></tr>
+          <tr><td>1. Покрівля</td><td>1–2</td><td>Звіт обстеження, баласт, мати</td><td>Обстеження покрівлі — у пакеті його немає</td></tr>
+          <tr><td>2. Цех</td><td>3–4</td><td>Трикутники, спойлери, модулі партіями</td><td>Мати й баласт спершу</td></tr>
+          <tr><td>3. Склад</td><td>5</td><td>Модулі 180 шт, кріплення на скати</td><td>Паралельно з етапом 2</td></tr>
+          <tr><td>4. Електрика даху</td><td>6–9</td><td>Кабелі, щити ЩР-PV, щогли, спуски</td><td>Після модулів; зрівнювання потенціалів і блискавкозахист — одночасно</td></tr>
+          <tr><td>5. Основа УЗЕ</td><td>10</td><td>Бетон, контур заземлення</td><td>До приїзду накопичувача; можна вести паралельно з етапами 2–4</td></tr>
+          <tr><td>6. Накопичувач</td><td>11</td><td>Шафи або контейнер, кран, навіс</td><td>Виробництво ≈ 45 днів (E-Systems) плюс доставка; замовляти, коли основа вже в роботі</td></tr>
+          <tr><td>7. Силові лінії і ПНР</td><td>12</td><td>Лінії до ТП, облік, випробування</td><td>Технологічне вікно ОСР</td></tr>
+        </tbody></table></div>
+
+      <h2>7. Відкриті питання</h2>
+      <ul class="open">
+        <li>Умови постачання (EXW, FOB, DAP), ПДВ і дата дії цін на шафи 105 і 115 €/кВт·год — потрібен документ.</li>
+        <li>Чи є в Golen/E-Systems шафові рішення і PCS на 0,4 кВ без трансформатора, і скільки вони коштують.</li>
+        <li>Габарити і Uхх модулів GCL 710–720 Вт та Renesola 720 Вт: чи підходять під кріплення RUDNIK і довжину стрінга.</li>
+        <li>Власник ТП-5913 і ТП-6923, вільна потужність, чи потрібні ТУ.</li>
+        <li>Доставка з Китаю (маршрут, імпортер, мито) — окремий запит, у цифрах її немає.</li>
+        <li>Курс і дата, на яку фіксуються ціни.</li>
+      </ul>
+
+      <p class="foot">Джерела: кошторис 2025/12-06-К (ЗКР, підсумкові вартісні параметри, пояснювальна записка); аналіз РП 2025/12-07; пропозиції E-Systems/Golen від 03–04.10.2026 (надано замовником); прайс Nota Trade 15.10.2026 (Google Диск); курс НБУ на 12.10.2026 — <a href="https://thepage.ua/ua/currency/2026-10-12/amp" target="_blank" rel="noopener">The Page</a>; ціни на шафи 105 і 115 €/кВт·год — зі слів замовника. Масу й кількість модулів у контейнері, склад PV-інверторів і розрахункові рядки позначено «≈» або «припущення».</p>
+    </div>

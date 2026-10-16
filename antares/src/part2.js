@@ -19,6 +19,7 @@ $$('.tabs button').forEach(b => b.addEventListener('click', () => {
   $$('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
   $$('.pane').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
   dockSync(b.dataset.tab);
+  document.querySelector('.app').classList.toggle('wide', b.dataset.tab==='note');
   try { localStorage.setItem('ant-tab', b.dataset.tab); } catch(e) {}
 }));
 try { const t = localStorage.getItem('ant-tab'); if (t) { const b = document.querySelector('.tabs [data-tab="'+t+'"]'); if (b) b.click(); } } catch(e) {}
