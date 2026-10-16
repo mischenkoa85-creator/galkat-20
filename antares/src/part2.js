@@ -9,11 +9,11 @@ const D2R=Math.PI/180, R2D=180/Math.PI;
 // керування над макетом (своє для кожної вкладки) і панель даних внизу, яку можна згорнути й розтягнути
 let ctxOpen=true, ctxHas=true;
 try{ ctxOpen=localStorage.getItem('ant-ctx')!=='0'; }catch(e){}
-function ctxSet(o){ ctxOpen=o; $('#ctx').hidden=!(o&&ctxHas); const b=$('#ctxtoggle'); b.textContent=o?'▴':'▾'; b.setAttribute('aria-expanded',String(o)); b.title=o?'Сховати керування':'Показати керування'; b.setAttribute('aria-label',b.title); try{ localStorage.setItem('ant-ctx',o?'1':'0'); }catch(e){} requestRender(); }
+function ctxSet(o){ ctxOpen=o; setTimeout(()=>{ if(window.hudShift){ hudShift(); requestRender(); } },0); $('#ctx').hidden=!(o&&ctxHas); const b=$('#ctxtoggle'); b.textContent=o?'▴':'▾'; b.setAttribute('aria-expanded',String(o)); b.title=o?'Сховати керування':'Показати керування'; b.setAttribute('aria-label',b.title); try{ localStorage.setItem('ant-ctx',o?'1':'0'); }catch(e){} requestRender(); }
 function dockSync(tab){ ctxHas=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); $('#ctxtoggle').hidden=!ctxHas; ctxSet(ctxOpen); }
 $('#ctxtoggle').addEventListener('click',()=>ctxSet(!ctxOpen));
 const SHEETS=['peek','half','full']; let sheetS='half';
-try{ const v=localStorage.getItem('ant-sheet'); if(SHEETS.includes(v)) sheetS=v; }catch(e){}
+try{ const v=localStorage.getItem('ant-sheet'); if(v==='half'||v==='full') sheetS=v; }catch(e){}
 function sheetSet(st){ sheetS=st; $('#sheet').dataset.s=st; try{ localStorage.setItem('ant-sheet',st); }catch(e){} requestRender(); }
 { const g=$('#grab'); let y0=null, moved=false;
   g.addEventListener('pointerdown',e=>{ y0=e.clientY; moved=false; try{ g.setPointerCapture(e.pointerId); }catch(x){} });

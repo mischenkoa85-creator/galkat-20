@@ -220,7 +220,7 @@ function updateSun(){
   $('#sunkv').innerHTML=`<dt>Азимут / висота</dt><dd>${fmt(s.az,1)}° / ${fmt(s.el,1)}°</dd><dt>Кут падіння на ряди цеху</dt><dd>${s.el>0?fmt(inc,1)+'°'+(cosI<0?' (сонце за площиною модулів)':''):'—'}</dd>`+
     `<dt>Центр модуля в тіні</dt><dd>${s.el>0?`${full} з 1 440 (цех ${fullR}, склад ${fullW})`:'ніч'}</dd><dt>Частково в тіні</dt><dd>${s.el>0?part:'—'}</dd>`+
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
-  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span>висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span>у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span>сонце під горизонтом</span>`; }
+  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span>висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span class="sr-x">у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span>сонце під горизонтом</span>`; }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
@@ -258,8 +258,10 @@ const VIEWS={
 };
 let anim=null;
 const FIT=new Set(['over','plan','wh','ess','ms3','s1','s4','s5','s6','s8','s9','s12']);
-function goView(k, instant){ $$('.hud button').forEach(b=>b.classList.toggle('on',b.dataset.cam===k)); const port=k==='over'&&camera.aspect<0.8; const [p,t]=VIEWS[port?'overP':k]();
-  if(FIT.has(k)&&!port&&camera.aspect<1){ const f=Math.min(1.8,Math.pow(1/camera.aspect,0.6)); p.sub(t).multiplyScalar(f).add(t); }
+function goView(k, instant){ $$('.hud button').forEach(b=>b.classList.toggle('on',b.dataset.cam===k)); const [p,t]=VIEWS[k]();
+  if(FIT.has(k)){ // відстань підбирається так, щоб сфера об'єкта влізла і по ширині, і по висоті вікна
+    const R=({over:72,plan:84,s1:80,s4:60,s6:70,s8:70,wh:34,ess:20,ms3:24,s5:30,s9:22,s12:26})[k]||30, vf=camera.fov*Math.PI/180, hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
+    const need=R/Math.sin(Math.min(vf,hf)/2)*1.05, cur=p.distanceTo(t); if(camera.aspect<1.25||need>cur) p.sub(t).setLength(Math.max(need,k==='plan'?0:cur*0.6)).add(t); }
   if(instant||matchMedia('(prefers-reduced-motion: reduce)').matches){ camera.position.copy(p); controls.target.copy(t); controls.update(); requestRender(); return; }
   const p0=camera.position.clone(), t0=controls.target.clone(); const t1=performance.now(); cancelAnimationFrame(anim);
   const step=n=>{ const u=Math.min(1,(n-t1)/900), e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2; camera.position.lerpVectors(p0,p,e); controls.target.lerpVectors(t0,t,e); controls.update(); requestRender(); if(u<1) anim=requestAnimationFrame(step); };
@@ -272,7 +274,11 @@ showFinding = v=>{ if(/^s\d+$/.test(v)){ $('#t-build').click(); setStep(+v.slice
 
 // ---------- render loop
 controls.addEventListener('change',requestRender);
-function resize(){ const v=$('.view'); const w=v.clientWidth, h=v.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); OW=w; OH=h; requestRender(); }
+function resize(){ const v=$('.view'); const w=v.clientWidth, h=v.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; OW=w; OH=h; hudShift(); requestRender(); }
+// на вузьких екранах зсуваємо картинку вниз на половину висоти верхніх елементів керування, щоб модель була в центрі вільної області
+function hudShift(){ const hw=$('.hudwrap'); let s=0; if(hw&&OW<700){ const vr=$('.view').getBoundingClientRect(), r=hw.getBoundingClientRect(); s=Math.max(0,Math.min(OH*0.45,r.bottom-vr.top))/2; }
+  if(s>1) camera.setViewOffset(OW,OH,0,-Math.round(s),OW,OH); else camera.clearViewOffset(); camera.updateProjectionMatrix(); }
+window.hudShift=hudShift;
 new ResizeObserver(resize).observe($('.view'));
 const needle=$('#needle');
 function orientDecals(){ const a=controls.getAzimuthalAngle(); const k=Math.round(a/(Math.PI/2)); DECALS.forEach(d=>{ d.holder.rotation.y=k*Math.PI/2; }); }
