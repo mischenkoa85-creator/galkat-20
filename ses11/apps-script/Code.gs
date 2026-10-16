@@ -102,8 +102,8 @@ const WHO_COL = { reports: 9, stock: 7, receipts: 10, moves: 11 };
 /* текстові колонки (формат «@»: «00123», «3/10» лишаються текстом) */
 const TEXT_COLS = {
   access: ['A', 'B', 'E'], reports: ['B', 'I', 'J', 'L'], stock: ['B', 'D', 'E', 'G', 'H', 'J', 'K', 'L'],
-  nomen: ['A', 'B', 'C', 'D', 'E', 'F'], receipts: ['B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'M'],
-  moves: ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'O', 'P', 'Q'], serials: ['A', 'B', 'C', 'D', 'E', 'F']
+  nomen: ['A', 'B', 'C', 'D', 'E', 'F'], receipts: ['B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
+  moves: ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q'], serials: ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 };
 const DEFAULT_SETTINGS = [
   ['day1', '', 'День 1 за план-графіком договору (дата РРРР-ММ-ДД): перший робочий день після виконання стартових умов, п. 3.1'],
@@ -189,7 +189,8 @@ function createSheets_(ss) {
     } else {
       /* аркуш створено старою версією: дописати відсутні заголовки праворуч */
       const lc = sh.getLastColumn();
-      if (lc >= 1 && lc < t.head.length) sh.getRange(1, lc + 1, 1, t.head.length - lc).setValues([t.head.slice(lc)]).setFontWeight('bold').setBackground('#e8eef6');
+      if (lc === 0) { sh.getRange(1, 1, 1, t.head.length).setValues([t.head]).setFontWeight('bold').setBackground('#e8eef6'); sh.setFrozenRows(1); applyTextFormats_(sh, k); if (k === 'settings') sh.getRange(2, 1, DEFAULT_SETTINGS.length, 3).setValues(DEFAULT_SETTINGS); if (k === 'nomen') fillNomen_(ss); }
+      else if (lc < t.head.length) sh.getRange(1, lc + 1, 1, t.head.length - lc).setValues([t.head.slice(lc)]).setFontWeight('bold').setBackground('#e8eef6');
     }
     if (BRIG_TABS.indexOf(k) >= 0 && !colOf_(sh, BRIG_HEAD)) {
       const c = Math.max(sh.getLastColumn(), t.head.length) + 1;
@@ -284,6 +285,10 @@ function ymd_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
   return String(v || '').trim();
 }
+
+/* час запису документа складу: текст ISO з мілісекундами (Таблиця не обріже), береться ПІСЛЯ waitLock —
+   тож порядок часу = порядок запису; однаковий час розводить replaySerials_ (надходження раніше руху, далі рядок) */
+function nowIso_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss.SSS"); }
 
 function stamp_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TZ, "yyyy-MM-dd'T'HH:mm:ss");
@@ -579,8 +584,10 @@ function docValues_(ss) {
     lv: ss.getSheetByName(TABS.stock.name).getDataRange().getValues()
   };
 }
-/* залишки за місцями (документи), видано на дах (видача − повернення + старі «Видачі»), бригади з «Руху» */
-function docState_(V) {
+/* залишки за місцями (документи + старі «Видачі» з дати stockStart, як на сайті),
+   видано на дах (видача − повернення + усі старі «Видачі»), бригади з «Руху» */
+const P_NOBR = P_BRIG + 'без бригади';
+function docState_(V, start) {
   const bal = {}, roofIss = {}, brs = [];
   const add = function (m, a, c, q) { const x = m[a] || (m[a] = {}); x[c] = r3_((x[c] || 0) + q); };
   for (let i = 1; i < V.rv.length; i++) if (V.rv[i][0]) add(bal, P_STORE, String(V.rv[i][3]), Number(V.rv[i][5]) || 0);
@@ -593,8 +600,11 @@ function docState_(V) {
     [from, to].forEach(function (p) { if (p.indexOf(P_BRIG) === 0) { const b = p.slice(P_BRIG.length); if (brs.indexOf(b) < 0) brs.push(b); } });
   }
   for (let i = 1; i < V.lv.length; i++) {
-    const r = V.lv[i]; if (!r[0] || (String(r[9] || '').trim() || 'видача') !== 'видача') continue;
-    const c = (CATALOG.legacy[String(r[2])] || {})[String(r[3])]; if (c) add(roofIss, String(r[2]), c, Number(r[5]) || 0);
+    const r = V.lv[i]; if (!r[0]) continue;
+    const c = (CATALOG.legacy[String(r[2])] || {})[String(r[3])]; const q = Number(r[5]) || 0; if (!c || !q) continue;
+    const keep = (String(r[9] || '').trim() || 'видача') !== 'видача';
+    if (!keep) add(roofIss, String(r[2]), c, q);
+    if (!start || ymd_(r[1]) >= start) { add(bal, P_STORE, c, -q); add(bal, keep ? P_KEEP : P_NOBR, c, q); }
   }
   return { bal: bal, roofIss: roofIss, brs: brs };
 }
@@ -623,7 +633,7 @@ function replaySerials_(V) {
     splitSerials_(r[9]).forEach(function (sn) { ev.push({ t: r[13], n: i, k: T.opening ? 0 : 1, sn: sn, c: String(r[6]), to: T.opening ? unsafe_(r[3]) : unsafe_(r[4]), o: String(r[5] || ''), id: String(r[0]) }); });
   }
   const tm = v => v instanceof Date ? v.getTime() : (Date.parse(v) || 0);
-  ev.sort(function (a, b) { return (tm(a.t) - tm(b.t)) || (a.n - b.n) || (a.k - b.k); });
+  ev.sort(function (a, b) { return (tm(a.t) - tm(b.t)) || (a.k - b.k) || (a.n - b.n); });
   const map = {}; const order = [];
   ev.forEach(function (e) {
     const kind = placeKind_(e.to); if (!kind) return;
@@ -662,11 +672,12 @@ function saveReceipt_(ss, me, req) {
   const prev = findCid_(sh, cid, CID_COL.receipts);
   if (prev) return dupOf(prev);
   const doc = safe_(String(req.doc || '').slice(0, 120));
-  const id = newId_('N'); const now = new Date(); const files = [];
+  const id = newId_('N'); const files = [];
   /* фото — на Диск до блокування */
   const link = savePhotos_(photos, d, 'Накладна', files);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
+    const now = nowIso_();
     const again = findCid_(sh, cid, CID_COL.receipts);
     if (again) { trash_(files); repairSerials_(ss, docValues_(ss)); return { ok: true, dup: true, id: String(again[0]) }; }
     let S = readSerials_(ss);
@@ -707,15 +718,16 @@ function saveMove_(ss, me, req) {
   const prev = findCid_(sh, cid, CID_COL.moves);
   if (prev) { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { repairSerials_(ss, docValues_(ss)); } finally { lk.releaseLock(); } return { ok: true, dup: true, id: String(prev[0]) }; }
   const id = newId_(T.prefix);
-  const now = new Date(); const files = [];
+  const files = [];
   /* підпис — на Диск до блокування */
   const sign = signB64 ? savePhotos_([{ b64: signB64, mime: 'image/png' }], d, 'Підпис_' + id, files) : '';
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
+    const now = nowIso_();
     const fail = (e, m) => { trash_(files); return { ok: false, error: e, message: m || '' }; };
     const again = findCid_(sh, cid, CID_COL.moves);
     if (again) { trash_(files); repairSerials_(ss, docValues_(ss)); return { ok: true, dup: true, id: String(again[0]) }; }
-    const V = docValues_(ss); const DS = docState_(V);
+    const V = docValues_(ss); const DS = docState_(V, ymd_(readSettings_(ss).stockStart || ''));
     /* бригада — лише з «Доступи» або вже наявна в «Русі» */
     const known = brigades_(ss).list.concat(DS.brs);
     for (const p of [from, to]) if (placeKind_(p) === 'бригада' && known.indexOf(p.slice(P_BRIG.length)) < 0) return fail('bad_place', p);

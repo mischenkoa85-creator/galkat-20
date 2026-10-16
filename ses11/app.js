@@ -930,8 +930,9 @@
       const map = SK.specMap[s.o] || {}; const pre = ss0 && s.d < ss0;
       for (const k in s.items) {
         const c = map[k]; const q = Number(s.items[k]) || 0; if (!c || !q) continue;
-        if (s.type === STORE) { if (!pre) { add3(L.place, P_STORE, c, -q); add3(L.place, P_KEEP, c, q); } add3(L.roofKeep, s.o, c, q); }
-        else { if (!pre) { add3(L.place, P_STORE, c, -q); add3(L.place, brPlace(NOBR), c, q); B(NOBR, c, 'iss', q); } add3(L.roofIss, s.o, c, q); }
+        /* з дати stockStart — і в наявність (doc), так само рахує сервер */
+        if (s.type === STORE) { if (!pre) { P(P_STORE, c, -q); P(P_KEEP, c, q); } add3(L.roofKeep, s.o, c, q); }
+        else { if (!pre) { P(P_STORE, c, -q); P(brPlace(NOBR), c, q); B(NOBR, c, 'iss', q); } add3(L.roofIss, s.o, c, q); }
       }
     }
     const M = mountedCalc(); L.mnt = M.byRoof;

@@ -74,6 +74,7 @@ function formatDate(d, tz, fmt) {
   const Y = d.getFullYear(), M = z2(d.getMonth() + 1), D = z2(d.getDate()), h = z2(d.getHours()), m = z2(d.getMinutes()), s = z2(d.getSeconds());
   if (fmt === 'yyyy-MM-dd') return Y + '-' + M + '-' + D;
   if (fmt === "yyyy-MM-dd'T'HH:mm:ss") return Y + '-' + M + '-' + D + 'T' + h + ':' + m + ':' + s;
+  if (fmt === "yyyy-MM-dd'T'HH:mm:ss.SSS") return Y + '-' + M + '-' + D + 'T' + h + ':' + m + ':' + s + '.' + String(d.getMilliseconds()).padStart(3, '0');
   if (fmt === 'yyMMddHHmmss') return String(Y).slice(2) + M + D + h + m + s;
   if (fmt === 'HHmmss') return h + m + s;
   throw new Error('formatDate: ' + fmt);

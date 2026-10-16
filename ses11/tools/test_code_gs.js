@@ -275,4 +275,40 @@ t('setup на порожній таблиці: усі аркуші, налашт
   assert.strictEqual(E.ss.rows('Номенклатура').find(r => r[0] === 'EL01')[4], 'ГАЛ-КАТ');
 });
 
+t('1. порядок «Серійних»: однаковий час надходження і руху — серійний усе одно в бригаді', () => {
+  const E = makeServer({ 'Аркуш1': [] }); E.ctx.setup();
+  E.ss.getSheetByName('Доступи').rows.push(['222222', 'К', 'комірник', 'так', '', ''], ['333333', 'Іван', 'виконавець', 'так', '', 'Бригада 1']);
+  for (let i = 1; i <= 3; i++) assert.strictEqual(E.call('222222', 'receipt', { cid: 'cTSREC0000' + i, d: TODAY, lines: [{ c: 'MK01', q: 1 }] }).ok, true);
+  assert.strictEqual(E.call('222222', 'receipt', { cid: 'cTSREC00004', d: TODAY, lines: [{ c: 'EL01', q: 1, serials: ['TS001'] }] }).ok, true);
+  assert.strictEqual(E.call('222222', 'move', { cid: 'cTSMOV00001', d: TODAY, type: 'видача', from: 'склад', to: 'бригада: Бригада 1', o: '6', lines: [{ c: 'EL01', q: 1, serials: ['TS001'] }] }).ok, true);
+  const rec = E.ss.rows('Надходження'); const mov = E.ss.rows('Рух');
+  assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}$/.test(rec[4][11]) && typeof mov[1][13] === 'string', 'час — текст ISO з мілісекундами: ' + rec[4][11]);
+  assert.ok(E.ss.getSheetByName('Рух').formats.some(f => f[0] === 'N:N' && f[1] === '@'));
+  /* черга надіслала обидва документи в ту саму мілісекунду; рух — у рядку 2 «Руху», надходження — у рядку 5 «Надходження» */
+  const same = rec[4][11]; rec[4][11] = same; E.ss.getSheetByName('Рух').rows[1][13] = same;
+  E.ctx.rebuildSerials_(E.ss);
+  const s = E.ss.rows('Серійні')[1];
+  assert.deepStrictEqual([s[0], s[2], s[3]], ['TS001', 'бригада', 'бригада: Бригада 1']);
+});
+
+t('2. наявний, але порожній аркуш — заголовок записується', () => {
+  const E = makeServer({ 'Аркуш1': [], 'Рух': [], 'Серійні': [[]] });
+  E.ctx.setup();
+  assert.strictEqual(E.ss.rows('Рух')[0][0], 'ID документа');
+  assert.strictEqual(E.ss.rows('Серійні')[0][0], 'Серійний номер');
+  assert.strictEqual(E.ss.sheets.filter(x => x.name === 'Рух').length, 1);
+});
+
+t('3. старі «Видачі» з дати stockStart зменшують наявність складу на сервері (як на сайті)', () => {
+  const E = makeServer({ 'Аркуш1': [] }); E.ctx.setup();
+  E.ss.getSheetByName('Доступи').rows.push(['222222', 'К', 'комірник', 'так', '', ''], ['333333', 'Іван', 'виконавець', 'так', '', 'Бригада 1']);
+  assert.strictEqual(E.call('222222', 'receipt', { cid: 'cLGREC00001', d: TODAY, lines: [{ c: 'MK01', q: 100 }] }).ok, true);
+  /* телефон зі старою версією записав видачу 30 балок після stockStart; ще одна — до stockStart, її не рахуємо */
+  assert.strictEqual(E.call('222222', 'stock', { cid: 'cLGOLD00001', d: TODAY, o: '6', items: { m1: { q: 30, name: 'Балка' } } }).ok, true);
+  E.ss.getSheetByName('Видачі').rows.push(['Vold', '2020-01-01', '6', 'm1', 'Балка', 50, '', 'К', new Date(2020, 0, 1), 'видача', '', 'cLGOLD00002']);
+  const r = E.call('222222', 'move', { cid: 'cLGMOV00001', d: TODAY, type: 'видача', from: 'склад', to: 'бригада: Бригада 1', o: '6', lines: [{ c: 'MK01', q: 71 }] });
+  assert.ok(r.error === 'bad_request' && /MK01: є 70/.test(r.message), JSON.stringify(r));
+  assert.strictEqual(E.call('222222', 'move', { cid: 'cLGMOV00002', d: TODAY, type: 'видача', from: 'склад', to: 'бригада: Бригада 1', o: '6', lines: [{ c: 'MK01', q: 70 }] }).ok, true);
+});
+
 console.log('\nУсі тести Code.gs пройшли: ' + n);
