@@ -201,7 +201,11 @@ function computeShade(dX,dY,dZ){ const {x0,y0,c,nx,ny,H,ID}=HM; const hor=Math.h
   return out; }
 const PANEL_AZ=180;
 const dateIn=$('#date'), timeIn=$('#time');
-(function(){ const n=new Date(); const z=x=>String(x).padStart(2,'0'); dateIn.value=`${n.getFullYear()}-${z(n.getMonth()+1)}-${z(n.getDate())}`; })();
+(function(){ // старт — реальні дата й час у Києві (час обмежено світлою частиною доби)
+  const n=new Date(), P={}; try{ new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Kiev',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(n).forEach(x=>{P[x.type]=x.value}); }catch(e){}
+  const z=x=>String(x).padStart(2,'0'); dateIn.value=P.year?`${P.year}-${P.month}-${P.day}`:`${n.getFullYear()}-${z(n.getMonth()+1)}-${z(n.getDate())}`;
+  const m=P.hour?(+P.hour*60+ +P.minute):(n.getHours()*60+n.getMinutes()); timeIn.value=Math.max(240,Math.min(1320,Math.round(m/5)*5)); })();
+$('#sunmore').addEventListener('click',()=>{ const d=$('.dp[data-dock="sun"]'), o=!d.classList.contains('more'); d.classList.toggle('more',o); $('#sunmore').setAttribute('aria-expanded',String(o)); requestRender(); });
 const fmt=(v,d)=>v.toFixed(d).replace('.',',');
 let sunPath=null;
 function localToUTC(dateStr, minutes){ const [Y,Mo,Dd]=dateStr.split('-').map(Number); const guess=new Date(Date.UTC(Y,Mo-1,Dd,12)); const off=kyivOffset(guess); return new Date(Date.UTC(Y,Mo-1,Dd,0,minutes-off*60)); }
@@ -220,7 +224,7 @@ function updateSun(){
   $('#sunkv').innerHTML=`<dt>Азимут / висота</dt><dd>${fmt(s.az,1)}° / ${fmt(s.el,1)}°</dd><dt>Кут падіння на ряди цеху</dt><dd>${s.el>0?fmt(inc,1)+'°'+(cosI<0?' (сонце за площиною модулів)':''):'—'}</dd>`+
     `<dt>Центр модуля в тіні</dt><dd>${s.el>0?`${full} з 1 440 (цех ${fullR}, склад ${fullW})`:'ніч'}</dd><dt>Частково в тіні</dt><dd>${s.el>0?part:'—'}</dd>`+
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
-  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span>висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span class="sr-x">у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span>сонце під горизонтом</span>`; }
+  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span class="sr-x">висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span class="sr-x">у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span class="sr-x">сонце під горизонтом</span>`; }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
