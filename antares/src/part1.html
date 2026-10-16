@@ -229,10 +229,26 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .nodeexp .row{margin:0;flex:1 1 260px}
 .dock .filter{margin:0}
 .dock .small{margin:0}
-@media (max-width: 860px){ .dockbody{max-height:34svh} .dockhint{display:none} }
+@media (max-width: 860px){
+  .stage{display:block}
+  .stage .view{height:56svh;min-height:300px}
+  .dock{position:sticky;bottom:0;z-index:20;box-shadow:0 -2px 10px rgba(0,0,0,.18)}
+  .dockbody{max-height:32svh;padding:6px 12px 8px}
+  .dockhead{padding:5px 12px}
+  .dockhint{display:none}
+  .bar{padding:8px 12px}
+  .bar h1{font-size:15px}
+  .bar .addr,.bar .code{display:none}
+  .sunctl{gap:6px 12px}
+  .sunctl .legend,.dock .sunread{display:none}
+  #dchips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;flex:1 1 100%;order:3}
+  #dchips button{flex:none}
+  .sunctl .row:has(#time){flex:1 1 100%;order:4}
+  .sunctl input[type=date]{max-width:150px}
+}
 
 @media (max-width: 860px){
-  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 58svh auto;height:auto;min-height:100%}
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;height:auto;min-height:100%}
   .side{border-left:0;border-top:1px solid var(--rule)}
   .pane{overflow:visible}
   .bar .code{margin-left:0}
