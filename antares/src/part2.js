@@ -6,22 +6,32 @@ const nf=(v,d)=>Number(v).toLocaleString('uk-UA',{minimumFractionDigits:d||0,max
 const D2R=Math.PI/180, R2D=180/Math.PI;
 
 // ---------- tabs
-// нижня панель керування: свій набір елементів для кожної вкладки, її можна сховати
-const DOCKN={model:['Шари макета','вмикайте й вимикайте групи елементів'],build:['Монтаж','кроки, перемотування, показ по черзі'],node:['Вузол','вигляд, розбір на елементи'],sun:['Сонце','дата, час, затінення'],find:['Зауваження','фільтр за важливістю']};
-let dockOpen=true;
-try{ const v=localStorage.getItem('ant-dock'); dockOpen = v===null ? true : v==='1'; }catch(e){ dockOpen=true; }
-function dockSet(open){ dockOpen=open; const d=$('#dock'); d.classList.toggle('closed',!open); $('#dockhandle').setAttribute('aria-expanded',String(open)); $('#dockar').textContent=open?'▾':'▴'; $('#docktxt').textContent=open?'Сховати':'Показати'; try{ localStorage.setItem('ant-dock',open?'1':'0'); }catch(e){} }
-function dockSync(tab){ const has=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $('#dock').hidden=!has; $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); if(has){ $('#dockname').textContent=DOCKN[tab][0]; $('#dockhint').textContent=DOCKN[tab][1]; } }
-$('#dockhandle').addEventListener('click',()=>dockSet(!dockOpen));
+// керування над макетом (своє для кожної вкладки) і панель даних внизу, яку можна згорнути й розтягнути
+let ctxOpen=true, ctxHas=true;
+try{ ctxOpen=localStorage.getItem('ant-ctx')!=='0'; }catch(e){}
+function ctxSet(o){ ctxOpen=o; $('#ctx').hidden=!(o&&ctxHas); const b=$('#ctxtoggle'); b.textContent=o?'▴':'▾'; b.setAttribute('aria-expanded',String(o)); b.title=o?'Сховати керування':'Показати керування'; b.setAttribute('aria-label',b.title); try{ localStorage.setItem('ant-ctx',o?'1':'0'); }catch(e){} requestRender(); }
+function dockSync(tab){ ctxHas=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); $('#ctxtoggle').hidden=!ctxHas; ctxSet(ctxOpen); }
+$('#ctxtoggle').addEventListener('click',()=>ctxSet(!ctxOpen));
+const SHEETS=['peek','half','full']; let sheetS='half';
+try{ const v=localStorage.getItem('ant-sheet'); if(SHEETS.includes(v)) sheetS=v; }catch(e){}
+function sheetSet(st){ sheetS=st; $('#sheet').dataset.s=st; try{ localStorage.setItem('ant-sheet',st); }catch(e){} requestRender(); }
+{ const g=$('#grab'); let y0=null, moved=false;
+  g.addEventListener('pointerdown',e=>{ y0=e.clientY; moved=false; try{ g.setPointerCapture(e.pointerId); }catch(x){} });
+  g.addEventListener('pointermove',e=>{ if(y0!==null&&Math.abs(e.clientY-y0)>14) moved=true; });
+  g.addEventListener('pointerup',e=>{ if(y0===null) return; const dy=e.clientY-y0, i=SHEETS.indexOf(sheetS); y0=null;
+    if(moved){ sheetSet(SHEETS[Math.max(0,Math.min(2,i+(dy<0?1:-1)))]); } else sheetSet(SHEETS[(i+1)%3]); });
+  g.addEventListener('pointercancel',()=>{ y0=null; }); }
 $$('#layers label').forEach(l=>{ const s=l.querySelector('.src'); if(s) l.title=s.textContent; });
-dockSet(dockOpen); dockSync('model');
+function showTab(tab){ const b=document.querySelector('.tabs [data-tab="'+tab+'"]'); if(b) b.click(); }
 $$('.tabs button').forEach(b => b.addEventListener('click', () => {
   $$('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
   $$('.pane').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
-  dockSync(b.dataset.tab);
-  document.querySelector('.app').classList.toggle('wide', b.dataset.tab==='note');
+  dockSync(b.dataset.tab); $('#panes').scrollTop=0;
+  if(sheetS==='peek') sheetSet('half');
+  if(b.dataset.tab==='note'&&sheetS!=='full') sheetSet('full');
   try { localStorage.setItem('ant-tab', b.dataset.tab); } catch(e) {}
 }));
+sheetSet(sheetS); dockSync('model');
 try { const t = localStorage.getItem('ant-tab'); if (t) { const b = document.querySelector('.tabs [data-tab="'+t+'"]'); if (b) b.click(); } } catch(e) {}
 
 // ---------- findings (rendered even if WebGL fails)
@@ -327,6 +337,9 @@ const ugM=stripUG.map(s=>{ const L=Math.hypot(s[2]-s[0],s[3]-s[1]), a=Math.atan2
 const ugIM=inst(new THREE.BoxGeometry(1,0.04,0.025),MAT.strip,ugM,G.downUG);
 
 // ---------- ESS pads: foundations, frame, earthing (essF / essUG), equipment and canopy (essE)
+MAT.cont=lam(0xdde3e6); MAT.contD=lam(0x55646e);
+const essCab=[], essContTags=[]; let ESSV='cab'; grp('essC');
+function essVisApply(){ essCab.forEach(m=>{ if(ESSV!=='cab') m.visible=false; }); }
 const SLP=[0.5,2.105,2.71,3.315,4.37,5.425,6.48,7.535,8.59];
 const essTags=[];
 D.pads.forEach(p=>{ const alongY=p.axis==='y';
@@ -342,18 +355,21 @@ D.pads.forEach(p=>{ const alongY=p.axis==='y';
   [-4.545,4.545].forEach(u=>bxUV(u-0.032,u+0.032,-0.675,0.675,0.45,0.61,MAT.frame,G.essF));
   const FM=[[-4.725,1.1,2.75],[0,1.1,2.75],[4.725,1.1,2.75],[-4.725,-1.1,3.0],[4.725,-1.1,3.0]];
   FM.forEach(([u,v,h])=>{ info(bxUV(u-0.175,u+0.175,v-0.175,v+0.175,-1.2,0.2,MAT.fm,G.essF),'Фундамент ФМ-1, бетон С20/25 F100\nзакладна З-1, болти М16×600'); bxUV(u-0.3,u+0.3,v-0.3,v+0.3,-1.3,-1.2,MAT.fm,G.essF);
-    info(bxUV(u-0.06,u+0.06,v-0.06,v+0.06,0.2,0.2+h,MAT.col,G.essE),`Стійка навісу □120×120×4, h = ${nf(h,2)} м`); });
+    essCab.push(info(bxUV(u-0.06,u+0.06,v-0.06,v+0.06,0.2,0.2+h,MAT.col,G.essE),`Стійка навісу □120×120×4, h = ${nf(h,2)} м`)); });
   const hAt=v=>0.2+2.75+(1.1-v)/2.2*0.25+0.04;
-  [-1.1,0,1.1].forEach(v=>bxUV(-4.69,4.69,v-0.04,v+0.04,hAt(v)-0.04,hAt(v)+0.04,MAT.col,G.essE));
+  [-1.1,0,1.1].forEach(v=>essCab.push(bxUV(-4.69,4.69,v-0.04,v+0.04,hAt(v)-0.04,hAt(v)+0.04,MAT.col,G.essE)));
   // sloped profiled sheet ПС-20 2500×9750
   const sh=new THREE.Mesh(new THREE.BoxGeometry(alongY?2.5:9.75,0.02,alongY?9.75:2.5),MAT.sheet); const mid=L2W(0,0); sh.position.set(mid[0],hAt(0)+0.06,-mid[1]);
   if(alongY) sh.rotation.z=-Math.atan(0.25/2.2); else sh.rotation.x=-Math.atan(0.25/2.2);
-  sh.castShadow=true; sh.receiveShadow=true; G.essE.add(sh); info(sh,`${p.id}: навіс з профнастилу ПС-20, 9,75 × 2,5 м\nстійки 3,0 / 2,75 м`); bMeshes.push(sh);
+  sh.castShadow=true; sh.receiveShadow=true; G.essE.add(sh); essCab.push(sh); info(sh,`${p.id}: навіс з профнастилу ПС-20, 9,75 × 2,5 м\nстійки 3,0 / 2,75 м`); bMeshes.push(sh);
   // cabinets (positions straight from ЕТР арк. 2)
   const top=0.61, Hc=1.85;
-  p.gal.forEach((g,i)=>info(boxXY(g[0],g[1],g[2],g[3],top,top+Hc,MAT.gal,G.essE),`${p.id}: Galaxy261L №${i+1}\nLFP 261 кВт·год, рідинне охолодження, IP54`));
+  p.gal.forEach((g,i)=>essCab.push(info(boxXY(g[0],g[1],g[2],g[3],top,top+Hc,MAT.gal,G.essE),`${p.id}: Galaxy261L №${i+1}\nLFP 261 кВт·год, рідинне охолодження, IP54`)));
   p.sm.forEach(g=>info(boxXY(g[0],g[1],g[2],g[3],top,top+1.2,MAT.sm,G.essE),`${p.id}: пристрій обмеження генерації SM / щит керування`));
-  const mp=p.mps; info(boxXY(mp[0],mp[1],mp[2],mp[3],top,top+Hc,MAT.mps,G.essE),`${p.id}: шафа мікромережі FFD POWER 500 кВт\nSTS · PCS · IT 500 кВА · 10 MPPT · EMS\n${nf(p.kwp,1)} кВтп → ${p.tp}`);
+  const mp=p.mps; essCab.push(info(boxXY(mp[0],mp[1],mp[2],mp[3],top,top+Hc,MAT.mps,G.essE),`${p.id}: шафа мікромережі FFD POWER 500 кВт\nSTS · PCS · IT 500 кВА · 10 MPPT · EMS\n${nf(p.kwp,1)} кВтп → ${p.tp}`));
+  // варіант: контейнер LES-H20-1205W500C-PS-EU (габарит 20 ft прийнято, уточнити за паспортом)
+  { const c=info(bxUV(-3.03,3.03,-1.22,1.22,0.61,0.61+2.896,MAT.cont,G.essC),`${p.id}: контейнер LES-H20-1205W500C-PS-EU\n500 кВт / ≈1 205 кВт·год, 768 В, 12 PV-входів\nSTS за комплектацією; габарит 20 ft прийнято, уточнити за паспортом\n${nf(p.kwp,1)} кВтп → ${p.tp}`);
+    bxUV(-3.03,3.03,1.215,1.23,0.9,2.5,MAT.contD,G.essC); bxUV(-3.03,3.03,-1.23,-1.215,0.9,2.5,MAT.contD,G.essC); bxUV(3.02,3.04,-0.9,0.9,0.9,2.7,MAT.contD,G.essC); }
   // ЩР-PV and ЩР-АКБ: on the facade for MS-1/2, on a stand for MS-3
   p.pv.forEach((b,i)=>{ const X=(b[0]+b[1])/2, Y=(b[2]+b[3])/2; const m=alongY?boxXY(96.66,96.82,Y-0.25,Y+0.25,1.15,1.75,MAT.boxPV,G.essE):boxXY(X-0.25,X+0.25,120.05,120.21,1.15,1.75,MAT.boxPV,G.essE); info(m,`${p.pvn[i]} · WRP18-3\n10 ОПН T1+T2, 20 запобіжників gPV 25 А / 1000 В`); });
   const a=p.akb, Xa=(a[0]+a[1])/2, Ya=(a[2]+a[3])/2; info(alongY?boxXY(96.66,97.06,Ya-0.5,Ya+0.5,0.9,1.7,MAT.boxAKB,G.essE):boxXY(Xa-0.5,Xa+0.5,120.05,120.45,0.9,1.7,MAT.boxAKB,G.essE),`${p.akbn} · GT 80-100-40 IP66\n5 роз’єднувачів + NH2 gPV 250 А / 1000 В`);
@@ -414,13 +430,16 @@ const _p=new THREE.Vector3(), overlap=(r,L)=>L.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1
 function liveTags(){ const out=[]; for(const a of TAGS){ let p=a, vis=true; while(p&&p!==scene){ if(!p.visible) vis=false; p=p.parent; } if(p&&vis) out.push(a); } return out; }
 function drawTags(){ const live=liveTags(), placed=new Set();
   if(tagsOn&&OW){ const vr=canvas.getBoundingClientRect(), block=[];
-    ['.hud','.compass'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
-    const items=[];
-    live.forEach(a=>{ const t=a.userData.tag; a.getWorldPosition(_p); const dist=_p.distanceTo(camera.position); if(dist>t.far) return;
+    ['.hudwrap','.compass'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
+    const items=[]; const cd=camera.position.distanceTo(controls.target), small=OW<640;
+    // LOD: near = повний підпис, mid = лише перший рядок, far = лише важливі; ліміт кількості за площею вікна
+    const lod=cd<(small?45:60)?0:cd<(small?100:140)?1:cd<(small?190:260)?2:3, minPri=[0,0,6,7][lod], cap=Math.max(4,Math.floor(OW*OH/(small?26000:14000)));
+    live.forEach(a=>{ const t=a.userData.tag; a.getWorldPosition(_p); const dist=_p.distanceTo(camera.position); if(dist>t.far) return; if(t.pri<minPri) return;
       _p.project(camera); if(_p.z>1) return; const x=(_p.x+1)/2*OW, y=(1-_p.y)/2*OH; if(x<3||y<3||x>OW-3||y>OH-3) return; items.push({t,x,y,dist}); });
-    items.sort((a,b)=>b.t.pri-a.t.pri||a.dist-b.dist);
+    items.sort((a,b)=>b.t.pri-a.t.pri||a.dist-b.dist); if(items.length>cap) items.length=cap;
+    items.forEach(it=>{ const t=it.t; if(!t.el) return; const want=lod===0?t.text:t.text.split('\n')[0]; if(t.cur!==want||t.sm!==(lod>=2)){ t.cur=want; t.sm=lod>=2; t.el.textContent=want; t.el.classList.toggle('tgs',t.sm); t.w=0; } });
     items.forEach(it=>block.push([it.x-5,it.y-5,it.x+5,it.y+5]));
-    for(const it of items){ const t=it.t; tagEl(t); let got=null;
+    for(const it of items){ const t=it.t; tagEl(t); { const want=lod===0?t.text:t.text.split('\n')[0]; if(t.cur!==want||t.sm!==(lod>=2)){ t.cur=want; t.sm=lod>=2; t.el.textContent=want; t.el.classList.toggle('tgs',t.sm); t.w=0; measureTag(t); } } let got=null;
       const tryK=k=>{ const c=CANDS[k], ex=it.x+c[0], ey=it.y+c[1]; const l=c[2]>0?ex:c[2]<0?ex-t.w:ex-t.w/2, tp=c[3]<0?ey-t.h:c[3]>0?ey:ey-t.h/2, r=[l,tp,l+t.w,tp+t.h];
         if(l<4||tp<4||r[2]>OW-4||r[3]>OH-4||overlap(r,block)) return false; got={k,r,ex,ey}; return true; };
       if(!(t.c>=0&&tryK(t.c))) for(let k=0;k<CANDS.length;k++) if(tryK(k)) break;
@@ -444,7 +463,15 @@ addTag(G.bld,W(80,-14,HE+10*T11),'Прибудови складу · 11°',{pri:
 addTag(G.obs,W(28.4,60,roofZ(28.4)+0.6),'Зенітний ліхтар на гребені',{pri:3,far:160});
 addTag(G.bld,W(36,40,HV+0.05),'Ендова між арками',{pri:3,far:140});
 addTag(G.bld,W(84,30,roofZ(84)),'Проліт 13–17: 24 м (профіль умовно)',{pri:2,far:150});
-essTags.forEach(([t,p])=>{ t.add(tag(`${p.id} · ${nf(p.kwp,1)} кВтп · 5 × Galaxy261L`,{pri:7,line:'#7a4a00'})); });
+const essTagObjs=[];
+function essTagText(p){ return ESSV==='cab'
+  ? `${p.id} · ${nf(p.kwp,1)} кВтп → ${p.tp}\nШафа FFD POWER 500 кВт: STS · PCS · IT 500 кВА · 10 MPPT · EMS\n5 × Galaxy261L = 1 305 кВт·год, LFP, рідинне охолодження`
+  : `${p.id} · ${nf(p.kwp,1)} кВтп → ${p.tp}\nКонтейнер LES-H20-1205W500C-PS-EU: 500 кВт / ≈1 205 кВт·год\n768 В · 12 PV-входів · STS за комплектацією · 20 ft (уточнити)`; }
+essTags.forEach(([t,p])=>{ const o=tag(essTagText(p),{pri:7,line:'#7a4a00',noOcc:true}); t.add(o); essTagObjs.push([o,p]); });
+function setEssVariant(v){ ESSV=v; $$('#essvar button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ev===v)));
+  essTagObjs.forEach(([o,p])=>{ const t=o.userData.tag; t.text=essTagText(p); t.cur=null; });
+  applyStep(); requestRender(); }
+$$('#essvar button').forEach(b=>b.addEventListener('click',()=>setEssVariant(b.dataset.ev)));
 { const m=roofMasts[20]; addTag(G.lps,W(m[0],m[1],surfZ(m[0],m[1])+4.0),'Блискавкоприймач М-04/40 · 4 м',{pri:3,far:120}); }
 ropeTag.add(tag('Тросовий перехід DC: склад → цех',{pri:8,line:'#b85c00'}));
 addTag(G.ac,W(97.1,56,TRAY_H+0.1),'Кабельрост 400×100 на фасаді',{pri:6,far:160,line:'#a32222'});

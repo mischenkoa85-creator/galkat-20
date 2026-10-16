@@ -31,35 +31,39 @@ body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-siz
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
 
-.app{display:grid;grid-template-columns:minmax(0,1fr) 410px;grid-template-rows:auto minmax(0,1fr);height:100%}
-.bar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.app{display:flex;flex-direction:column;height:100vh;height:100svh;min-height:0}
+.bar{flex:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:8px 14px;border-bottom:1px solid var(--rule);background:var(--panel)}
 .bar h1{font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.01em;margin:0;text-wrap:balance}
 .bar .addr{color:var(--ink-2)}
 .bar .code{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin-left:auto;letter-spacing:.04em}
 
-.view{position:relative;min-width:0;min-height:0;background:var(--scene)}
+.view{position:relative;flex:1 1 0;min-width:0;min-height:150px;background:var(--scene);overflow:hidden}
 #gl{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
 #lbl{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #lbl svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .tg{position:absolute;left:0;top:0;font:500 12px/15px var(--f-body);padding:3px 7px;border-radius:3px;border:1px solid;white-space:pre;will-change:transform}
-.hud{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 90px)}
+.tg.tgs{font-size:10px;line-height:12px;padding:2px 5px}
+@media(max-width:640px){#essvar button{font-size:12px;padding:7px 6px}.tg{font-size:11px;line-height:13px;padding:2px 6px;max-width:58vw;white-space:pre-wrap}.tg.tgs{font-size:9.5px;line-height:11px}}
+.hudwrap{position:absolute;left:10px;top:10px;z-index:5;display:flex;flex-direction:column;gap:6px;max-width:calc(100% - 76px);pointer-events:none}
+.hudwrap>*{pointer-events:auto}
+.hudrow{display:flex;gap:6px;align-items:flex-start;min-width:0}
+.hud{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .hud button{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:5px 9px;font-size:12.5px;cursor:pointer}
 .hud button:hover{border-color:var(--cobalt)}
 .hud button.on{background:var(--cobalt);color:var(--panel);border-color:var(--cobalt)}
-.compass{position:absolute;right:12px;top:12px;width:58px;height:58px;border-radius:50%;background:var(--panel);border:1px solid var(--rule);display:grid;place-items:center}
-.compass svg{width:46px;height:46px}
+.compass{position:absolute;right:10px;top:10px;width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--rule);display:grid;place-items:center;z-index:4}
+.compass svg{width:40px;height:40px}
 .compass small{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10px;color:var(--ink-2);white-space:nowrap}
 .sunread{font-family:var(--f-mono);font-size:12px;display:flex;gap:6px 14px;flex-wrap:wrap}
 .sunread b{font-weight:500;color:var(--sun)}
 .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;max-width:280px;white-space:pre-line}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-family:var(--f-mono);font-size:12px;text-align:center;padding:16px}
 
-.side{border-left:1px solid var(--rule);background:var(--panel);display:flex;flex-direction:column;min-height:0;min-width:0}
 .tabs{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--rule)}
 .tabs button{background:none;border:0;border-right:1px solid var(--rule-2);padding:10px 2px;cursor:pointer;font-weight:500;font-size:12px;color:var(--ink-2)}
 .tabs button:last-child{border-right:0}
 .tabs button[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--cobalt)}
-.pane{overflow:auto;padding:14px 16px 24px;min-height:0;flex:1}
+.pane{padding:12px 16px 28px;max-width:1280px;margin:0 auto}
 .pane h2{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px;color:var(--ink-2)}
 .pane h2:first-child{margin-top:2px}
 .lead{margin:0 0 10px;color:var(--ink-2);max-width:62ch}
@@ -197,59 +201,83 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .glegend i{display:inline-block;width:14px;height:3px;background:var(--s1);margin-right:5px;vertical-align:3px}
 .glegend i.b{height:10px;background:var(--sun);opacity:.45;vertical-align:-1px}
 .gtip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;white-space:pre;line-height:1.35}
-/* ---- нижня панель керування */
-.stage{display:flex;flex-direction:column;min-width:0;min-height:0}
-.stage .view{flex:1 1 0}
-.dock{flex:none;border-top:1px solid var(--rule);background:var(--panel)}
-.dock[hidden]{display:none}
-.dockhead{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:6px 14px;cursor:pointer;text-align:left;font-size:12.5px}
-.dockhead b{font-family:var(--f-display);font-weight:500;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);flex:none}
-.dockhint{color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dockact{margin-left:auto;color:var(--ink-2);white-space:nowrap;flex:none}
-.dockact i{font-style:normal}
-.dockact u{text-decoration:none}
-.dockhead:hover .dockact{color:var(--cobalt)}
-.dockbody{padding:8px 14px 12px;max-height:38svh;overflow:auto;border-top:1px solid var(--rule-2)}
-.dock.closed .dockbody{display:none}
-.dock .layers{display:flex;flex-wrap:wrap;gap:5px;border:0}
-.dock .layers label{border:1px solid var(--rule);border-radius:3px;padding:3px 8px;gap:6px;font-size:12px;background:var(--paper)}
-.dock .layers label:has(input:checked){border-color:var(--cobalt)}
-.dock .layers input{width:14px;height:14px}
-.dock .layers .src{display:none}
-.dock .stepchips{margin:0 0 8px}
-.dock .sbgrow{flex:1 1 260px;padding:0}
-.dock .stepbar span{flex:1 1 180px;white-space:normal;padding:0 4px}
-.sunctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
-.sunctl .row,.sunctl .chk,.sunctl .legend,.sunctl .chips{margin:0}
-.sunctl .row:has(#time){flex:1 1 300px}
-.dock .sunread{padding-top:8px}
-.nodectl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
-.nodectl .seg{margin:0;flex:none}
-.nodeexp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;flex:1 1 360px}
-.nodeexp .row{margin:0;flex:1 1 260px}
-.dock .filter{margin:0}
-.dock .small{margin:0}
+/* ---- єдиний шаблон: зверху об'єкт з керуванням, знизу панель даних */
+.hudbtn{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:5px 9px;font-size:12.5px;cursor:pointer;flex:none;line-height:1.2}
+.hudbtn:hover{border-color:var(--cobalt)}
+.ctx{background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;max-width:100%;backdrop-filter:blur(3px);box-shadow:0 1px 6px rgba(0,0,0,.12)}
+.ctx[hidden]{display:none}
+.ctx .dp{display:flex;flex-direction:column;gap:6px}
+.ctx .row,.ctx .chips,.ctx .chk,.ctx .seg,.ctx .filter,.ctx .stepchips{margin:0}
+.ctx .small{margin:0;font-size:12px}
+.ctx .stepchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.ctx .stepchips button{flex:none;min-width:30px;height:28px;padding:0 6px;font-size:12px}
+.ctx .sbgrow{flex:1 1 200px;padding:0}
+.ctx .stepbar span{flex:1 1 140px;white-space:normal;padding:0 4px;font-size:12.5px}
+.sunread{font-family:var(--f-mono);font-size:12px;display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.sunread b{font-weight:500;color:var(--sun)}
+.sunread .sr-t{font-family:var(--f-display);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.01em}
+.sunread span b{font-size:15px}
+.sunctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.sunctl .chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%}
+.sunctl .chips button{flex:none;padding:4px 8px}
+.sunctl .row.rtime{flex:1 1 220px;flex-wrap:nowrap;gap:8px}
+.sunctl .row.rtime input[type=range]{min-width:100px}
+.sunctl input[type=date]{padding:3px 5px;max-width:140px}
+.pbtn{width:34px;height:30px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer;flex:none}
+.pbtn:hover{border-color:var(--cobalt)}
+.sunctl .chk{font-size:12.5px;gap:6px}
+.nodectl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.nodectl .seg{flex:none}
+.nodeexp{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:1 1 280px}
+.nodeexp .row{flex:1 1 200px}
+.ctx .seg button{padding:5px 9px;white-space:nowrap}
+
+.sheet{flex:none;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-top:1px solid var(--rule);box-shadow:0 -3px 12px rgba(0,0,0,.14);position:relative;z-index:8}
+.sheet[data-s="peek"]{height:auto}
+.sheet[data-s="half"]{height:max(250px,42svh)}
+.sheet[data-s="full"]{height:max(300px,80svh)}
+.sheet[data-s="peek"] .panes{display:none}
+.grab{display:block;width:100%;border:0;background:none;padding:5px 0 3px;cursor:grab;touch-action:none}
+.grab i{display:block;width:44px;height:4px;border-radius:2px;background:var(--rule);margin:0 auto}
+.grab:hover i{background:var(--cobalt)}
+.sheethead{flex:none;border-bottom:1px solid var(--rule)}
+.sheethead .tabs{border-bottom:0}
+.panes{flex:1 1 0;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.layers{display:flex;flex-wrap:wrap;gap:6px;border:0}
+.layers label{border:1px solid var(--rule);border-radius:3px;padding:5px 10px;gap:7px;font-size:12.5px;background:var(--paper);border-bottom:1px solid var(--rule)}
+.layers label:has(input:checked){border-color:var(--cobalt)}
+.layers label:last-child{border-bottom:1px solid var(--rule)}
+.layers .src{display:none}
+.tomodel{display:none!important}
+.docs{margin:6px 0 0;padding-left:18px;font-size:13px}
+.docs li{margin:0 0 4px}
+.docs a,.pane a,.foot a{color:var(--cobalt)}
+.srcl{font-size:11.5px;white-space:nowrap}
 @media (max-width: 860px){
-  .stage{display:block}
-  .stage .view{height:56svh;min-height:300px}
-  .dock{position:sticky;bottom:0;z-index:20;box-shadow:0 -2px 10px rgba(0,0,0,.18)}
-  .dockbody{max-height:32svh;padding:6px 12px 8px}
-  .dockhead{padding:5px 12px}
-  .dockhint{display:none}
-  .bar{padding:8px 12px}
-  .bar h1{font-size:15px}
+  .bar{padding:6px 10px}
+  .bar h1{font-size:14px}
   .bar .addr,.bar .code{display:none}
-  .sunctl{gap:6px 12px}
-  .sunctl .legend,.dock .sunread{display:none}
-  #dchips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;flex:1 1 100%;order:3}
-  #dchips button{flex:none}
-  .sunctl .row:has(#time){flex:1 1 100%;order:4}
-  .sunctl input[type=date]{max-width:150px}
+  .sheet[data-s="half"]{height:max(220px,44svh)}
+  .sheet[data-s="full"]{height:max(260px,84svh)}
+  .tabs button{font-size:11px;padding:9px 0}
+  .pane{padding:10px 12px 24px}
+  .hudwrap{left:6px;top:6px;max-width:calc(100% - 58px)}
+  .hud{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .hud::-webkit-scrollbar{display:none}
+  .hud button{flex:none;padding:4px 8px;font-size:12px}
+  .compass{width:40px;height:40px;right:6px;top:6px}
+  .compass svg{width:32px;height:32px}
+  .compass small{display:none}
+  .ctx{padding:6px 8px}
+  .sunread .sr-t{font-size:17px}
+  .sunread span b{font-size:14px}
+  .sunctl .row.rtime{flex:1 1 100%}
+  .pane h2{margin-top:14px}
 }
-
-
+@media (min-width: 861px){
+  .bar h1{font-size:16px}
+}
 /* Записка: широка панель, таблиці, курс */
-.app.wide{grid-template-columns:minmax(0,1fr) min(780px,58vw)}
 .pane.note .lead{margin-top:0}
 .pane.note h4{margin:16px 0 4px}
 .rates{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);margin:10px 0 4px;font-size:13px}
@@ -269,16 +297,6 @@ table.nt tr.sub td{font-weight:600;background:var(--paper)}
 table.nt tr.cur td{background:var(--cobalt-soft)}
 .cv{font-variant-numeric:tabular-nums}
 
-@media (max-width: 860px){
-  .app.wide{grid-template-columns:minmax(0,1fr)}
-  .tabs button{font-size:11px}
-  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;height:auto;min-height:100%}
-  .side{border-left:0;border-top:1px solid var(--rule)}
-  .pane{overflow:visible}
-  .bar .code{margin-left:0}
-  .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--panel)}
-  .hud button{padding:4px 7px;font-size:12px}
-}
 .tomodel{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--cobalt);color:var(--panel);border:0;border-radius:20px;padding:9px 15px;font-size:13.5px;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.25);cursor:pointer}
 </style>
 
@@ -289,12 +307,13 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
     <span class="code">РП 2025/12-07 · АБ / ЕТР / БЗ · 2026</span>
   </header>
 
-  <div class="stage">
-  <section class="view" aria-label="3D-макет">
+<section class="view" aria-label="3D-макет">
     <canvas id="gl"></canvas>
     <div id="lbl" aria-hidden="true"><svg></svg></div>
     <div class="loading" id="loading">Будую макет…</div>
-    <div class="hud" role="toolbar" aria-label="Види">
+    <div class="hudwrap" id="hudwrap">
+      <div class="hudrow">
+        <div class="hud" role="toolbar" aria-label="Види">
       <button data-cam="over" class="on">Огляд</button>
       <button data-cam="plan">План</button>
       <button data-cam="arch">Аркові прольоти</button>
@@ -302,33 +321,13 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
       <button data-cam="ess">УЗЕ біля цеху</button>
       <button data-cam="ms3">MS-3 і ТП-6923</button>
     </div>
-    <div class="compass" title="Північ прийнято по осі К"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
-      <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-2)"/>
-      <text x="0" y="-9" text-anchor="middle" font-size="8" font-family="var(--f-mono)" fill="var(--panel)" font-weight="600">Пн</text></svg><small>умовно</small></div>
-    <div class="tip" id="tip" hidden></div>
-  </section>
-
-  <div class="dock" id="dock" aria-label="Керування">
-    <button class="dockhead" id="dockhandle" aria-expanded="true" aria-controls="dockbody"><b id="dockname">Керування</b><span class="dockhint" id="dockhint"></span><span class="dockact"><i id="dockar">▾</i> <u id="docktxt">Сховати</u></span></button>
-    <div class="dockbody" id="dockbody">
-      <div class="dp" data-dock="model">
-      <div class="layers" id="layers">
-        <label><input type="checkbox" id="L-bld" checked><span class="sw" style="background:#d4d8d4"></span>Цех, склад, ТП (масиви)<span class="src">АБ арк. 6–7</span></label>
-        <label><input type="checkbox" id="L-obs" checked><span class="sw" style="background:#aec6d6"></span>Зенітні ліхтарі й вентшахти<span class="src" id="obs-src">ЕТР арк. 2</span></label>
-        <label><input type="checkbox" id="L-pv" checked><span class="sw" style="background:#2a4a8f"></span>Фотомодулі<span class="src">1 260 + 180</span></label>
-        <label><input type="checkbox" id="L-bal" checked><span class="sw" style="background:#9d9a93"></span>Баластна система RUDNIK<span class="src">АБ арк. 8</span></label>
-        <label><input type="checkbox" id="L-heat"><span class="sw" style="background:linear-gradient(90deg,#2a4a8f,#e0a21b,#d2412f)"></span>Ухил ряду вздовж арки<span class="src">0–5–10–16°</span></label>
-        <label><input type="checkbox" id="L-lps" checked><span class="sw" style="background:#8fd3e8"></span>Блискавкоприймачі й дріт Ø8<span class="src">БЗ арк. 2</span></label>
-        <label><input type="checkbox" id="L-zones"><span class="sw" style="background:transparent;border-color:#d0453a"></span>Зони захисту R 9,9 м<span class="src">БЗ прим. 2</span></label>
-        <label><input type="checkbox" id="L-down" checked><span class="sw" style="background:#6f7a80"></span>Спуски й заземлювачі<span class="src">44 шт</span></label>
-        <label><input type="checkbox" id="L-bond"><span class="sw" style="background:#7ccf3a"></span>Зрівнювання потенціалів 1×6<span class="src">ЕТР арк. 3</span></label>
-        <label><input type="checkbox" id="L-dc"><span class="sw" style="background:#ff8c1a"></span>Траси DC і тросовий перехід<span class="src">ЕТР арк. 2</span></label>
-        <label><input type="checkbox" id="L-ac" checked><span class="sw" style="background:#c0392b"></span>Лінії AC до ТП, кабельрост<span class="src">ЕТР арк. 2</span></label>
-        <label><input type="checkbox" id="L-ess" checked><span class="sw" style="background:#e6e9eb"></span>УЗЕ: основа, шафи, навіс<span class="src">АБ арк. 2–5</span></label>
-        <label><input type="checkbox" id="L-axes" checked><span class="sw" style="background:var(--cobalt)"></span>Осі 1–17 / А–К<span class="src">ЕТР арк. 2</span></label>
-        <label><input type="checkbox" id="L-tags" checked><span class="sw" style="background:#fff"></span>Виноски<span class="src">без накладань</span></label>
+        <button class="hudbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати керування" aria-label="Сховати керування">▴</button>
       </div>
-
+      <div class="ctx" id="ctx" aria-label="Керування">
+      <div class="dp" data-dock="model">
+        <div class="seg" id="essvar" role="group" aria-label="Варіант УЗЕ">
+          <button data-ev="cab" aria-pressed="true">УЗЕ: шафи за проєктом</button><button data-ev="cont" aria-pressed="false">Контейнери LES-H20 ×3</button>
+        </div>
       </div>
       <div class="dp" data-dock="build" hidden>
         <div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div>
@@ -348,30 +347,33 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
         </div>
       </div>
       <div class="dp" data-dock="sun" hidden>
-        <div class="sunctl">
-      <div class="row"><label for="date">Дата</label><input type="date" id="date"></div>
-      <div class="chips" id="dchips">
-        <button data-d="12-21">21 грудня</button><button data-d="03-20">20 березня</button><button data-d="06-21">21 червня</button><button data-d="09-23">23 вересня</button>
-      </div>
-      <div class="row"><label for="time">Час</label><input type="range" id="time" min="240" max="1320" step="5" value="780"><output id="timeo" for="time">13:00</output></div>
-      <div class="chips"><button id="play">▶ Прокрутити день</button></div>
-      <label class="chk"><input type="checkbox" id="shadeOn" checked>Фарбувати затінені модулі</label>
-      <div class="legend"><span><i style="background:#e0711b"></i>центр модуля в тіні</span><span><i style="background:#e9c46a"></i>частково</span></div>
-
-        </div>
         <div class="sunread" id="sunread"></div>
+        <div class="sunctl">
+          <div class="chips" id="dchips" role="group" aria-label="Сезон">
+            <button data-d="12-21">Зима</button><button data-d="03-20">Весна</button><button data-d="06-21">Літо</button><button data-d="09-23">Осінь</button>
+          </div>
+          <div class="row"><input type="date" id="date" aria-label="Дата"></div>
+          <div class="row rtime"><button id="play" class="pbtn" aria-label="Прокрутити день" title="Прокрутити день">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><output id="timeo" for="time">13:00</output></div>
+          <label class="chk"><input type="checkbox" id="shadeOn" checked>Тіні</label>
+        </div>
       </div>
       <div class="dp" data-dock="find" hidden>
         <div class="filter" id="filter">
         <button data-f="all" class="on">Усі</button><button data-f="c">Критично</button><button data-f="w">Суттєво</button><button data-f="n">Уточнити</button>
       </div>
       </div>
+      </div>
     </div>
-  </div>
-  </div>
+    <div class="compass" title="Північ прийнято по осі К"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
+      <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-2)"/>
+      <text x="0" y="-9" text-anchor="middle" font-size="8" font-family="var(--f-mono)" fill="var(--panel)" font-weight="600">Пн</text></svg><small>умовно</small></div>
+    <div class="tip" id="tip" hidden></div>
+  </section>
 
-  <aside class="side">
-    <div class="tabs" role="tablist">
+  <aside class="sheet" id="sheet" data-s="half" aria-label="Дані">
+    <div class="sheethead">
+      <button class="grab" id="grab" aria-label="Змінити висоту панелі даних" title="Тягніть або клацніть: згорнути / розгорнути"><i></i></button>
+      <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-tab="model" id="t-model">Макет</button>
       <button role="tab" aria-selected="false" data-tab="build" id="t-build">Монтаж</button>
       <button role="tab" aria-selected="false" data-tab="node" id="t-node">Вузол</button>
@@ -380,10 +382,31 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
       <button role="tab" aria-selected="false" data-tab="note" id="t-note">Записка</button>
       <button role="tab" aria-selected="false" data-tab="data" id="t-data">Дані</button>
     </div>
+    </div>
+    <div class="panes" id="panes">
+
 
     <div class="pane" data-pane="model">
-      <p class="hint">Клацніть на макеті по модулю, трикутнику чи баласту — на вкладці «Вузол» він розбереться на елементи з рахунком кріплення. Шари вмикаються в панелі під макетом.</p>
+      <p class="hint">Клацніть на макеті по модулю, трикутнику чи баласту — на вкладці «Вузол» він розбереться на елементи. Варіант УЗЕ (шафи чи контейнери) перемикається над макетом.</p>
+      <h2>Шари макета</h2>
+      <div class="layers" id="layers">
+        <label><input type="checkbox" id="L-bld" checked><span class="sw" style="background:#d4d8d4"></span>Цех, склад, ТП (масиви)<span class="src">АБ арк. 6–7</span></label>
+        <label><input type="checkbox" id="L-obs" checked><span class="sw" style="background:#aec6d6"></span>Зенітні ліхтарі й вентшахти<span class="src" id="obs-src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-pv" checked><span class="sw" style="background:#2a4a8f"></span>Фотомодулі<span class="src">1 260 + 180</span></label>
+        <label><input type="checkbox" id="L-bal" checked><span class="sw" style="background:#9d9a93"></span>Баластна система RUDNIK<span class="src">АБ арк. 8</span></label>
+        <label><input type="checkbox" id="L-heat"><span class="sw" style="background:linear-gradient(90deg,#2a4a8f,#e0a21b,#d2412f)"></span>Ухил ряду вздовж арки<span class="src">0–5–10–16°</span></label>
+        <label><input type="checkbox" id="L-lps" checked><span class="sw" style="background:#8fd3e8"></span>Блискавкоприймачі й дріт Ø8<span class="src">БЗ арк. 2</span></label>
+        <label><input type="checkbox" id="L-zones"><span class="sw" style="background:transparent;border-color:#d0453a"></span>Зони захисту R 9,9 м<span class="src">БЗ прим. 2</span></label>
+        <label><input type="checkbox" id="L-down" checked><span class="sw" style="background:#6f7a80"></span>Спуски й заземлювачі<span class="src">44 шт</span></label>
+        <label><input type="checkbox" id="L-bond"><span class="sw" style="background:#7ccf3a"></span>Зрівнювання потенціалів 1×6<span class="src">ЕТР арк. 3</span></label>
+        <label><input type="checkbox" id="L-dc"><span class="sw" style="background:#ff8c1a"></span>Траси DC і тросовий перехід<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-ac" checked><span class="sw" style="background:#c0392b"></span>Лінії AC до ТП, кабельрост<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-ess" checked><span class="sw" style="background:#e6e9eb"></span>УЗЕ: основа, шафи, навіс<span class="src">АБ арк. 2–5</span></label>
+        <label><input type="checkbox" id="L-axes" checked><span class="sw" style="background:var(--cobalt)"></span>Осі 1–17 / А–К<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-tags" checked><span class="sw" style="background:#fff"></span>Виноски<span class="src">без накладань</span></label>
+      </div>
       <h2>Прив'язка</h2>
+      
       <dl class="kv">
         <dt>Основа</dt><dd>Вектори PDF: ЕТР арк. 2 (модулі, стрінги, траси), ЕТР арк. 3 (зрівнювання, заземлення УЗЕ), БЗ арк. 2 (щогли, дріт, спуски), АБ арк. 2–7</dd>
         <dt>Калібрування</dt><dd>За осями А, К, 1, 17 кожного аркуша; масштаб 1:200, розбіжність між аркушами ≤ 0,1 м</dd>
@@ -395,7 +418,7 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
 
     <div class="pane" data-pane="build" hidden>
       <p class="lead">Покроковий монтаж за кресленнями АБ, ЕТР і БЗ. Кількості з макета пораховані за геометрією креслень, поруч — цифри специфікації та кошторису. Червоним позначено зауваження з аналізу.</p>
-      <p class="hint">Кроки й повзунок — у панелі під макетом: кожен крок збирається по черзі, повзунок перемотує. Клік по модулю, трикутнику чи баласту розбирає вузол на вкладці «Вузол».</p>
+      <p class="hint">Кроки й повзунок — над макетом: кожен крок збирається по черзі, повзунок перемотує. Клік по модулю, трикутнику чи баласту розбирає вузол на вкладці «Вузол».</p>
       <div id="stepbody"></div>
     </div>
 
@@ -417,7 +440,7 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
     </div>
 
     <div class="pane" data-pane="sun" hidden>
-      <p class="hint">Дата, час і розфарбування — у панелі під макетом.</p>
+      <p class="hint">Сезон, дату і час вибирайте над макетом: там же видно час, кути сонця і потужність станції зараз. Оранжеві модулі — центр у тіні, жовті — частково.</p>
       <h2>Генерація станції зараз</h2>
       <div id="gen"></div>
       <h2>Положення сонця і тіні</h2>
@@ -606,10 +629,21 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
         <li>Курс і дата, на яку фіксуються ціни.</li>
       </ul>
 
-      <p class="foot">Джерела: кошторис 2025/12-06-К (ЗКР, підсумкові вартісні параметри, пояснювальна записка); аналіз РП 2025/12-07; пропозиції E-Systems/Golen від 03–04.10.2026 (надано замовником); прайс Nota Trade 15.10.2026 (Google Диск); курс НБУ на 12.10.2026 — <a href="https://thepage.ua/ua/currency/2026-10-12/amp" target="_blank" rel="noopener">The Page</a>; ціни на шафи 105 і 115 €/кВт·год і на контейнери 80–84 €/кВт·год — зі слів замовника; склад LES-H20-1205W500C-PS-EU — регламент сервісу BESS ГалКат (ОС-108). Масу й кількість модулів у контейнері, склад PV-інверторів і розрахункові рядки позначено «≈» або «припущення».</p>
+      <p class="foot">Документи й посилання зібрано у вкладці «Дані» → «Документи і джерела». Джерела: кошторис 2025/12-06-К (ЗКР, підсумкові вартісні параметри, пояснювальна записка); аналіз РП 2025/12-07 (<a href="https://drive.google.com/drive/folders/1LIhk4oZl5BXjTQN0-t6r0KtogZ9yBgFu" target="_blank" rel="noopener">пакет проєкту</a>); пропозиції E-Systems/Golen від 03–04.10.2026 (надано замовником); прайс <a href="https://drive.google.com/file/d/1Rc9bfqjecDQu8mgQDLv8dD3cnk3NvSlP/view" target="_blank" rel="noopener">Nota Trade 15.10.2026</a> (Google Диск); курс НБУ на 12.10.2026 — <a href="https://thepage.ua/ua/currency/2026-10-12/amp" target="_blank" rel="noopener">The Page</a>; ціни на шафи 105 і 115 €/кВт·год і на контейнери 80–84 €/кВт·год — зі слів замовника; склад LES-H20-1205W500C-PS-EU — регламент сервісу BESS ГалКат (ОС-108). Масу й кількість модулів у контейнері, склад PV-інверторів і розрахункові рядки позначено «≈» або «припущення».</p>
     </div>
 
     <div class="pane" data-pane="data" hidden>
+      <h2>Документи і джерела</h2>
+      <ul class="docs">
+        <li><a href="https://drive.google.com/drive/folders/1LIhk4oZl5BXjTQN0-t6r0KtogZ9yBgFu" target="_blank" rel="noopener">Папка «Ukraine project demandings»</a> — РП 2025/12-07 (149 арк.: ЕТР, АБ, БЗ), кошторис 2025/12-06-К, файл АВК-5</li>
+        <li><a href="https://drive.google.com/file/d/1UYoQiqTDgo-5y696D40EvEvIjwBt_fIH/view" target="_blank" rel="noopener">Архів «Ukraine project demandings.zip»</a> — вихідний пакет проєкту (завантажено 15.10.2026)</li>
+        <li><a href="https://drive.google.com/file/d/1yUm-EunCpQmrBQEDelePLPrZdEcX0OPm/view" target="_blank" rel="noopener">Специфікація Антарес — розділена.xlsx</a> — модулі, шафи, АКБ, кабель, кріплення</li>
+        <li><a href="https://drive.google.com/drive/folders/1pFPDlRyK_SAbNazvzaAl0dZgRbNR4Ztv" target="_blank" rel="noopener">Папка «Антарес ПКД»</a> і <a href="https://drive.google.com/drive/folders/1wzU_7oxyI6w2fDQoGAZPVgvSfZ-OEFQ4" target="_blank" rel="noopener">«Антарес»</a> — супутні матеріали</li>
+        <li><a href="https://drive.google.com/file/d/1Rc9bfqjecDQu8mgQDLv8dD3cnk3NvSlP/view" target="_blank" rel="noopener">Nota Trade Price 15/10.xlsx</a> — ціни панелей (GCL 710 Вт 0,139 $/Вт), FOX ESS, GoodWe</li>
+        <li><a href="https://thepage.ua/ua/currency/2026-10-12/amp" target="_blank" rel="noopener">Курс НБУ на 12.10.2026</a> (The Page)</li>
+        <li>Пропозиції E-Systems і Golen (03–04.10.2026) та ціни на шафи й контейнери — від замовника, без файлів-джерел; у макеті позначено «зі слів замовника»</li>
+        <li><a href="https://github.com/mischenkoa85-creator/galkat-20/tree/main/antares" target="_blank" rel="noopener">Код макета на GitHub</a></li>
+      </ul>
       <h2>Генерація</h2>
       <dl class="kv">
         <dt>Модулі</dt><dd>Shinefar SF-M21/G132710, 710 Вт, 2384 × 1303 мм; 1 440 шт = 1 022,4 кВтп</dd>
@@ -640,6 +674,8 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
         <dt>Не показано</dt><dd>Компенсатори К-220, кабельні стяжки, кріплення гофротруб, внутрішнє обладнання ТП</dd>
       </dl>
     </div>
+
+    </div>
   </aside>
   <button class="tomodel" id="tomodel" hidden>↑ Модель</button>
 </div>
@@ -659,22 +695,32 @@ const nf=(v,d)=>Number(v).toLocaleString('uk-UA',{minimumFractionDigits:d||0,max
 const D2R=Math.PI/180, R2D=180/Math.PI;
 
 // ---------- tabs
-// нижня панель керування: свій набір елементів для кожної вкладки, її можна сховати
-const DOCKN={model:['Шари макета','вмикайте й вимикайте групи елементів'],build:['Монтаж','кроки, перемотування, показ по черзі'],node:['Вузол','вигляд, розбір на елементи'],sun:['Сонце','дата, час, затінення'],find:['Зауваження','фільтр за важливістю']};
-let dockOpen=true;
-try{ const v=localStorage.getItem('ant-dock'); dockOpen = v===null ? true : v==='1'; }catch(e){ dockOpen=true; }
-function dockSet(open){ dockOpen=open; const d=$('#dock'); d.classList.toggle('closed',!open); $('#dockhandle').setAttribute('aria-expanded',String(open)); $('#dockar').textContent=open?'▾':'▴'; $('#docktxt').textContent=open?'Сховати':'Показати'; try{ localStorage.setItem('ant-dock',open?'1':'0'); }catch(e){} }
-function dockSync(tab){ const has=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $('#dock').hidden=!has; $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); if(has){ $('#dockname').textContent=DOCKN[tab][0]; $('#dockhint').textContent=DOCKN[tab][1]; } }
-$('#dockhandle').addEventListener('click',()=>dockSet(!dockOpen));
+// керування над макетом (своє для кожної вкладки) і панель даних внизу, яку можна згорнути й розтягнути
+let ctxOpen=true, ctxHas=true;
+try{ ctxOpen=localStorage.getItem('ant-ctx')!=='0'; }catch(e){}
+function ctxSet(o){ ctxOpen=o; $('#ctx').hidden=!(o&&ctxHas); const b=$('#ctxtoggle'); b.textContent=o?'▴':'▾'; b.setAttribute('aria-expanded',String(o)); b.title=o?'Сховати керування':'Показати керування'; b.setAttribute('aria-label',b.title); try{ localStorage.setItem('ant-ctx',o?'1':'0'); }catch(e){} requestRender(); }
+function dockSync(tab){ ctxHas=!!document.querySelector('.dp[data-dock="'+tab+'"]'); $$('.dp').forEach(p=>p.hidden=p.dataset.dock!==tab); $('#ctxtoggle').hidden=!ctxHas; ctxSet(ctxOpen); }
+$('#ctxtoggle').addEventListener('click',()=>ctxSet(!ctxOpen));
+const SHEETS=['peek','half','full']; let sheetS='half';
+try{ const v=localStorage.getItem('ant-sheet'); if(SHEETS.includes(v)) sheetS=v; }catch(e){}
+function sheetSet(st){ sheetS=st; $('#sheet').dataset.s=st; try{ localStorage.setItem('ant-sheet',st); }catch(e){} requestRender(); }
+{ const g=$('#grab'); let y0=null, moved=false;
+  g.addEventListener('pointerdown',e=>{ y0=e.clientY; moved=false; try{ g.setPointerCapture(e.pointerId); }catch(x){} });
+  g.addEventListener('pointermove',e=>{ if(y0!==null&&Math.abs(e.clientY-y0)>14) moved=true; });
+  g.addEventListener('pointerup',e=>{ if(y0===null) return; const dy=e.clientY-y0, i=SHEETS.indexOf(sheetS); y0=null;
+    if(moved){ sheetSet(SHEETS[Math.max(0,Math.min(2,i+(dy<0?1:-1)))]); } else sheetSet(SHEETS[(i+1)%3]); });
+  g.addEventListener('pointercancel',()=>{ y0=null; }); }
 $$('#layers label').forEach(l=>{ const s=l.querySelector('.src'); if(s) l.title=s.textContent; });
-dockSet(dockOpen); dockSync('model');
+function showTab(tab){ const b=document.querySelector('.tabs [data-tab="'+tab+'"]'); if(b) b.click(); }
 $$('.tabs button').forEach(b => b.addEventListener('click', () => {
   $$('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
   $$('.pane').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
-  dockSync(b.dataset.tab);
-  document.querySelector('.app').classList.toggle('wide', b.dataset.tab==='note');
+  dockSync(b.dataset.tab); $('#panes').scrollTop=0;
+  if(sheetS==='peek') sheetSet('half');
+  if(b.dataset.tab==='note'&&sheetS!=='full') sheetSet('full');
   try { localStorage.setItem('ant-tab', b.dataset.tab); } catch(e) {}
 }));
+sheetSet(sheetS); dockSync('model');
 try { const t = localStorage.getItem('ant-tab'); if (t) { const b = document.querySelector('.tabs [data-tab="'+t+'"]'); if (b) b.click(); } } catch(e) {}
 
 // ---------- findings (rendered even if WebGL fails)
@@ -980,6 +1026,9 @@ const ugM=stripUG.map(s=>{ const L=Math.hypot(s[2]-s[0],s[3]-s[1]), a=Math.atan2
 const ugIM=inst(new THREE.BoxGeometry(1,0.04,0.025),MAT.strip,ugM,G.downUG);
 
 // ---------- ESS pads: foundations, frame, earthing (essF / essUG), equipment and canopy (essE)
+MAT.cont=lam(0xdde3e6); MAT.contD=lam(0x55646e);
+const essCab=[], essContTags=[]; let ESSV='cab'; grp('essC');
+function essVisApply(){ essCab.forEach(m=>{ if(ESSV!=='cab') m.visible=false; }); }
 const SLP=[0.5,2.105,2.71,3.315,4.37,5.425,6.48,7.535,8.59];
 const essTags=[];
 D.pads.forEach(p=>{ const alongY=p.axis==='y';
@@ -995,18 +1044,21 @@ D.pads.forEach(p=>{ const alongY=p.axis==='y';
   [-4.545,4.545].forEach(u=>bxUV(u-0.032,u+0.032,-0.675,0.675,0.45,0.61,MAT.frame,G.essF));
   const FM=[[-4.725,1.1,2.75],[0,1.1,2.75],[4.725,1.1,2.75],[-4.725,-1.1,3.0],[4.725,-1.1,3.0]];
   FM.forEach(([u,v,h])=>{ info(bxUV(u-0.175,u+0.175,v-0.175,v+0.175,-1.2,0.2,MAT.fm,G.essF),'Фундамент ФМ-1, бетон С20/25 F100\nзакладна З-1, болти М16×600'); bxUV(u-0.3,u+0.3,v-0.3,v+0.3,-1.3,-1.2,MAT.fm,G.essF);
-    info(bxUV(u-0.06,u+0.06,v-0.06,v+0.06,0.2,0.2+h,MAT.col,G.essE),`Стійка навісу □120×120×4, h = ${nf(h,2)} м`); });
+    essCab.push(info(bxUV(u-0.06,u+0.06,v-0.06,v+0.06,0.2,0.2+h,MAT.col,G.essE),`Стійка навісу □120×120×4, h = ${nf(h,2)} м`)); });
   const hAt=v=>0.2+2.75+(1.1-v)/2.2*0.25+0.04;
-  [-1.1,0,1.1].forEach(v=>bxUV(-4.69,4.69,v-0.04,v+0.04,hAt(v)-0.04,hAt(v)+0.04,MAT.col,G.essE));
+  [-1.1,0,1.1].forEach(v=>essCab.push(bxUV(-4.69,4.69,v-0.04,v+0.04,hAt(v)-0.04,hAt(v)+0.04,MAT.col,G.essE)));
   // sloped profiled sheet ПС-20 2500×9750
   const sh=new THREE.Mesh(new THREE.BoxGeometry(alongY?2.5:9.75,0.02,alongY?9.75:2.5),MAT.sheet); const mid=L2W(0,0); sh.position.set(mid[0],hAt(0)+0.06,-mid[1]);
   if(alongY) sh.rotation.z=-Math.atan(0.25/2.2); else sh.rotation.x=-Math.atan(0.25/2.2);
-  sh.castShadow=true; sh.receiveShadow=true; G.essE.add(sh); info(sh,`${p.id}: навіс з профнастилу ПС-20, 9,75 × 2,5 м\nстійки 3,0 / 2,75 м`); bMeshes.push(sh);
+  sh.castShadow=true; sh.receiveShadow=true; G.essE.add(sh); essCab.push(sh); info(sh,`${p.id}: навіс з профнастилу ПС-20, 9,75 × 2,5 м\nстійки 3,0 / 2,75 м`); bMeshes.push(sh);
   // cabinets (positions straight from ЕТР арк. 2)
   const top=0.61, Hc=1.85;
-  p.gal.forEach((g,i)=>info(boxXY(g[0],g[1],g[2],g[3],top,top+Hc,MAT.gal,G.essE),`${p.id}: Galaxy261L №${i+1}\nLFP 261 кВт·год, рідинне охолодження, IP54`));
+  p.gal.forEach((g,i)=>essCab.push(info(boxXY(g[0],g[1],g[2],g[3],top,top+Hc,MAT.gal,G.essE),`${p.id}: Galaxy261L №${i+1}\nLFP 261 кВт·год, рідинне охолодження, IP54`)));
   p.sm.forEach(g=>info(boxXY(g[0],g[1],g[2],g[3],top,top+1.2,MAT.sm,G.essE),`${p.id}: пристрій обмеження генерації SM / щит керування`));
-  const mp=p.mps; info(boxXY(mp[0],mp[1],mp[2],mp[3],top,top+Hc,MAT.mps,G.essE),`${p.id}: шафа мікромережі FFD POWER 500 кВт\nSTS · PCS · IT 500 кВА · 10 MPPT · EMS\n${nf(p.kwp,1)} кВтп → ${p.tp}`);
+  const mp=p.mps; essCab.push(info(boxXY(mp[0],mp[1],mp[2],mp[3],top,top+Hc,MAT.mps,G.essE),`${p.id}: шафа мікромережі FFD POWER 500 кВт\nSTS · PCS · IT 500 кВА · 10 MPPT · EMS\n${nf(p.kwp,1)} кВтп → ${p.tp}`));
+  // варіант: контейнер LES-H20-1205W500C-PS-EU (габарит 20 ft прийнято, уточнити за паспортом)
+  { const c=info(bxUV(-3.03,3.03,-1.22,1.22,0.61,0.61+2.896,MAT.cont,G.essC),`${p.id}: контейнер LES-H20-1205W500C-PS-EU\n500 кВт / ≈1 205 кВт·год, 768 В, 12 PV-входів\nSTS за комплектацією; габарит 20 ft прийнято, уточнити за паспортом\n${nf(p.kwp,1)} кВтп → ${p.tp}`);
+    bxUV(-3.03,3.03,1.215,1.23,0.9,2.5,MAT.contD,G.essC); bxUV(-3.03,3.03,-1.23,-1.215,0.9,2.5,MAT.contD,G.essC); bxUV(3.02,3.04,-0.9,0.9,0.9,2.7,MAT.contD,G.essC); }
   // ЩР-PV and ЩР-АКБ: on the facade for MS-1/2, on a stand for MS-3
   p.pv.forEach((b,i)=>{ const X=(b[0]+b[1])/2, Y=(b[2]+b[3])/2; const m=alongY?boxXY(96.66,96.82,Y-0.25,Y+0.25,1.15,1.75,MAT.boxPV,G.essE):boxXY(X-0.25,X+0.25,120.05,120.21,1.15,1.75,MAT.boxPV,G.essE); info(m,`${p.pvn[i]} · WRP18-3\n10 ОПН T1+T2, 20 запобіжників gPV 25 А / 1000 В`); });
   const a=p.akb, Xa=(a[0]+a[1])/2, Ya=(a[2]+a[3])/2; info(alongY?boxXY(96.66,97.06,Ya-0.5,Ya+0.5,0.9,1.7,MAT.boxAKB,G.essE):boxXY(Xa-0.5,Xa+0.5,120.05,120.45,0.9,1.7,MAT.boxAKB,G.essE),`${p.akbn} · GT 80-100-40 IP66\n5 роз’єднувачів + NH2 gPV 250 А / 1000 В`);
@@ -1067,13 +1119,16 @@ const _p=new THREE.Vector3(), overlap=(r,L)=>L.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1
 function liveTags(){ const out=[]; for(const a of TAGS){ let p=a, vis=true; while(p&&p!==scene){ if(!p.visible) vis=false; p=p.parent; } if(p&&vis) out.push(a); } return out; }
 function drawTags(){ const live=liveTags(), placed=new Set();
   if(tagsOn&&OW){ const vr=canvas.getBoundingClientRect(), block=[];
-    ['.hud','.compass'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
-    const items=[];
-    live.forEach(a=>{ const t=a.userData.tag; a.getWorldPosition(_p); const dist=_p.distanceTo(camera.position); if(dist>t.far) return;
+    ['.hudwrap','.compass'].forEach(sel=>{ const e=$(sel); if(!e||e.hidden) return; const r=e.getBoundingClientRect(); if(r.width) block.push([r.left-vr.left-6,r.top-vr.top-6,r.right-vr.left+6,r.bottom-vr.top+22]); });
+    const items=[]; const cd=camera.position.distanceTo(controls.target), small=OW<640;
+    // LOD: near = повний підпис, mid = лише перший рядок, far = лише важливі; ліміт кількості за площею вікна
+    const lod=cd<(small?45:60)?0:cd<(small?100:140)?1:cd<(small?190:260)?2:3, minPri=[0,0,6,7][lod], cap=Math.max(4,Math.floor(OW*OH/(small?26000:14000)));
+    live.forEach(a=>{ const t=a.userData.tag; a.getWorldPosition(_p); const dist=_p.distanceTo(camera.position); if(dist>t.far) return; if(t.pri<minPri) return;
       _p.project(camera); if(_p.z>1) return; const x=(_p.x+1)/2*OW, y=(1-_p.y)/2*OH; if(x<3||y<3||x>OW-3||y>OH-3) return; items.push({t,x,y,dist}); });
-    items.sort((a,b)=>b.t.pri-a.t.pri||a.dist-b.dist);
+    items.sort((a,b)=>b.t.pri-a.t.pri||a.dist-b.dist); if(items.length>cap) items.length=cap;
+    items.forEach(it=>{ const t=it.t; if(!t.el) return; const want=lod===0?t.text:t.text.split('\n')[0]; if(t.cur!==want||t.sm!==(lod>=2)){ t.cur=want; t.sm=lod>=2; t.el.textContent=want; t.el.classList.toggle('tgs',t.sm); t.w=0; } });
     items.forEach(it=>block.push([it.x-5,it.y-5,it.x+5,it.y+5]));
-    for(const it of items){ const t=it.t; tagEl(t); let got=null;
+    for(const it of items){ const t=it.t; tagEl(t); { const want=lod===0?t.text:t.text.split('\n')[0]; if(t.cur!==want||t.sm!==(lod>=2)){ t.cur=want; t.sm=lod>=2; t.el.textContent=want; t.el.classList.toggle('tgs',t.sm); t.w=0; measureTag(t); } } let got=null;
       const tryK=k=>{ const c=CANDS[k], ex=it.x+c[0], ey=it.y+c[1]; const l=c[2]>0?ex:c[2]<0?ex-t.w:ex-t.w/2, tp=c[3]<0?ey-t.h:c[3]>0?ey:ey-t.h/2, r=[l,tp,l+t.w,tp+t.h];
         if(l<4||tp<4||r[2]>OW-4||r[3]>OH-4||overlap(r,block)) return false; got={k,r,ex,ey}; return true; };
       if(!(t.c>=0&&tryK(t.c))) for(let k=0;k<CANDS.length;k++) if(tryK(k)) break;
@@ -1097,7 +1152,15 @@ addTag(G.bld,W(80,-14,HE+10*T11),'Прибудови складу · 11°',{pri:
 addTag(G.obs,W(28.4,60,roofZ(28.4)+0.6),'Зенітний ліхтар на гребені',{pri:3,far:160});
 addTag(G.bld,W(36,40,HV+0.05),'Ендова між арками',{pri:3,far:140});
 addTag(G.bld,W(84,30,roofZ(84)),'Проліт 13–17: 24 м (профіль умовно)',{pri:2,far:150});
-essTags.forEach(([t,p])=>{ t.add(tag(`${p.id} · ${nf(p.kwp,1)} кВтп · 5 × Galaxy261L`,{pri:7,line:'#7a4a00'})); });
+const essTagObjs=[];
+function essTagText(p){ return ESSV==='cab'
+  ? `${p.id} · ${nf(p.kwp,1)} кВтп → ${p.tp}\nШафа FFD POWER 500 кВт: STS · PCS · IT 500 кВА · 10 MPPT · EMS\n5 × Galaxy261L = 1 305 кВт·год, LFP, рідинне охолодження`
+  : `${p.id} · ${nf(p.kwp,1)} кВтп → ${p.tp}\nКонтейнер LES-H20-1205W500C-PS-EU: 500 кВт / ≈1 205 кВт·год\n768 В · 12 PV-входів · STS за комплектацією · 20 ft (уточнити)`; }
+essTags.forEach(([t,p])=>{ const o=tag(essTagText(p),{pri:7,line:'#7a4a00',noOcc:true}); t.add(o); essTagObjs.push([o,p]); });
+function setEssVariant(v){ ESSV=v; $$('#essvar button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ev===v)));
+  essTagObjs.forEach(([o,p])=>{ const t=o.userData.tag; t.text=essTagText(p); t.cur=null; });
+  applyStep(); requestRender(); }
+$$('#essvar button').forEach(b=>b.addEventListener('click',()=>setEssVariant(b.dataset.ev)));
 { const m=roofMasts[20]; addTag(G.lps,W(m[0],m[1],surfZ(m[0],m[1])+4.0),'Блискавкоприймач М-04/40 · 4 м',{pri:3,far:120}); }
 ropeTag.add(tag('Тросовий перехід DC: склад → цех',{pri:8,line:'#b85c00'}));
 addTag(G.ac,W(97.1,56,TRAY_H+0.1),'Кабельрост 400×100 на фасаді',{pri:6,far:160,line:'#a32222'});
@@ -1129,8 +1192,8 @@ canvas.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') tip.hidd
 const STEPS=['Обстеження і розбивка покрівлі','Мати і баласт','Трикутники і сполучники','Модулі на даху цеху і спойлери','Склад: модулі на скатах 11°, 17°, 22°','Стрінги і DC-траси','Зрівнювання потенціалів','Блискавкоприймачі й дріт на даху','Спуски і заземлювачі','Основа УЗЕ і контур заземлення','Шафи MPS, Galaxy і навіс','Силові лінії до ТП'];
 const NS=STEPS.length;
 let STEP=0;
-const SV={layout:[1,1],mats:[2,99],ball:[2,99],tri:[3,99],conn:[3,99],pv:[4,99],spoil:[4,99],whpv:[5,99],dc:[6,6],bond:[7,7],lps:[8,99],zones:[8,8],down:[9,99],downUG:[9,9],essF:[10,99],essUG:[10,10],essE:[11,99],ac:[12,12]};
-const HL={2:['ball','mat'],3:['tri','conn'],4:['pvL','spoil'],5:['pvL','pvP','block'],8:['alu','holder','mbase','mast6'],9:['k682','strip','rod'],10:['cushion','sleeper','frame','fm','rod','strip'],11:['gal','mps','sm','col','sheet','boxPV','boxAKB'],12:['tray','cable','trough']};
+const SV={layout:[1,1],mats:[2,99],ball:[2,99],tri:[3,99],conn:[3,99],pv:[4,99],spoil:[4,99],whpv:[5,99],dc:[6,6],bond:[7,7],lps:[8,99],zones:[8,8],down:[9,99],downUG:[9,9],essF:[10,99],essUG:[10,10],essE:[11,99],essC:[11,99],ac:[12,12]};
+const HL={2:['ball','mat'],3:['tri','conn'],4:['pvL','spoil'],5:['pvL','pvP','block'],8:['alu','holder','mbase','mast6'],9:['k682','strip','rod'],10:['cushion','sleeper','frame','fm','rod','strip'],11:['gal','mps','sm','col','sheet','boxPV','boxAKB','cont'],12:['tray','cable','trough']};
 function setGroundOpacity(op){ MAT.ground.transparent=op<1; MAT.ground.opacity=op; MAT.ground.depthWrite=op>=1; MAT.ground.needsUpdate=true; }
 function setPvOpacity(op){ [MAT.pvL,MAT.pvP].forEach(m=>{ m.transparent=op<1; m.opacity=op; m.depthWrite=op>=1; m.needsUpdate=true; }); }
 function setTpOpacity(op){ MAT.tp.transparent=op<1; MAT.tp.opacity=op; MAT.tp.depthWrite=op>=1; MAT.tp.needsUpdate=true; }
@@ -1141,7 +1204,7 @@ function applyLayers(){
   const bal=$('#L-bal').checked; ['tri','ball','mats','conn','spoil'].forEach(n=>G[n].visible=bal);
   G.lps.visible=$('#L-lps').checked; G.zones.visible=$('#L-zones').checked; G.down.visible=$('#L-down').checked; G.downUG.visible=false;
   G.bond.visible=$('#L-bond').checked; G.dc.visible=$('#L-dc').checked; G.ac.visible=$('#L-ac').checked;
-  const e=$('#L-ess').checked; G.essF.visible=e; G.essE.visible=e; G.essUG.visible=false;
+  const e=$('#L-ess').checked; G.essF.visible=e; G.essE.visible=e; G.essC.visible=e&&ESSV==='cont'; G.essUG.visible=false;
   G.axes.visible=$('#L-axes').checked; G.layout.visible=false;
   roofHeat=$('#L-heat').checked; colorRoof(); setGroundOpacity(1); setTpOpacity(1); setPvOpacity(1); }
 
@@ -1160,7 +1223,7 @@ const GROW={
  8:p=>{ const a=Math.min(1,p/0.5), b=Math.max(0,(p-0.5)/0.5); setCnt(mbaseIM,a); setCnt(rodIM,a); setCnt(mtipIM,a); setCnt(holdIM,b); drw(wireLine,b); },
  9:p=>{ setCnt(downIM,p); setCnt(k682IM,p); setCnt(stripIM,p); setCnt(rodIM2,p); setCnt(ugIM,p); drw(downLine,p); },
  10:p=>{ kids(G.essF,Math.min(1,p/0.75)); const b=Math.max(0,(p-0.75)/0.25); setCnt(essRodIM,b); setCnt(essStripIM,b); },
- 11:p=>{ kids(G.essE,p); },
+ 11:p=>{ kids(G.essE,p); kids(G.essC,p); essVisApply(); },
  12:p=>{ kids(G.ac,p); }
 };
 function growAll(){ for(let s=2;s<=NS;s++){ const f=GROW[s]; if(f) f(s===STEP?PROG:1); } requestRender(); }
@@ -1178,6 +1241,7 @@ function applyStep(){
   if(s===0){ applyLayers(); $('#stepbar').hidden=true; }
   else {
     Object.keys(SV).forEach(n=>{ G[n].visible=s>=SV[n][0]&&s<=SV[n][1]; });
+    G.essC.visible=G.essC.visible&&ESSV==='cont';
     G.bld.visible=true; G.obs.visible=true; G.axes.visible=$('#L-axes').checked;
     (HL[s]||[]).forEach(k=>{ if(MAT[k]&&MAT[k].emissive) MAT[k].emissive.set(0x3a2a00); });
     roofHeat=s===1; colorRoof();
@@ -1345,7 +1409,7 @@ function updateSun(){
   $('#sunkv').innerHTML=`<dt>Азимут / висота</dt><dd>${fmt(s.az,1)}° / ${fmt(s.el,1)}°</dd><dt>Кут падіння на ряди цеху</dt><dd>${s.el>0?fmt(inc,1)+'°'+(cosI<0?' (сонце за площиною модулів)':''):'—'}</dd>`+
     `<dt>Центр модуля в тіні</dt><dd>${s.el>0?`${full} з 1 440 (цех ${fullR}, склад ${fullW})`:'ніч'}</dd><dt>Частково в тіні</dt><dd>${s.el>0?part:'—'}</dd>`+
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
-  $('#sunread').innerHTML = s.el>0 ? `<span>☀ <b>${fmt(s.az,0)}° / ${fmt(s.el,0)}°</b></span><span>у тіні ${full}</span><span>частково ${part}</span>${genChip()}` : `<span>Сонце під горизонтом</span>${genChip()}`;
+  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span>висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span>у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span>сонце під горизонтом</span>`; }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
@@ -1357,8 +1421,8 @@ timeIn.addEventListener('input',updateSun);
 $('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); });
 $$('#dchips button').forEach(b=>b.addEventListener('click',()=>{ const y=(dateIn.value||'2026').slice(0,4); dateIn.value=`${y}-${b.dataset.d}`; $$('#dchips button').forEach(x=>x.classList.toggle('on',x===b)); updateSun(); }));
 let playing=null;
-$('#play').addEventListener('click',()=>{ if(playing){ cancelAnimationFrame(playing); playing=null; $('#play').textContent='▶ Прокрутити день'; return; }
-  $('#play').textContent='■ Зупинити'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+10; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
+$('#play').addEventListener('click',()=>{ if(playing){ cancelAnimationFrame(playing); playing=null; $('#play').textContent='▶'; return; }
+  $('#play').textContent='■'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+10; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
 
 // ---------- layers
 const exitSteps=()=>{ if(STEP){ stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };

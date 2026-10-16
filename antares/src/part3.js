@@ -3,8 +3,8 @@
 const STEPS=['Обстеження і розбивка покрівлі','Мати і баласт','Трикутники і сполучники','Модулі на даху цеху і спойлери','Склад: модулі на скатах 11°, 17°, 22°','Стрінги і DC-траси','Зрівнювання потенціалів','Блискавкоприймачі й дріт на даху','Спуски і заземлювачі','Основа УЗЕ і контур заземлення','Шафи MPS, Galaxy і навіс','Силові лінії до ТП'];
 const NS=STEPS.length;
 let STEP=0;
-const SV={layout:[1,1],mats:[2,99],ball:[2,99],tri:[3,99],conn:[3,99],pv:[4,99],spoil:[4,99],whpv:[5,99],dc:[6,6],bond:[7,7],lps:[8,99],zones:[8,8],down:[9,99],downUG:[9,9],essF:[10,99],essUG:[10,10],essE:[11,99],ac:[12,12]};
-const HL={2:['ball','mat'],3:['tri','conn'],4:['pvL','spoil'],5:['pvL','pvP','block'],8:['alu','holder','mbase','mast6'],9:['k682','strip','rod'],10:['cushion','sleeper','frame','fm','rod','strip'],11:['gal','mps','sm','col','sheet','boxPV','boxAKB'],12:['tray','cable','trough']};
+const SV={layout:[1,1],mats:[2,99],ball:[2,99],tri:[3,99],conn:[3,99],pv:[4,99],spoil:[4,99],whpv:[5,99],dc:[6,6],bond:[7,7],lps:[8,99],zones:[8,8],down:[9,99],downUG:[9,9],essF:[10,99],essUG:[10,10],essE:[11,99],essC:[11,99],ac:[12,12]};
+const HL={2:['ball','mat'],3:['tri','conn'],4:['pvL','spoil'],5:['pvL','pvP','block'],8:['alu','holder','mbase','mast6'],9:['k682','strip','rod'],10:['cushion','sleeper','frame','fm','rod','strip'],11:['gal','mps','sm','col','sheet','boxPV','boxAKB','cont'],12:['tray','cable','trough']};
 function setGroundOpacity(op){ MAT.ground.transparent=op<1; MAT.ground.opacity=op; MAT.ground.depthWrite=op>=1; MAT.ground.needsUpdate=true; }
 function setPvOpacity(op){ [MAT.pvL,MAT.pvP].forEach(m=>{ m.transparent=op<1; m.opacity=op; m.depthWrite=op>=1; m.needsUpdate=true; }); }
 function setTpOpacity(op){ MAT.tp.transparent=op<1; MAT.tp.opacity=op; MAT.tp.depthWrite=op>=1; MAT.tp.needsUpdate=true; }
@@ -15,7 +15,7 @@ function applyLayers(){
   const bal=$('#L-bal').checked; ['tri','ball','mats','conn','spoil'].forEach(n=>G[n].visible=bal);
   G.lps.visible=$('#L-lps').checked; G.zones.visible=$('#L-zones').checked; G.down.visible=$('#L-down').checked; G.downUG.visible=false;
   G.bond.visible=$('#L-bond').checked; G.dc.visible=$('#L-dc').checked; G.ac.visible=$('#L-ac').checked;
-  const e=$('#L-ess').checked; G.essF.visible=e; G.essE.visible=e; G.essUG.visible=false;
+  const e=$('#L-ess').checked; G.essF.visible=e; G.essE.visible=e; G.essC.visible=e&&ESSV==='cont'; G.essUG.visible=false;
   G.axes.visible=$('#L-axes').checked; G.layout.visible=false;
   roofHeat=$('#L-heat').checked; colorRoof(); setGroundOpacity(1); setTpOpacity(1); setPvOpacity(1); }
 
@@ -34,7 +34,7 @@ const GROW={
  8:p=>{ const a=Math.min(1,p/0.5), b=Math.max(0,(p-0.5)/0.5); setCnt(mbaseIM,a); setCnt(rodIM,a); setCnt(mtipIM,a); setCnt(holdIM,b); drw(wireLine,b); },
  9:p=>{ setCnt(downIM,p); setCnt(k682IM,p); setCnt(stripIM,p); setCnt(rodIM2,p); setCnt(ugIM,p); drw(downLine,p); },
  10:p=>{ kids(G.essF,Math.min(1,p/0.75)); const b=Math.max(0,(p-0.75)/0.25); setCnt(essRodIM,b); setCnt(essStripIM,b); },
- 11:p=>{ kids(G.essE,p); },
+ 11:p=>{ kids(G.essE,p); kids(G.essC,p); essVisApply(); },
  12:p=>{ kids(G.ac,p); }
 };
 function growAll(){ for(let s=2;s<=NS;s++){ const f=GROW[s]; if(f) f(s===STEP?PROG:1); } requestRender(); }
@@ -52,6 +52,7 @@ function applyStep(){
   if(s===0){ applyLayers(); $('#stepbar').hidden=true; }
   else {
     Object.keys(SV).forEach(n=>{ G[n].visible=s>=SV[n][0]&&s<=SV[n][1]; });
+    G.essC.visible=G.essC.visible&&ESSV==='cont';
     G.bld.visible=true; G.obs.visible=true; G.axes.visible=$('#L-axes').checked;
     (HL[s]||[]).forEach(k=>{ if(MAT[k]&&MAT[k].emissive) MAT[k].emissive.set(0x3a2a00); });
     roofHeat=s===1; colorRoof();
@@ -219,7 +220,7 @@ function updateSun(){
   $('#sunkv').innerHTML=`<dt>Азимут / висота</dt><dd>${fmt(s.az,1)}° / ${fmt(s.el,1)}°</dd><dt>Кут падіння на ряди цеху</dt><dd>${s.el>0?fmt(inc,1)+'°'+(cosI<0?' (сонце за площиною модулів)':''):'—'}</dd>`+
     `<dt>Центр модуля в тіні</dt><dd>${s.el>0?`${full} з 1 440 (цех ${fullR}, склад ${fullW})`:'ніч'}</dd><dt>Частково в тіні</dt><dd>${s.el>0?part:'—'}</dd>`+
     `<dt>Ряди без взаємного затінення</dt><dd>при висоті сонця > ${fmt(rowEl,1)}° (крок 2,10 м, нахил 15°)</dd><dt>Час</dt><dd>UTC+${off}</dd>`;
-  $('#sunread').innerHTML = s.el>0 ? `<span>☀ <b>${fmt(s.az,0)}° / ${fmt(s.el,0)}°</b></span><span>у тіні ${full}</span><span>частково ${part}</span>${genChip()}` : `<span>Сонце під горизонтом</span>${genChip()}`;
+  { const tm=$('#timeo').textContent; $('#sunread').innerHTML = s.el>0 ? `<b class="sr-t">${tm}</b>${genChip()}<span>висота <b>${fmt(s.el,0)}°</b> · азимут <b>${fmt(s.az,0)}°</b></span><span>у тіні ${full} · частково ${part}</span>` : `<b class="sr-t">${tm}</b>${genChip()}<span>сонце під горизонтом</span>`; }
   if(sunPath){ scene.remove(sunPath); sunPath.geometry.dispose(); }
   const pts=[]; for(let t=180;t<=1380;t+=10){ const q=solar(localToUTC(dateIn.value,t)); if(q.el<-2) continue; const d=new THREE.Vector3(Math.sin(q.az*rad)*Math.cos(q.el*rad), Math.sin(q.el*rad), -Math.cos(q.az*rad)*Math.cos(q.el*rad)); pts.push(tgt.clone().addScaledVector(d,130)); }
   sunPath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({color:0xd08a1a,dashSize:3,gapSize:2})); sunPath.computeLineDistances(); scene.add(sunPath);
@@ -231,8 +232,8 @@ timeIn.addEventListener('input',updateSun);
 $('#shadeOn').addEventListener('change',()=>{ colorModules(effMode()); });
 $$('#dchips button').forEach(b=>b.addEventListener('click',()=>{ const y=(dateIn.value||'2026').slice(0,4); dateIn.value=`${y}-${b.dataset.d}`; $$('#dchips button').forEach(x=>x.classList.toggle('on',x===b)); updateSun(); }));
 let playing=null;
-$('#play').addEventListener('click',()=>{ if(playing){ cancelAnimationFrame(playing); playing=null; $('#play').textContent='▶ Прокрутити день'; return; }
-  $('#play').textContent='■ Зупинити'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+10; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
+$('#play').addEventListener('click',()=>{ if(playing){ cancelAnimationFrame(playing); playing=null; $('#play').textContent='▶'; return; }
+  $('#play').textContent='■'; let last=0; const step=t=>{ if(t-last>90){ last=t; let v=+timeIn.value+10; if(v>1320) v=240; timeIn.value=v; updateSun(); } playing=requestAnimationFrame(step); }; playing=requestAnimationFrame(step); });
 
 // ---------- layers
 const exitSteps=()=>{ if(STEP){ stopGrow(); PROG=1; STEP=0; growAll(); $('#stepbar').hidden=true; $$('#stepchips button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.s===0))); renderStep(); Object.values(MAT).forEach(m=>{ if(m.emissive) m.emissive.set(0x000000); }); } };
