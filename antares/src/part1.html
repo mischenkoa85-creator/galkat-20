@@ -218,7 +218,17 @@ table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-so
 .sunread .sr-t{font-family:var(--f-display);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.01em}
 .sunread span b{font-size:15px}
 .sunctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
-.dp[data-dock="sun"]{width:min(300px,100%)}
+.dp[data-dock="sun"]{width:min(250px,100%);gap:4px}
+.sunrow{display:flex;align-items:center;gap:6px}
+.sunrow .sunread{flex:1 1 auto;min-width:0;flex-wrap:nowrap;gap:2px 8px;align-items:baseline}
+.sunrow .sunread .sr-x{display:none}
+.sunx{display:none;font-family:var(--f-mono);font-size:11.5px;line-height:1.5}
+.dp.more .sunx{display:block}
+.sunx b{font-weight:500;color:var(--sun)}
+.sbtn{min-width:52px;padding:0 6px;height:28px;font-size:12px}
+#speed{min-width:36px;height:28px;padding:0 4px;font-size:12px}
+.sunctl .row.rtime{flex:1 1 100%;gap:6px}
+.sunctl .row.rtime input[type=range]{min-width:60px;flex:1}
 .sunctl .sx{display:none;flex:1 1 100%;align-items:center;gap:8px 12px;flex-wrap:wrap}
 .dp.more .sunctl .sx{display:flex}
 .sunread .sr-x{display:none}
@@ -364,13 +374,14 @@ table.nt tr.cur td{background:var(--cobalt-soft)}
         </div>
       </div>
       <div class="dp" data-dock="sun" hidden>
-        <div class="sunread" id="sunread"></div>
+        <div class="sunrow">
+          <div class="sunread" id="sunread"></div>
+          <button id="season" class="pbtn sbtn" title="Сезон: натискайте, щоб перемикати Зима → Весна → Літо → Осінь" aria-label="Сезон">Осінь</button>
+          <button id="sunmore" class="pbtn" aria-expanded="false" aria-label="Додатково: дата, тіні" title="Додатково: дата, висота й азимут, тіні">⋯</button>
+        </div>
+        <div class="sunx" id="sunx"></div>
         <div class="sunctl">
-          <div class="chips" id="dchips" role="group" aria-label="Сезон">
-            <button data-d="12-21">Зима</button><button data-d="03-20">Весна</button><button data-d="06-21">Літо</button><button data-d="09-23">Осінь</button>
-          </div>
-          <button id="sunmore" class="pbtn" aria-expanded="false" aria-label="Додатково: дата, тіні" title="Додатково: дата, тіні">⋯</button>
-          <div class="row rtime"><button id="play" class="pbtn" aria-label="Прокрутити день" title="Прокрутити день">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><output id="timeo" for="time">13:00</output></div>
+          <div class="row rtime"><button id="play" class="pbtn" aria-label="Пуск / пауза" title="Пуск / пауза">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><button id="speed" class="pbtn" title="Швидкість програвання" aria-label="Швидкість">×1</button><output id="timeo" for="time">13:00</output></div>
           <div class="sx"><div class="row rdate"><input type="date" id="date" aria-label="Дата"></div>
           <label class="chk"><input type="checkbox" id="shadeOn" checked>Тіні</label></div>
         </div>
