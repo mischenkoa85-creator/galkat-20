@@ -9,6 +9,14 @@
  *   1. Виконати функцію setup — створить аркуші та код адміністратора (у аркуші «Доступи»).
  *   2. Розгорнути → Нове розгортання → Вебзастосунок: «Виконувати як: я», «Доступ: усі».
  *   3. Скопіювати адресу вебзастосунку (…/exec) і передати для сайту.
+ *
+ * Зміни 16.10.2026:
+ *   - ідемпотентність: сайт надсилає ID запису з телефона (cid). Повтор із черги офлайн із тим самим cid
+ *     не створює другий запис — сервер повертає вже записаний (dup: true). Колонка «ID клієнта».
+ *   - записи складу мають «Тип»: «видача» (як раніше) або «зберігання ГАЛ-КАТ» — передача матеріалів
+ *     відкладених дахів 10–11 на відповідальне зберігання ТзДВ «ГАЛ-КАТ», з номером акта (колонка «Акт»).
+ *   - нові колонки дописуються праворуч у наявні аркуші самі, старі рядки не змінюються.
+ *   Після заміни коду: Розгорнути → Керувати розгортаннями → редагувати → Нова версія.
  */
 
 const SHEET_ID = '1muZlfeTZ3U5FoOCJ7Pbu1u5Jg8Dw0KVevxPisuX0d0Y';
@@ -24,11 +32,13 @@ const PHOTO_FOLDERS = {
 const OBJECTS = Object.keys(PHOTO_FOLDERS);
 const ROLES = ['адмін', 'виконавець', 'комірник', 'замовник'];
 const MAX_PHOTOS = 8;
+const STOCK_TYPES = ['видача', 'зберігання ГАЛ-КАТ'];
+const CID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
 const TABS = {
   access: { name: 'Доступи', head: ['Код', 'Ім’я', 'Роль', 'Активний', 'Примітка'] },
-  reports: { name: 'Звіти', head: ['ID звіту', 'Дата', 'Об’єкт', 'Дія', 'Кількість', 'Кран, маш.-год', 'Фото дня', 'Фото, шт', 'Примітка', 'Хто', 'Записано'] },
-  stock: { name: 'Видачі', head: ['ID видачі', 'Дата', 'Дах', 'Позиція', 'Найменування', 'Кількість', 'Примітка', 'Хто', 'Записано'] },
+  reports: { name: 'Звіти', head: ['ID звіту', 'Дата', 'Об’єкт', 'Дія', 'Кількість', 'Кран, маш.-год', 'Фото дня', 'Фото, шт', 'Примітка', 'Хто', 'Записано', 'ID клієнта'] },
+  stock: { name: 'Видачі', head: ['ID видачі', 'Дата', 'Дах', 'Позиція', 'Найменування', 'Кількість', 'Примітка', 'Хто', 'Записано', 'Тип', 'Акт', 'ID клієнта'] },
   settings: { name: 'Налаштування', head: ['Параметр', 'Значення', 'Пояснення'] },
   norms: { name: 'Норми', head: ['Ключ', 'Норма, люд-год/од.', 'Пояснення'] },
   plan: { name: 'Обсяги', head: ['Об’єкт', 'Дія', 'Обсяг', 'Пояснення'] }
@@ -69,6 +79,10 @@ function ensureSheets_(ss) {
       if (k === 'access') sh.getRange('A:A').setNumberFormat('@');
       if (k === 'settings') sh.getRange(2, 1, DEFAULT_SETTINGS.length, 3).setValues(DEFAULT_SETTINGS);
       sh.autoResizeColumns(1, t.head.length);
+    } else {
+      /* аркуш створено старою версією: дописати відсутні заголовки праворуч */
+      const lc = sh.getLastColumn();
+      if (lc >= 1 && lc < t.head.length) sh.getRange(1, lc + 1, 1, t.head.length - lc).setValues([t.head.slice(lc)]).setFontWeight('bold').setBackground('#e8eef6');
     }
   }
 }
@@ -140,7 +154,7 @@ function readAll_(ss) {
   const reports = {};
   for (let i = 1; i < rep.length; i++) {
     const r = rep[i]; const id = String(r[0]); if (!id) continue;
-    const x = reports[id] || (reports[id] = { id: id, d: ymd_(r[1]), o: String(r[2]), items: {}, crane: 0, photo: '', photos: 0, n: '', by: '', at: '' });
+    const x = reports[id] || (reports[id] = { id: id, cid: String(r[11] || ''), d: ymd_(r[1]), o: String(r[2]), items: {}, crane: 0, photo: '', photos: 0, n: '', by: '', at: '' });
     const w = String(r[3]); const q = Number(r[4]);
     if (w && w !== '—' && isFinite(q)) x.items[w] = (x.items[w] || 0) + q;
     if (Number(r[5]) > 0) x.crane += Number(r[5]);
@@ -153,7 +167,7 @@ function readAll_(ss) {
   const stock = {};
   for (let i = 1; i < st.length; i++) {
     const r = st[i]; const id = String(r[0]); if (!id) continue;
-    const x = stock[id] || (stock[id] = { id: id, d: ymd_(r[1]), o: String(r[2]), items: {}, n: '', by: '', at: '' });
+    const x = stock[id] || (stock[id] = { id: id, cid: String(r[11] || ''), d: ymd_(r[1]), o: String(r[2]), items: {}, type: String(r[9] || '').trim() || 'видача', act: String(r[10] || ''), n: '', by: '', at: '' });
     const k = String(r[3]); const q = Number(r[5]);
     if (k && isFinite(q)) x.items[k] = (x.items[k] || 0) + q;
     if (r[6]) x.n = String(r[6]);
@@ -176,6 +190,15 @@ function newId_(prefix) {
   return prefix + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + Math.floor(Math.random() * 1000);
 }
 
+/* перший рядок аркуша з цим ID клієнта (колонка 12) або null */
+function findCid_(sh, cid) {
+  if (!cid) return null;
+  const last = sh.getLastRow(); if (last < 2) return null;
+  const vals = sh.getRange(2, 1, last - 1, 12).getValues();
+  for (let i = 0; i < vals.length; i++) if (String(vals[i][11]) === cid) return vals[i];
+  return null;
+}
+
 function dayFolder_(objectId, d) {
   const root = DriveApp.getFolderById(PHOTO_FOLDERS[objectId]);
   const it = root.getFoldersByName(d);
@@ -190,7 +213,12 @@ function saveReport_(ss, me, req) {
   const crane = Math.max(0, Number(req.crane) || 0);
   const photos = Array.isArray(req.photos) ? req.photos.slice(0, MAX_PHOTOS) : [];
   if (!keys.length && !crane && !photos.length) return { ok: false, error: 'empty' };
+  const cid = CID_RE.test(String(req.cid || '')) ? String(req.cid) : '';
+  const sh = ss.getSheetByName(TABS.reports.name);
+  const prev = findCid_(sh, cid);
+  if (prev) return { ok: true, dup: true, id: String(prev[0]), photo: String(prev[6] || ''), photos: Number(prev[7]) || 0 };
   const id = newId_('R');
+  const files = [];
   let folderUrl = '';
   let saved = 0;
   if (photos.length) {
@@ -200,17 +228,19 @@ function saveReport_(ss, me, req) {
     photos.forEach(function (p, i) {
       if (!p || !p.b64) return;
       const blob = Utilities.newBlob(Utilities.base64Decode(p.b64), p.mime || 'image/jpeg', (o === 'S' ? 'Загальна' : 'Дах' + o) + '_' + d + '_' + stamp + '_' + (i + 1) + '.jpg');
-      folder.createFile(blob); saved++;
+      files.push(folder.createFile(blob)); saved++;
     });
   }
   const note = String(req.note || '').slice(0, 300);
   const now = new Date();
   const rows = [];
-  if (!keys.length) rows.push([id, d, o, '—', '', crane || '', folderUrl, saved || '', note, me.name, now]);
-  keys.forEach(function (w, i) { rows.push([id, d, o, w, Number(items[w]), i === 0 ? (crane || '') : '', folderUrl, i === 0 ? (saved || '') : '', i === 0 ? note : '', me.name, now]); });
+  if (!keys.length) rows.push([id, d, o, '—', '', crane || '', folderUrl, saved || '', note, me.name, now, cid]);
+  keys.forEach(function (w, i) { rows.push([id, d, o, w, Number(items[w]), i === 0 ? (crane || '') : '', folderUrl, i === 0 ? (saved || '') : '', i === 0 ? note : '', me.name, now, cid]); });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const sh = ss.getSheetByName(TABS.reports.name);
+    /* дві одночасні спроби з тим самим cid: записує лише перша, фото другої — у кошик */
+    const again = findCid_(sh, cid);
+    if (again) { files.forEach(function (f) { f.setTrashed(true); }); return { ok: true, dup: true, id: String(again[0]), photo: String(again[6] || ''), photos: Number(again[7]) || 0 }; }
     sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   } finally { lock.releaseLock(); }
   return { ok: true, id: id, photo: folderUrl, photos: saved };
@@ -223,11 +253,17 @@ function saveStock_(ss, me, req) {
   const items = req.items || {};
   const keys = Object.keys(items).filter(function (k) { return /^[a-z0-9]{1,8}$/.test(k) && isFinite(Number(items[k].q)) && Number(items[k].q) !== 0; });
   if (!keys.length) return { ok: false, error: 'empty' };
-  const id = newId_('V'); const note = String(req.note || '').slice(0, 200); const now = new Date();
-  const rows = keys.map(function (k, i) { return [id, d, o, k, String(items[k].name || '').slice(0, 200), Number(items[k].q), i === 0 ? note : '', me.name, now]; });
+  const type = String(req.type || req.phase || 'видача').trim();
+  if (STOCK_TYPES.indexOf(type) < 0) return { ok: false, error: 'bad_type' };
+  const act = String(req.act || '').slice(0, 60);
+  const cid = CID_RE.test(String(req.cid || '')) ? String(req.cid) : '';
+  const id = newId_(type === 'видача' ? 'V' : 'Z'); const note = String(req.note || '').slice(0, 200); const now = new Date();
+  const rows = keys.map(function (k, i) { return [id, d, o, k, String(items[k].name || '').slice(0, 200), Number(items[k].q), i === 0 ? note : '', me.name, now, type, act, cid]; });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = ss.getSheetByName(TABS.stock.name);
+    const prev = findCid_(sh, cid);
+    if (prev) return { ok: true, dup: true, id: String(prev[0]) };
     sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   } finally { lock.releaseLock(); }
   return { ok: true, id: id };
