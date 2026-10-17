@@ -1,0 +1,569 @@
+<title>Дахова СЕС Антарес</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: drawing-sheet tool — 3D viewport on the left, title-block style side panel on the right; stacks on phones */
+:root{
+  --paper:#E8EDEE; --panel:#F7F9F9; --ink:#162026; --ink-2:#4D5D65; --rule:#C6D0D4; --rule-2:#DCE3E6;
+  --cobalt:#2446A3; --cobalt-soft:#DDE4F6; --sun:#B86E00;
+  --crit:#B42318; --warn:#A04A05; --note:#2A6A88;
+  --scene:#DCE4E6; --s1:#2a78d6;
+  --f-display:"Unbounded","Onest",system-ui,sans-serif;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1417; --panel:#131B1F; --ink:#E0E7E9; --ink-2:#92A3AA; --rule:#2A3940; --rule-2:#1D282D;
+  --cobalt:#93ADFF; --cobalt-soft:#1D2A4A; --sun:#F0B44A;
+  --crit:#F48B80; --warn:#F2A866; --note:#86C6E2;
+  --scene:#172227; --s1:#3987e5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1417; --panel:#131B1F; --ink:#E0E7E9; --ink-2:#92A3AA; --rule:#2A3940; --rule-2:#1D282D;
+  --cobalt:#93ADFF; --cobalt-soft:#1D2A4A; --sun:#F0B44A;
+  --crit:#F48B80; --warn:#F2A866; --note:#86C6E2;
+  --scene:#172227; --s1:#3987e5; color-scheme:dark}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px}
+
+.app{display:flex;flex-direction:column;height:100vh;height:100svh;min-height:0}
+.bar{flex:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:8px 14px;border-bottom:1px solid var(--rule);background:var(--panel)}
+.bar h1{font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:.01em;margin:0;text-wrap:balance}
+.bar .addr{color:var(--ink-2)}
+.bar .code{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin-left:auto;letter-spacing:.04em}
+
+.view{position:relative;flex:1 1 0;min-width:0;min-height:150px;background:var(--scene);overflow:hidden}
+#gl{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+#lbl{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#lbl svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tg{position:absolute;left:0;top:0;font:500 12px/15px var(--f-body);padding:3px 7px;border-radius:3px;border:1px solid;white-space:pre;will-change:transform}
+.tg.tgs{font-size:10px;line-height:12px;padding:2px 5px}
+@media(max-width:640px){#essvar button{font-size:12px;padding:7px 6px}.tg{font-size:11px;line-height:13px;padding:2px 6px;max-width:58vw;white-space:pre-wrap}.tg.tgs{font-size:9.5px;line-height:11px}}
+.hudwrap{position:absolute;left:10px;top:10px;z-index:5;display:flex;flex-direction:column;gap:6px;max-width:calc(100% - 76px);pointer-events:none}
+.hudwrap>*{pointer-events:auto}
+.hudrow{display:flex;gap:6px;align-items:flex-start;min-width:0}
+.hud{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.hud button{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:5px 9px;font-size:12.5px;cursor:pointer}
+.hud button:hover{border-color:var(--cobalt)}
+.hud button.on{background:var(--cobalt);color:var(--panel);border-color:var(--cobalt)}
+.compass{position:absolute;right:10px;top:10px;width:52px;height:52px;border-radius:50%;background:var(--panel);border:1px solid var(--rule);display:grid;place-items:center;z-index:4}
+.compass svg{width:40px;height:40px}
+.compass small{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10px;color:var(--ink-2);white-space:nowrap}
+.sunread{font-family:var(--f-mono);font-size:12px;display:flex;gap:6px 14px;flex-wrap:wrap}
+.sunread b{font-weight:500;color:var(--sun)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;max-width:280px;white-space:pre-line}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-family:var(--f-mono);font-size:12px;text-align:center;padding:16px}
+
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--rule)}
+.tabs button{background:none;border:0;border-right:1px solid var(--rule-2);padding:10px 2px;cursor:pointer;font-weight:500;font-size:12px;color:var(--ink-2)}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--cobalt)}
+.pane{padding:12px 16px 28px;max-width:1280px;margin:0 auto}
+.pane h2{font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:18px 0 8px;color:var(--ink-2)}
+.pane h2:first-child{margin-top:2px}
+.lead{margin:0 0 10px;color:var(--ink-2);max-width:62ch}
+
+.layers{display:grid;grid-template-columns:1fr;border:1px solid var(--rule)}
+.layers label{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--rule-2);cursor:pointer}
+.layers label:last-child{border-bottom:0}
+.layers input{accent-color:var(--cobalt);width:16px;height:16px;flex:none}
+.layers .src{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--ink-2);white-space:nowrap}
+.sw{width:12px;height:12px;border-radius:2px;flex:none;border:1px solid var(--rule)}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+.row input[type=range]{flex:1;accent-color:var(--cobalt);min-width:120px}
+.row output{font-family:var(--f-mono);font-size:12px;min-width:44px;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:4px 9px;cursor:pointer;font-size:12.5px}
+.chips button.on{border-color:var(--sun);color:var(--sun)}
+input[type=date]{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:4px 6px}
+.chk{display:flex;gap:8px;align-items:center;margin:10px 0 4px;cursor:pointer}
+.chk input{accent-color:var(--sun);width:16px;height:16px}
+
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);border:1px solid var(--rule);font-size:13px;margin:0}
+.kv dt,.kv dd{margin:0;padding:6px 9px;border-bottom:1px solid var(--rule-2)}
+.kv dt{color:var(--ink-2);border-right:1px solid var(--rule-2);font-size:12px;letter-spacing:.02em}
+.kv dd{font-variant-numeric:tabular-nums;min-width:0}
+.kv dt:nth-last-of-type(1),.kv dd:nth-last-of-type(1){border-bottom:0}
+
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--rule);margin-bottom:12px}
+.sum div{padding:8px 10px;border-right:1px solid var(--rule-2)}
+.sum div:last-child{border-right:0}
+.sum b{display:block;font-family:var(--f-display);font-weight:500;font-size:20px}
+.sum span{font-size:11.5px;color:var(--ink-2)}
+.sum .c b{color:var(--crit)} .sum .w b{color:var(--warn)} .sum .n b{color:var(--note)}
+.filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filter button{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:3px 9px;font-size:12px;cursor:pointer}
+.filter button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.find{border:1px solid var(--rule);border-left:4px solid var(--sev);padding:10px 12px;margin-bottom:8px;background:var(--panel)}
+.find[data-s="c"]{--sev:var(--crit)} .find[data-s="w"]{--sev:var(--warn)} .find[data-s="n"]{--sev:var(--note)}
+.find .tag{font-family:var(--f-mono);font-size:11px;color:var(--sev);letter-spacing:.04em}
+.find h3{margin:2px 0 0;font-size:14px;font-weight:600;line-height:1.3;text-wrap:balance}
+.find p{margin:6px 0 0;max-width:62ch}
+.find .ref{margin-top:6px;font-family:var(--f-mono);font-size:11px;color:var(--ink-2)}
+.find .go{margin-top:8px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:3px 9px;font-size:12px;cursor:pointer}
+.find .go:hover{border-color:var(--cobalt);color:var(--cobalt)}
+.good{border:1px dashed var(--rule);padding:10px 12px;margin-top:12px}
+.good h3{margin:0 0 4px;font-size:13px}
+.good ul{margin:0;padding-left:18px}
+.foot{font-size:12px;color:var(--ink-2);margin-top:14px;max-width:62ch}
+
+.stepchips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.stepchips button{min-width:34px;height:32px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer;font-family:var(--f-mono);font-size:13px;padding:0 8px}
+.stepchips button[aria-pressed="true"]{background:var(--cobalt);color:var(--panel);border-color:var(--cobalt)}
+.stepchips button.done{font-family:var(--f-body);font-size:12.5px}
+.steph{font-family:var(--f-display);font-weight:500;font-size:15px;margin:2px 0 8px;display:flex;gap:10px;align-items:baseline;text-wrap:balance}
+.steph span{font-family:var(--f-mono);font-size:11px;color:var(--sun);letter-spacing:.06em;text-transform:uppercase;flex:none}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule);margin:10px 0}
+.kpis div{padding:7px 9px;border-right:1px solid var(--rule-2);min-width:0}
+.kpis div:last-child{border-right:0}
+.kpis b{display:block;font-family:var(--f-display);font-weight:500;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis span{font-size:11.5px;color:var(--ink-2)}
+.pane h4{font-size:12px;font-weight:600;margin:14px 0 4px;color:var(--ink-2);letter-spacing:.02em}
+.tw{overflow-x:auto;border:1px solid var(--rule);margin:4px 0 8px}
+table.spec{border-collapse:collapse;width:100%;font-size:11.5px}
+table.spec th{font-family:var(--f-mono);font-weight:500;font-size:10.5px;text-align:left;color:var(--ink-2);background:var(--paper);padding:5px 6px;border-bottom:1px solid var(--rule);white-space:nowrap}
+table.spec td{padding:4px 6px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+table.spec tr:last-child td{border-bottom:0}
+table.spec td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.small{font-size:12px;color:var(--ink-2);margin:2px 0 8px}
+.notes{margin:10px 0 0;padding-left:18px;font-size:12.5px}
+.notes li{margin-bottom:5px}
+.notes li.c::marker{color:var(--crit)} .notes li.w::marker{color:var(--warn)}
+.stepnav{display:flex;justify-content:space-between;gap:8px;margin:14px 0 4px}
+.stepnav button{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:6px 12px;cursor:pointer}
+.stepnav button:disabled{opacity:.4;cursor:default}
+details{margin:8px 0;border-top:1px solid var(--rule-2);padding-top:6px}
+summary{cursor:pointer;font-weight:600;font-size:13px;padding:4px 0}
+.stepbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px}
+.stepbar span{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.stepbar button{border:1px solid var(--rule);background:var(--paper);border-radius:3px;width:32px;height:30px;cursor:pointer;flex:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink-2);margin:6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+.sbgrow{display:flex;align-items:center;gap:8px;flex:1 0 100%;padding:0 4px 2px}
+.sbgrow input[type=range]{flex:1;min-width:120px;accent-color:var(--cobalt)}
+.sbgrow output{font-family:var(--f-mono);font-size:11.5px;min-width:38px;text-align:right;color:var(--ink-2)}
+.sbgrow button{width:32px;height:28px}
+.hint{font-size:12.5px;color:var(--ink-2);border-left:3px solid var(--cobalt);padding:3px 0 3px 10px;margin:0 0 12px;max-width:62ch}
+.seg{display:flex;border:1px solid var(--rule);border-radius:3px;overflow:hidden;margin:8px 0}
+.seg button{flex:1;border:0;border-right:1px solid var(--rule);background:var(--paper);padding:6px 4px;cursor:pointer;font-size:12.5px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--cobalt);color:var(--panel)}
+.nodewrap{position:relative;height:340px;border:1px solid var(--rule);background:var(--scene);overflow:hidden}
+.nodewrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.nb{position:absolute;left:0;top:0;width:19px;height:19px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--cobalt);color:var(--panel);font:600 11px/19px var(--f-mono);text-align:center;pointer-events:none;border:1.5px solid var(--panel);will-change:transform}
+.nb.dim{opacity:.35}
+.nodehint{position:absolute;left:8px;bottom:6px;font-size:11px;color:var(--ink-2);pointer-events:none}
+table.spec tr[data-part]{cursor:pointer}
+table.spec tr[data-part]:hover td,table.spec tr.on td{background:var(--cobalt-soft)}
+.nbn{display:inline-block;width:17px;height:17px;border-radius:50%;background:var(--cobalt);color:var(--panel);font:600 10.5px/17px var(--f-mono);text-align:center;margin-right:5px}
+.dwg{width:100%;height:auto;display:block;border:1px solid var(--rule);background:var(--paper);margin:6px 0}
+.dwg text{font-family:var(--f-mono);font-size:9.5px;fill:var(--ink)}
+.dwg .t2{fill:var(--ink-2)}
+.dwg .ln{stroke:var(--ink);fill:none;stroke-width:1.1}
+.dwg .th{stroke:var(--ink);fill:none;stroke-width:2.2}
+.dwg .dm{stroke:var(--ink-2);fill:none;stroke-width:.7}
+.dwg .bl{fill:var(--cobalt-soft);stroke:var(--cobalt);stroke-width:1.1}
+.dwg .gr{fill:#9d9a93;stroke:var(--ink);stroke-width:.8}
+.dwg .rf{fill:none;stroke:var(--ink-2);stroke-width:.6}
+.dwg .cb{stroke:#ff8c1a;fill:none;stroke-width:2.2}
+.dwg .bd{stroke:#2fc24a;fill:none;stroke-width:2.2}
+.dwg .bn circle{fill:var(--cobalt)} .dwg .bn text{fill:var(--panel);font-weight:600;font-size:9px;text-anchor:middle}
+
+.genbig{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:2px 0 6px}
+.genbig b{font-family:var(--f-display);font-weight:500;font-size:26px;white-space:nowrap}
+.genbig span{color:var(--ink-2);font-size:12.5px}
+.gbar{position:relative;height:12px;background:var(--rule-2);border-radius:2px;margin:6px 0 4px}
+.gbar .band{position:absolute;top:0;bottom:0;background:var(--sun);opacity:.3;border-radius:2px}
+.gbar .mark{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;background:var(--s1);border-radius:1px}
+.gscale{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);margin-bottom:8px}
+.seasons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sch{border:1px solid var(--rule);padding:6px 6px 4px;background:var(--paper);min-width:0}
+.sch h5{margin:0;font-size:12.5px;font-weight:600}
+.sch p{margin:0 0 2px;font-size:11px;color:var(--ink-2);line-height:1.3}
+.gsvg{width:100%;height:auto;display:block;touch-action:pan-y}
+.gsvg text{font-family:var(--f-mono);font-size:8.5px;fill:var(--ink-2)}
+.gsvg .grid{stroke:var(--rule-2);stroke-width:1}
+.gsvg .axis{stroke:var(--rule);stroke-width:1}
+.gsvg .band{fill:var(--sun);fill-opacity:.28;stroke:none}
+.gsvg .line{fill:none;stroke:var(--s1);stroke-width:2;stroke-linejoin:round}
+.gsvg .bar{fill:var(--s1)}
+.gsvg .wh{stroke:var(--ink);stroke-width:1.2}
+.gsvg .cur{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3}
+.gsvg .xh{stroke:var(--ink-2);stroke-width:1}
+.gsvg .lbl{fill:var(--ink)}
+.glegend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2);margin:6px 0}
+.glegend i{display:inline-block;width:14px;height:3px;background:var(--s1);margin-right:5px;vertical-align:3px}
+.glegend i.b{height:10px;background:var(--sun);opacity:.45;vertical-align:-1px}
+.gtip{position:fixed;z-index:60;pointer-events:none;background:var(--ink);color:var(--paper);font-size:12px;padding:5px 8px;border-radius:3px;white-space:pre;line-height:1.35}
+/* ---- єдиний шаблон: зверху об'єкт з керуванням, знизу панель даних */
+.hudbtn{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:5px 9px;font-size:12.5px;cursor:pointer;flex:none;line-height:1.2}
+.hudbtn:hover{border-color:var(--cobalt)}
+.ctx{background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;max-width:100%;backdrop-filter:blur(3px);box-shadow:0 1px 6px rgba(0,0,0,.12)}
+.ctx[hidden]{display:none}
+.ctx .dp{display:flex;flex-direction:column;gap:6px}
+.ctx .row,.ctx .chips,.ctx .chk,.ctx .seg,.ctx .filter,.ctx .stepchips{margin:0}
+.ctx .small{margin:0;font-size:12px}
+.ctx .stepchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.ctx .stepchips button{flex:none;min-width:30px;height:28px;padding:0 6px;font-size:12px}
+.ctx .sbgrow{flex:1 1 200px;padding:0}
+.ctx .stepbar span{flex:1 1 140px;white-space:normal;padding:0 4px;font-size:12.5px}
+.sunread{font-family:var(--f-mono);font-size:12px;display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.sunread b{font-weight:500;color:var(--sun)}
+.sunread .sr-t{font-family:var(--f-display);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.01em}
+.sunread span b{font-size:15px}
+.sunctl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.dp[data-dock="sun"]{width:min(250px,100%);gap:4px}
+.sunrow{display:flex;align-items:center;gap:6px}
+.sunrow .sunread{flex:1 1 auto;min-width:0;flex-wrap:nowrap;gap:2px 8px;align-items:baseline}
+.sunrow .sunread .sr-x{display:none}
+.shl{font-size:11.5px;line-height:1.3;display:flex;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;align-items:center;gap:0 8px;margin:0 0 2px}.shl:empty{display:none}.shl i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px;vertical-align:-1px}.shl button{font:inherit;font-size:11.5px;padding:0 7px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer}
+.sunx{display:none;font-family:var(--f-mono);font-size:11.5px;line-height:1.5}
+.dp.more .sunx{display:block}
+.sunx b{font-weight:500;color:var(--sun)}
+.dp[data-dock="build"]{width:min(260px,100%);gap:4px}
+#stepbar,.ctx #stepbar{gap:4px;flex-wrap:nowrap}
+.ctx #stepbar span{flex:1 1 0;white-space:nowrap;padding:0 2px;font-size:12.5px}
+#stepbar button{width:auto}
+.bx .stepchips .done{display:none}
+#stepbar span{flex:1 1 auto;min-width:0;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+#stepbar .pbtn,#bplay{min-width:30px;width:auto;height:28px;padding:0 6px}
+#bspeed{min-width:36px;height:28px;padding:0 4px;font-size:12px}
+.bx{display:none;flex-direction:column;gap:6px}
+.dp.more .bx{display:flex}
+.bx .stepchips{flex-wrap:wrap;overflow:visible}
+#sbexit{width:auto;align-self:flex-start;padding:0 10px;font-size:12px}
+.sbtn{min-width:52px;padding:0 6px;height:28px;font-size:12px}
+#speed{min-width:36px;height:28px;padding:0 4px;font-size:12px}
+.sunctl .row.rtime{flex:1 1 100%;gap:6px}
+.sunctl .row.rtime input[type=range]{min-width:60px;flex:1}
+.sunctl .sx{display:none;flex:1 1 100%;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.dp.more .sunctl .sx{display:flex}
+.sunread .sr-x{display:none}
+.dp.more .sunread .sr-x{display:inline}
+#timeo{display:none}
+#sunmore{min-width:32px}
+.sunctl .chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%}
+.sunctl .chips button{flex:none;padding:4px 8px}
+.sunctl .row.rtime{flex:1 1 220px;flex-wrap:nowrap;gap:8px}
+.sunctl .row.rtime input[type=range]{min-width:100px}
+.sunctl input[type=date]{padding:3px 5px;max-width:140px}
+.pbtn{width:34px;height:30px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;cursor:pointer;flex:none}
+.pbtn:hover{border-color:var(--cobalt)}
+.sunctl .chk{font-size:12.5px;gap:6px}
+.nodectl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.nodectl .seg{flex:none}
+.nodeexp{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:1 1 280px}
+.nodeexp .row{flex:1 1 200px}
+.ctx .seg button{padding:5px 9px;white-space:nowrap}
+
+.sheet{flex:none;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-top:1px solid var(--rule);box-shadow:0 -3px 12px rgba(0,0,0,.14);position:relative;z-index:8}
+.sheet[data-s="peek"]{height:auto}
+.sheet[data-s="half"]{height:max(250px,42svh)}
+.sheet[data-s="full"]{height:max(300px,80svh)}
+.sheet[data-s="peek"] .panes{display:none}
+.grab{display:block;width:100%;border:0;background:none;padding:5px 0 3px;cursor:grab;touch-action:none}
+.grab i{display:block;width:44px;height:4px;border-radius:2px;background:var(--rule);margin:0 auto}
+.grab:hover i{background:var(--cobalt)}
+.sheethead{flex:none;border-bottom:1px solid var(--rule)}
+.sheethead .tabs{border-bottom:0}
+.panes{flex:1 1 0;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.layers{display:flex;flex-wrap:wrap;gap:6px;border:0}
+.layers label{border:1px solid var(--rule);border-radius:3px;padding:5px 10px;gap:7px;font-size:12.5px;background:var(--paper);border-bottom:1px solid var(--rule)}
+.layers label:has(input:checked){border-color:var(--cobalt)}
+.layers label:last-child{border-bottom:1px solid var(--rule)}
+.layers .src{display:none}
+.tomodel{display:none!important}
+.docs{margin:6px 0 0;padding-left:18px;font-size:13px}
+.docs li{margin:0 0 4px}
+.docs a,.pane a,.foot a{color:var(--cobalt)}
+.srcl{font-size:11.5px;white-space:nowrap}
+@media (max-width: 860px){
+  .bar{padding:6px 10px}
+  .bar h1{font-size:14px}
+  .bar .addr,.bar .code{display:none}
+  .sheet[data-s="half"]{height:max(220px,44svh)}
+  .sheet[data-s="full"]{height:max(260px,84svh)}
+  .tabs button{font-size:11px;padding:9px 0}
+  .pane{padding:10px 12px 24px}
+  .hudwrap{left:6px;top:6px;max-width:calc(100% - 58px)}
+  .hud{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .hud::-webkit-scrollbar{display:none}
+  .hud button{flex:none;padding:4px 8px;font-size:12px}
+  .compass{width:40px;height:40px;right:6px;top:6px}
+  .compass svg{width:32px;height:32px}
+  .compass small{display:none}
+  .ctx{padding:6px 8px}
+  .sunread .sr-t{font-size:17px}
+  .sunread span b{font-size:14px}
+  .sunctl{gap:4px 6px}
+  .sunctl .chips{gap:3px}
+  .sunctl .chips button{padding:3px 6px;font-size:11.5px;min-height:26px}
+  .sunctl .row.rdate input{width:112px;font-size:12px;padding:2px 4px;height:26px}
+  .sunctl .row.rtime{flex:1 1 100%;gap:6px}
+  .sunctl .chk{font-size:12px}
+  .sunctl .pbtn{min-width:34px;height:28px;padding:0}
+  .sunread{gap:2px 10px;font-size:11.5px}
+  .sunread .sr-t{font-size:16px}
+  .sunread span b{font-size:12.5px}
+  .ctx .dp{gap:4px}
+  .pane h2{margin-top:14px}
+}
+@media (min-width: 861px){
+  .bar h1{font-size:16px}
+}
+/* Записка: широка панель, таблиці, курс */
+.pane.note .lead{margin-top:0}
+.pane.note h4{margin:16px 0 4px}
+.rates{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);margin:10px 0 4px;font-size:13px}
+.rates input{width:78px;font-family:var(--f-mono);font-size:13px;padding:3px 5px;border:1px solid var(--rule);border-radius:3px;background:var(--panel);text-align:right}
+.rates button{margin-left:auto;background:none;border:1px solid var(--rule);border-radius:3px;padding:3px 9px;cursor:pointer;font-size:12px}
+.rates button:hover{border-color:var(--cobalt)}
+.concl{margin:4px 0 0;padding-left:20px}.concl li{margin:0 0 7px}
+.open{margin:4px 0 0;padding-left:20px}.open li{margin:0 0 4px}
+.tblw{overflow-x:auto;margin:6px 0 8px;border:1px solid var(--rule-2);border-radius:3px}
+table.nt{border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px}
+table.nt th{background:var(--paper);text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.02em;color:var(--ink-2);padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:bottom}
+table.nt td{padding:5px 8px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+table.nt tr:last-child td{border-bottom:0}
+table.nt .n{text-align:right;font-family:var(--f-mono);white-space:nowrap}
+table.nt th.n{text-align:right}
+table.nt tr.sub td{font-weight:600;background:var(--paper)}
+table.nt tr.cur td{background:var(--cobalt-soft)}
+.cv{font-variant-numeric:tabular-nums}
+
+.tomodel{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--cobalt);color:var(--panel);border:0;border-radius:20px;padding:9px 15px;font-size:13.5px;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.25);cursor:pointer}
+</style>
+
+<div class="app">
+  <header class="bar">
+    <h1>Дахова СЕС 1 022 кВтп з УЗЕ 3,9 МВт·год · ТОВ МК «Антарес»</h1>
+    <span class="addr">м. Київ, вул. Миколи Василенка, 1-А · цех 96 × 96 м з арковою покрівлею, склад, ТП-5913 і ТП-6923</span>
+    <span class="code">РП 2025/12-07 · АБ / ЕТР / БЗ · 2026</span>
+  </header>
+
+<section class="view" aria-label="3D-макет">
+    <canvas id="gl"></canvas>
+    <div id="lbl" aria-hidden="true"><svg></svg></div>
+    <div class="loading" id="loading">Будую макет…</div>
+    <div class="hudwrap" id="hudwrap">
+      <div class="hudrow">
+        <div class="hud" role="toolbar" aria-label="Види">
+      <button data-cam="over" class="on">Огляд</button>
+      <button data-cam="plan">План</button>
+      <button data-cam="arch">Аркові прольоти</button>
+      <button data-cam="wh">Склад</button>
+      <button data-cam="ess">УЗЕ біля цеху</button>
+      <button data-cam="ms3">MS-3 і ТП-6923</button>
+    </div>
+        <button class="hudbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати керування" aria-label="Сховати керування">▴</button>
+      </div>
+      <div class="ctx" id="ctx" aria-label="Керування">
+      <div class="dp" data-dock="model">
+        <div class="seg" id="essvar" role="group" aria-label="Варіант УЗЕ">
+          <button data-ev="cab" aria-pressed="true">УЗЕ: шафи за проєктом</button><button data-ev="cont" aria-pressed="false">Контейнери LES-H20 ×3</button>
+        </div>
+        <div class="seg" id="essview" role="group" aria-label="Вигляд УЗЕ"><button data-xv="out" aria-pressed="true">Зовні</button><button data-xv="in" aria-pressed="false">Всередині (схема)</button></div>
+      </div>
+      <div class="dp" data-dock="build" hidden>
+        <div class="sunrow stepbar" id="stepbar"><button id="sbprev" class="pbtn" aria-label="Попередній крок">◀</button><span id="sbtxt">Готовий об’єкт</span><button id="sbnext" class="pbtn" aria-label="Наступний крок">▶</button><button id="bmore" class="pbtn" aria-expanded="false" aria-label="Додатково: усі кроки" title="Усі кроки">⋯</button></div>
+        <div class="sunctl"><div class="row rtime"><button id="bplay" class="pbtn" aria-label="Пуск / пауза будівництва" title="Показати все будівництво (≈1,5 хв) / пауза">▶</button><input type="range" id="bprog" min="0" max="1000" value="1000" aria-label="Хід будівництва"><button id="bspeed" class="pbtn" title="Швидкість" aria-label="Швидкість">×1</button></div></div>
+        <div class="bx"><div class="stepchips" id="stepchips" role="group" aria-label="Кроки монтажу"></div><button id="sbexit" class="pbtn" title="Готовий об'єкт" aria-label="Показати готовий об'єкт">Готовий об’єкт</button></div>
+        <div class="sbgrow" id="sbgrow" hidden style="display:none"><button id="sbplay">▶</button><input type="range" id="sbprog" min="0" max="1000" value="1000"><output id="sbpct">100 %</output></div>
+      </div>
+      <div class="dp" data-dock="node" hidden>
+        <p class="small" id="node-ctl-empty">Клацніть на макеті по модулю, трикутнику чи баласту — тут з’являться перемикачі вузла.</p>
+        <div class="nodectl" id="node-ctl" hidden>
+          <div class="seg" role="group" aria-label="Вигляд вузла">
+            <button data-nv="exp" aria-pressed="true">Розбір</button><button data-nv="dwg" aria-pressed="false">Креслення</button><button data-nv="wire" aria-pressed="false">Розводка</button>
+          </div>
+          <div class="nodeexp" id="nodeexp">
+            <div class="row"><label for="nodee">Зібрано</label><input type="range" id="nodee" min="0" max="100" value="0" aria-label="Розбирання вузла"><span>Розібрано</span></div>
+            <div class="chips"><button id="nodeplay">▶ Розібрати і зібрати</button><button id="nodezoom" title="Камера на метизи трикутника">🔩 Метизи крупно</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="dp" data-dock="sun" hidden>
+        <div class="sunrow">
+          <div class="sunread" id="sunread"></div>
+          <button id="season" class="pbtn sbtn" title="Сезон: натискайте, щоб перемикати Зима → Весна → Літо → Осінь" aria-label="Сезон">Осінь</button>
+          <button id="sunmore" class="pbtn" aria-expanded="false" aria-label="Додатково: дата, тіні" title="Додатково: дата, висота й азимут, тіні">⋯</button>
+        </div>
+        <div class="shl" id="shl"></div>
+        <div class="sunx" id="sunx"></div>
+        <div class="sunctl">
+          <div class="row rtime"><button id="play" class="pbtn" aria-label="Пуск / пауза" title="Пуск / пауза">▶</button><input type="range" id="time" min="240" max="1320" step="5" value="780" aria-label="Час доби"><button id="speed" class="pbtn" title="Швидкість програвання" aria-label="Швидкість">×1</button><output id="timeo" for="time">13:00</output></div>
+          <div class="sx"><div class="row rdate"><input type="date" id="date" aria-label="Дата"></div>
+          <label class="chk"><input type="checkbox" id="shadeOn" checked>Тіні</label></div>
+        </div>
+      </div>
+      <div class="dp" data-dock="find" hidden>
+        <div class="filter" id="filter">
+        <button data-f="all" class="on">Усі</button><button data-f="c">Критично</button><button data-f="w">Суттєво</button><button data-f="n">Уточнити</button>
+      </div>
+      </div>
+      </div>
+    </div>
+    <div class="compass" title="Північ прийнято по осі К"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
+      <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-2)"/>
+      <text x="0" y="-9" text-anchor="middle" font-size="8" font-family="var(--f-mono)" fill="var(--panel)" font-weight="600">Пн</text></svg><small>умовно</small></div>
+    <div class="tip" id="tip" hidden></div>
+  </section>
+
+  <aside class="sheet" id="sheet" data-s="half" aria-label="Дані">
+    <div class="sheethead">
+      <button class="grab" id="grab" aria-label="Змінити висоту панелі даних" title="Тягніть або клацніть: згорнути / розгорнути"><i></i></button>
+      <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="model" id="t-model">Макет</button>
+      <button role="tab" aria-selected="false" data-tab="build" id="t-build">Монтаж</button>
+      <button role="tab" aria-selected="false" data-tab="node" id="t-node">Вузол</button>
+      <button role="tab" aria-selected="false" data-tab="sun" id="t-sun">Сонце</button>
+      <button role="tab" aria-selected="false" data-tab="find" id="t-find">Аналіз</button>
+      <button role="tab" aria-selected="false" data-tab="note" id="t-note">Записка</button>
+      <button role="tab" aria-selected="false" data-tab="data" id="t-data">Дані</button>
+    </div>
+    </div>
+    <div class="panes" id="panes">
+
+
+    <div class="pane" data-pane="model">
+      <p class="hint">Клацніть на макеті по модулю, трикутнику чи баласту — на вкладці «Вузол» він розбереться на елементи. Варіант УЗЕ (шафи чи контейнери) перемикається над макетом.</p>
+      <h2>Шари макета</h2>
+      <div class="layers" id="layers">
+        <label><input type="checkbox" id="L-bld" checked><span class="sw" style="background:#d4d8d4"></span>Цех, склад, ТП (масиви)<span class="src">АБ арк. 6–7</span></label>
+        <label><input type="checkbox" id="L-obs" checked><span class="sw" style="background:#aec6d6"></span>Зенітні ліхтарі й вентшахти<span class="src" id="obs-src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-pv" checked><span class="sw" style="background:#2a4a8f"></span>Фотомодулі<span class="src">1 260 + 180</span></label>
+        <label><input type="checkbox" id="L-bal" checked><span class="sw" style="background:#9d9a93"></span>Баластна система RUDNIK<span class="src">АБ арк. 8</span></label>
+        <label><input type="checkbox" id="L-heat"><span class="sw" style="background:linear-gradient(90deg,#2a4a8f,#e0a21b,#d2412f)"></span>Ухил ряду вздовж арки<span class="src">0–5–10–16°</span></label>
+        <label><input type="checkbox" id="L-lps" checked><span class="sw" style="background:#8fd3e8"></span>Блискавкоприймачі й дріт Ø8<span class="src">БЗ арк. 2</span></label>
+        <label><input type="checkbox" id="L-zones"><span class="sw" style="background:transparent;border-color:#d0453a"></span>Зони захисту R 9,9 м<span class="src">БЗ прим. 2</span></label>
+        <label><input type="checkbox" id="L-down" checked><span class="sw" style="background:#6f7a80"></span>Спуски й заземлювачі<span class="src">44 шт</span></label>
+        <label><input type="checkbox" id="L-bond"><span class="sw" style="background:#7ccf3a"></span>Зрівнювання потенціалів 1×6<span class="src">ЕТР арк. 3</span></label>
+        <label><input type="checkbox" id="L-dc"><span class="sw" style="background:#ff8c1a"></span>Траси DC і тросовий перехід<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-ac" checked><span class="sw" style="background:#c0392b"></span>Лінії AC до ТП, кабельрост<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-ess" checked><span class="sw" style="background:#e6e9eb"></span>УЗЕ: основа, шафи, навіс<span class="src">АБ арк. 2–5</span></label>
+        <label><input type="checkbox" id="L-axes" checked><span class="sw" style="background:var(--cobalt)"></span>Осі 1–17 / А–К<span class="src">ЕТР арк. 2</span></label>
+        <label><input type="checkbox" id="L-tags" checked><span class="sw" style="background:#fff"></span>Виноски<span class="src">без накладань</span></label>
+      </div>
+      <h2>Прив'язка</h2>
+      
+      <dl class="kv">
+        <dt>Основа</dt><dd>Вектори PDF: ЕТР арк. 2 (модулі, стрінги, траси), ЕТР арк. 3 (зрівнювання, заземлення УЗЕ), БЗ арк. 2 (щогли, дріт, спуски), АБ арк. 2–7</dd>
+        <dt>Калібрування</dt><dd>За осями А, К, 1, 17 кожного аркуша; масштаб 1:200, розбіжність між аркушами ≤ 0,1 м</dd>
+        <dt>Висоти</dt><dd>Цех: верх арки +15,0 (H = 15 м з розрахунку ризику БЗ), ендови +13,8. Склад, ТП, навіси — умовно</dd>
+        <dt>Орієнтація</dt><dd>Стрілки півночі на кресленнях немає. Прийнято: вісь К — північ, модулі дивляться на південь (PVsyst: азимут 4°)</dd>
+        <dt>Профіль арки</dt><dd>Розріз А-А (АБ арк. 7): прольоти 18 м, підйом 1,19 м. Проліт 13–17 (24 м) — підйом 1,6 м прийнято умовно</dd>
+      </dl>
+    </div>
+
+    <div class="pane" data-pane="build" hidden>
+      <p class="lead">Покроковий монтаж за кресленнями АБ, ЕТР і БЗ. Кількості з макета пораховані за геометрією креслень, поруч — цифри специфікації та кошторису. Червоним позначено зауваження з аналізу.</p>
+      <p class="hint">Кроки й повзунок — над макетом: кожен крок збирається по черзі, повзунок перемотує. Клік по модулю, трикутнику чи баласту розбирає вузол на вкладці «Вузол».</p>
+      <div id="stepbody"></div>
+    </div>
+
+
+    <div class="pane" data-pane="node" hidden>
+      <p class="lead" id="node-empty">Клацніть на макеті по фотомодулю, трикутнику, баласту, спойлеру чи сполучнику — тут з’явиться вузол кріплення: розбір на елементи, креслення і розводка від модуля до щита.</p>
+      <div id="node-body" hidden>
+        <h3 class="steph" id="node-title"></h3>
+        <p class="small" id="node-sub"></p>
+        <div data-nview="exp">
+          <div class="nodewrap" id="nodewrap"><canvas id="nodecv"></canvas><div id="nodebadges"></div><div class="nodehint">тягніть — обертати · коліщатко — масштаб</div></div>
+          <h4>Склад вузла</h4>
+          <div id="nodetable"></div>
+        </div>
+        <div data-nview="dwg" hidden></div>
+        <div data-nview="wire" hidden></div>
+        <div id="nodenotes"></div>
+      </div>
+    </div>
+
+    <div class="pane" data-pane="sun" hidden>
+      <p class="hint">Сезон, дату і час вибирайте над макетом: там же видно час, кути сонця і потужність станції зараз. Оранжеві модулі — центр у тіні, жовті — частково.</p>
+      <h2>Генерація станції зараз</h2>
+      <div id="gen"></div>
+      <h2>Положення сонця і тіні</h2>
+      <dl class="kv" id="sunkv"></dl>
+      <h2>Добова генерація по сезонах</h2>
+      <div class="glegend"><span><i></i>очікувана потужність</span><span><i class="b"></i>від суцільної хмарності до ясного неба</span></div>
+      <div class="seasons" id="seasons"><p class="small">Рахую затінення на чотири доби…</p></div>
+      <h2>Генерація по місяцях</h2>
+      <div id="months"></div>
+      <details id="gtab"><summary>Таблиці даних</summary><div id="gtabbody"></div></details>
+      <p class="foot" id="genfoot"></p>
+      <p class="foot">Тінь рахується променями від п'яти точок кожного модуля до сонця по карті висот 0,2 м: сусідні ряди, ліхтарі, вентшахти, щогли блискавкозахисту, сусідні будівлі. Щогла Ø40 мм у карті займає комірку 0,2 м, тож її тінь трохи завищена. Координати: 50,45° пн. ш., 30,43° сх. д.; північ прийнято по осі К.</p>
+    </div>
+
+    <div class="pane" data-pane="find" hidden>
+      <div class="sum" id="sum"></div>
+      <div id="finds"></div>
+      <div class="good"><h3>Що в проєкті узгоджено</h3><ul>
+        <li>Розкладка ЕТР арк. 2 сходиться зі специфікацією: 1 440 модулів, 80 стрінгів, по 180 модулів на кожен з 8 ЩР-PV.</li>
+        <li>Кріплення внутрішньо узгоджені: 2 698 трикутників — це 2 на модуль плюс 1 на кожен з 181 відрізка рядів (макет дає 2 701); баласт і мати — по 2 на трикутник.</li>
+        <li>Крок рядів 2,10 м при нахилі 15°: ряди не затінюють один одного, поки сонце вище ≈ 22°.</li>
+        <li>51 щогла з радіусом 9,9 м накриває поле; спуски по фасадах цеху — через 10 м.</li>
+      </ul></div>
+      <p class="foot">Зауваження зібрано з аналізу РП 2025/12-07 і кошторису (документ проєкту «Антарес_СЕС_УЗЕ_РП2025-12-07_аналіз»); три нові пункти (С9, У1, У2) виявлено під час побудови макета.</p>
+    </div>
+
+<!--NOTE-->
+    <div class="pane" data-pane="data" hidden>
+      <h2>Документи і джерела</h2>
+      <ul class="docs">
+        <li><a href="https://drive.google.com/drive/folders/1LIhk4oZl5BXjTQN0-t6r0KtogZ9yBgFu" target="_blank" rel="noopener">Папка «Ukraine project demandings»</a> — РП 2025/12-07 (149 арк.: ЕТР, АБ, БЗ), кошторис 2025/12-06-К, файл АВК-5</li>
+        <li><a href="https://drive.google.com/file/d/1UYoQiqTDgo-5y696D40EvEvIjwBt_fIH/view" target="_blank" rel="noopener">Архів «Ukraine project demandings.zip»</a> — вихідний пакет проєкту (завантажено 15.10.2026)</li>
+        <li><a href="https://drive.google.com/file/d/1yUm-EunCpQmrBQEDelePLPrZdEcX0OPm/view" target="_blank" rel="noopener">Специфікація Антарес — розділена.xlsx</a> — модулі, шафи, АКБ, кабель, кріплення</li>
+        <li><a href="https://drive.google.com/drive/folders/1pFPDlRyK_SAbNazvzaAl0dZgRbNR4Ztv" target="_blank" rel="noopener">Папка «Антарес ПКД»</a> і <a href="https://drive.google.com/drive/folders/1wzU_7oxyI6w2fDQoGAZPVgvSfZ-OEFQ4" target="_blank" rel="noopener">«Антарес»</a> — супутні матеріали</li>
+        <li><a href="https://drive.google.com/file/d/1Rc9bfqjecDQu8mgQDLv8dD3cnk3NvSlP/view" target="_blank" rel="noopener">Nota Trade Price 15/10.xlsx</a> — ціни панелей (GCL 710 Вт 0,139 $/Вт), FOX ESS, GoodWe</li>
+        <li><a href="https://thepage.ua/ua/currency/2026-10-12/amp" target="_blank" rel="noopener">Курс НБУ на 12.10.2026</a> (The Page)</li>
+        <li>Пропозиції E-Systems і Golen (03–04.10.2026) та ціни на шафи й контейнери — від замовника, без файлів-джерел; у макеті позначено «зі слів замовника»</li>
+        <li><a href="https://github.com/mischenkoa85-creator/galkat-20/tree/main/antares" target="_blank" rel="noopener">Код макета на GitHub</a></li>
+      </ul>
+      <h2>Генерація</h2>
+      <dl class="kv">
+        <dt>Модулі</dt><dd>Shinefar SF-M21/G132710, 710 Вт, 2384 × 1303 мм; 1 440 шт = 1 022,4 кВтп</dd>
+        <dt>Дах цеху</dt><dd>1 260 шт, альбомно на трикутниках 15°, 45 рядів з кроком 2,10 м, 181 відрізок</dd>
+        <dt>Склад</dt><dd>180 шт паралельно скатам: 11° (57), 22° (105, портрет), 17° (18, портрет)</dd>
+        <dt>Стрінги</dt><dd>80 = 74 × 18 + 3 × 19 + 3 × 17; 8 ЩР-PV по 10 стрінгів</dd>
+        <dt>PVsyst</dt><dd>1 182 761 кВт·год/рік, 1 157 кВт·год/кВтп, PR 88,5 % (одна площина 15° / 4°)</dd>
+      </dl>
+      <h2>Мікромережі й УЗЕ</h2>
+      <dl class="kv">
+        <dt>MS-1, MS-2</dt><dd>Біля фасаду по осі 17, по 383,4 кВтп; ЩР-PV(1–3) і (4–6), ЩР-АКБ(1–2) → ТП-5913 (2 × ТМЗ-2500)</dd>
+        <dt>MS-3</dt><dd>На півночі, 255,6 кВтп; ЩР-PV(7–8), ЩР-АКБ(3) → ТП-6923 (ТМЗ-2500)</dd>
+        <dt>Шафа</dt><dd>FFD POWER 500 кВт: STS, PCS, ізолюючий трансформатор 500 кВА, 10 MPPT, EMS; порти grid і load</dd>
+        <dt>Накопичувач</dt><dd>15 × Galaxy261L (LFP, рідинне охолодження) = 3 915 кВт·год, по 5 на шафу</dd>
+        <dt>Основа</dt><dd>Подушка 250 мм, 9 лежнів ЛЖ-16, рама РМ-1, 5 ФМ-1, навіс 9,45 × 2,2 м зі стійок □120×120×4</dd>
+      </dl>
+      <h2>Кошторис</h2>
+      <dl class="kv">
+        <dt>Разом</dt><dd>106 591 тис. грн з ПДВ (ціни на 27.03.2026)</dd>
+        <dt>Склад</dt><dd>Устаткування 57 101, будівельні роботи 29 530, інші 2 195, ПДВ 17 765 тис. грн</dd>
+        <dt>Трудомісткість</dt><dd>55 738 люд.-год</dd>
+      </dl>
+      <h2>Припущення макета</h2>
+      <dl class="kv">
+        <dt>Висоти</dt><dd>Цех H = 15 м (БЗ, розрахунок ризику); склад — карниз +5,0 м; ТП — 4,5 м; навіс УЗЕ — 3,0 / 2,75 м (АБ арк. 2)</dd>
+        <dt>Скати складу</dt><dd>За позначками на ЕТР арк. 2: 22° і 17° — двоскатна частина (гребінь по осі Б), 11° — односхилі прибудови</dd>
+        <dt>ТП</dt><dd>Контури з ЕТР арк. 3 (≈ ± 0,5 м); ТП-5913 прибудована до фасаду по осі 17</dd>
+        <dt>Не показано</dt><dd>Компенсатори К-220, кабельні стяжки, кріплення гофротруб, внутрішнє обладнання ТП</dd>
+      </dl>
+    </div>
+
+    </div>
+  </aside>
+  <button class="tomodel" id="tomodel" hidden>↑ Модель</button>
+</div>
+
+<script>window.addEventListener("error",function(e){var l=document.getElementById("loading");if(l)l.textContent="Макет не відкрився: "+(e.message||"помилка")+(e.lineno?" (рядок "+e.lineno+")":"");});</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const D = /*DATA*/;
+</script>
