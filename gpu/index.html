@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ГПУ-1 і ГПУ-2 на вул. Конюшинній, 20 у Львові: 3D-модель установок, паль, плит Фпм-1 і фундаментів Фм-1 зі стояками за томом 4 КБ, кошторис арматури й бетону.">
+<style>
+:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>ГПУ-1 і ГПУ-2 · Конюшинна, 20</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: viewer-first workbench, same system as the площадка 20 site. The 3D viewport leads;
+   a control rail sits to its right and drops underneath on phones; reference data follows as plain lists. */
+:root{
+  --bg:#eef1f4; --panel:#f9fafb; --ink:#16212c; --muted:#56646f; --line:#cdd5dc;
+  --accent:#a85200; --accent-soft:#f6e3cf; --on-accent:#ffffff;
+  --scene-sky:#dbe3ea; --scene-line:#16212c; --tag-bg:rgba(249,250,251,.92);
+  --c-slab:#c3c9cf; --c-pile1:#8ea2ba; --c-pile2:#7aa39b; --c-fm:#bbb5a4; --c-fill:#ddd5bf;
+  --c-prep:#e3e6e8; --c-pole:#9b9ea3; --c-gpu:#3f6d8f; --c-rebar:#c45a00; --c-ground:#7d8a6a; --c-water:#1f6fd0;
+  --soil-1:#b9927c; --soil-2:#e6d6a4; --soil-3:#d3c097; --soil-4:#bda87e; --soil-5:#a3ad93; --soil-6:#ead98f; --soil-7:#8f9299;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171d; --panel:#18212a; --ink:#e4eaef; --muted:#93a2af; --line:#2c3944;
+    --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
+    --scene-sky:#18222b; --scene-line:#e4eaef; --tag-bg:rgba(24,33,42,.92);
+    --c-slab:#aab1b8; --c-pile1:#7f95b0; --c-pile2:#6c978e; --c-fm:#a8a292; --c-fill:#c9c1ab;
+    --c-prep:#c8cdd1; --c-pole:#8c9096; --c-gpu:#5d93ba; --c-rebar:#ff8a2b; --c-ground:#5f6b52; --c-water:#5aa2f5;
+    --soil-1:#7d6052; --soil-2:#9c9069; --soil-3:#8c7f61; --soil-4:#7b6c4f; --soil-5:#69715e; --soil-6:#a3965c; --soil-7:#5c5f66;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171d; --panel:#18212a; --ink:#e4eaef; --muted:#93a2af; --line:#2c3944;
+  --accent:#ffa64d; --accent-soft:#3a2a17; --on-accent:#1b1206;
+  --scene-sky:#18222b; --scene-line:#e4eaef; --tag-bg:rgba(24,33,42,.92);
+  --c-slab:#aab1b8; --c-pile1:#7f95b0; --c-pile2:#6c978e; --c-fm:#a8a292; --c-fill:#c9c1ab;
+  --c-prep:#c8cdd1; --c-pole:#8c9096; --c-gpu:#5d93ba; --c-rebar:#ff8a2b; --c-ground:#5f6b52; --c-water:#5aa2f5;
+  --soil-1:#7d6052; --soil-2:#9c9069; --soil-3:#8c7f61; --soil-4:#7b6c4f; --soil-5:#69715e; --soil-6:#a3965c; --soil-7:#5c5f66;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(22px,3.2vw,30px);line-height:1.15;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px}
+.status{margin-left:auto;font-family:var(--f-mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 8px;border-radius:2px}
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.stage{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line)}
+.viewer{position:relative;height:clamp(400px,72vh,800px);background:var(--scene-sky);overflow:hidden;touch-action:none}
+.viewer canvas{display:block;width:100%;height:100%}
+.labels{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-family:var(--f-mono);font-size:11.5px;line-height:1.25;padding:1px 5px;background:var(--tag-bg);color:var(--ink);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.lb.tag{font-family:var(--f-display);font-weight:600;font-size:13px;border-color:var(--ink)}
+.lb.lev{color:var(--accent);border-color:var(--accent)}
+.lb.ax{width:22px;height:22px;padding:0;display:grid;place-items:center;border-radius:50%;border-color:var(--ink);font-weight:500}
+.lb.dim{border:0;background:transparent;color:var(--muted)}
+.lb.num{border:0;font-size:10.5px;padding:0 3px}
+.lb.soil{border:0;font-size:11px}
+.lb.wat{border:0;color:var(--c-water);font-size:11px}
+.hint{position:absolute;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);bottom:8px;font-size:12px;color:var(--muted);background:var(--tag-bg);padding:2px 8px;pointer-events:none}
+.fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+.card{position:absolute;left:10px;bottom:10px;width:min(350px,calc(100% - 20px));max-height:calc(100% - 20px);overflow:auto;background:var(--panel);border:1px solid var(--ink);padding:12px 14px 13px;font-size:13.5px;line-height:1.4;display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.card h3{font-family:var(--f-display);font-weight:600;font-size:18px;line-height:1.2;margin:0}
+.card .k{color:var(--muted);font-size:12.5px}
+.card .x{flex:none;padding:1px 8px;font-size:16px;line-height:1.3}
+.card dl{grid-template-columns:minmax(0,auto) minmax(0,1fr);font-size:13px;gap:3px 12px}
+.card dd{white-space:normal;font-size:12.5px}
+.card .note{margin:0;padding:6px 8px;background:var(--accent-soft);font-size:12.5px}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:7px 20px;background:var(--panel);border-top:1px solid var(--line);padding:9px 12px;font-size:13px;line-height:1.3}
+.legend .row{display:flex;gap:7px;align-items:center}
+.legend .sw{flex:none;width:18px;height:12px;border:1px solid var(--ink)}
+.legend .sw.ln{height:0;border:0;border-top:2px solid var(--c-rebar)}
+.legend .sw.gh{opacity:.55;border-style:dashed}
+.legend .sw.wl{height:0;border:0;border-top:2px solid var(--c-water)}
+.legend small{color:var(--muted);font-family:var(--f-mono);font-size:11.5px}
+.legend .u{margin-left:auto;color:var(--muted);font-size:12px}
+.rail{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.rail h2{font-family:var(--f-mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:13.5px;color:var(--ink);background:transparent;border:1px solid var(--line);padding:6px 10px;border-radius:2px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tip{margin:8px 0 0;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.checks label{display:flex;gap:7px;align-items:center;font-size:14px;cursor:pointer;min-width:0}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;margin:0;flex:none}
+.slider{display:flex;flex-direction:column;gap:4px}
+.slider .row{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.slider output{font-family:var(--f-mono);font-size:13px;color:var(--muted);white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.data{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:22px 32px}
+.data section{min-width:0}
+.data h2{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 14px;font-size:14px}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.est{display:flex;flex-direction:column;gap:16px;min-width:0}
+.est-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.est-head h2{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px}
+.tile{background:var(--panel);border:1px solid var(--line);padding:11px 14px 12px;min-width:0}
+.tile.sum{border-color:var(--accent)}
+.tile .l{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--f-display);font-weight:600;font-size:26px;line-height:1.2;font-variant-numeric:tabular-nums}
+.tile .s{font-size:12.5px;color:var(--muted)}
+.est-opts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:14px}
+.est-opts label{display:flex;align-items:center;gap:7px}
+.est-cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+.est-cols h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0 0 8px}
+.tw{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:500px;font-size:13.5px;line-height:1.35}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.n{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+tr.grp td{font-family:var(--f-display);font-weight:600;font-size:15px;background:var(--bg)}
+tr.sub td{font-weight:600}
+tr.work td:first-child{padding-left:22px;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3}
+.nop{color:var(--accent)}
+input[type=number]{width:92px;font-family:var(--f-mono);font-size:12.5px;text-align:right;padding:3px 6px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:2px}
+.est-opts input[type=number]{width:58px}
+.est .src a{color:var(--accent)}
+.wide{grid-column:1/-1}
+.wide ul{max-width:95ch}
+.src{color:var(--muted);font-size:13px;max-width:80ch;margin:0}
+@media (max-width:860px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .est-cols{grid-template-columns:minmax(0,1fr)}
+  .viewer{height:clamp(340px,60vh,560px)}
+  .status{margin-left:0}
+  .legend .u{margin-left:0}
+  .lb{font-size:10.5px}
+  .lb.tag{font-size:12px}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ГПУ-1 і ГПУ-2 · Конюшинна, 20</h1>
+    <span class="sub">установки, палі, плити Фпм-1, фундаменти Фм-1 зі стояками і кошторис</span>
+    <span class="status">Модель для огляду</span>
+  </header>
+
+  <div class="bench">
+    <div class="stage">
+      <div class="viewer" id="viewer">
+        <div class="labels" id="labels"></div>
+        <div class="hint" id="hint">Клацніть на елемент, щоб побачити його дані · тягніть, щоб обертати · коліщатко наближає</div>
+        <div class="card" id="card" hidden>
+          <div class="top">
+            <div><h3 id="card-title"></h3><div class="k" id="card-sub"></div></div>
+            <button type="button" class="x" id="card-close" aria-label="Закрити">×</button>
+          </div>
+          <dl id="card-rows"></dl>
+          <p class="note" id="card-note" hidden></p>
+        </div>
+      </div>
+      <div class="legend" id="legend">
+        <div class="row"><span class="sw" style="background:var(--c-pile1)"></span><span>Палі ПБІ-1 <small>28 шт. · 8,0 м</small></span></div>
+        <div class="row"><span class="sw" style="background:var(--c-pile2)"></span><span>Палі ПБІ-2 <small>8 шт. · 6,5 м</small></span></div>
+        <div class="row"><span class="sw" style="background:var(--c-slab)"></span><span>Плити Фпм-1 <small>2 шт.</small></span></div>
+        <div class="row"><span class="sw" style="background:var(--c-fm)"></span><span>Фундаменти Фм-1 <small>2 шт.</small></span></div>
+        <div class="row"><span class="sw" style="background:var(--c-pole)"></span><span>Стояки СК-22.1-2.1</span></div>
+        <div class="row"><span class="sw" style="background:#d8dcd9"></span><span>ГПУ, вигляд типовий</span></div>
+        <div class="row"><span class="sw ln"></span><span>Арматура</span></div>
+        <div class="u">Розміри в мм, позначки в м</div>
+      </div>
+      <div class="legend" id="legend-soil">
+        <div class="row"><span class="sw" style="background:var(--soil-1)"></span><span>ІГЕ-1 насипний ґрунт</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-2)"></span><span>ІГЕ-2 пісок дрібний</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-3)"></span><span>ІГЕ-3 супісок</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-4)"></span><span>ІГЕ-4 суглинок</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-5)"></span><span>ІГЕ-5 глина напівтверда</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-6)"></span><span>ІГЕ-6 пісок водонасичений</span></div>
+        <div class="row"><span class="sw" style="background:var(--soil-7)"></span><span>ІГЕ-7 пісковик</span></div>
+        <div class="row"><span class="sw wl"></span><span>рівень води</span></div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div>
+        <h2>Вид</h2>
+        <div class="btns" id="views">
+          <button type="button" id="view-iso" data-view="iso" aria-pressed="true">Загальний</button>
+          <button type="button" id="view-top" data-view="top" aria-pressed="false">План</button>
+          <button type="button" id="view-south" data-view="south" aria-pressed="false">З півдня</button>
+          <button type="button" id="view-west" data-view="west" aria-pressed="false">Із заходу</button>
+          <button type="button" id="view-piles" data-view="piles" aria-pressed="false">Палі</button>
+          <button type="button" id="view-fm" data-view="fm" aria-pressed="false">Фм-1</button>
+        </div>
+      </div>
+      <div>
+        <h2>Шари</h2>
+        <div class="checks">
+          <label><input type="checkbox" id="chk-piles" checked> Палі</label>
+          <label><input type="checkbox" id="chk-slabs" checked> Плити Фпм-1</label>
+          <label><input type="checkbox" id="chk-fm" checked> Фм-1</label>
+          <label><input type="checkbox" id="chk-poles" checked> Стояки</label>
+          <label><input type="checkbox" id="chk-prep" checked> Підготовка</label>
+          <label><input type="checkbox" id="chk-gpu" checked> ГПУ</label>
+          <label><input type="checkbox" id="chk-rebar"> Арматура</label>
+          <label><input type="checkbox" id="chk-soil" checked> Ґрунти</label>
+          <label><input type="checkbox" id="chk-ground" checked> Поверхня землі</label>
+          <label><input type="checkbox" id="chk-axes" checked> Осі й розміри</label>
+          <label><input type="checkbox" id="chk-tags" checked> Підписи</label>
+          <label><input type="checkbox" id="chk-levels" checked> Позначки</label>
+          <label><input type="checkbox" id="chk-nums"> Номери паль</label>
+        </div>
+      </div>
+      <div>
+        <h2>Бетон</h2>
+        <div class="btns" id="conc">
+          <button type="button" id="conc-solid" data-conc="solid" aria-pressed="true">Суцільний</button>
+          <button type="button" id="conc-glass" data-conc="glass" aria-pressed="false">Прозорий</button>
+        </div>
+        <p class="tip" id="conc-tip">У прозорому режимі видно голови паль у плитах і стояк у стакані, ГПУ теж стають напівпрозорими. Шар «Арматура» вмикає прозорість сам.</p>
+      </div>
+      <div class="slider">
+        <div class="row"><label for="cut">Розріз з півдня</label><output id="cut-out" for="cut">вимкнено</output></div>
+        <input type="range" id="cut" min="-4" max="20" step="0.5" value="-4">
+        <p class="tip">Зрізає все, що південніше від вибраної площини. Відстань рахується від осі А.</p>
+      </div>
+    </aside>
+  </div>
+
+  <section class="est" id="est">
+    <div class="est-head">
+      <h2>Кошторис матеріалів і робіт</h2>
+      <span class="sub">кількості за специфікаціями тому КБ · ціни орієнтовні, їх можна змінити</span>
+    </div>
+    <div class="tiles">
+      <div class="tile"><div class="l">Арматура і штаба</div><div class="v" id="t-steel">—</div><div class="s" id="t-steel-s"></div></div>
+      <div class="tile"><div class="l">Бетон</div><div class="v" id="t-conc">—</div><div class="s" id="t-conc-s"></div></div>
+      <div class="tile"><div class="l">Матеріали</div><div class="v" id="t-mat">—</div><div class="s">за цінами з таблиці</div></div>
+      <div class="tile"><div class="l">Роботи</div><div class="v" id="t-work">—</div><div class="s">за розцінками «від»</div></div>
+      <div class="tile sum"><div class="l">Разом</div><div class="v" id="t-all">—</div><div class="s" id="t-all-s"></div></div>
+    </div>
+    <div class="est-opts">
+      <label for="waste-r">Запас арматури, % <input type="number" id="waste-r" min="0" max="30" step="1" value="5"></label>
+      <label for="waste-c">Запас бетону конструкцій, % <input type="number" id="waste-c" min="0" max="30" step="1" value="2"></label>
+      <label for="waste-cp">Перевитрата бетону паль, % <input type="number" id="waste-cp" min="0" max="40" step="1" value="10"></label>
+      <label for="est-works"><input type="checkbox" id="est-works" checked> Рахувати роботи</label>
+      <button type="button" id="est-reset">Повернути початкові ціни</button>
+    </div>
+    <div class="est-cols">
+      <div>
+        <h3>За елементами</h3>
+        <div class="tw"><table>
+          <thead><tr><th>Позиція</th><th class="n">За проєктом</th><th class="n">Із запасом</th><th class="n">Ціна, грн</th><th class="n">Сума, грн</th></tr></thead>
+          <tbody id="est-rows"></tbody>
+        </table></div>
+        <p class="tip" id="est-miss"></p>
+      </div>
+      <div>
+        <h3>Ціни</h3>
+        <div class="tw"><table style="min-width:380px">
+          <thead><tr><th>Матеріал або робота</th><th class="n">Грн за од.</th></tr></thead>
+          <tbody id="est-prices"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <p class="src">Запаси 5, 2 і 10 % — мої припущення, а не дані проєкту: специфікації дають теоретичні кількості, фактичні визначає виконавець. Ціни взято з відкритих прайсів у жовтні 2026 року:
+      арматура — <a href="https://metinvest-smc.com/ua/lviv/products/armatura/" target="_blank" rel="noopener">Метінвест-СМЦ, Львів</a>;
+      бетон — <a href="https://ibud.ua/ua/r47-lvov/c128-beton" target="_blank" rel="noopener">ibud.ua, Львів</a>;
+      штаба — <a href="https://prom.ua/Smuga-staleva.html" target="_blank" rel="noopener">Prom.ua</a>;
+      стояк — <a href="https://ukrspetsbeton.com.ua/praisy-companii/127509" target="_blank" rel="noopener">Укрспецбетон</a>;
+      палі — <a href="https://zmu.net.ua/uk/p/497165307-buroinekcionnye-svai-cfa/" target="_blank" rel="noopener">ЗМУ</a> і <a href="https://bmk-misto.com.ua/buroinektsiyni-pali" target="_blank" rel="noopener">БМК Місто</a>;
+      загальнобудівельні роботи — <a href="https://budver.com/fundament" target="_blank" rel="noopener">budver.com</a> і <a href="https://rating-remont-kvartir.com.ua/ua/rozcinki-na-betonni-roboti/" target="_blank" rel="noopener">rating-remont-kvartir.com.ua</a>.
+      Розцінки на роботи подано як мінімальні «від», тому реальна вартість робіт буде вищою. У суму не входять доставка, бетононасос, доплати за W8 і F150, шпунтове огородження, водовідлив, випробування і контроль паль, геодезія. Це не офіційний кошторис: його складає кошторисник за державними нормами.</p>
+  </section>
+
+  <div class="data">
+    <section>
+      <h2>Палі буроін'єкційні Ø420</h2>
+      <dl>
+        <dt>ПБІ-1, під плитами</dt><dd>28 шт. × 8 000 мм</dd>
+        <dt>Голова / низ</dt><dd>−0,750 / −8,750</dd>
+        <dt>Бетон, каркас Крп-1</dt><dd>1,11 м³, 105,3 кг</dd>
+        <dt>ПБІ-2, під Фм-1</dt><dd>8 шт. × 6 500 мм</dd>
+        <dt>Голова / низ</dt><dd>−2,850 / −9,350</dd>
+        <dt>Бетон, каркас Крп-2</dt><dd>0,90 м³, 85,8 кг</dd>
+        <dt>Технологія</dt><dd>CFA, напірне бетонування</dd>
+        <dt>Розрахункове навантаження</dt><dd>300 кН на палю</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Плити Фпм-1 під ГПУ</h2>
+      <dl>
+        <dt>Кількість</dt><dd>2 шт., ГПУ по 52 т</dd>
+        <dt>Розміри</dt><dd>16 000 × 4 000 × 600</dd>
+        <dt>Верх / низ</dt><dd>−0,200 / −0,800</dd>
+        <dt>Бетон С25/30 W8 F150</dt><dd>38 м³ на плиту</dd>
+        <dt>Підготовка С8/10, 100 мм</dt><dd>6,6 м³ на плиту</dd>
+        <dt>Арматура А500С</dt><dd>1 865,3 кг на плиту</dd>
+        <dt>Сітки верх і низ</dt><dd>Ø12, крок 200</dd>
+        <dt>Виріз / отвір</dt><dd>1000 × 500 / 600 × 400</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Фундаменти Фм-1 і стояки</h2>
+      <dl>
+        <dt>Кількість</dt><dd>2 шт., осі 1/Е і 3/А</dd>
+        <dt>Плитна частина</dt><dd>2400 × 2400 × 800</dd>
+        <dt>Підколонник</dt><dd>1400 × 1400 × 2500</dd>
+        <dt>Стакан</dt><dd>Ø750, глибина 2500</dd>
+        <dt>Верх / низ</dt><dd>+0,400 / −2,900</dd>
+        <dt>Бетон С25/30 / С30/35</dt><dd>8,4 / 1,3 м³</dd>
+        <dt>Арматура А500С</dt><dd>396,9 кг</dd>
+        <dt>Стояк СК-22.1-2.1</dt><dd>4 847 кг, верх +20,600</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Установки ГПУ</h2>
+      <dl>
+        <dt>Кількість</dt><dd>2 шт., ГПУ-1 і ГПУ-2</dd>
+        <dt>Потужність</dt><dd>2 × 2 500 кВт</dd>
+        <dt>Напруга</dt><dd>6 кВ</dd>
+        <dt>Маса однієї</dt><dd>52 000 кг</dd>
+        <dt>Габарит у плані</dt><dd>≈ 14,94 × 3,25 м</dd>
+        <dt>Приєднання</dt><dd>РП-Алюміній, камери № 7 і № 9</dd>
+        <dt>Кабелі 6 кВ</dt><dd>АСБл 3×240</dd>
+        <dt>Труби крізь плиту</dt><dd>ПНД Ø110 × 3, Ø160 × 1</dd>
+      </dl>
+      <p class="tip">Маса і труби — з тому КБ, потужність і приєднання — зі схеми 6 кВ, варіант 6. Марку установки в документах не вказано.</p>
+    </section>
+    <section>
+      <h2>Ґрунти за розрізом, арк. 3</h2>
+      <dl>
+        <dt>ІГЕ-1 насипний ґрунт</dt><dd>до 319,0</dd>
+        <dt>ІГЕ-2 пісок дрібний</dt><dd>319,0 … 316,65</dd>
+        <dt>ІГЕ-3 супісок пластичний</dt><dd>316,65 … 315,9</dd>
+        <dt>ІГЕ-4 суглинок тугопластичний</dt><dd>315,9 … 313,55</dd>
+        <dt>ІГЕ-5 глина напівтверда</dt><dd>313,55 … 308,85</dd>
+        <dt>ІГЕ-6 пісок водонасичений</dt><dd>308,85 … 305,45</dd>
+        <dt>ІГЕ-7 пісковик</dt><dd>нижче 305,45</dd>
+        <dt>Ґрунтові води, 21.08.26</dt><dd>310,2 і 309,7</dd>
+      </dl>
+      <p class="tip">Низ усіх паль стоїть в ІГЕ-5: 311,450 для ПБІ-1 і 310,850 для ПБІ-2.</p>
+    </section>
+    <section>
+      <h2>Вимоги до робіт, арк. 1 і 2</h2>
+      <dl>
+        <dt>Випробування паль</dt><dd>статичні, до масових робіт</dd>
+        <dt>Контроль суцільності</dt><dd>100 % паль</dd>
+        <dt>Від буріння до бетонування</dt><dd>не більше 2 год</dd>
+        <dt>Перед Фм-1</dt><dd>шпунтове огородження</dd>
+        <dt>Розпалубка</dt><dd>80 % міцності, від 7 діб</dd>
+        <dt>Навантаження</dt><dd>після 100 % міцності</dd>
+        <dt>Зворотна засипка</dt><dd>пісок, ущільнення ≥ 0,95</dd>
+      </dl>
+      <p class="tip">Шпунт, гідроізоляція і водовідведення йдуть окремими проєктами.</p>
+    </section>
+    <section class="wide">
+      <h2>Що показано умовно</h2>
+      <ul>
+        <li>ГПУ показано типовим контейнером. Габарит у плані, близько 14,94 × 3,25 м, знято з масштабу аркуша 9. Висоту кузова 3,05 м, двері, жалюзі, щитову, вихлопну трубу, охолоджувач і вентиляцію на даху показано умовно: марки й паспорта установки в документах немає.</li>
+        <li>Стояки: довжина 22,6 м випливає з позначок (низ −2,000, верх +20,600). Діаметр унизу 550 мм узято із зазору 100 мм у стакані Ø750, угорі близько 330 мм знято з масштабу.</li>
+        <li>Армування спрощене: сітки плит Ø12 з кроком 200, каркаси паль (6Ø16 і спіраль Ø8 з кроком 300), вертикальні стержні й хомути Фм-1. П-подібні стержні по контуру, підтримуючі каркаси Кр-1 і підсилення отвору не показано.</li>
+        <li>Ґрунти показано горизонтальними шарами, межі усереднено між свердловинами св.1 і св.2. Положення свердловин відносно осей на кресленнях не вказано.</li>
+        <li>Виріз у плиті прийнято 1000 × 500 мм у бетоні й 800 × 400 мм у підготовці. Так прочитано розмірний ланцюг аркуша 9.</li>
+        <li>Трубопроводи, кабельні труби, шпунтове огородження і гідроізоляцію не показано.</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="src">Побудовано за томом 4 «Конструкції залізобетонні», шифр 15/2026-02-КБ, ТОВ «Далгакиран Компресор Україна», аркуші 1–16, друк 08.10.2026. Модель показує геометрію і позначки. Будувати треба за підписаними робочими кресленнями.</p>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  // price list: m = material, w = work; def = null means no public price was found
+  const PR = [
+    {id:'s16', k:'m', name:'Арматура А500С Ø16', u:'т', def:48500, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
+    {id:'s12', k:'m', name:'Арматура А500С Ø12', u:'т', def:48500, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
+    {id:'s10', k:'m', name:'Арматура А500С Ø10', u:'т', def:49100, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
+    {id:'s8',  k:'m', name:'Арматура А240С Ø8', u:'т', def:50385, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
+    {id:'pl',  k:'m', name:'Штаба сталева 40×4', u:'т', def:38225, src:'Prom.ua, Ст3пс'},
+    {id:'c25', k:'m', name:'Бетон С25/30 (В30)', u:'м³', def:4000, src:'ibud.ua, Львів; без доплат за W8, F150'},
+    {id:'c30', k:'m', name:'Бетон С30/35 (В35)', u:'м³', def:4000, src:'ibud.ua, Львів'},
+    {id:'c8',  k:'m', name:'Бетон С8/10 (В10)', u:'м³', def:3500, src:'ibud.ua, Львів'},
+    {id:'pole',k:'m', name:'Стояк СК-22.1-2.1', u:'шт.', def:37245, src:'Укрспецбетон'},
+    {id:'mast',k:'m', name:'Мастика бітумна холодна', u:'кг', def:null, src:'ціну не знайдено'},
+    {id:'roll',k:'m', name:'Гідроізоляція рулонна', u:'м²', def:null, src:'ціну не знайдено'},
+    {id:'sand',k:'m', name:'Пісок середній або крупний', u:'м³', def:null, src:'ціну не знайдено'},
+    {id:'pipe',k:'m', name:'Гофротруба ПНД Ø110/94', u:'м', def:null, src:'ціну не знайдено'},
+    {id:'w_pile',k:'w', name:'Влаштування паль CFA Ø420', u:'м', def:600, src:'ЗМУ, БМК Місто; «від», без матеріалів'},
+    {id:'w_mob', k:'w', name:'Перебазування бурової установки', u:'посл.', def:7000, src:'БМК Місто, Київ; «від»'},
+    {id:'w_reb', k:'w', name:'В\'язання арматури і каркасів', u:'т', def:12540, src:'budver.com; «від»'},
+    {id:'w_form',k:'w', name:'Опалубка', u:'м²', def:495, src:'budver.com; «від»'},
+    {id:'w_conc',k:'w', name:'Укладання бетону', u:'м³', def:1100, src:'rating-remont-kvartir.com.ua; «від»'},
+    {id:'w_exc', k:'w', name:'Розробка ґрунту', u:'м³', def:660, src:'budver.com; «від»'},
+    {id:'w_fill',k:'w', name:'Засипка піском з ущільненням', u:'м³', def:550, src:'budver.com; «від»'},
+    {id:'w_coat',k:'w', name:'Гідроізоляція обмазувальна, 2 шари', u:'м²', def:110, src:'budver.com; «від»'},
+    {id:'w_roll',k:'w', name:'Гідроізоляція рулонна', u:'м²', def:132, src:'budver.com; «від»'},
+    {id:'w_pole',k:'w', name:'Монтаж стояка із замонолічуванням', u:'шт.', def:null, src:'ціну не знайдено'}
+  ];
+  const BY = {}; PR.forEach(p=>BY[p.id]=p);
+  // quantities: [price id, quantity for the whole group, waste key, note]
+  const GROUPS = [
+    {id:'g1', name:'Палі ПБІ-1', n:28, src:'арк. 2, 4, 5, 7', items:[
+      ['c25',31.08,'cp','28 × 1,11 м³'],['s16',2.189,'r'],['s8',0.2848,'r','спіраль'],['pl',0.4746,'r','фіксатори і кільця'],
+      ['w_pile',224,null,'28 × 8,0 м'],['w_reb',2.9484,null,'каркаси Крп-1']]},
+    {id:'g2', name:'Палі ПБІ-2', n:8, src:'арк. 2, 4, 6, 8', items:[
+      ['c25',7.2,'cp','8 × 0,90 м³'],['s16',0.5117,'r'],['s8',0.0662,'r','спіраль'],['pl',0.1085,'r','фіксатори і кільця'],
+      ['w_pile',52,null,'8 × 6,5 м'],['w_reb',0.6864,null,'каркаси Крп-2']]},
+    {id:'g3', name:'Плити Фпм-1', n:2, src:'арк. 2, 9–13', items:[
+      ['c25',76,'c','2 × 38 м³'],['c8',13.2,'c','підготовка, 2 × 6,6 м³'],['s12',3.1106,'r'],['s10',0.6258,'r'],
+      ['pipe',60,null,'2 × 30 м, арк. 9'],['roll',127,null,'під плитами, з геометрії'],['mast',98.4,null,'бічні грані, 2 шари по 1 кг/м²'],['sand',3.0,null,'≈, у контурі підготовки'],
+      ['w_reb',3.7364,null],['w_form',51.6,null,'бічні грані й отвори, з геометрії'],['w_conc',89.2,null,'плити й підготовка'],
+      ['w_coat',49.2,null,'з геометрії'],['w_roll',127,null,'з геометрії'],['w_exc',61.0,null,'≈, у контурі підготовки'],['w_fill',3.0,null,'≈']]},
+    {id:'g4', name:'Фундаменти Фм-1', n:2, src:'арк. 2, 14–16', items:[
+      ['c25',16.8,'c','2 × 8,4 м³'],['c30',2.6,'c','замонолічування, 2 × 1,3 м³'],['c8',1.2,'c','підготовка, 2 × 0,6 м³'],['s12',0.4319,'r'],['s10',0.3618,'r'],
+      ['roll',11.5,null,'під фундаментами, з геометрії'],['mast',102,null,'2 шари по 1 кг/м²'],['sand',17.4,null,'≈, у контурі підготовки'],
+      ['w_reb',0.7937,null],['w_form',55.1,null,'з отвороутворювачем стакана'],['w_conc',20.6,null],
+      ['w_coat',51.0,null,'з геометрії'],['w_roll',11.5,null,'з геометрії'],['w_exc',34.5,null,'≈, у контурі підготовки'],['w_fill',17.4,null,'≈']]},
+    {id:'g5', name:'Стояки СК-22.1-2.1', n:2, src:'арк. 14, 15', items:[ ['pole',2,null,'по 4 847 кг'],['w_pole',2,null] ]},
+    {id:'g6', name:'Загальне', n:1, src:'', items:[ ['w_mob',1,null] ]}
+  ];
+  const STEEL=['s16','s12','s10','s8','pl'], CONC=['c25','c30','c8'], KEY='gpu-est-v1';
+  const st={price:{}, waste:{r:5,c:2,cp:10}, works:true};
+  try{ const o=JSON.parse(localStorage.getItem(KEY)||'null'); if(o){ Object.assign(st.price,o.price||{}); Object.assign(st.waste,o.waste||{}); if(typeof o.works==='boolean') st.works=o.works; } }catch(e){}
+  const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} };
+
+  const nf=(v,d)=>v.toFixed(d).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  const money=v=>nf(Math.round(v),0);
+  const qty=(v,u)=>nf(v, u==='т'?3 : (u==='м³'||u==='м²')?1 : (u==='м'||u==='кг'||u==='шт.'||u==='посл.')?(v%1?1:0):1)+' '+u;
+  const price=id=> Object.prototype.hasOwnProperty.call(st.price,id) ? st.price[id] : BY[id].def;
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+  // price table
+  $('est-prices').innerHTML = PR.map((p,i)=>
+    (i===0?'<tr class="grp"><td colspan="2">Матеріали</td></tr>':'') + (p.id==='w_pile'?'<tr class="grp"><td colspan="2">Роботи</td></tr>':'') +
+    '<tr><td><label for="price-'+p.id+'">'+esc(p.name)+', за '+p.u+'</label><small>'+esc(p.src)+'</small></td>'+
+    '<td class="n"><input type="number" id="price-'+p.id+'" min="0" step="1" inputmode="decimal" placeholder="—"></td></tr>').join('');
+  function fill(){ PR.forEach(p=>{ const v=price(p.id); $('price-'+p.id).value = v==null?'':v; });
+    $('waste-r').value=st.waste.r; $('waste-c').value=st.waste.c; $('waste-cp').value=st.waste.cp; $('est-works').checked=st.works; }
+
+  const unit={};
+  function calc(){
+    let mat=0, work=0, steel0=0, steel1=0, conc0=0, conc1=0; const miss={};
+    let html='';
+    GROUPS.forEach(g=>{
+      let gm=0, gw=0, rows='';
+      g.items.forEach(it=>{
+        const p=BY[it[0]], isW=p.k==='w'; if(isW && !st.works) return;
+        const k=it[2]? 1+(+st.waste[it[2]]||0)/100 : 1, q0=it[1], q=q0*k, pr=price(p.id), sum=pr==null?null:q*pr;
+        if(sum==null) miss[p.id]=p.name; else if(isW) gw+=sum; else gm+=sum;
+        if(STEEL.indexOf(p.id)>=0){ steel0+=q0; steel1+=q; }
+        if(CONC.indexOf(p.id)>=0){ conc0+=q0; conc1+=q; }
+        rows+='<tr'+(isW?' class="work"':'')+'><td>'+esc(p.name)+(it[3]?'<small>'+esc(it[3])+'</small>':'')+'</td>'+
+          '<td class="n">'+qty(q0,p.u)+'</td><td class="n">'+(it[2]?qty(q,p.u):'')+'</td>'+
+          '<td class="n">'+(pr==null?'<span class="nop">не задано</span>':nf(pr,0))+'</td><td class="n">'+(sum==null?'—':money(sum))+'</td></tr>';
+      });
+      if(!rows) return;
+      mat+=gm; work+=gw; unit[g.id]={mat:gm/g.n, all:(gm+gw)/g.n};
+      html+='<tr class="grp"><td colspan="4">'+esc(g.name)+(g.n>1?' · '+g.n+' шт.':'')+(g.src?' <small>'+esc(g.src)+'</small>':'')+'</td><td class="n">'+money(gm+gw)+'</td></tr>'+rows+
+        (g.n>1?'<tr class="sub"><td colspan="4">На 1 шт.</td><td class="n">'+money((gm+gw)/g.n)+'</td></tr>':'');
+    });
+    $('est-rows').innerHTML=html;
+    $('t-steel').textContent=nf(steel1,3)+' т'; $('t-steel-s').textContent='за проєктом '+nf(steel0*1000,1)+' кг';
+    $('t-conc').textContent=nf(conc1,1)+' м³'; $('t-conc-s').textContent='за проєктом '+nf(conc0,1)+' м³';
+    $('t-mat').textContent=money(mat)+' грн'; $('t-work').textContent=st.works?money(work)+' грн':'не рахуються';
+    $('t-all').textContent=money(mat+work)+' грн';
+    const names=Object.keys(miss).map(k=>miss[k]);
+    const nn=names.length, w=(nn%10===1&&nn%100!==11)?'позицію':(nn%10>=2&&nn%10<=4&&(nn%100<12||nn%100>14))?'позиції':'позицій';
+    $('t-all-s').textContent=nn?'не враховано '+nn+' '+w+' без ціни':'усі позиції з цінами';
+    $('est-miss').textContent=names.length?'Без ціни, у суму не входять: '+names.join('; ')+'. Введіть ціну в таблиці праворуч, і сума оновиться.':'';
+  }
+  fill(); calc();
+
+  $('est').addEventListener('input',e=>{ const t=e.target;
+    if(t.id&&t.id.indexOf('price-')===0){ const v=parseFloat(t.value); st.price[t.id.slice(6)] = (t.value===''||isNaN(v)||v<0) ? null : v; }
+    else if(t.id==='waste-r'||t.id==='waste-c'||t.id==='waste-cp'){ const v=parseFloat(t.value); st.waste[t.id.slice(6)]=isNaN(v)||v<0?0:Math.min(v,50); }
+    else if(t.id==='est-works') st.works=t.checked; else return;
+    calc(); save(); });
+  $('est-reset').addEventListener('click',()=>{ st.price={}; st.waste={r:5,c:2,cp:10}; st.works=true; fill(); calc(); save(); });
+  window.GPU_EST={ unit:function(id){ const u=unit[id]; if(!u) return null; return {mat:'≈ '+money(u.mat)+' грн', all: st.works?'≈ '+money(u.all)+' грн':null}; } };
+})();
+</script>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/OrbitControls.js"></script>
+<script>
+(function(){
+  const viewer = document.getElementById('viewer');
+  const $ = id => document.getElementById(id);
+  function fail(msg){ const d=document.createElement('div'); d.className='fail'; d.textContent=msg; viewer.appendChild(d); $('hint').hidden=true; $('legend').hidden=true; $('legend-soil').hidden=true; }
+  if (!window.THREE || !THREE.OrbitControls) { fail('Не вдалося завантажити 3D-бібліотеку. Оновіть сторінку.'); return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({antialias:true}); }
+  catch(e){ fail('Цей браузер не показує 3D-графіку (WebGL вимкнено).'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  viewer.insertBefore(renderer.domElement, viewer.firstChild);
+  const cv = renderer.domElement;
+
+  // ---- coordinates: drawing x (axes 1→3, east), y (axes А→Е, north), z (level, 0,000 = 320,200), metres ----
+  const CX=9.5, CY=9.0, ZERO=320.2;
+  const P = (x,y,z) => new THREE.Vector3(x-CX, z, CY-y);
+  const lev = z => (z>0?'+':z<0?'−':'')+Math.abs(z).toFixed(3).replace('.',',');
+  const absl = z => (ZERO+z).toFixed(3).replace('.',',');
+  const both = z => lev(z)+' ('+absl(z)+')';
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.3, 600);
+  const controls = new THREE.OrbitControls(camera, cv);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 3; controls.maxDistance = 220; controls.maxPolarAngle = Math.PI*0.8;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f86, 0.86));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.5); sun.position.set(-18, 30, 22); scene.add(sun);
+
+  // ---- materials (colours come from the page tokens in applyTheme) ----
+  const lam = () => new THREE.MeshLambertMaterial({color:0x999999, side:THREE.DoubleSide});
+  const M = {
+    slab:lam(), pile1:lam(), pile2:lam(), fm:lam(), fill:lam(), prep:lam(), pole:lam(),
+    gpu: new THREE.MeshLambertMaterial({color:0x3f6d8f, transparent:true, opacity:.26, depthWrite:false, side:THREE.DoubleSide}),
+    ground: new THREE.MeshBasicMaterial({color:0x7d8a6a, transparent:true, opacity:.17, depthWrite:false, side:THREE.DoubleSide}),
+    edge: new THREE.LineBasicMaterial({color:0x16212c, transparent:true, opacity:.5}),
+    rebar: new THREE.LineBasicMaterial({color:0xc45a00}),
+    axis: new THREE.LineDashedMaterial({color:0x16212c, dashSize:.5, gapSize:.22, transparent:true, opacity:.6}),
+    hi: new THREE.LineBasicMaterial({color:0xa85200, depthTest:false}),
+    water: new THREE.LineBasicMaterial({color:0x1f6fd0}),
+    waterD: new THREE.LineDashedMaterial({color:0x1f6fd0, dashSize:.45, gapSize:.3}),
+    soil: [1,2,3,4,5,6,7].map(()=>new THREE.MeshBasicMaterial({color:0xcccccc}))
+  };
+  const CONCRETE = [M.slab,M.pile1,M.pile2,M.fm,M.fill,M.prep];
+
+  const G = {}; ['piles','slabs','fm','poles','prep','gpu','rebar','soil','ground','axes'].forEach(k=>{ G[k]=new THREE.Group(); scene.add(G[k]); });
+  G.rebar.visible = false;
+
+  const pickables = [];
+  function edges(mesh, ang){ const e=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, ang||25), M.edge); e.raycast=function(){}; mesh.add(e); }
+  function reg(mesh, info, group){ mesh.userData.info=info; pickables.push(mesh); group.add(mesh); edges(mesh); return mesh; }
+  // plan polygon (drawing x,y) extruded from level z0 to z1
+  function extrude(pts, holes, z0, z1, mat){
+    const s=new THREE.Shape(); pts.forEach((p,i)=> i? s.lineTo(p[0],p[1]) : s.moveTo(p[0],p[1])); s.closePath();
+    (holes||[]).forEach(h=>s.holes.push(h));
+    const g=new THREE.ExtrudeGeometry(s,{depth:z1-z0, bevelEnabled:false, curveSegments:40});
+    g.rotateX(-Math.PI/2);
+    const m=new THREE.Mesh(g,mat); m.position.set(-CX, z0, CY); return m;
+  }
+  const rectPath = (x0,y0,x1,y1) => { const h=new THREE.Path(); h.moveTo(x0,y0); h.lineTo(x0,y1); h.lineTo(x1,y1); h.lineTo(x1,y0); h.closePath(); return h; };
+  function cyl(x,y,z0,z1,r0,r1,mat,seg){ const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,z1-z0,seg||28),mat); m.position.copy(P(x,y,(z0+z1)/2)); return m; }
+
+  // ---- labels (HTML over the canvas) ----
+  const lay=$('labels'), labels=[];
+  const PRIO={tag:0, lev:1, ax:2, num:3, soil:4, wat:4, dim:5};
+  function label(text,pos,cls,layer,vis){ const el=document.createElement('div'); el.className='lb '+cls; el.textContent=text; lay.appendChild(el); labels.push({el,pos,layer,vis,on:null,pr:PRIO[cls],w:0,h:0}); }
+  function measure(){ labels.forEach(L=>{ const hid=L.el.hidden; L.el.hidden=false; L.w=L.el.offsetWidth; L.h=L.el.offsetHeight; L.el.hidden=hid; }); }
+
+  // ---- data from the drawings ----
+  const SLABS=[ {gpu:'ГПУ-2', y0:11, ax:'1–2 / Г–Д', n0:1}, {gpu:'ГПУ-1', y0:3, ax:'1–2 / Б–В', n0:15} ];
+  const FMS=[ {x:0, y:18, ax:'1 / Е', n0:29}, {x:19, y:0, ax:'3 / А', n0:33} ];
+  const T1=-0.75, B1=-8.75, T2=-2.85, B2=-9.35, R=0.21;
+
+  const rb=[];                                     // rebar line segments
+  const seg=(a,b)=>rb.push(a.x,a.y,a.z,b.x,b.y,b.z);
+  function ring(x,y,z,r,n){ for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, b=(i+1)/n*Math.PI*2; seg(P(x+r*Math.cos(a),y+r*Math.sin(a),z), P(x+r*Math.cos(b),y+r*Math.sin(b),z)); } }
+  function cage(x,y,top,len,rings){
+    const zt=top+0.3, zb=zt-len, zk=zb+0.5, r=0.128;
+    for(let k=0;k<6;k++){ const a=(30+60*k)*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+      seg(P(x+r*c,y+r*s,zt), P(x+r*c,y+r*s,zk)); seg(P(x+r*c,y+r*s,zk), P(x+0.035*c,y+0.035*s,zb)); }
+    const turns=(zt-zk)/0.3, n=Math.round(turns*14); let prev=null;
+    for(let i=0;i<=n;i++){ const t=i/n, a=t*turns*Math.PI*2, p=P(x+0.14*Math.cos(a), y+0.14*Math.sin(a), zt-t*(zt-zk)); if(prev) seg(prev,p); prev=p; }
+    for(let i=0;i<rings;i++) ring(x,y,zt-0.8-1.5*i,0.12,16);
+  }
+
+  function pileInfo(n,type,where){
+    const t1=type===1;
+    return {g:t1?'g1':'g2', title:'Паля '+(t1?'ПБІ-1':'ПБІ-2')+' № '+n, sub:where+' · аркуші 4, '+(t1?'5, 7':'6, 8'), rows:[
+      ['Тип','буроін\'єкційна, CFA'],['Діаметр','420 мм'],['Довжина',t1?'8 000 мм':'6 500 мм'],
+      ['Голова',both(t1?T1:T2)],['Низ',both(t1?B1:B2)],['Основа','ІГЕ-5, глина напівтверда'],
+      ['Бетон','С25/30 W8 F150 XC2, '+(t1?'1,11':'0,90')+' м³'],
+      ['Каркас',(t1?'Крп-1, 105,3 кг':'Крп-2, 85,8 кг')+': 6Ø16 А500С, спіраль Ø8 А240С крок 300'],
+      ['Навантаження','до 300 кН за розрахунком']],
+      note:'Перед масовим влаштуванням паль потрібні статичні випробування (арк. 1, п. 2.22).'};
+  }
+  function addPile(n,x,y,type,where){
+    const top=type===1?T1:T2, bot=type===1?B1:B2;
+    reg(cyl(x,y,bot,top,R,R,type===1?M.pile1:M.pile2), pileInfo(n,type,where), G.piles);
+    cage(x,y,top,type===1?8.25:6.75,type===1?5:4);
+    label(String(n), P(x,y,top+0.05), 'num', 'nums');
+  }
+
+
+  // ---- ГПУ: контейнер типового вигляду. Габарит у плані — з арк. 2, 9 тому КБ; висота, двері, обладнання на даху — умовно.
+  //      Координати креслярські: x від осі 1 на схід, y від осі А на північ, z від ±0,000.
+  const gpuGrp=new THREE.Group(); gpuGrp.position.set(-CX,0,CY); G.gpu.add(gpuGrp);
+  const GM=[];
+  const lm=c=>{ const m=new THREE.MeshLambertMaterial({color:c}); GM.push(m); return m; };
+  const MT={frame:lm(0x41484e), steel:lm(0x5d666d), alu:lm(0xc4c8cb), stack:lm(0xb7bbbe), fan:lm(0x30363b), guard:lm(0x8b9398),
+    cooler:lm(0xe3e6e8), vent:lm(0x6b747a), heat:lm(0x8c3b29), gas:lm(0xe2b32a), rail:lm(0xe0b62c), ac:lm(0xdfe2e3)};
+  const gpick=(m,info)=>{ if(info){ m.userData.info=info; pickables.push(m); } return m; };
+  const gbox=(L,W,H,x0,y0,z0,mat,info)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(L,H,W),mat); m.position.set(x0+L/2,z0+H/2,-(y0+W/2)); gpuGrp.add(m); return gpick(m,info); };
+  const gcylX=(r,x0,x1,y,z,mat,info,seg)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,x1-x0,seg||24),mat); m.rotation.z=Math.PI/2; m.position.set((x0+x1)/2,z,-y); gpuGrp.add(m); return gpick(m,info); };
+  const gcylZ=(r0,r1,x,y,z0,z1,mat,info,seg)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,z1-z0,seg||24),mat); m.position.set(x,(z0+z1)/2,-y); gpuGrp.add(m); return gpick(m,info); };
+  // стіни контейнера; s — метри від лівого краю, як дивитися ззовні
+  function wallTex(face,L,H,name){
+    const PX=56, c=document.createElement('canvas'); c.width=Math.round(L*PX); c.height=Math.round(H*PX); const g=c.getContext('2d');
+    const X=m=>m*PX, Yb=m=>c.height-m*PX;
+    g.fillStyle='#d8dcd9'; g.fillRect(0,0,c.width,c.height);
+    if(face==='T'){ g.fillStyle='#c3c8c8'; g.fillRect(0,0,c.width,c.height); for(let x=0;x<L;x+=0.6){ g.fillStyle='rgba(80,88,92,.25)'; g.fillRect(X(x),0,2,c.height); } }
+    else {
+      for(let x=0;x<L;x+=1.0){ g.fillStyle='rgba(95,104,108,.28)'; g.fillRect(X(x),0,2,c.height); g.fillStyle='rgba(255,255,255,.5)'; g.fillRect(X(x)+2,0,1,c.height); }
+      g.fillStyle='rgba(70,78,84,.55)'; g.fillRect(0,0,c.width,X(0.07)); g.fillRect(0,Yb(0.1),c.width,X(0.1));
+    }
+    const door=(s0,w,h,dbl,win)=>{
+      g.fillStyle='#cfd4d1'; g.fillRect(X(s0),Yb(h+0.05),X(w),X(h));
+      g.strokeStyle='#4f585d'; g.lineWidth=3; g.strokeRect(X(s0),Yb(h+0.05),X(w),X(h));
+      if(dbl){ g.beginPath(); g.moveTo(X(s0+w/2),Yb(h+0.05)); g.lineTo(X(s0+w/2),Yb(0.05)); g.stroke(); }
+      g.fillStyle='#373e43'; const hz=1.05; if(dbl){ g.fillRect(X(s0+w/2-0.14),Yb(hz+0.2),X(0.035),X(0.2)); g.fillRect(X(s0+w/2+0.1),Yb(hz+0.2),X(0.035),X(0.2)); } else g.fillRect(X(s0+w-0.13),Yb(hz+0.2),X(0.035),X(0.2));
+      if(win){ g.fillStyle='#3b4a56'; g.fillRect(X(s0+w*0.3),Yb(h-0.2),X(w*0.4),X(0.35)); }
+      g.fillStyle='#f2c230'; const tx=s0+w/2, tz=h+0.12; g.beginPath(); g.moveTo(X(tx),Yb(tz+0.24)); g.lineTo(X(tx-0.14),Yb(tz)); g.lineTo(X(tx+0.14),Yb(tz)); g.closePath(); g.fill(); g.strokeStyle='#222'; g.lineWidth=2; g.stroke();
+      g.fillStyle='#f4f1dd'; g.fillRect(X(tx+0.3),Yb(h+0.32),X(0.3),X(0.12));
+    };
+    const louver=(s0,w,z0,h)=>{
+      g.fillStyle='#9aa3a8'; g.fillRect(X(s0),Yb(z0+h),X(w),X(h));
+      for(let z=z0+0.06;z<z0+h-0.04;z+=0.075){ g.fillStyle='rgba(40,46,50,.75)'; g.fillRect(X(s0+0.06),Yb(z+0.03),X(w-0.12),3); g.fillStyle='rgba(255,255,255,.35)'; g.fillRect(X(s0+0.06),Yb(z+0.045),X(w-0.12),1); }
+      g.strokeStyle='#4f585d'; g.lineWidth=3; g.strokeRect(X(s0),Yb(z0+h),X(w),X(h));
+    };
+    const text=(t,x,z,sz,col)=>{ g.fillStyle=col||'#24435f'; g.font='bold '+Math.round(X(sz))+'px "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif'; g.textAlign='center'; g.fillText(t,X(x),Yb(z)); };
+    if(face==='S'){ door(0.6,0.9,2.1,0,1); louver(3.2,2.4,0.6,1.8); door(6.2,2.0,2.3,1); louver(8.8,2.4,0.6,1.8); door(11.8,0.9,2.1,0); louver(13.1,1.4,1.6,1.0);
+      text(name,4.4,2.62,0.36); text('ГАЗ · ВИБУХОНЕБЕЗПЕЧНО',7.2,2.72,0.13,'#8a1f12'); }
+    else if(face==='N'){ const S=a=>L-a; louver(S(14.2),1.4,1.6,1.0); door(S(11.6),2.0,2.3,1); louver(S(8.8),2.4,0.6,1.8); door(S(5.6),2.0,2.3,1); louver(S(3.0),2.0,0.7,1.4); text(name,S(7.3),2.62,0.36); }
+    else if(face==='E'){ door(0.8,0.9,2.1,0); louver(2.0,0.9,1.7,0.8); text('ГАЗ',2.45,0.95,0.2,'#8a1f12'); }
+    else if(face==='W'){ louver(0.4,1.0,1.5,0.9); g.fillStyle='#8f979b'; g.fillRect(X(1.9),Yb(0.7),X(0.9),X(0.5)); g.strokeStyle='#4f585d'; g.strokeRect(X(1.9),Yb(0.7),X(0.9),X(0.5)); text(name,L/2,2.62,0.3); }
+    const t=new THREE.CanvasTexture(c); t.anisotropy=4; return t;
+  }
+  function buildGPU(name, y0, ax){
+    const XC0=0.48, LC=14.94, WC=3.25, ZB=-0.2, HF=0.15, HC=3.05, ZT=ZB+HF+HC;
+    const yc0=y0+0.5, yN=yc0+WC*0.72, yS=yc0+WC*0.3, A=a=>XC0+a;
+    const iUnit={title:name, sub:'газопоршнева когенераційна установка в контейнері · осі '+ax, rows:[
+      ['Потужність','2 500 кВт, 6 кВ (схема 6 кВ, вар. 6)'],['Маса','52 000 кг (том КБ, арк. 2)'],['Габарит у плані','≈ 14,94 × 3,25 м, з масштабу арк. 9'],
+      ['Висота кузова','3,05 м, умовно'],['Опирання','плита Фпм-1, верх '+both(-0.2)],['Приєднання','РП-Алюміній, кабель АСБл 3×240'],
+      ['Труби крізь плиту','ПНД Ø110 × 3 і Ø160 × 1, опалення Ø150 × 2']],
+      note:'Вигляд типовий: щитова на західному торці, двері, жалюзі й обладнання на даху показано умовно. Марки й паспорта установки в документах немає.'};
+    const iEx={title:'Вихлоп '+name, sub:'глушник, теплообмінник і димова труба · умовно', rows:[['Труба','Ø ≈ 450 мм, верх ≈ +9,800'],['Теплообмінник','гріє воду для трубопроводів опалення Ø150']],
+      note:'Розміри й висота умовні: томів ТХ і ТМ у матеріалах немає.'};
+    const iVent={title:'Витяжна вентиляція '+name, sub:'вентилятор із шумоглушником · умовно', rows:[['Приплив','через жалюзі в бічних стінах']]};
+    const iCool={title:'Сухий охолоджувач '+name, sub:'радіатор на рамі над дахом · умовно', rows:[['Вентилятори','4 × Ø ≈ 1,25 м'],['Призначення','скидає тепло, яке не забрала теплова мережа']]};
+    const iGas={title:'Газовий ввід '+name, sub:'газопровід до газової рампи · умовно', rows:[['Місце і діаметр','умовні'],['ШРП','на схід від майданчика за генпланом']]};
+    const iAC={title:'Кондиціонер щитової '+name, sub:'західний торець · умовно', rows:[['Компонування','типове для контейнерних ГПУ']]};
+    gbox(LC+0.06,WC+0.06,HF,XC0-0.03,yc0-0.03,ZB,MT.frame,iUnit);
+    const fm=f=>{ const m=new THREE.MeshLambertMaterial({color:0xffffff, map:wallTex(f, f==='E'||f==='W'?WC:LC, HC, name)}); GM.push(m); return m; };
+    const roofM=new THREE.MeshLambertMaterial({color:0xffffff, map:wallTex('T',LC,WC,name)}); GM.push(roofM);
+    const body=new THREE.Mesh(new THREE.BoxGeometry(LC,HC,WC),[fm('E'),fm('W'),roofM,MT.frame,fm('S'),fm('N')]);
+    body.position.set(XC0+LC/2,ZB+HF+HC/2,-(yc0+WC/2)); gpuGrp.add(body); gpick(body,iUnit);
+    gbox(LC+0.1,WC+0.1,0.08,XC0-0.05,yc0-0.05,ZT,MT.frame,iUnit);
+    // огородження даху і драбина на східному торці
+    const rH=1.05, zr=ZT+0.08;
+    const rail=(x0,ya,x1,yb)=>{ const L=Math.hypot(x1-x0,yb-ya); [0.5,rH].forEach(h=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(L,0.045,0.045),MT.rail); m.position.set((x0+x1)/2,zr+h,-(ya+yb)/2); m.rotation.y=Math.atan2(-(yb-ya),x1-x0); gpuGrp.add(m); });
+      const n=Math.max(1,Math.round(L/1.5)); for(let i=0;i<=n;i++){ const t=i/n; gbox(0.05,0.05,rH,x0+(x1-x0)*t-0.025,ya+(yb-ya)*t-0.025,zr,MT.rail); } };
+    const e=0.06; rail(XC0+e,yc0+e,XC0+LC-e,yc0+e); rail(XC0+e,yc0+WC-e,XC0+LC-e,yc0+WC-e); rail(XC0+e,yc0+e,XC0+e,yc0+WC-e); rail(XC0+LC-e,yc0+e,XC0+LC-e,yc0+1.9);
+    const xl=XC0+LC+0.12, ly0=yc0+2.35;
+    [ly0,ly0+0.5].forEach(yy=>gbox(0.05,0.05,ZT+1.1-ZB,xl,yy,ZB,MT.rail));
+    for(let z=ZB+0.35;z<ZT+1.0;z+=0.3) gbox(0.04,0.5,0.035,xl,ly0,z,MT.rail);
+    // кондиціонер щитової, газовий ввід
+    gbox(0.32,0.85,0.65,XC0-0.34,yc0+1.9,1.2,MT.ac,iAC);
+    gcylX(0.055,XC0+LC,XC0+LC+0.45,yc0+2.95,0.6,MT.gas,iGas,12); gcylZ(0.055,0.055,XC0+LC+0.45,yc0+2.95,-0.45,0.6,MT.gas,iGas,12);
+    gcylZ(0.11,0.11,XC0+LC+0.45,yc0+2.95,0.3,0.75,MT.gas,iGas,12);
+    // вихлоп: рама, глушник, теплообмінник, димова труба
+    const zc=ZT+0.28;
+    gbox(7.2,0.18,0.18,A(0.5),yN-0.09,ZT,MT.steel); gbox(7.2,0.18,0.18,A(0.5),yN-0.75,ZT,MT.steel);
+    gcylX(0.475,A(0.95),A(4.6),yN,zc+0.5,MT.alu,iEx);
+    [A(1.3),A(4.2)].forEach(x=>gbox(0.12,0.9,0.32,x,yN-0.45,ZT,MT.steel));
+    gcylX(0.4,A(4.75),A(7.35),yN,zc+0.48,MT.alu,iEx);
+    [A(4.75),A(7.35)].forEach(x=>gcylX(0.5,x-0.04,x+0.04,yN,zc+0.48,MT.steel));
+    [A(5.3),A(6.8)].forEach(x=>gcylZ(0.075,0.075,x,yN-0.42,ZT,zc+0.3,MT.heat,iEx,12));
+    gcylX(0.2,A(0.6),A(0.95),yN,zc+0.5,MT.stack,iEx);
+    gcylX(0.18,A(7.35),A(7.75),yN,zc+0.48,MT.stack,iEx); gcylZ(0.18,0.18,A(7.75),yN,ZT,zc+0.66,MT.stack,iEx);
+    gcylZ(0.225,0.225,A(0.6),yN,ZT,9.6,MT.stack,iEx); gcylZ(0.225,0.3,A(0.6),yN,9.6,9.8,MT.stack,iEx);
+    [3.6,6.0,8.4].forEach(z=>gcylZ(0.25,0.25,A(0.6),yN,z,z+0.06,MT.steel));
+    // витяжний вентилятор
+    gbox(3.0,1.35,1.0,A(2.4),yS-0.675,ZT,MT.vent,iVent);
+    gbox(0.06,1.2,0.8,A(2.36),yS-0.6,ZT+0.1,MT.steel); gbox(0.06,1.2,0.8,A(5.4),yS-0.6,ZT+0.1,MT.steel);
+    // сухий охолоджувач на рамі з 4 вентиляторами
+    const xc0=A(7.9), xc1=A(14.6), yc=yc0+0.27, wc=WC-0.54, zl=ZT+0.9;
+    [[xc0,yc],[xc0,yc+wc-0.12],[xc1-0.12,yc],[xc1-0.12,yc+wc-0.12],[(xc0+xc1)/2,yc],[(xc0+xc1)/2,yc+wc-0.12]].forEach(([x,yy])=>gbox(0.12,0.12,zl-ZT,x,yy,ZT,MT.steel));
+    gbox(xc1-xc0,wc,0.85,xc0,yc,zl,MT.cooler,iCool);
+    for(let i=0;i<4;i++){ const x=xc0+(xc1-xc0)*(i+0.5)/4, yy=yc+wc/2;
+      gcylZ(0.64,0.64,x,yy,zl+0.85,zl+1.0,MT.fan,iCool,28); gcylZ(0.62,0.62,x,yy,zl+1.0,zl+1.03,MT.guard,null,28); gcylZ(0.12,0.12,x,yy,zl+1.0,zl+1.08,MT.steel,null,12); }
+    [A(8.2),A(8.6)].forEach(x=>gcylZ(0.06,0.06,x,yc+0.35,ZT,zl,MT.heat,iCool,10));
+  }
+
+  // slabs Фпм-1 with piles ПБІ-1
+  SLABS.forEach(s=>{
+    const y=s.y0;
+    const info={g:'g3', title:'Плита Фпм-1 під '+s.gpu, sub:'осі '+s.ax+' · аркуші 9–13', rows:[
+      ['Розміри','16 000 × 4 000 × 600 мм'],['Верх',both(-0.2)],['Низ',both(-0.8)],
+      ['Бетон','С25/30 W8 F150 XC2, 38 м³'],['Арматура','1 865,3 кг, А500С'],
+      ['Сітки','Ø12 крок 200, верх і низ'],['Каркаси','Кр-1, 26 шт., крок 600'],
+      ['Виріз','1000 × 500 мм, за 3800 від осі 1'],['Отвір','600 × 400 мм, за 1000 від осі 2'],
+      ['Палі','14 × ПБІ-1, крок 2500 × 3000'],['Навантаження',s.gpu+', 52 000 кг']]};
+    reg(extrude([[0,y],[3.8,y],[3.8,y+0.5],[4.8,y+0.5],[4.8,y],[16,y],[16,y+4],[0,y+4]], [rectPath(14.4,y+0.5,15.0,y+0.9)], -0.8, -0.2, M.slab), info, G.slabs);
+    reg(extrude([[-0.1,y-0.1],[3.9,y-0.1],[3.9,y+0.4],[4.7,y+0.4],[4.7,y-0.1],[16.1,y-0.1],[16.1,y+4.1],[-0.1,y+4.1]], null, -0.9, -0.8, M.prep),
+      {title:'Бетонна підготовка', sub:'під плитою Фпм-1 · аркуш 9', rows:[['Бетон','С8/10'],['Товщина','100 мм'],['Виступ за плиту','100 мм'],['Низ',both(-0.9)],['Обсяг','6,6 м³ на плиту']]}, G.prep);
+    for(let i=0;i<7;i++){ const x=0.5+2.5*i;
+      addPile(s.n0+2*i,   x, y+3.5, 1, 'плита під '+s.gpu);
+      addPile(s.n0+2*i+1, x, y+0.5, 1, 'плита під '+s.gpu); }
+    buildGPU(s.gpu, y, s.ax);
+    label(s.gpu+' · 52 т', P(8,y+2.1,5.7), 'tag', 'tags', ()=>G.gpu.visible);
+    label('Фпм-1', P(-0.9,y+2,-0.5), 'tag', 'tags', ()=>G.slabs.visible);
+    // slab meshes Ø12 @200, bottom and top
+    const cuts=[[3.75,-1,4.85,0.55],[14.35,0.45,15.05,0.95]];
+    const runs=(a0,a1,list)=>{ let out=[[a0,a1]]; list.forEach(c=>{ const nx=[]; out.forEach(r=>{ if(c[1]<=r[0]||c[0]>=r[1]) nx.push(r); else { if(c[0]>r[0]) nx.push([r[0],c[0]]); if(c[1]<r[1]) nx.push([c[1],r[1]]); } }); out=nx; }); return out; };
+    [-0.74,-0.256].forEach(z=>{
+      for(let j=0;j<=20;j++){ const ly=Math.min(0.05+0.2*j,3.95);
+        runs(0.05,15.95,cuts.filter(c=>ly>c[1]&&ly<c[3]).map(c=>[c[0],c[2]])).forEach(r=>seg(P(r[0],y+ly,z),P(r[1],y+ly,z))); }
+      for(let i=0;i<=80;i++){ const lx=Math.min(0.05+0.2*i,15.95);
+        runs(0.05,3.95,cuts.filter(c=>lx>c[0]&&lx<c[2]).map(c=>[c[1],c[3]])).forEach(r=>seg(P(lx,y+r[0],z+0.012),P(lx,y+r[1],z+0.012))); }
+    });
+  });
+  label('ПБІ-1 · 28 шт.', P(-0.9,3.5,-5), 'tag', 'tags', ()=>G.piles.visible);
+  label(lev(-0.2), P(16.9,5,-0.2), 'lev', 'levels', ()=>G.slabs.visible);
+  label(both(B1), P(16.6,3.5,B1), 'lev', 'levels', ()=>G.piles.visible);
+
+  // foundations Фм-1 with piles ПБІ-2 and poles СК-22.1-2.1
+  FMS.forEach(f=>{
+    const x=f.x, y=f.y;
+    const info={g:'g4', title:'Фундамент Фм-1', sub:'осі '+f.ax+' · аркуші 14–16', rows:[
+      ['Плитна частина','2400 × 2400 × 800 мм'],['Підколонник','1400 × 1400 × 2500 мм'],['Стакан','Ø750, глибина 2500 мм'],
+      ['Верх',both(0.4)],['Верх плитної частини',both(-2.1)],['Низ',both(-2.9)],
+      ['Бетон','С25/30 F150 XC4, 8,4 м³'],['Замонолічування','С30/35, 1,3 м³'],['Арматура','396,9 кг, А500С Ø10 і Ø12'],
+      ['Палі','4 × ПБІ-2, по 700 мм від осей']],
+      note:'Водонепроникність бетону на аркуші 14 вказано W6, у специфікації аркуша 15 — W8. Уточніть у проєктувальника.'};
+    reg(extrude([[x-1.3,y-1.3],[x+1.3,y-1.3],[x+1.3,y+1.3],[x-1.3,y+1.3]], null, -3.0, -2.9, M.prep),
+      {title:'Бетонна підготовка', sub:'під фундаментом Фм-1 · аркуш 14', rows:[['Бетон','С8/10'],['Розміри','2600 × 2600 × 100 мм'],['Низ',both(-3.0)],['Обсяг','0,6 м³']]}, G.prep);
+    reg(extrude([[x-1.2,y-1.2],[x+1.2,y-1.2],[x+1.2,y+1.2],[x-1.2,y+1.2]], null, -2.9, -2.1, M.fm), info, G.fm);
+    const hole=new THREE.Path(); hole.absarc(x,y,0.375,0,Math.PI*2,true);
+    reg(extrude([[x-0.7,y-0.7],[x+0.7,y-0.7],[x+0.7,y+0.7],[x-0.7,y+0.7]], [hole], -2.1, 0.4, M.fm), info, G.fm);
+    reg(cyl(x,y,-2.1,0.4,0.373,0.373,M.fill,40), info, G.fm);
+    reg(cyl(x,y,0.4,0.55,0.415,0.265,M.fill,40), info, G.fm);
+    reg(cyl(x,y,-2.0,20.6,0.275,0.165,M.pole,32),
+      {g:'g5', title:'Стояк СК-22.1-2.1', sub:'на фундаменті Фм-1, осі '+f.ax+' · аркуші 2, 14', rows:[
+        ['Тип','залізобетонний центрифугований конічний'],['Стандарт','ДСТУ Б В.2.6-125:2010'],['Маса','4 847 кг'],
+        ['Верх',both(20.6)],['Низ у стакані',both(-2.0)],['Закладання','2400 мм, зазор до дна 100 мм'],
+        ['Висота над фундаментом','≈ 20,2 м'],['Відхилення від вертикалі','до 20 мм угорі']],
+        note:'На плані аркуша 14 марку підписано СК-22.1-1.1, на решті аркушів — СК-22.1-2.1. Діаметри в моделі зняті з масштабу.'}, G.poles);
+    [[-0.7,0.7],[0.7,0.7],[-0.7,-0.7],[0.7,-0.7]].forEach((d,i)=>addPile(f.n0+i, x+d[0], y+d[1], 2, 'фундамент Фм-1, осі '+f.ax));
+    const side = x>9 ? 1 : -1;
+    label('Фм-1', P(x,y,1.25), 'tag', 'tags', ()=>G.fm.visible);
+    label('СК-22.1-2.1', P(x+side*1.6,y,11), 'tag', 'tags', ()=>G.poles.visible);
+    label(lev(20.6), P(x,y,21.3), 'lev', 'levels', ()=>G.poles.visible);
+    label(lev(0.4), P(x+side*1.5,y,0.4), 'lev', 'levels', ()=>G.fm.visible);
+    // reinforcement of Фм-1 (simplified)
+    const zb=-2.834;
+    for(let i=0;i<=11;i++){ const o=-1.13+2.26*i/11; seg(P(x-1.13,y+o,zb),P(x+1.13,y+o,zb)); seg(P(x+o,y-1.13,zb+0.012),P(x+o,y+1.13,zb+0.012)); }
+    for(let i=0;i<9;i++){ const o=-0.63+0.14*i;
+      [[o,-0.63,0,-1],[0.63,o,1,0],[-o,0.63,0,1],[-0.63,-o,-1,0]].forEach(v=>{ seg(P(x+v[0],y+v[1],zb+0.03),P(x+v[0],y+v[1],0.35)); seg(P(x+v[0],y+v[1],zb+0.03),P(x+v[0]+0.32*v[2],y+v[1]+0.32*v[3],zb+0.03)); }); }
+    for(let k=0;k<25;k++){ const z=-2.05+0.1*k;
+      [0.645,0.425].forEach(h=>{ const c=[[-h,-h],[h,-h],[h,h],[-h,h]]; for(let i=0;i<4;i++) seg(P(x+c[i][0],y+c[i][1],z),P(x+c[(i+1)%4][0],y+c[(i+1)%4][1],z)); }); }
+  });
+  label('ПБІ-2 · 8 шт.', P(20.7,-0.7,-6.4), 'tag', 'tags', ()=>G.piles.visible);
+  label(both(B2), P(20.9,-0.7,B2), 'lev', 'levels', ()=>G.piles.visible);
+  label(lev(-3.0), P(20.9,0,-3.0), 'lev', 'levels', ()=>G.prep.visible);
+
+  { const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(rb,3)); G.rebar.add(new THREE.LineSegments(g, M.rebar)); }
+
+  // ---- axes and spacing ----
+  const AX=[['1',0],['2',16],['3',19]], AY=[['А',0],['Б',3],['В',7],['Г',11],['Д',15],['Е',18]], ZA=-0.19;
+  function dashed(a,b,mat){ const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]), mat); l.computeLineDistances(); return l; }
+  AX.forEach(a=>{ G.axes.add(dashed(P(a[1],-2.6,ZA),P(a[1],20.2,ZA),M.axis)); label(a[0], P(a[1],-3.3,ZA), 'ax', 'axes'); });
+  AY.forEach(a=>{ G.axes.add(dashed(P(-2.6,a[1],ZA),P(21.2,a[1],ZA),M.axis)); label(a[0], P(-3.3,a[1],ZA), 'ax', 'axes'); });
+  for(let i=1;i<AX.length;i++) label(String((AX[i][1]-AX[i-1][1])*1000), P((AX[i][1]+AX[i-1][1])/2,-2.2,ZA), 'dim', 'axes');
+  for(let i=1;i<AY.length;i++) label(String((AY[i][1]-AY[i-1][1])*1000), P(-2.2,(AY[i][1]+AY[i-1][1])/2,ZA), 'dim', 'axes');
+
+  // ---- ground surface and soil backdrop (averaged from boreholes св.1 and св.2, sheet 3) ----
+  const GL=-0.45, X0=-4.5, X1=23.5, Y0=-4.5, Y1=22.5;
+  { const g=new THREE.PlaneGeometry(X1-X0, Y1-Y0); g.rotateX(-Math.PI/2); const m=new THREE.Mesh(g,M.ground); m.position.copy(P((X0+X1)/2,(Y0+Y1)/2,GL)); G.ground.add(m);
+    const o=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([P(X0,Y0,GL),P(X1,Y0,GL),P(X1,Y1,GL),P(X0,Y1,GL)]), M.edge); G.ground.add(o); }
+  const SOIL=[['ІГЕ-1',GL,-1.2],['ІГЕ-2',-1.2,-3.55],['ІГЕ-3',-3.55,-4.3],['ІГЕ-4',-4.3,-6.65],['ІГЕ-5',-6.65,-11.35],['ІГЕ-6',-11.35,-14.75],['ІГЕ-7',-14.75,-15.6]];
+  const seesN = () => camera.position.z > CY-Y1, seesE = () => camera.position.x < X1-CX;
+  const soilTxt = () => seesE() && controls.getPolarAngle() > 0.45;
+  const wallN=new THREE.Group(), wallE=new THREE.Group(); G.soil.add(wallN, wallE);
+  SOIL.forEach((s,i)=>{
+    const h=s[1]-s[2], zc=(s[1]+s[2])/2;
+    const n=new THREE.Mesh(new THREE.PlaneGeometry(X1-X0,h), M.soil[i]); n.position.copy(P((X0+X1)/2,Y1,zc)); wallN.add(n);
+    const e=new THREE.Mesh(new THREE.PlaneGeometry(Y1-Y0,h), M.soil[i]); e.rotation.y=-Math.PI/2; e.position.copy(P(X1,(Y0+Y1)/2,zc)); wallE.add(e);
+    if(i){ wallN.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(X0,Y1-0.02,s[1]),P(X1,Y1-0.02,s[1])]), M.edge));
+           wallE.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([P(X1-0.02,Y0,s[1]),P(X1-0.02,Y1,s[1])]), M.edge)); }
+    label(s[0], P(X1-0.05,Y0+1.4,zc), 'soil', 'soil', soilTxt);
+  });
+  [[-10.25,M.water,'ґрунтові води 310,2 / 309,7'],[-3.2,M.waterD,'верховодка ≈ 317,0']].forEach(w=>{
+    wallN.add(dashed(P(X0,Y1-0.04,w[0]),P(X1,Y1-0.04,w[0]),w[1])); wallE.add(dashed(P(X1-0.04,Y0,w[0]),P(X1-0.04,Y1,w[0]),w[1]));
+    label(w[2], P(X1-0.05,Y0+14,w[0]+0.34), 'wat', 'soil', soilTxt);
+  });
+
+  // ---- theme ----
+  function applyTheme(){
+    const cs=getComputedStyle(document.documentElement), c=n=>new THREE.Color(cs.getPropertyValue(n).trim()||'#888888');
+    scene.background=c('--scene-sky');
+    M.slab.color=c('--c-slab'); M.pile1.color=c('--c-pile1'); M.pile2.color=c('--c-pile2'); M.fm.color=c('--c-fm'); M.fill.color=c('--c-fill');
+    M.prep.color=c('--c-prep'); M.pole.color=c('--c-pole'); M.gpu.color=c('--c-gpu'); M.ground.color=c('--c-ground');
+    M.edge.color=c('--scene-line'); M.axis.color=c('--scene-line'); M.rebar.color=c('--c-rebar'); M.hi.color=c('--accent');
+    M.water.color=c('--c-water'); M.waterD.color=c('--c-water');
+    M.soil.forEach((m,i)=>{ m.color=c('--soil-'+(i+1)); });
+  }
+  applyTheme();
+  new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});
+  if(window.matchMedia){ const mq=matchMedia('(prefers-color-scheme: dark)'); (mq.addEventListener?mq.addEventListener.bind(mq,'change'):mq.addListener.bind(mq))(applyTheme); }
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- state and controls ----
+  const on={tags:true, levels:true, nums:false, axes:true, soil:true};
+  const st={glass:false, cut:-4};
+  const plane=new THREE.Plane(new THREE.Vector3(0,0,-1), 0);
+  function concrete(){ const g=st.glass||G.rebar.visible;
+    CONCRETE.forEach(m=>{ m.transparent=g; m.opacity=g?0.22:1; m.depthWrite=!g; m.needsUpdate=true; });
+    GM.forEach(m=>{ m.transparent=g; m.opacity=g?0.3:1; m.depthWrite=!g; m.needsUpdate=true; });
+    $('conc-solid').setAttribute('aria-pressed', String(!g)); $('conc-glass').setAttribute('aria-pressed', String(g)); }
+  function bind(id,fn){ const el=$(id); el.addEventListener('change',()=>fn(el.checked)); fn(el.checked); }
+  bind('chk-piles',v=>G.piles.visible=v); bind('chk-slabs',v=>G.slabs.visible=v); bind('chk-fm',v=>G.fm.visible=v);
+  bind('chk-poles',v=>G.poles.visible=v); bind('chk-prep',v=>G.prep.visible=v); bind('chk-gpu',v=>G.gpu.visible=v);
+  bind('chk-rebar',v=>{ G.rebar.visible=v; concrete(); });
+  bind('chk-soil',v=>{ G.soil.visible=v; on.soil=v; $('legend-soil').hidden=!v; }); bind('chk-ground',v=>G.ground.visible=v);
+  bind('chk-axes',v=>{ G.axes.visible=v; on.axes=v; });
+  bind('chk-tags',v=>on.tags=v); bind('chk-levels',v=>on.levels=v); bind('chk-nums',v=>on.nums=v);
+  $('conc').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    st.glass = b.dataset.conc==='glass';
+    if(!st.glass && G.rebar.visible){ $('chk-rebar').checked=false; G.rebar.visible=false; }
+    concrete(); });
+  function setCut(v){ st.cut=v; const act=v>-4; plane.constant=CY-v; renderer.clippingPlanes=act?[plane]:[];
+    $('cut-out').textContent = act ? (v.toFixed(1).replace('.',',')+' м від осі А') : 'вимкнено'; }
+  $('cut').addEventListener('input',e=>setCut(parseFloat(e.target.value))); setCut(parseFloat($('cut').value));
+
+  // ---- views ----
+  const V={
+    iso:  {t:[0,4.5,0],     p:[-34,24,44]},
+    top:  {t:[0,0,0.5],     p:[0,66,0.55]},
+    south:{t:[0,3,0],       p:[0,5,70]},
+    west: {t:[0,3,0],       p:[-70,5,0]},
+    piles:{t:[-1,-4.6,3],   p:[-21,-2.2,23]},
+    fm:   {t:[9.5,-0.9,9],  p:[17.5,3.6,20.5]}
+  };
+  let fly=null;
+  const fit=()=>{ const a=viewer.clientWidth/Math.max(1,viewer.clientHeight); return Math.max(1, 1.35/a); };
+  function go(name, instant){
+    const v=V[name], k=fit(), t=new THREE.Vector3().fromArray(v.t), p=new THREE.Vector3().fromArray(v.p).sub(t).multiplyScalar(k).add(t);
+    document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.view===name)));
+    if(instant||reduce){ camera.position.copy(p); controls.target.copy(t); fly=null; controls.update(); }
+    else fly={p0:camera.position.clone(), t0:controls.target.clone(), p1:p, t1:t, s:performance.now()};
+  }
+  $('views').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) go(b.dataset.view); });
+  controls.addEventListener('start',()=>{ fly=null; document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed','false')); });
+
+  // ---- picking ----
+  const ray=new THREE.Raycaster(), ptr=new THREE.Vector2(); let hi=null, down=null;
+  const shown=o=>{ for(;o;o=o.parent) if(!o.visible) return false; return true; };
+  function select(mesh){
+    if(hi){ hi.parent.remove(hi); hi.geometry.dispose(); hi=null; }
+    const card=$('card');
+    if(!mesh){ card.hidden=true; return; }
+    hi=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,25), M.hi); hi.renderOrder=99; hi.raycast=function(){}; mesh.add(hi);
+    const d=mesh.userData.info;
+    $('card-title').textContent=d.title; $('card-sub').textContent=d.sub||'';
+    const dl=$('card-rows'); dl.textContent='';
+    const rows=d.rows.slice();
+    if(d.g && window.GPU_EST){ const u=window.GPU_EST.unit(d.g); if(u){ rows.push(['Матеріали на 1 шт.',u.mat]); if(u.all) rows.push(['З роботами на 1 шт.',u.all]); } }
+    rows.forEach(r=>{ const dt=document.createElement('dt'), dd=document.createElement('dd'); dt.textContent=r[0]; dd.textContent=r[1]; dl.appendChild(dt); dl.appendChild(dd); });
+    const n=$('card-note'); n.hidden=!d.note; n.textContent=d.note||'';
+    card.hidden=false; $('hint').hidden=true;
+  }
+  cv.addEventListener('pointerdown',e=>{ down={x:e.clientX,y:e.clientY}; });
+  cv.addEventListener('pointerup',e=>{
+    if(!down || Math.hypot(e.clientX-down.x,e.clientY-down.y)>5){ down=null; return; } down=null;
+    const r=cv.getBoundingClientRect(); ptr.set((e.clientX-r.left)/r.width*2-1, -(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(ptr,camera);
+    const cutOn=st.cut>-4;
+    const hits=ray.intersectObjects(pickables,false).filter(h=>shown(h.object) && (!cutOn || plane.distanceToPoint(h.point)>=-1e-4));
+    // the translucent GPU block yields to anything solid right behind it
+    let h=hits[0]; if(h && (st.glass||G.rebar.visible) && h.object.parent===gpuGrp){ const nx=hits.find(q=>q.object.parent!==gpuGrp); if(nx) h=nx; }
+    select(h?h.object:null);
+  });
+  $('card-close').addEventListener('click',()=>select(null));
+
+  // ---- frame ----
+  const v3=new THREE.Vector3();
+  function placeLabels(){
+    const w=viewer.clientWidth, h=viewer.clientHeight, cutOn=st.cut>-4, taken=[];
+    for(const L of labels){
+      let vis = on[L.layer] && (!L.vis || L.vis()) && (!cutOn || plane.distanceToPoint(L.pos)>=0), x=0, y=0;
+      if(vis){ v3.copy(L.pos).project(camera); x=(v3.x+1)/2*w; y=(1-v3.y)/2*h;
+        vis = v3.z>-1 && v3.z<1 && x>L.w/2-6 && x<w-L.w/2+6 && y>L.h/2-6 && y<h-L.h/2+6; }
+      if(vis){ const r=[x-L.w/2-2, y-L.h/2-2, x+L.w/2+2, y+L.h/2+2];
+        for(const q of taken) if(r[0]<q[2] && r[2]>q[0] && r[1]<q[3] && r[3]>q[1]){ vis=false; break; }
+        if(vis) taken.push(r); }
+      if(vis!==L.on){ L.el.hidden=!vis; L.on=vis; }
+      if(vis) L.el.style.transform='translate(-50%,-50%) translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
+    }
+  }
+  function resize(){ const w=viewer.clientWidth, h=viewer.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); measure(); }
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(viewer); else window.addEventListener('resize',resize);
+  labels.sort((a,b)=>a.pr-b.pr);
+  resize(); concrete(); go('iso', true);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(fly){ let t=Math.min(1,(now-fly.s)/650); t=t*t*(3-2*t);
+      camera.position.lerpVectors(fly.p0,fly.p1,t); controls.target.lerpVectors(fly.t0,fly.t1,t); if(t>=1) fly=null; }
+    controls.update();
+    wallN.visible=seesN(); wallE.visible=seesE();
+    renderer.render(scene,camera);
+    placeLabels();
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
