@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', 'src', 'draw.py')
 DATA = json.load(open(os.path.join(HERE, 'route_data.json'), encoding='utf-8'))
 DATE = '21.10.2026'
-TOTAL = 7
+TOTAL = 8
 
 
 def rep(s, a, b, n=1):
@@ -93,13 +93,13 @@ if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == '--q':
     print(json.dumps(quantities(), indent=1, ensure_ascii=False))
     sys.exit()
 
-import route_sheets   # noqa: E402  (аркуші 1–3: план, профіль, розрахунок і перекладання)
+import route_sheets   # noqa: E402  (аркуші 1–4: план, профіль, розрахунок і перекладання, заземлення)
 
 if __name__ == '__main__':
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import mm
     out = sys.argv[1]
-    m1 = load_variant(1, (4, 5)); m2 = load_variant(2, (6, 7))
+    m1 = load_variant(1, (5, 6)); m2 = load_variant(2, (7, 8))
     c = canvas.Canvas(out, pagesize=(m1.PW * mm, m1.PH * mm))
     c.setTitle('ГалКат, площадка 20: BESS навпроти ГПУ, КЛ-6 кВ і зв’язок до РП «Алюміній», перекладання КЛ, фундаменти у двох варіантах')
     c.setAuthor('Ескіз за кресленням траси КЛ-6 кВ (знімок), томом 4 КБ, генпланом 2023 і кресленнями Golen')
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     route_sheets.sheet_plan(c, m1, DATA, q)
     route_sheets.sheet_profile(c, m1, DATA, q)
     route_sheets.sheet_calc(c, m1, DATA, q)
+    route_sheets.sheet_ground(c, m1, DATA, q)
     m1.sheet_foundation(c); m1.sheet_rebar(c)
     m2.sheet_foundation(c); m2.sheet_rebar(c)
     c.save()
