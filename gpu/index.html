@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="ГПУ-1 і ГПУ-2 на вул. Конюшинній, 20 у Львові: палі, плити Фпм-1 і Фм-1 за томом 4 КБ, траса КЛ-6 кВ до РП «Алюміній», BESS навпроти ГПУ з двома варіантами фундаменту, перекладання існуючих КЛ 6 кВ, канал зв’язку, розрахунок кабелів, перевірка відстаней за ПУЕ і кошторис.">
+<meta name="description" content="ГПУ-1 і ГПУ-2 на вул. Конюшинній, 20 у Львові: палі, плити Фпм-1 і Фм-1 за томом 4 КБ, траса КЛ-6 кВ до РП «Алюміній», BESS навпроти ГПУ з двома варіантами фундаменту, перекладання існуючих КЛ 6 кВ, канал зв’язку, розрахунок кабелів, перевірка відстаней за ПУЕ, обсяги матеріалів.">
 <style>
 :root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 html,body{margin:0}
@@ -176,7 +176,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
 <div class="wrap">
   <header>
     <h1>ГПУ, BESS і КЛ-6 кВ · Конюшинна, 20</h1>
-    <span class="sub">ГПУ на палях, BESS навпроти ГПУ, КЛ-6 кВ і зв’язок до РП «Алюміній», перекладання існуючих КЛ, кошторис</span>
+    <span class="sub">ГПУ на палях, BESS навпроти ГПУ, КЛ-6 кВ і зв’язок до РП «Алюміній», перекладання існуючих КЛ, обсяги матеріалів</span>
     <span class="status">Модель для огляду</span>
   </header>
 
@@ -415,48 +415,19 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
 
   <section class="est" id="est">
     <div class="est-head">
-      <h2>Кошторис матеріалів і робіт</h2>
-      <span class="sub">кількості за специфікаціями тому КБ · ціни орієнтовні, їх можна змінити</span>
+      <h2>Обсяги матеріалів і робіт</h2>
+      <span class="sub">ГПУ: палі, плити Фпм-1, фундаменти Фм-1, стояки · кількості за специфікаціями тому КБ, без цін</span>
     </div>
     <div class="tiles">
       <div class="tile"><div class="l">Арматура і штаба</div><div class="v" id="t-steel">—</div><div class="s" id="t-steel-s"></div></div>
       <div class="tile"><div class="l">Бетон</div><div class="v" id="t-conc">—</div><div class="s" id="t-conc-s"></div></div>
-      <div class="tile"><div class="l">Матеріали</div><div class="v" id="t-mat">—</div><div class="s">за цінами з таблиці</div></div>
-      <div class="tile"><div class="l">Роботи</div><div class="v" id="t-work">—</div><div class="s">за розцінками «від»</div></div>
-      <div class="tile sum"><div class="l">Разом</div><div class="v" id="t-all">—</div><div class="s" id="t-all-s"></div></div>
+      <div class="tile"><div class="l">Палі CFA Ø420</div><div class="v" id="t-pile">—</div><div class="s" id="t-pile-s"></div></div>
     </div>
-    <div class="est-opts">
-      <label for="waste-r">Запас арматури, % <input type="number" id="waste-r" min="0" max="30" step="1" value="5"></label>
-      <label for="waste-c">Запас бетону конструкцій, % <input type="number" id="waste-c" min="0" max="30" step="1" value="2"></label>
-      <label for="waste-cp">Перевитрата бетону паль, % <input type="number" id="waste-cp" min="0" max="40" step="1" value="10"></label>
-      <label for="est-works"><input type="checkbox" id="est-works" checked> Рахувати роботи</label>
-      <button type="button" id="est-reset">Повернути початкові ціни</button>
-    </div>
-    <div class="est-cols">
-      <div>
-        <h3>За елементами</h3>
-        <div class="tw"><table>
-          <thead><tr><th>Позиція</th><th class="n">За проєктом</th><th class="n">Із запасом</th><th class="n">Ціна, грн</th><th class="n">Сума, грн</th></tr></thead>
-          <tbody id="est-rows"></tbody>
-        </table></div>
-        <p class="tip" id="est-miss"></p>
-      </div>
-      <div>
-        <h3>Ціни</h3>
-        <div class="tw"><table style="min-width:380px">
-          <thead><tr><th>Матеріал або робота</th><th class="n">Грн за од.</th></tr></thead>
-          <tbody id="est-prices"></tbody>
-        </table></div>
-      </div>
-    </div>
-    <p class="src">Запаси 5, 2 і 10 % — мої припущення, а не дані проєкту: специфікації дають теоретичні кількості, фактичні визначає виконавець. Ціни взято з відкритих прайсів у жовтні 2026 року:
-      арматура — <a href="https://metinvest-smc.com/ua/lviv/products/armatura/" target="_blank" rel="noopener">Метінвест-СМЦ, Львів</a>;
-      бетон — <a href="https://ibud.ua/ua/r47-lvov/c128-beton" target="_blank" rel="noopener">ibud.ua, Львів</a>;
-      штаба — <a href="https://prom.ua/Smuga-staleva.html" target="_blank" rel="noopener">Prom.ua</a>;
-      стояк — <a href="https://ukrspetsbeton.com.ua/praisy-companii/127509" target="_blank" rel="noopener">Укрспецбетон</a>;
-      палі — <a href="https://zmu.net.ua/uk/p/497165307-buroinekcionnye-svai-cfa/" target="_blank" rel="noopener">ЗМУ</a> і <a href="https://bmk-misto.com.ua/buroinektsiyni-pali" target="_blank" rel="noopener">БМК Місто</a>;
-      загальнобудівельні роботи — <a href="https://budver.com/fundament" target="_blank" rel="noopener">budver.com</a> і <a href="https://rating-remont-kvartir.com.ua/ua/rozcinki-na-betonni-roboti/" target="_blank" rel="noopener">rating-remont-kvartir.com.ua</a>.
-      Розцінки на роботи подано як мінімальні «від», тому реальна вартість робіт буде вищою. У суму не входять доставка, бетононасос, доплати за W8 і F150, шпунтове огородження, водовідлив, випробування і контроль паль, геодезія. Це не офіційний кошторис: його складає кошторисник за державними нормами.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Позиція</th><th class="n">За проєктом</th><th class="n">Із запасом</th></tr></thead>
+      <tbody id="est-rows"></tbody>
+    </table></div>
+    <p class="src">Запаси — арматура 5 %, бетон конструкцій 2 %, бетон паль 10 % — припущення, а не дані проєкту: специфікації дають теоретичні кількості, фактичні визначає виконавець. Обсяги, позначені «≈», взято з геометрії моделі. Фундаменти BESS і PCS — у таблиці розділу вище і в PDF-кресленнях.</p>
   </section>
 
   <div class="data">
@@ -566,113 +537,52 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
 <script>
 (function(){
   const $ = id => document.getElementById(id);
-  // price list: m = material, w = work; def = null means no public price was found
-  const PR = [
-    {id:'s16', k:'m', name:'Арматура А500С Ø16', u:'т', def:48500, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
-    {id:'s12', k:'m', name:'Арматура А500С Ø12', u:'т', def:48500, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
-    {id:'s10', k:'m', name:'Арматура А500С Ø10', u:'т', def:49100, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
-    {id:'s8',  k:'m', name:'Арматура А240С Ø8', u:'т', def:50385, src:'Метінвест-СМЦ, Львів, 11.10.2026'},
-    {id:'pl',  k:'m', name:'Штаба сталева 40×4', u:'т', def:38225, src:'Prom.ua, Ст3пс'},
-    {id:'c25', k:'m', name:'Бетон С25/30 (В30)', u:'м³', def:4000, src:'ibud.ua, Львів; без доплат за W8, F150'},
-    {id:'c30', k:'m', name:'Бетон С30/35 (В35)', u:'м³', def:4000, src:'ibud.ua, Львів'},
-    {id:'c8',  k:'m', name:'Бетон С8/10 (В10)', u:'м³', def:3500, src:'ibud.ua, Львів'},
-    {id:'pole',k:'m', name:'Стояк СК-22.1-2.1', u:'шт.', def:37245, src:'Укрспецбетон'},
-    {id:'mast',k:'m', name:'Мастика бітумна холодна', u:'кг', def:null, src:'ціну не знайдено'},
-    {id:'roll',k:'m', name:'Гідроізоляція рулонна', u:'м²', def:null, src:'ціну не знайдено'},
-    {id:'sand',k:'m', name:'Пісок середній або крупний', u:'м³', def:null, src:'ціну не знайдено'},
-    {id:'pipe',k:'m', name:'Гофротруба ПНД Ø110/94', u:'м', def:null, src:'ціну не знайдено'},
-    {id:'w_pile',k:'w', name:'Влаштування паль CFA Ø420', u:'м', def:600, src:'ЗМУ, БМК Місто; «від», без матеріалів'},
-    {id:'w_mob', k:'w', name:'Перебазування бурової установки', u:'посл.', def:7000, src:'БМК Місто, Київ; «від»'},
-    {id:'w_reb', k:'w', name:'В\'язання арматури і каркасів', u:'т', def:12540, src:'budver.com; «від»'},
-    {id:'w_form',k:'w', name:'Опалубка', u:'м²', def:495, src:'budver.com; «від»'},
-    {id:'w_conc',k:'w', name:'Укладання бетону', u:'м³', def:1100, src:'rating-remont-kvartir.com.ua; «від»'},
-    {id:'w_exc', k:'w', name:'Розробка ґрунту', u:'м³', def:660, src:'budver.com; «від»'},
-    {id:'w_fill',k:'w', name:'Засипка піском з ущільненням', u:'м³', def:550, src:'budver.com; «від»'},
-    {id:'w_coat',k:'w', name:'Гідроізоляція обмазувальна, 2 шари', u:'м²', def:110, src:'budver.com; «від»'},
-    {id:'w_roll',k:'w', name:'Гідроізоляція рулонна', u:'м²', def:132, src:'budver.com; «від»'},
-    {id:'w_pole',k:'w', name:'Монтаж стояка із замонолічуванням', u:'шт.', def:null, src:'ціну не знайдено'}
-  ];
-  const BY = {}; PR.forEach(p=>BY[p.id]=p);
-  // quantities: [price id, quantity for the whole group, waste key, note]
+  // materials and works: id → [name, unit, kind]
+  const P = {s16:['Арматура А500С Ø16','т','m'], s12:['Арматура А500С Ø12','т','m'], s10:['Арматура А500С Ø10','т','m'], s8:['Арматура А240С Ø8','т','m'],
+    pl:['Штаба сталева 40×4','т','m'], c25:['Бетон С25/30 (В30)','м³','m'], c30:['Бетон С30/35 (В35)','м³','m'], c8:['Бетон С8/10 (В10)','м³','m'],
+    pole:['Стояк СК-22.1-2.1','шт.','m'], mast:['Мастика бітумна холодна','кг','m'], roll:['Гідроізоляція рулонна','м²','m'], sand:['Пісок середній або крупний','м³','m'],
+    pipe:['Гофротруба ПНД Ø110/94','м','m'], w_pile:['Буріння і бетонування паль CFA Ø420','м','w'], w_reb:['В\'язання арматури і каркасів','т','w'],
+    w_form:['Опалубка','м²','w'], w_conc:['Укладання бетону','м³','w'], w_exc:['Розробка ґрунту','м³','w'], w_fill:['Засипка піском з ущільненням','м³','w'],
+    w_coat:['Гідроізоляція обмазувальна, 2 шари','м²','w'], w_roll:['Гідроізоляція рулонна, укладання','м²','w'], w_pole:['Монтаж стояка із замонолічуванням','шт.','w']};
+  // [id, quantity for the whole group, reserve key, note]
   const GROUPS = [
-    {id:'g1', name:'Палі ПБІ-1', n:28, src:'арк. 2, 4, 5, 7', items:[
+    {name:'Палі ПБІ-1', n:28, src:'арк. 2, 4, 5, 7', items:[
       ['c25',31.08,'cp','28 × 1,11 м³'],['s16',2.189,'r'],['s8',0.2848,'r','спіраль'],['pl',0.4746,'r','фіксатори і кільця'],
       ['w_pile',224,null,'28 × 8,0 м'],['w_reb',2.9484,null,'каркаси Крп-1']]},
-    {id:'g2', name:'Палі ПБІ-2', n:8, src:'арк. 2, 4, 6, 8', items:[
+    {name:'Палі ПБІ-2', n:8, src:'арк. 2, 4, 6, 8', items:[
       ['c25',7.2,'cp','8 × 0,90 м³'],['s16',0.5117,'r'],['s8',0.0662,'r','спіраль'],['pl',0.1085,'r','фіксатори і кільця'],
       ['w_pile',52,null,'8 × 6,5 м'],['w_reb',0.6864,null,'каркаси Крп-2']]},
-    {id:'g3', name:'Плити Фпм-1', n:2, src:'арк. 2, 9–13', items:[
+    {name:'Плити Фпм-1', n:2, src:'арк. 2, 9–13', items:[
       ['c25',76,'c','2 × 38 м³'],['c8',13.2,'c','підготовка, 2 × 6,6 м³'],['s12',3.1106,'r'],['s10',0.6258,'r'],
-      ['pipe',60,null,'2 × 30 м, арк. 9'],['roll',127,null,'під плитами, з геометрії'],['mast',98.4,null,'бічні грані, 2 шари по 1 кг/м²'],['sand',3.0,null,'≈, у контурі підготовки'],
-      ['w_reb',3.7364,null],['w_form',51.6,null,'бічні грані й отвори, з геометрії'],['w_conc',89.2,null,'плити й підготовка'],
-      ['w_coat',49.2,null,'з геометрії'],['w_roll',127,null,'з геометрії'],['w_exc',61.0,null,'≈, у контурі підготовки'],['w_fill',3.0,null,'≈']]},
-    {id:'g4', name:'Фундаменти Фм-1', n:2, src:'арк. 2, 14–16', items:[
+      ['pipe',60,null,'2 × 30 м, арк. 9'],['roll',127,null,'≈, під плитами'],['mast',98.4,null,'≈, бічні грані, 2 шари по 1 кг/м²'],['sand',3.0,null,'≈, у контурі підготовки'],
+      ['w_reb',3.7364,null],['w_form',51.6,null,'≈, бічні грані й отвори'],['w_conc',89.2,null,'плити й підготовка'],
+      ['w_coat',49.2,null,'≈'],['w_roll',127,null,'≈'],['w_exc',61.0,null,'≈, у контурі підготовки'],['w_fill',3.0,null,'≈']]},
+    {name:'Фундаменти Фм-1', n:2, src:'арк. 2, 14–16', items:[
       ['c25',16.8,'c','2 × 8,4 м³'],['c30',2.6,'c','замонолічування, 2 × 1,3 м³'],['c8',1.2,'c','підготовка, 2 × 0,6 м³'],['s12',0.4319,'r'],['s10',0.3618,'r'],
-      ['roll',11.5,null,'під фундаментами, з геометрії'],['mast',102,null,'2 шари по 1 кг/м²'],['sand',17.4,null,'≈, у контурі підготовки'],
+      ['roll',11.5,null,'≈, під фундаментами'],['mast',102,null,'≈, 2 шари по 1 кг/м²'],['sand',17.4,null,'≈, у контурі підготовки'],
       ['w_reb',0.7937,null],['w_form',55.1,null,'з отвороутворювачем стакана'],['w_conc',20.6,null],
-      ['w_coat',51.0,null,'з геометрії'],['w_roll',11.5,null,'з геометрії'],['w_exc',34.5,null,'≈, у контурі підготовки'],['w_fill',17.4,null,'≈']]},
-    {id:'g5', name:'Стояки СК-22.1-2.1', n:2, src:'арк. 14, 15', items:[ ['pole',2,null,'по 4 847 кг'],['w_pole',2,null] ]},
-    {id:'g6', name:'Загальне', n:1, src:'', items:[ ['w_mob',1,null] ]}
+      ['w_coat',51.0,null,'≈'],['w_roll',11.5,null,'≈'],['w_exc',34.5,null,'≈, у контурі підготовки'],['w_fill',17.4,null,'≈']]},
+    {name:'Стояки СК-22.1-2.1', n:2, src:'арк. 14, 15', items:[ ['pole',2,null,'по 4 847 кг'],['w_pole',2,null] ]}
   ];
-  const STEEL=['s16','s12','s10','s8','pl'], CONC=['c25','c30','c8'], KEY='gpu-est-v1';
-  const st={price:{}, waste:{r:5,c:2,cp:10}, works:true};
-  try{ const o=JSON.parse(localStorage.getItem(KEY)||'null'); if(o){ Object.assign(st.price,o.price||{}); Object.assign(st.waste,o.waste||{}); if(typeof o.works==='boolean') st.works=o.works; } }catch(e){}
-  const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} };
-
-  const nf=(v,d)=>v.toFixed(d).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,' ');
-  const money=v=>nf(Math.round(v),0);
-  const qty=(v,u)=>nf(v, u==='т'?3 : (u==='м³'||u==='м²')?1 : (u==='м'||u==='кг'||u==='шт.'||u==='посл.')?(v%1?1:0):1)+' '+u;
-  const price=id=> Object.prototype.hasOwnProperty.call(st.price,id) ? st.price[id] : BY[id].def;
+  const RES={r:5, c:2, cp:10}, STEEL=['s16','s12','s10','s8','pl'], CONC=['c25','c30','c8'];
+  const nf=(v,d)=>v.toFixed(d).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  const qty=(v,u)=>nf(v, u==='т'?3 : (u==='м³'||u==='м²')?1 : (v%1?1:0))+' '+u;
   const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-
-  // price table
-  $('est-prices').innerHTML = PR.map((p,i)=>
-    (i===0?'<tr class="grp"><td colspan="2">Матеріали</td></tr>':'') + (p.id==='w_pile'?'<tr class="grp"><td colspan="2">Роботи</td></tr>':'') +
-    '<tr><td><label for="price-'+p.id+'">'+esc(p.name)+', за '+p.u+'</label><small>'+esc(p.src)+'</small></td>'+
-    '<td class="n"><input type="number" id="price-'+p.id+'" min="0" step="1" inputmode="decimal" placeholder="—"></td></tr>').join('');
-  function fill(){ PR.forEach(p=>{ const v=price(p.id); $('price-'+p.id).value = v==null?'':v; });
-    $('waste-r').value=st.waste.r; $('waste-c').value=st.waste.c; $('waste-cp').value=st.waste.cp; $('est-works').checked=st.works; }
-
-  const unit={};
-  function calc(){
-    let mat=0, work=0, steel0=0, steel1=0, conc0=0, conc1=0; const miss={};
-    let html='';
-    GROUPS.forEach(g=>{
-      let gm=0, gw=0, rows='';
-      g.items.forEach(it=>{
-        const p=BY[it[0]], isW=p.k==='w'; if(isW && !st.works) return;
-        const k=it[2]? 1+(+st.waste[it[2]]||0)/100 : 1, q0=it[1], q=q0*k, pr=price(p.id), sum=pr==null?null:q*pr;
-        if(sum==null) miss[p.id]=p.name; else if(isW) gw+=sum; else gm+=sum;
-        if(STEEL.indexOf(p.id)>=0){ steel0+=q0; steel1+=q; }
-        if(CONC.indexOf(p.id)>=0){ conc0+=q0; conc1+=q; }
-        rows+='<tr'+(isW?' class="work"':'')+'><td>'+esc(p.name)+(it[3]?'<small>'+esc(it[3])+'</small>':'')+'</td>'+
-          '<td class="n">'+qty(q0,p.u)+'</td><td class="n">'+(it[2]?qty(q,p.u):'')+'</td>'+
-          '<td class="n">'+(pr==null?'<span class="nop">не задано</span>':nf(pr,0))+'</td><td class="n">'+(sum==null?'—':money(sum))+'</td></tr>';
-      });
-      if(!rows) return;
-      mat+=gm; work+=gw; unit[g.id]={mat:gm/g.n, all:(gm+gw)/g.n};
-      html+='<tr class="grp"><td colspan="4">'+esc(g.name)+(g.n>1?' · '+g.n+' шт.':'')+(g.src?' <small>'+esc(g.src)+'</small>':'')+'</td><td class="n">'+money(gm+gw)+'</td></tr>'+rows+
-        (g.n>1?'<tr class="sub"><td colspan="4">На 1 шт.</td><td class="n">'+money((gm+gw)/g.n)+'</td></tr>':'');
+  let html='', s0=0, s1=0, c0=0, c1=0, pile=0;
+  GROUPS.forEach(g=>{
+    html+='<tr class="grp"><td colspan="3">'+esc(g.name)+(g.n>1?' · '+g.n+' шт.':'')+' <small>'+esc(g.src)+'</small></td></tr>';
+    g.items.forEach(it=>{
+      const p=P[it[0]], q0=it[1], q=it[2]? q0*(1+RES[it[2]]/100) : q0;
+      if(STEEL.indexOf(it[0])>=0){ s0+=q0; s1+=q; }
+      if(CONC.indexOf(it[0])>=0){ c0+=q0; c1+=q; }
+      if(it[0]==='w_pile') pile+=q0;
+      html+='<tr'+(p[2]==='w'?' class="work"':'')+'><td>'+esc(p[0])+(it[3]?'<small>'+esc(it[3])+'</small>':'')+'</td><td class="n">'+qty(q0,p[1])+'</td><td class="n">'+(it[2]?qty(q,p[1]):'')+'</td></tr>';
     });
-    $('est-rows').innerHTML=html;
-    $('t-steel').textContent=nf(steel1,3)+' т'; $('t-steel-s').textContent='за проєктом '+nf(steel0*1000,1)+' кг';
-    $('t-conc').textContent=nf(conc1,1)+' м³'; $('t-conc-s').textContent='за проєктом '+nf(conc0,1)+' м³';
-    $('t-mat').textContent=money(mat)+' грн'; $('t-work').textContent=st.works?money(work)+' грн':'не рахуються';
-    $('t-all').textContent=money(mat+work)+' грн';
-    const names=Object.keys(miss).map(k=>miss[k]);
-    const nn=names.length, w=(nn%10===1&&nn%100!==11)?'позицію':(nn%10>=2&&nn%10<=4&&(nn%100<12||nn%100>14))?'позиції':'позицій';
-    $('t-all-s').textContent=nn?'не враховано '+nn+' '+w+' без ціни':'усі позиції з цінами';
-    $('est-miss').textContent=names.length?'Без ціни, у суму не входять: '+names.join('; ')+'. Введіть ціну в таблиці праворуч, і сума оновиться.':'';
-  }
-  fill(); calc();
-
-  $('est').addEventListener('input',e=>{ const t=e.target;
-    if(t.id&&t.id.indexOf('price-')===0){ const v=parseFloat(t.value); st.price[t.id.slice(6)] = (t.value===''||isNaN(v)||v<0) ? null : v; }
-    else if(t.id==='waste-r'||t.id==='waste-c'||t.id==='waste-cp'){ const v=parseFloat(t.value); st.waste[t.id.slice(6)]=isNaN(v)||v<0?0:Math.min(v,50); }
-    else if(t.id==='est-works') st.works=t.checked; else return;
-    calc(); save(); });
-  $('est-reset').addEventListener('click',()=>{ st.price={}; st.waste={r:5,c:2,cp:10}; st.works=true; fill(); calc(); save(); });
-  window.GPU_EST={ unit:function(id){ const u=unit[id]; if(!u) return null; return {mat:'≈ '+money(u.mat)+' грн', all: st.works?'≈ '+money(u.all)+' грн':null}; } };
+  });
+  $('est-rows').innerHTML=html;
+  $('t-steel').textContent=nf(s1,3)+' т'; $('t-steel-s').textContent='за проєктом '+nf(s0*1000,1)+' кг';
+  $('t-conc').textContent=nf(c1,1)+' м³'; $('t-conc-s').textContent='за проєктом '+nf(c0,1)+' м³';
+  $('t-pile').textContent=nf(pile,0)+' м'; $('t-pile-s').textContent='36 паль: 28 × 8,0 м і 8 × 6,5 м';
 })();
 </script>
 <script src="../vendor/three.min.js"></script>
@@ -1448,7 +1358,6 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
     $('card-title').textContent=d.title; $('card-sub').textContent=d.sub||'';
     const dl=$('card-rows'); dl.textContent='';
     const rows=d.rows.slice();
-    if(d.g && window.GPU_EST){ const u=window.GPU_EST.unit(d.g); if(u){ rows.push(['Матеріали на 1 шт.',u.mat]); if(u.all) rows.push(['З роботами на 1 шт.',u.all]); } }
     rows.forEach(r=>{ const dt=document.createElement('dt'), dd=document.createElement('dd'); dt.textContent=r[0]; dd.textContent=r[1]; dl.appendChild(dt); dl.appendChild(dd); });
     const n=$('card-note'); n.hidden=!d.note; n.textContent=d.note||'';
     card.hidden=false; $('hint').hidden=true;
