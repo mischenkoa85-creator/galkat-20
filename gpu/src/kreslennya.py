@@ -30,7 +30,7 @@ def load_variant(v, sheets):
     s = rep(s, "('Дата', '12.10.2026')", "('Дата', '%s')" % DATE)
     # ---- аркуш «Фундамент»
     s = rep(s, "frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 5)",
-            "frame(p, ['Фундамент BESS і PCS · варіант %d' % VARIANT, 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', SHEET_F, TOTAL)")
+            "frame(p, ['Фундамент BESS і PCS · варіант %d · %s' % (VARIANT, VDEPTH), 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', SHEET_F, TOTAL)")
     s = rep(s, "'5458 × 1838 у світлі, глибина 1800 від верху фундаменту'", "'5458 × 1838 у світлі, глибина %d від верху фундаменту' % (F_TOP - COL_BOT)")
     s = rep(s, "    for zz, t in ((F_TOP, '+0,300'), (0, '0,000'), (COL_BOT, '−1,500'), (BEAM_BOT, '−1,850')):\n        p.line(X(LF) + 1.2",
             "    for zz, t in ((F_TOP, '+0,300'), (0, '0,000'), (COL_BOT, LV(COL_BOT)), (BEAM_BOT, LV(BEAM_BOT))):\n        p.line(X(LF) + 1.2")
@@ -49,7 +49,7 @@ def load_variant(v, sheets):
     a0 = s.index('def sheet_rebar(c):'); a1 = s.index('# Sheet 5: 3D views')
     r = s[a0:a1]
     r = rep(r, "frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', 4, 5)",
-            "frame(p, ['Армування фундаменту · варіант %d' % VARIANT, 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', SHEET_R, TOTAL)")
+            "frame(p, ['Армування фундаменту · варіант %d · %s' % (VARIANT, VDEPTH), 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', SHEET_R, TOTAL)")
     r = rep(r, "YE = lambda y: ey0 + (y + 1950) * kk", "YE = lambda y: ey0 + (y - (BEAM_BOT - PREP)) * kk")
     r = rep(r, "(F_TOP + 1500) * kk", "(F_TOP - COL_BOT) * kk")
     r = rep(r, "chain = [(250, 300, '50'), (-50, 250, '3×100'), (-1450, -50, '7×200 = 1400'), (-1500, -1450, '50')]",
@@ -65,7 +65,7 @@ def load_variant(v, sheets):
     r = rep(r, "p.text(sx + 5.6, 115, '2040', 6.0, anchor='c', rot=90)", "p.text(sx + 5.6, 115, str(POS4 - 200), 6.0, anchor='c', rot=90)")
     s = s[:a0] + r + s[a1:]
     m = types.ModuleType('draw_v%d' % v)
-    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'TOTAL': TOTAL})
+    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'TOTAL': TOTAL, 'VDEPTH': '1,80 м' if v == 1 else '1,50 м'})
     exec(compile(s, 'draw_v%d.py' % v, 'exec'), m.__dict__)
     m.POS4 = [x for x in m.REBAR if x[1] == '4'][0][4]
     m.W_LEN = 2 * ((m.COLX[1] - m.BEAM) + (m.COLX[2] - m.COLX[1] - m.BEAM) + (m.COLX[3] - m.COLX[2] - m.BEAM)) + 2 * (m.BF - 2 * m.BEAM)
@@ -113,3 +113,15 @@ if __name__ == '__main__':
     m2.sheet_foundation(c); m2.sheet_rebar(c)
     c.save()
     print('saved', out)
+    # фундамент окремо для друку: варіант 1 (1,80 м) — аркуші 5–6, варіант 2 (1,50 м) — аркуші 7–8
+    from pypdf import PdfReader, PdfWriter
+    rd = PdfReader(out); od = os.path.dirname(os.path.abspath(out))
+    for v, pages, name, t in ((1, (4, 5), 'kreslennya-fundament-bess-var1-1-80.pdf', 'варіант 1, 1,80 м (низ −1,850)'),
+                              (2, (6, 7), 'kreslennya-fundament-bess-var2-1-50.pdf', 'варіант 2, 1,50 м (низ −1,500)')):
+        w = PdfWriter()
+        for i in pages:
+            w.add_page(rd.pages[i])
+        w.add_metadata({'/Title': 'ГалКат, площадка 20: фундамент BESS і PCS — ' + t, '/Author': 'Ескіз за кресленнями Golen'})
+        with open(os.path.join(od, name), 'wb') as fh:
+            w.write(fh)
+        print('saved', name)

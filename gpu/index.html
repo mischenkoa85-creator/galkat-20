@@ -81,6 +81,10 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(22px,3.2vw,30px)
 .card dl{grid-template-columns:minmax(0,auto) minmax(0,1fr);font-size:13px;gap:3px 12px}
 .card dd{white-space:normal;font-size:12.5px}
 .card .note{margin:0;padding:6px 8px;background:var(--accent-soft);font-size:12.5px}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+a.btn,button.btn{display:inline-block;font:inherit;font-size:13px;color:var(--ink);background:transparent;border:1px solid var(--line);padding:5px 10px;border-radius:2px;cursor:pointer;text-decoration:none}
+a.btn:hover,button.btn:hover{border-color:var(--ink)}
+a.btn.main,button.btn.main{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .legend{display:flex;flex-wrap:wrap;align-items:center;gap:7px 20px;background:var(--panel);border-top:1px solid var(--line);padding:9px 12px;font-size:13px;line-height:1.3}
 .legend .row{display:flex;gap:7px;align-items:center}
 .legend .sw{flex:none;width:18px;height:12px;border:1px solid var(--ink)}
@@ -192,6 +196,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
           </div>
           <dl id="card-rows"></dl>
           <p class="note" id="card-note" hidden></p>
+          <div class="acts" id="card-acts" hidden></div>
         </div>
       </div>
       <div class="legend" id="legend">
@@ -280,9 +285,14 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
       <div>
         <h2>Фундамент BESS і PCS</h2>
         <div class="btns" id="bvar">
-          <button type="button" data-var="1" aria-pressed="true">Фундамент 1 · низ −1,850</button>
-          <button type="button" data-var="2" aria-pressed="false">Фундамент 2 · низ −1,500</button>
+          <button type="button" data-var="1" aria-pressed="true">Варіант 1 · 1,80 м · низ −1,850</button>
+          <button type="button" data-var="2" aria-pressed="false">Варіант 2 · 1,50 м · низ −1,500</button>
         </div>
+        <div class="acts" id="bprint" style="margin-top:8px">
+          <button type="button" class="btn" data-print="1">Друкувати креслення · 1,80 м</button>
+          <button type="button" class="btn" data-print="2">Друкувати креслення · 1,50 м</button>
+        </div>
+        <p class="tip">Креслення фундаменту й армування, 2 аркуші A3 на варіант. Або натисніть на фундамент у 3D — у картці буде кнопка друку саме цього варіанта.</p>
         <p class="tip">BESS і PCS стоять навпроти ГПУ, у червоному прямокутнику. Дві існуючі КЛ 6 кВ з-під них перекладено в обхід зі сходу.</p>
       </div>
       <div>
@@ -378,7 +388,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
             <tr><td>Тиск під балкою</td><td class="n">≈ 120 кПа</td><td class="n">≈ 110 кПа</td></tr>
           </tbody>
         </table></div>
-        <p class="tip"><a href="kreslennya-trasa-kl6-bess-fundamenty.pdf">Креслення, 8 аркушів A3 (PDF)</a>: план мереж з перевіркою за ПУЕ, профіль і перерізи, розрахунок кабелів і перекладання, заземлення BESS, фундамент і армування для кожного варіанта.</p>
+        <p class="tip"><a href="kreslennya-trasa-kl6-bess-fundamenty.pdf">Креслення, 8 аркушів A3 (PDF)</a> · фундамент окремо: <a href="kreslennya-fundament-bess-var1-1-80.pdf">варіант 1, 1,80 м</a>, <a href="kreslennya-fundament-bess-var2-1-50.pdf">варіант 2, 1,50 м</a>: план мереж з перевіркою за ПУЕ, профіль і перерізи, розрахунок кабелів і перекладання, заземлення BESS, фундамент і армування для кожного варіанта.</p>
       </div>
     </div>
   </section>
@@ -1112,7 +1122,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
     note:'Відсік LV / HV — на західному торці. Звідси виходять КЛ-6 кВ BESS і канал зв’язку на північ, до проколу; сюди ж заходить канал зв’язку від ГПУ (шафа EMS — умовно тут).'};
 
   // ---------------- фундамент Golen: обв'язувальна балка 350 × 350, 8 колон, цегляне заповнення; два варіанти глибини ----------------
-  const VAR={1:{bot:-1.85, name:'Варіант 1 · як у Golen', d:'низ −1,850'}, 2:{bot:-1.5, name:'Варіант 2 · глибина 1,5 м', d:'низ −1,500'}};
+  const VAR={1:{bot:-1.85, name:'Варіант 1 · 1,80 м, як у Golen', d:'низ −1,850'}, 2:{bot:-1.5, name:'Варіант 2 · 1,50 м', d:'низ −1,500'}};
   const LF=6.158, BF=2.538, BM=0.35, COLX=[0,2.0,3.808,5.808];
   function vols(v){ const ch=0.3-(VAR[v].bot+BM); return {beam:0.1225*(2*LF+2*(BF-2*BM)), cols:8*0.1225*ch, brick:BM*ch*(2*(1.65+1.458+1.65)+2*(BF-2*BM)), h:ch}; }
   function foundation(c, g, v, kind){
@@ -1121,7 +1131,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
       rows:[['Верх', '+0,300 ('+absl(zt)+')'],['Низ', VAR[v].d.replace('низ ','')+' ('+absl(zb)+')'],['±0,000 фундаменту', absl(g)+' — середня позначка землі під блоком'],
         ['Балка 350 × 350', n2(V.beam)+' м³ C25, 4Ø12, хомути Ø8 крок 200'],['Колони 8 × 350 × 350', 'h = '+n2(V.h)+' м, '+n2(V.cols)+' м³ C25'],['Кладка між колонами', n2(V.brick)+' м³, М20'],
         ['Підготовка','100 мм C8/10 під балкою (рекомендовано)']],
-      note:(v===2?'Варіант 2 — та сама конструкція, піднята підошва: колони коротші на 350 мм. Нормативну глибину промерзання для ґрунтів площадки звірити з ДБН В.2.1-10 і вишукуваннями. ':'')+'Креслення варіанта — у PDF-комплекті. Розрахунок основи робить проєктувальник.'};
+      note:(v===2?'Варіант 2 — та сама конструкція, піднята підошва: колони коротші на 350 мм. Нормативну глибину промерзання для ґрунтів площадки звірити з ДБН В.2.1-10 і вишукуваннями. ':'')+'Креслення фундаменту й армування цього варіанта — кнопка «Друкувати» нижче. Розрахунок основи робить проєктувальник.', print:v};
     const ring=extrude([[x0,y0],[x0+LF,y0],[x0+LF,y0+BF],[x0,y0+BF]],[rectPath(x0+BM,y0+BM,x0+LF-BM,y0+BF-BM)],zb,zc,M.bconc); pick(ring,info,grp); edges(ring);
     const prep=extrude([[x0-0.1,y0-0.1],[x0+LF+0.1,y0-0.1],[x0+LF+0.1,y0+BF+0.1],[x0-0.1,y0+BF+0.1]],[rectPath(x0+BM+0.1,y0+BM+0.1,x0+LF-BM-0.1,y0+BF-BM-0.1)],zb-0.1,zb,M.bprep); pick(prep,info,grp);
     [0,BF-BM].forEach(dy=>COLX.forEach(cx_=>{ const m=bx(x0+cx_,y0+dy,zc,x0+cx_+BM,y0+dy+BM,zt,M.bconc); pick(m,info,grp); edges(m); grp.add(bx(x0+cx_+0.025,y0+dy+0.025,zt,x0+cx_+0.325,y0+dy+0.325,zt+0.012,M.bsteel)); }));
@@ -1333,6 +1343,23 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
   bind('chk-bfound',v=>{ G.bfound.visible=v; });
   bind('chk-gnd',v=>{ G.gnd.visible=v; on.gnd=v; });
   bind('chk-rp',v=>{ G.rp.visible=v; on.rp=v; });
+  const PDF_BASE='';
+  const FPDF={1:{f:'kreslennya-fundament-bess-var1-1-80.pdf', t:'1,80 м'}, 2:{f:'kreslennya-fundament-bess-var2-1-50.pdf', t:'1,50 м'}};
+  const pdfUrl=v=>new URL(PDF_BASE+FPDF[v].f, location.href).href;
+  const framePrint=v=>{ try{ return new URL(pdfUrl(v)).origin===location.origin && /^https?:/.test(location.protocol) && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent); }catch(e){ return false; } };
+  function printPdf(v){
+    if(!framePrint(v)){ window.open(pdfUrl(v),'_blank','noopener'); return; }
+    const old=document.getElementById('print-frame'); if(old) old.remove();
+    const fr=document.createElement('iframe'); fr.id='print-frame'; fr.title='Друк креслення'; fr.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+    fr.onload=()=>{ setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){ window.open(pdfUrl(v),'_blank','noopener'); } },400); };
+    fr.src=pdfUrl(v); document.body.appendChild(fr);
+  }
+  function pdfCtl(v,text,cls,print){
+    if(print && framePrint(v)){ const b=document.createElement('button'); b.type='button'; b.className='btn '+cls; b.textContent=text; b.addEventListener('click',()=>printPdf(v)); return b; }
+    const a=document.createElement('a'); a.className='btn '+cls; a.href=pdfUrl(v); a.target='_blank'; a.rel='noopener'; a.textContent=text; return a;
+  }
+  $('bprint').addEventListener('click',e=>{ const b=e.target.closest('button[data-print]'); if(b) printPdf(+b.dataset.print); });
+  if(!framePrint(1)){ const B=$('bprint'); B.textContent=''; [1,2].forEach(v=>B.appendChild(pdfCtl(v,'Креслення для друку · '+FPDF[v].t+' (PDF)','',false))); }
   function applyBess(){
     SET.f[1].visible=st.fvar===1; SET.f[2].visible=st.fvar===2;
     document.querySelectorAll('#bvar button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.var===st.fvar)));
@@ -1406,6 +1433,11 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
     const rows=d.rows.slice();
     rows.forEach(r=>{ const dt=document.createElement('dt'), dd=document.createElement('dd'); dt.textContent=r[0]; dd.textContent=r[1]; dl.appendChild(dt); dl.appendChild(dd); });
     const n=$('card-note'); n.hidden=!d.note; n.textContent=d.note||'';
+    const A=$('card-acts'); A.textContent=''; A.hidden=!d.print;
+    if(d.print){ const v=d.print, o=3-v;
+      A.appendChild(pdfCtl(v,'Друкувати креслення · '+FPDF[v].t,'main',true));
+      if(framePrint(v)) A.appendChild(pdfCtl(v,'Відкрити PDF','',false));
+      A.appendChild(pdfCtl(o,'Інший варіант · '+FPDF[o].t,'',false)); }
     card.hidden=false; $('hint').hidden=true;
   }
   cv.addEventListener('pointerdown',e=>{ down={x:e.clientX,y:e.clientY}; });
