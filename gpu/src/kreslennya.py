@@ -4,12 +4,14 @@
 Фундаментні аркуші — з ../../src/draw.py (комплект площадки 20), параметризовані за глибиною.
 Запуск:  python3 kreslennya.py out.pdf"""
 import json, math, os, sys, types
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stamp
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', 'src', 'draw.py')
 DATA = json.load(open(os.path.join(HERE, 'route_data.json'), encoding='utf-8'))
 DATE = '21.10.2026'
-TOTAL = 8
+TOTAL = 9
 
 
 def rep(s, a, b, n=1):
@@ -24,10 +26,12 @@ def load_variant(v, sheets):
         s = rep(s, 'F_TOP, COL_BOT, BEAM_BOT = 300, -1500, -1850', 'F_TOP, COL_BOT, BEAM_BOT = 300, -1150, -1500')
         s = rep(s, 'COL_ST_Y = [-1450 + 200 * i for i in range(8)] + [50, 150, 250]', 'COL_ST_Y = [-1050 + 200 * i for i in range(6)] + [50, 150, 250]')
         s = rep(s, "('f', '4', 12, 'A500C', 2240, 'Г 2040 + 200', 32,", "('f', '4', 12, 'A500C', 1890, 'Г 1690 + 200', 32,")
+    f0 = s.index('def frame(p, sheet_title, scale, num, total):'); f1 = s.index('\ndef notes(', f0)
+    s = s[:f0] + 'def frame(p, sheet_title, scale, num, total):\n    STAMP(p, types.SimpleNamespace(PW=PW, PH=PH, W_VIS=W_VIS, MUTED=MUTED, INK=INK, ACC=ACC), sheet_title, scale, num, total, SRC_STAMP)\n\n' + s[f1:]
+    s = rep(s, "'Креслення є ескізом і не замінює робочу документацію. Перед бетонуванням потрібні підтвердження Golen і розрахунок проєктувальника.',",
+            "'Креслення дійсне після підписів у штампі. Перед бетонуванням — підтвердження Golen щодо закладних деталей і розрахунок основи за даними інженерно-геологічних вишукувань.',")
+    s = rep(s, "    p.dim_h(XC(0), XC(800), yb_, yb_ - 9.6, '800', size=6.2)\n", "")   # над основним написом
     s = rep(s, "assert LF == 6158 and BF == 2538", "assert LF == 6158 and BF == 2538\nLV = lambda z: ('−' if z < 0 else '+' if z > 0 else '') + ('%.3f' % (abs(z) / 1000.0)).replace('.', ',')")
-    s = rep(s, "p.text(x0 + 2, y0 + 31, 'ТзДВ «Гал-Кат», площадка № 20. УЗЕ 1,725 МВт / 5 МВт·год', 8.2, 'B')",
-            "p.text(x0 + 2, y0 + 31, 'ТзДВ «Гал-Кат», площадка № 20. ГПУ, УЗЕ 1,725 МВт / 5 МВт·год', 8.2, 'B')")
-    s = rep(s, "('Дата', '12.10.2026')", "('Дата', '%s')" % DATE)
     # ---- аркуш «Фундамент»
     s = rep(s, "frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 5)",
             "frame(p, ['Фундамент BESS і PCS · варіант %d · %s' % (VARIANT, VDEPTH), 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', SHEET_F, TOTAL)")
@@ -39,7 +43,7 @@ def load_variant(v, sheets):
     s = rep(s, "('Бетон разом', '3,72 м³'),", "('Бетон разом', fnum(V_BEAM + V_COLS, 2) + ' м³'),")
     s = rep(s, "('Кладка, площа стін (h = 1,8 м)', '23,7 м²'),", "('Кладка, площа стін (h = %s м)' % fnum((F_TOP - COL_BOT) / 1000.0, 2), fnum(W_LEN * (F_TOP - COL_BOT) / 1e6, 1) + ' м²'),")
     s = rep(s, "'Ескіз виконано за довідковим кресленням виробника (Golen, Annex 1 – Response 1, аркуш Reference Foundation Drawing of 5MWh BESS Container). Розміри в міліметрах, позначки в метрах.',",
-            "VAR_NOTE + ' Ескіз — за довідковим кресленням Golen (Annex 1 – Response 1, Reference Foundation Drawing of 5MWh BESS Container). Фундамент блока PCS — того самого типу: Golen його не дав. Розміри в мм, позначки в м від верху землі біля блока.',")
+            "VAR_NOTE + ' Креслення — за довідковим кресленням Golen (Annex 1 – Response 1, Reference Foundation Drawing of 5MWh BESS Container). Фундамент блока PCS — того самого типу: Golen його не дав. Розміри в мм, позначки в м від верху землі біля блока.',")
     s = rep(s, "'Орієнтовний тиск під підошвою балки ≈ 120 кПа (контейнер 43 т і власна вага фундаменту ≈ 24 т на площу ≈ 5,6 м²). Перевірити за ґрунтовими умовами; глибину закладання звірити з глибиною промерзання.',",
             "'Орієнтовний тиск під підошвою балки ≈ %d кПа (контейнер BESS 43 т і власна вага фундаменту ≈ %d т на площу ≈ 5,6 м²). Перевірити за ґрунтовими умовами; глибину закладання звірити з нормативною глибиною промерзання (ДБН В.2.1-10) і вишукуваннями.' % PRESS,")
     for a, b in (("наведено на аркуші 4.", "наведено на аркуші ' + str(SHEET_R) + '."), ("(аркуш 4).", "(аркуш ' + str(SHEET_R) + ').")):
@@ -65,7 +69,8 @@ def load_variant(v, sheets):
     r = rep(r, "p.text(sx + 5.6, 115, '2040', 6.0, anchor='c', rot=90)", "p.text(sx + 5.6, 115, str(POS4 - 200), 6.0, anchor='c', rot=90)")
     s = s[:a0] + r + s[a1:]
     m = types.ModuleType('draw_v%d' % v)
-    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'TOTAL': TOTAL, 'VDEPTH': '1,80 м' if v == 1 else '1,50 м'})
+    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'TOTAL': TOTAL, 'VDEPTH': '1,80 м' if v == 1 else '1,50 м',
+                       'STAMP': stamp.draw, 'types': types, 'SRC_STAMP': 'Golen Power Technology, Annex 1 – Response 1, Reference Foundation Drawing of 5MWh BESS Container'})
     exec(compile(s, 'draw_v%d.py' % v, 'exec'), m.__dict__)
     m.POS4 = [x for x in m.REBAR if x[1] == '4'][0][4]
     m.W_LEN = 2 * ((m.COLX[1] - m.BEAM) + (m.COLX[2] - m.COLX[1] - m.BEAM) + (m.COLX[3] - m.COLX[2] - m.BEAM)) + 2 * (m.BF - 2 * m.BEAM)
@@ -99,29 +104,30 @@ if __name__ == '__main__':
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import mm
     out = sys.argv[1]
-    m1 = load_variant(1, (5, 6)); m2 = load_variant(2, (7, 8))
+    m1 = load_variant(1, (6, 7)); m2 = load_variant(2, (8, 9))
     c = canvas.Canvas(out, pagesize=(m1.PW * mm, m1.PH * mm))
     c.setTitle('ГалКат, площадка 20: BESS навпроти ГПУ, КЛ-6 кВ і зв’язок до РП «Алюміній», перекладання КЛ, фундаменти у двох варіантах')
-    c.setAuthor('Ескіз за кресленням траси КЛ-6 кВ (знімок), томом 4 КБ, генпланом 2023 і кресленнями Golen')
+    c.setAuthor('За кресленням траси КЛ-6 кВ (знімок), томом 4 КБ, генпланом 2023 і кресленнями Golen')
     c.setSubject('ГПУ, УЗЕ 1,725 МВт / 5 МВт·год, КЛ-6 кВ')
     q = quantities()
     route_sheets.sheet_plan(c, m1, DATA, q)
     route_sheets.sheet_profile(c, m1, DATA, q)
     route_sheets.sheet_calc(c, m1, DATA, q)
     route_sheets.sheet_ground(c, m1, DATA, q)
+    route_sheets.sheet_apron(c, m1, DATA, q)
     m1.sheet_foundation(c); m1.sheet_rebar(c)
     m2.sheet_foundation(c); m2.sheet_rebar(c)
     c.save()
     print('saved', out)
-    # фундамент окремо для друку: варіант 1 (1,80 м) — аркуші 5–6, варіант 2 (1,50 м) — аркуші 7–8
+    # фундамент окремо для друку: варіант 1 (1,80 м) — аркуші 6–7, варіант 2 (1,50 м) — аркуші 8–9
     from pypdf import PdfReader, PdfWriter
     rd = PdfReader(out); od = os.path.dirname(os.path.abspath(out))
-    for v, pages, name, t in ((1, (4, 5), 'kreslennya-fundament-bess-var1-1-80.pdf', 'варіант 1, 1,80 м (низ −1,850)'),
-                              (2, (6, 7), 'kreslennya-fundament-bess-var2-1-50.pdf', 'варіант 2, 1,50 м (низ −1,500)')):
+    for v, pages, name, t in ((1, (5, 6), 'kreslennya-fundament-bess-var1-1-80.pdf', 'варіант 1, 1,80 м (низ −1,850)'),
+                              (2, (7, 8), 'kreslennya-fundament-bess-var2-1-50.pdf', 'варіант 2, 1,50 м (низ −1,500)')):
         w = PdfWriter()
         for i in pages:
             w.add_page(rd.pages[i])
-        w.add_metadata({'/Title': 'ГалКат, площадка 20: фундамент BESS і PCS — ' + t, '/Author': 'Ескіз за кресленнями Golen'})
+        w.add_metadata({'/Title': 'ГалКат, площадка 20: фундамент BESS і PCS — ' + t, '/Author': 'За довідковими кресленнями Golen'})
         with open(os.path.join(od, name), 'wb') as fh:
             w.write(fh)
         print('saved', name)
