@@ -392,7 +392,7 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
             <tr><td>Тиск під балкою</td><td class="n">≈ 120 кПа</td><td class="n">≈ 110 кПа</td></tr>
           </tbody>
         </table></div>
-        <p class="tip"><a href="kreslennya-trasa-kl6-bess-fundamenty.pdf">Креслення, 9 аркушів A3 (PDF)</a>: план мереж з перевіркою за ПУЕ, профіль і перерізи, розрахунок кабелів і перекладання, заземлення BESS, майданчик обслуговування, фундамент і армування для кожного варіанта. Фундамент окремо для друку: <a href="kreslennya-fundament-bess-var1-1-80.pdf">варіант 1, 1,80 м</a>, <a href="kreslennya-fundament-bess-var2-1-50.pdf">варіант 2, 1,50 м</a>.</p>
+        <p class="tip"><a href="kreslennya-trasa-kl6-bess-fundamenty.pdf">Креслення, 9 аркушів A3 (PDF)</a>: план мереж з перевіркою за ПУЕ, профіль і перерізи, розрахунок кабелів і перекладання, заземлення BESS, майданчик обслуговування, фундамент і армування для кожного варіанта. Фундамент окремо для друку: <a href="kreslennya-fundament-bess-var1-1-80.pdf">варіант 1, 1,80 м</a>, <a href="kreslennya-fundament-bess-var2-1-50.pdf">варіант 2, 1,50 м</a>. <a href="specyfikatsiia-robit-fundamenty-bess.pdf">Специфікація матеріалів і відомість обсягів робіт</a> на фундаменти, канал, заземлення і майданчик — 4 аркуші A4, обидва варіанти.</p>
       </div>
     </div>
   </section>
@@ -1148,10 +1148,11 @@ td .sw{display:inline-block;width:16px;height:0;border-top:4px solid;vertical-al
   // кабельний канал між фундаментами BESS (південь) і PCS (північ) і DC-кабелі
   function channel(set){
     const grp=new THREE.Group(), cx=set.pcs[0], ya=set.bess[1]+BF/2, yb=set.pcs[1]-BF/2, g=(set.gb+set.gp)/2, top=g+0.02, fl=top-0.08-0.45;
-    const inf={title:'Кабельний канал 600 × 450', sub:'між фундаментами BESS і PCS · попередній розрахунок, не дані Golen', rows:[['Довжина', n1(yb-ya)+' м'],['DC','8 × (1 × 300 мм² Cu)'],['Слабкі струми','BMS ↔ PCS / EMS, живлення, керування — на полиці'],['Перекриття','10 плит П-1, 800 × 478 × 80']], note:'Остаточно — за кабельним журналом Golen.'};
+    const LCH=Math.round((yb-ya)*100)*10, NSL=Math.ceil(LCH/500), WSL=Math.floor((LCH-(NSL-1)*12)/NSL);
+    const inf={title:'Кабельний канал 600 × 450', sub:'між фундаментами BESS і PCS · попередній розрахунок, не дані Golen', rows:[['Довжина', n1(yb-ya)+' м'],['DC','8 × (1 × 300 мм² Cu)'],['Слабкі струми','BMS ↔ PCS / EMS, живлення, керування — на полиці'],['Перекриття', NSL+' плит П-1, 800 × '+WSL+' × 80']], note:'Остаточно — за кабельним журналом Golen.'};
     [[cx-0.4,cx-0.3],[cx+0.3,cx+0.4]].forEach(([a,b])=>pick(bx(a,ya,fl,b,yb,top-0.08,M.bconc),inf,grp));
     pick(bx(cx-0.4,ya,fl-0.1,cx+0.4,yb,fl,M.bconc),inf,grp);
-    for(let i=0;i<10;i++){ const y1=ya+(yb-ya)*i/10+0.006, y2=ya+(yb-ya)*(i+1)/10-0.006; const m=bx(cx-0.4,y1,top-0.08,cx+0.4,y2,top,M.bprep); pick(m,inf,grp); }
+    for(let i=0;i<NSL;i++){ const y1=ya+(yb-ya)*i/NSL+0.006, y2=ya+(yb-ya)*(i+1)/NSL-0.006; const m=bx(cx-0.4,y1,top-0.08,cx+0.4,y2,top,M.bprep); pick(m,inf,grp); }
     const mP=new THREE.MeshLambertMaterial({color:0xc0392b}), mN=new THREE.MeshLambertMaterial({color:0x1f2d3a}), zD=fl+0.03;
     for(let i=0;i<8;i++){ const d=-0.14+0.04*i, pA=[cx+1.57,set.pcs[1]-0.53], pB=[cx-2.61,set.bess[1]+0.67];
       tube([[pA[0],pA[1],set.gp+0.5],[pA[0],pA[1],zD],[cx+d,pA[1],zD],[cx+d,pB[1],zD],[pB[0],pB[1],zD],[pB[0],pB[1],set.gb+0.5]],0.017,i%2?mN:mP,inf,grp); }

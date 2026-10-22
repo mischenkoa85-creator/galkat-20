@@ -28,7 +28,7 @@ def wrap(p, s, width, size, font='R'):
 def draw(p, M, title, scale, num, total, src):
     W_VIS, MUTED, INK = M.W_VIS, M.MUTED, M.INK
     p.rect(20, 5, M.PW - 25, M.PH - 10, w=0.5)
-    x0, y0, w_, h_ = 230.0, 5.0, 185.0, 55.0
+    x0, y0, w_, h_ = M.PW - 190.0, 5.0, 185.0, 55.0          # A3 — 230, A4 книжкова — 20
     p.rect(x0, y0, w_, h_, w=0.5)
     xl = x0 + 65.0
     p.line(xl, y0, xl, y0 + h_, 0.5)
@@ -99,3 +99,26 @@ def draw(p, M, title, scale, num, total, src):
     yy = y0 + 8.6
     for ln in wrap(p, src.replace('Джерела: ', '').replace('Джерело геометрії: ', ''), 70, 4.8)[:3]:
         p.text(xl + 1.5, yy, ln, 4.8, col=MUTED); yy -= 2.2
+
+
+def draw_next(p, M, title, num, code=''):
+    """Основний напис наступних аркушів текстового документа, 185 × 15 мм (форма 6 ДСТУ Б А.2.4-4, спрощено)."""
+    W_VIS, MUTED = M.W_VIS, M.MUTED
+    p.rect(20, 5, M.PW - 25, M.PH - 10, w=0.5)
+    x0, y0, w_, h_ = M.PW - 190.0, 5.0, 185.0, 15.0
+    p.rect(x0, y0, w_, h_, w=0.5)
+    cw = [7, 10, 10, 13, 15, 10]
+    xx = x0
+    for c in cw:
+        xx += c; p.line(xx, y0, xx, y0 + h_, W_VIS)
+    for k in (1, 2):
+        p.line(x0, y0 + k * 5, x0 + 65, y0 + k * 5, W_VIS)
+    xx = x0
+    for t, c in zip(['Зм.', 'Кільк.', 'Арк.', '№ док.', 'Підпис', 'Дата'], cw):
+        p.text(xx + c / 2, y0 + 1.4, t, 4.8, anchor='c', col=MUTED); xx += c
+    xa = x0 + w_ - 10
+    p.line(xa, y0, xa, y0 + h_, 0.5); p.line(xa, y0 + 8, x0 + w_, y0 + 8, W_VIS)
+    p.text(xa + 5, y0 + 10.4, 'Аркуш', 4.8, anchor='c', col=MUTED)
+    p.text(xa + 5, y0 + 2.6, str(num), 8.5, 'B', anchor='c')
+    p.text(x0 + 67, y0 + 9.4, OBJ, fit(p, OBJ, 106, 6.4, 'B'), 'B')
+    p.text(x0 + 67, y0 + 3.6, title, fit(p, title, 106, 6.6), col=MUTED)

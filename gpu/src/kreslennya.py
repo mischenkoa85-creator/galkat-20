@@ -12,6 +12,10 @@ SRC = os.path.join(HERE, '..', '..', 'src', 'draw.py')
 DATA = json.load(open(os.path.join(HERE, 'route_data.json'), encoding='utf-8'))
 DATE = '21.10.2026'
 TOTAL = 9
+_B = DATA['bess'][0]
+CH_LEN = int(round(((_B['pcs'][1] - _B['bess'][1]) - 2 * 1.269) * 1000 / 10.0)) * 10     # розрив між фундаментами, мм
+SLAB_N_ = int(math.ceil(CH_LEN / 500.0))                                                     # плити П-1 ≤ 500 мм завширшки
+SLAB_L_ = int((CH_LEN - (SLAB_N_ - 1) * 12) // SLAB_N_)                                      # шви між плитами ≈ 12 мм
 
 
 def rep(s, a, b, n=1):
@@ -26,6 +30,14 @@ def load_variant(v, sheets):
         s = rep(s, 'F_TOP, COL_BOT, BEAM_BOT = 300, -1500, -1850', 'F_TOP, COL_BOT, BEAM_BOT = 300, -1150, -1500')
         s = rep(s, 'COL_ST_Y = [-1450 + 200 * i for i in range(8)] + [50, 150, 250]', 'COL_ST_Y = [-1050 + 200 * i for i in range(6)] + [50, 150, 250]')
         s = rep(s, "('f', '4', 12, 'A500C', 2240, 'Г 2040 + 200', 32,", "('f', '4', 12, 'A500C', 1890, 'Г 1690 + 200', 32,")
+    # кабельний канал між фундаментами: довжина — за фактичним розривом BESS ↔ PCS (22.10.2026: строго навпроти ГПУ, розрив 5462 мм)
+    s = rep(s, "CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 450, 80", "CH_L, CH_W, CH_T, CH_D, CH_COV = %d, 600, 100, 450, 80" % CH_LEN)
+    s = rep(s, "SLAB_N, SLAB_L = 10, 478", "SLAB_N, SLAB_L = %d, %d" % (SLAB_N_, SLAB_L_))
+    s = rep(s, "U_Z = [50 + 200 * i for i in range(25)]", "U_Z = [50 + 200 * i for i in range(int((CH_L - 100) // 200) + 1)] + ([CH_L - 50] if (CH_L - 100) % 200 else [])")
+    s = rep(s, "('c', '7', 8, 'A500C', 4840, '', 8,", "('c', '7', 8, 'A500C', CH_L - 60, '', 8,")
+    s = rep(s, "('s', '9', 8, 'A500C', 430, '', 5,", "('s', '9', 8, 'A500C', SLAB_L - 48, '', 5,")
+    s = rep(s, "'c': 'Кабельний канал, монолітний, L = 4900, 1 шт.',", "'c': 'Кабельний канал, монолітний, L = %d, 1 шт.' % CH_L,")
+    s = rep(s, "'s': 'Плита перекриття П-1, 800 × 478 × 80, на 1 шт. (усього %d)' % SLAB_N,", "'s': 'Плита перекриття П-1, 800 × %d × 80, на 1 шт. (усього %d)' % (SLAB_L, SLAB_N),")
     f0 = s.index('def frame(p, sheet_title, scale, num, total):'); f1 = s.index('\ndef notes(', f0)
     s = s[:f0] + 'def frame(p, sheet_title, scale, num, total):\n    STAMP(p, types.SimpleNamespace(PW=PW, PH=PH, W_VIS=W_VIS, MUTED=MUTED, INK=INK, ACC=ACC), sheet_title, scale, num, total, SRC_STAMP)\n\n' + s[f1:]
     s = rep(s, "'Креслення є ескізом і не замінює робочу документацію. Перед бетонуванням потрібні підтвердження Golen і розрахунок проєктувальника.',",
