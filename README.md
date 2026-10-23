@@ -11,6 +11,7 @@
 > https://mischenkoa85-creator.github.io/galkat-20/ses11/ (папка `ses11/`, опис у `ses11/README.md`).
 
 > **3D-макет монтажу СЕС+УЗЕ «Антарес» (РП 2025/12-07, 1022 кВтп):** https://mischenkoa85-creator.github.io/galkat-20/antares/ (папка `antares/`, опис у `antares/README.md`).
+> **«Антарес» — дах у 3D:** розкладка модулів у варіантах Б (по даху на лагах) і А (трикутники 15°), сонце й тіні на будь-яку дату й годину, проходи, генерація по годинах і місяцях, кошторис по розділах: https://mischenkoa85-creator.github.io/galkat-20/antares/roof/ (папка `antares/roof/`).
 
 > **ГПУ, BESS навпроти ГПУ, КЛ-6 кВ і зв’язок до РП «Алюміній», перекладання існуючих КЛ (фундаменти, заземлення і майданчик обслуговування BESS, розрахунок кабелів, перевірка за ПУЕ, обсяги матеріалів):** https://mischenkoa85-creator.github.io/galkat-20/gpu/ (папка `gpu/`). Креслення: https://mischenkoa85-creator.github.io/galkat-20/gpu/kreslennya-trasa-kl6-bess-fundamenty.pdf
 > Дві ГПУ у контейнерах типового вигляду, 36 буроін'єкційних паль, плити Фпм-1, фундаменти Фм-1 зі стояками СК-22.1-2.1,

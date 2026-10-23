@@ -5,6 +5,8 @@
 
 **Сайт: https://mischenkoa85-creator.github.io/galkat-20/antares/**
 
+**Нове (23.10.2026): дах у 3D — сонце, тіні, проходи, генерація, варіанти Б і А:** https://mischenkoa85-creator.github.io/galkat-20/antares/roof/ (папка `roof/`, опис у `roof/README.md`).
+
 Або відкрийте `index.html` у браузері (three.js r128 підтягується з CDN).
 
 ## Інтерфейс

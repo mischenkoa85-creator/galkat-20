@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Дах Антарес у 3D</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f3ef; --surface:#fcfcfb; --surface-2:#efeee9; --surface-3:#e6e5df;
+  --ink:#141413; --ink-2:#52514e; --ink-3:#7d7c76; --line:#e0dfd8; --line-2:#cfcec7;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --sun:#b86e00; --crit:#d03b3b;
+  --sky:#dfe6ec; --accent:#2a78d6; --on-accent:#ffffff;
+  --gl:max(12px, env(safe-area-inset-left)); --gr:max(12px, env(safe-area-inset-right));
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --surface-3:#2c2c29;
+    --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e87; --line:#2f2f2c; --line-2:#3e3e3a;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --sun:#f0b44a; --crit:#e66767;
+    --sky:#1c2227; --accent:#3987e5; --on-accent:#ffffff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --surface-3:#2c2c29;
+  --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e87; --line:#2f2f2c; --line-2:#3e3e3a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --sun:#f0b44a; --crit:#e66767;
+  --sky:#1c2227; --accent:#3987e5; --on-accent:#ffffff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-text-size-adjust:100%}
+body{overflow:hidden}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.app{display:flex;flex-direction:column;height:100vh;height:100svh;min-height:0}
+
+/* top bar */
+.bar{flex:none;display:flex;align-items:center;gap:8px 14px;padding:7px var(--gr) 7px var(--gl);border-bottom:1px solid var(--line);background:var(--surface)}
+.bar h1{margin:0;font-size:16px;line-height:1.2;font-weight:650;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0}
+.bar h1 small{font-weight:400;color:var(--ink-2);font-size:13px;margin-left:8px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;flex:none}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;color:var(--ink-2);font-size:13px;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14);font-weight:600}
+
+/* 3D view */
+.view{position:relative;flex:1 1 0;min-height:120px;background:var(--sky);overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hudwrap{position:absolute;left:10px;top:10px;max-width:calc(100% - 66px);display:flex;flex-direction:column;align-items:flex-start;gap:6px;z-index:3}
+.hudrow{display:flex;gap:6px;align-items:center;max-width:100%}
+.pill{display:flex;gap:2px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:9px;padding:2px;backdrop-filter:blur(6px);overflow-x:auto;scrollbar-width:none;max-width:100%}
+.pill::-webkit-scrollbar{display:none}
+.pill button{flex:none;border:0;background:transparent;border-radius:7px;padding:5px 9px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.pill button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.hbtn{flex:none;width:32px;height:30px;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 90%,transparent);color:var(--ink-2);backdrop-filter:blur(6px);display:grid;place-items:center;font-size:13px}
+.ctx{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:9px;padding:5px 9px;font-size:12px;color:var(--ink-2);backdrop-filter:blur(6px);max-width:min(560px,100%)}
+.legend .t{color:var(--ink);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.sw{width:11px;height:11px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.15);display:inline-block}
+.compass{position:absolute;right:10px;top:10px;width:46px;height:46px;border-radius:50%;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);display:grid;place-items:center;z-index:3;backdrop-filter:blur(6px)}
+.compass svg{width:38px;height:38px;transition:none}
+.tip{position:absolute;z-index:6;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:7px 9px;font-size:12px;line-height:1.45;white-space:pre-line;box-shadow:0 4px 14px rgba(0,0,0,.14);max-width:260px}
+.tip b{font-weight:650}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:14px;background:var(--sky);z-index:7}
+
+/* bottom sheet */
+.sheet{flex:none;display:flex;flex-direction:column;min-height:0;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -3px 12px rgba(0,0,0,.12);position:relative;z-index:8}
+.sheet[data-s="peek"]{height:auto}
+.sheet[data-s="half"]{height:max(270px,44svh)}
+.sheet[data-s="full"]{height:max(320px,82svh)}
+.sheet[data-s="peek"] .panes{display:none}
+.grab{display:block;width:100%;border:0;background:none;padding:6px 0 2px;cursor:grab;touch-action:none}
+.grab i{display:block;width:44px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto}
+.grab:hover i{background:var(--accent)}
+.sunrow{display:flex;align-items:center;gap:8px;padding:2px var(--gr) 0 var(--gl)}
+.pbtn{flex:none;min-width:34px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 7px;display:grid;place-items:center}
+#play{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:38px}
+#time{flex:1;min-width:70px;accent-color:var(--accent)}
+#clock{flex:none;font-size:16px;font-weight:650;min-width:46px;text-align:right}
+#season{min-width:64px;font-weight:600}
+.more{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:6px var(--gr) 0 var(--gl);font-size:12.5px;color:var(--ink-2)}
+.more input[type=date]{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:4px 6px;font-size:13px}
+.more .chips{display:flex;gap:4px;flex-wrap:wrap}
+.more .chips button{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:4px 9px;font-size:12.5px;color:var(--ink-2)}
+.more .chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface);font-weight:600}
+.more b{color:var(--ink)}
+.read{display:flex;flex-wrap:wrap;gap:2px 16px;padding:5px var(--gr) 6px var(--gl);font-size:12.5px;color:var(--ink-2)}
+.read b{color:var(--ink);font-weight:650}
+.read .sun b{color:var(--sun)}
+.read .busy{color:var(--ink-3)}
+.tabs{flex:none;display:flex;gap:2px;padding:0 var(--gr) 0 var(--gl);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:transparent;padding:8px 10px 9px;font-size:13.5px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+.panes{flex:1 1 0;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:12px var(--gr) 24px var(--gl)}
+.pane h2{font-size:15px;margin:0 0 4px;font-weight:650}
+.pane h3{font-size:13.5px;margin:14px 0 6px;font-weight:650}
+.pane p{margin:6px 0;color:var(--ink-2)}
+.note{font-size:12.5px;color:var(--ink-3)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4px 28px;align-items:start}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 6px}
+.stat{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.stat .v{font-size:18px;font-weight:650;line-height:1.2}
+.stat .k{font-size:11.5px;color:var(--ink-2);line-height:1.3;margin-top:2px}
+.chart{position:relative;margin:6px 0 2px;max-width:440px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .ax{fill:var(--ink-3);font-size:10.5px}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .base{stroke:var(--line-2);stroke-width:1}
+.chart .dl{font-size:11px;font-weight:600;fill:var(--ink-2)}
+.ctip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:6px 8px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.12);white-space:nowrap;z-index:3}
+.ctip .h{font-weight:650;margin-bottom:2px}
+.ctip .r{display:flex;align-items:center;gap:6px}
+.lg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2);margin:4px 0}
+.lg span{display:inline-flex;align-items:center;gap:6px}
+.lg i{display:inline-block;width:14px;height:3px;border-radius:2px}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+table.t th,table.t td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
+table.t th:first-child,table.t td:first-child{text-align:left;color:var(--ink-2)}
+table.t thead th{font-weight:600;color:var(--ink-2);font-size:12px;position:sticky;top:-12px;background:var(--surface)}
+table.t tfoot td{font-weight:650;color:var(--ink);border-bottom:0;border-top:1px solid var(--line-2)}
+table.t .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
+table.t td.l{text-align:left;color:var(--ink)}
+table.t tr.sec td{font-weight:650;color:var(--ink);background:var(--surface-2)}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-2);margin-left:4px;white-space:nowrap}
+.tag.w{background:color-mix(in srgb,#fab219 28%,var(--surface));color:var(--ink)}
+.seg.sm button{padding:4px 9px;font-size:12.5px}
+.rows{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.rowi{display:flex;align-items:flex-start;gap:10px;font-size:13px}
+.rowi .sw{margin-top:3px}
+.rowi .x{color:var(--ink-3);font-size:12px}
+.acc{display:flex;height:14px;border-radius:4px;overflow:hidden;margin:8px 0 4px;gap:2px}
+.acc div{height:100%}
+.lay label{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.lay label .x{margin-left:auto;color:var(--ink-3);font-size:12px;text-align:right}
+.lay input{width:16px;height:16px;accent-color:var(--accent)}
+.prog{height:3px;background:var(--surface-3);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog div{height:100%;background:var(--accent);width:0}
+details{margin-top:8px}
+summary{cursor:pointer;color:var(--ink-2);font-size:13px}
+
+@media (max-width: 700px){
+  .bar h1{font-size:14.5px}
+  .bar h1 small{display:none}
+  .seg button{padding:5px 8px;font-size:12.5px}
+  .hudwrap{left:8px;top:8px;max-width:calc(100% - 62px)}
+  .pill button{padding:4px 7px;font-size:12px}
+  .legend{font-size:11.5px;padding:4px 8px}
+  .compass{right:8px;top:8px;width:42px;height:42px}
+  .compass svg{width:34px;height:34px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sheet[data-s="half"]{height:max(250px,46svh)}
+  .sheet[data-s="full"]{height:max(300px,86svh)}
+  .tabs button{padding:8px 8px 9px;font-size:13px}
+  table.t thead th{top:-12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <h1>Дах Антарес у 3D<small>сонце, тіні, проходи, генерація</small></h1>
+    <div class="seg" id="var" role="group" aria-label="Варіант кріплення">
+      <button data-v="B" aria-pressed="true" title="Б — модулі по даху на лагах">Б · на лагах</button>
+      <button data-v="A" aria-pressed="false" title="А — трикутники 15°, як у проєкті">А · 15°</button>
+    </div>
+  </header>
+  <section class="view" id="view" aria-label="3D-модель">
+    <canvas id="gl" aria-label="3D-модель даху цеху і складу"></canvas>
+    <div class="hudwrap" id="hudwrap">
+      <div class="hudrow">
+        <div class="pill" id="cams" role="group" aria-label="Вид">
+          <button data-c="iso" aria-pressed="true">Огляд</button><button data-c="top" aria-pressed="false">План</button><button data-c="arch" aria-pressed="false">Арки</button><button data-c="south" aria-pressed="false">З півдня</button><button data-c="wh" aria-pressed="false">Склад</button>
+        </div>
+        <button class="hbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати легенду" aria-label="Сховати легенду">▴</button>
+      </div>
+      <div class="ctx" id="ctx">
+        <div class="pill" id="modes" role="group" aria-label="Колір модулів">
+          <button data-m="now" aria-pressed="true">Тінь зараз</button>
+          <button data-m="year" aria-pressed="false">Тінь за рік</button>
+          <button data-m="acc" aria-pressed="false">Доступ</button>
+          <button data-m="box" aria-pressed="false">Щити</button>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="compass" title="Північ"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
+      <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-3)"/>
+      <text x="0" y="-8" text-anchor="middle" font-size="8" fill="var(--surface)" font-weight="700">Пн</text></svg></div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="loading" id="loading">Будую модель…</div>
+  </section>
+  <aside class="sheet" id="sheet" data-s="half" aria-label="Сонце і дані">
+    <button class="grab" id="grab" aria-label="Згорнути або розгорнути панель" title="Тягніть або натисніть: згорнути / розгорнути"><i></i></button>
+    <div class="sunrow">
+      <button id="play" class="pbtn" aria-label="Запустити сонце" title="Запустити сонце">▶</button>
+      <button id="speed" class="pbtn" title="Швидкість" aria-label="Швидкість">×1</button>
+      <input type="range" id="time" min="0" max="143" step="1" value="72" aria-label="Час доби">
+      <output id="clock" class="num" for="time">12:00</output>
+      <button id="season" class="pbtn" title="Сезон: натискайте — Зима → Весна → Літо → Осінь" aria-label="Сезон">Осінь</button>
+      <button id="sunmore" class="pbtn" aria-expanded="false" aria-controls="more" title="Дата і деталі" aria-label="Дата і деталі">⋯</button>
+    </div>
+    <div class="more" id="more" hidden>
+      <div class="chips" id="dates" role="group" aria-label="День сезону">
+        <button data-d="12-21" aria-pressed="false">21.12</button><button data-d="03-20" aria-pressed="false">20.03</button><button data-d="06-21" aria-pressed="false">21.06</button><button data-d="09-23" aria-pressed="false">23.09</button><button data-d="now" aria-pressed="false">Сьогодні</button>
+      </div>
+      <input type="date" id="date" aria-label="Будь-яка дата">
+      <span id="sunx"></span>
+    </div>
+    <div class="read" id="now"></div>
+    <nav class="tabs" role="tablist" aria-label="Розділи">
+      <button role="tab" data-t="day" aria-selected="true">Доба</button>
+      <button role="tab" data-t="sea" aria-selected="false">Сезони</button>
+      <button role="tab" data-t="mon" aria-selected="false">Місяці</button>
+      <button role="tab" data-t="walk" aria-selected="false">Проходи</button>
+      <button role="tab" data-t="est" aria-selected="false">Кошторис</button>
+      <button role="tab" data-t="lay" aria-selected="false">Шари</button>
+    </nav>
+    <div class="panes" id="panes">
+      <section class="pane" data-p="day">
+        <h2 id="day-h">Доба</h2>
+        <p class="note" id="day-sub"></p>
+        <div class="prog" id="day-prog" hidden><div></div></div>
+        <div class="cols">
+          <div>
+            <div class="stats" id="day-stats"></div>
+            <h3>Потужність за годинами, кВт</h3>
+            <div class="lg" id="day-lg"></div>
+            <div class="chart" id="day-chart"></div>
+          </div>
+          <div>
+            <h3>Модулів у тіні, %</h3>
+            <div class="chart" id="day-shade"></div>
+            <p class="note">Тінь від ліхтарів, вентшахт, щогл блискавкозахисту, щитів PV і самої арки при низькому сонці; у варіанті А — ще й ряди один від одного. Модуль «у тіні», якщо затінено більше 5 % його площі. Склад не затінюється.</p>
+          </div>
+        </div>
+      </section>
+      <section class="pane" data-p="sea" hidden>
+        <h2>Сезони: скільки дає щогодини</h2>
+        <p class="note" id="sea-sub"></p>
+        <div class="seg sm" id="sea-w" role="group" aria-label="Погода">
+          <button data-w="avg" aria-pressed="true">Середній день</button>
+          <button data-w="clr" aria-pressed="false">Ясний</button>
+          <button data-w="ovc" aria-pressed="false">Хмарний</button>
+        </div>
+        <div class="cols">
+          <div><div class="lg" id="sea-lg"></div><div class="chart" id="sea-chart"></div>
+            <p class="note">Київський час, з літнім часом. Середній день — частка ясного неба за кліматом місяця (Київ). Цех і склад разом.</p></div>
+          <div><h3>По годинах, кВт·год</h3><div id="sea-table"></div></div>
+        </div>
+      </section>
+      <section class="pane" data-p="mon" hidden>
+        <h2>По місяцях</h2>
+        <div class="cols">
+          <div><div class="stats" id="mon-stats"></div><div class="chart" id="mon-chart"></div><p class="note" id="mon-note"></p></div>
+          <div><h3>Таблиця, МВт·год</h3><div id="mon-table"></div></div>
+        </div>
+      </section>
+      <section class="pane" data-p="walk" hidden>
+        <h2>Проходи</h2>
+        <div id="walk-body"></div>
+      </section>
+      <section class="pane" data-p="est" hidden>
+        <h2>Кошторис А і Б</h2>
+        <div id="est-body"></div>
+      </section>
+      <section class="pane lay" data-p="lay" hidden>
+        <h2>Шари макета</h2>
+        <div id="lay-body"></div>
+      </section>
+    </div>
+  </aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/*APP*/
+</script>
+</body>
+</html>
