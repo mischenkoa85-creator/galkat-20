@@ -146,7 +146,7 @@ const CON=DATA.rpm.con.map(([i,j])=>{ const p=RT[j].Y-RT[i].Y, st=(1.4+p)/2-0.35
 // модулі: центр над трикутником 2j+1; показники для невідповідностей
 const RMOD=[]; RT.forEach((t,i)=>{ if(t.k%2!==0) return; if(t.k>=2*t.n) return; const a=RT[i], m=RT[i+1], b=RT[i+2], th=[a,m,b].map(x=>Math.atan(roofK(x.X))/D2R);
   RMOD.push({i:i+1, sag:(roofZ(m.X)-(roofZ(a.X)+roofZ(b.X))/2)*1000, dth:Math.max(...th)-Math.min(...th), slope:Math.abs(th[1])}); });
-const RPM_={}, ND=24;
+const RPM_={}, ND=24; let XN=null;
 { const n=RT.length, P=G.rpBase;
   const lod=[['base',MAT.zn],['rail',MAT.zn],['strut',MAT.zn]].map(([k,m])=>{ const im=inst(obbGeo(k),m,n,P); RT.forEach((t,i)=>im.setMatrixAt(i,t.F)); return im; });
   const blk=inst(partGeo('block'),MAT.blk,n,P), mat=inst(partGeo('mat'),MAT.mat,n,P,false);
@@ -179,9 +179,10 @@ const RPM_={}, ND=24;
 const conOf=new Map(CON.map((c,j)=>[c.i,j]));
 function rpDetail(){ if(!G.rp.visible) return; const tg=controls.target, near=camera.position.distanceTo(tg)<34;
   RPM_.cur.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,RT[i].F))); RPM_.curC.forEach(j=>RPM_.con.setMatrixAt(j,CON[j].M));
+  const xr=XN&&XN.proj==='rp'?XN:null; if(xr){ xr.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,ZERO))); xr.cons.forEach(j=>RPM_.con.setMatrixAt(j,ZERO)); }
   let pick=[];
-  if(near){ const tx=tg.x, ty=-tg.z; pick=RT.map((t,i)=>[(t.X-tx)**2+(t.Y-ty)**2,i]).filter(a=>a[0]<14*14).sort((a,b)=>a[0]-b[0]).slice(0,ND).map(a=>a[1]); }
-  const pc=pick.filter(i=>conOf.has(i)).map(i=>conOf.get(i));
+  if(near){ const tx=tg.x, ty=-tg.z; pick=RT.map((t,i)=>[(t.X-tx)**2+(t.Y-ty)**2,i]).filter(a=>a[0]<14*14&&!(xr&&xr.triSet.has(a[1]))).sort((a,b)=>a[0]-b[0]).slice(0,ND).map(a=>a[1]); }
+  const pc=pick.filter(i=>conOf.has(i)).map(i=>conOf.get(i)).filter(j=>!(xr&&xr.conSet.has(j)));
   pick.forEach((i,k)=>{ RPM_.lod.forEach(im=>im.setMatrixAt(i,ZERO)); RPM_.det.forEach(im=>im.setMatrixAt(k,RT[i].F)); });
   pc.forEach((j,k)=>{ RPM_.con.setMatrixAt(j,ZERO); RPM_.detC.forEach(im=>im.setMatrixAt(k,CON[j].M)); });
   RPM_.det.forEach(im=>{ im.count=pick.length; im.instanceMatrix.needsUpdate=true; }); RPM_.detC.forEach(im=>{ im.count=pc.length; im.instanceMatrix.needsUpdate=true; });
@@ -514,8 +515,8 @@ const MARKS=new THREE.Group(); scene.add(MARKS);
 MIS.forEach((m,i)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:markTex(i+1),depthTest:false,transparent:true})); sp.scale.set(0.05,0.05,1); sp.material.sizeAttenuation=false;
   const p=MISPOS[m.id](); sp.position.copy(p).add(new V3(0,1.2,0)); sp.renderOrder=20; sp.userData.mis=m.id; MARKS.add(sp);
   const st=lines([p,sp.position.clone()],0xd64545,MARKS,{opacity:0.9}); st.renderOrder=19; st.material.depthTest=false; });
-function markersVis(){ MARKS.visible=state.proj==='rp'&&state.lay.marks!==false; }
-function goMis(id){ const m=MIS.find(x=>x.id===id); if(!m) return; state.proj='rp'; state.sec='mis'; state.mis=id; if(state.sheet==='peek') sheetSet('half'); apply(); goTo(m.view()); }
+function markersVis(){ MARKS.visible=state.proj==='rp'&&state.lay.marks!==false&&!XN; }
+function goMis(id){ const m=MIS.find(x=>x.id===id); if(!m) return; closeNode(true); state.proj='rp'; state.sec='mis'; state.mis=id; if(state.sheet==='peek') sheetSet('half'); apply(); goTo(m.view()); }
 $('#misN').textContent=MIS.length;
 $('#misChip').onclick=()=>{ state.sec='mis'; if(state.sheet==='peek') sheetSet('half'); apply(); };
 function misPaint(mis){ const m=RPM_.mods, c=RPM_.con;
@@ -574,7 +575,7 @@ function misFig(id){ const T=(x,y,t,o='')=>`<text ${o} x="${x}" y="${y}" font-si
 function panelMis(){ const act=MIS.find(m=>m.id===state.mis);
   return `<div class="ph"><span class="eyebrow rp">Вінницький проєкт · РП 2025/12-07</span><h2>Невідповідності: проєкт плаского даху перенесено на арковий</h2><p>Баластну систему RUDNIK, намальовану на рівній площині (АБ арк. 6), поставлено на аркову покрівлю без вузлів для арки й ендов, без розрахунку на зсув і вітер, з трикутником під модуль іншого розміру. Натисніть пункт або червоний номер на даху — камера покаже місце.</p></div>
   <div class="blk"><ol class="mis">${MIS.map((m,i)=>{ const on=state.mis===m.id; return `<li><button type="button" data-mis="${m.id}" aria-pressed="${on}"><span class="n">${i+1}</span><span>${esc(m.t)}<small>${m.sec==='km'?'Кріплення модулів':'Сонце і генерація'}</small></span></button>${on?`<div class="mis-d"><p>${esc(typeof m.d==='function'?m.d():m.d)}</p></div>`:''}</li>`; }).join('')}</ol></div>
-  ${act?`<div class="blk"><h3>${MIS.indexOf(act)+1}. У кресленнях РП</h3><p style="margin:0;font-size:13px">${esc(MSRC[act.id]||'')}</p>${misFig(act.id)}<button type="button" class="lnk" data-mis="">Прибрати підсвічування</button></div>`:''}`; }
+  ${act?`<div class="blk"><h3>${MIS.indexOf(act)+1}. У кресленнях РП</h3><p style="margin:0;font-size:13px">${esc(MSRC[act.id]||'')}</p>${misFig(act.id)}${act.sec==='km'?`<button type="button" class="lnk" data-xnode="mis:${act.id}">↑ Розібрати вузол тут — деталі по шарах</button>`:''}<button type="button" class="lnk" data-mis="">Прибрати підсвічування</button></div>`:''}`; }
 function misLink(sec){ const L=MIS.map((m,i)=>[m,i]).filter(([m])=>m.sec===sec); if(state.proj!=='rp'||!L.length) return '';
   return `<button type="button" class="lnk" data-gomis="${L[0][0].id}">⚠ <b>${L.length===1?'Невідповідність':L.length+' невідповідностей'}</b> — ${L.length===1?esc(L[0][0].t.toLowerCase()):'показати на даху'} →</button>`; }
 
@@ -614,7 +615,7 @@ function panelKM(){ const rp=state.proj==='rp';
               :[['ghost','Модулі напівпрозорі','#8aa0b8',''],['kMods','Модулі','#22345f','1 773'],['oLag','Лаги','#9aa5ad','241'],['oBlk','Блоки і мати','#a3a199',nf(OD.blk.length+OD.eblk.length+OD.xblk.length)],['oSl','Гільзи з муфтами','#7f8f99',nf(OD.sl.length)],['oRod','Шпильки (через прохід — помаранчеві)','#c0392b',nf(OD.rods.length)],['oXp','Крайні профілі і кутники','#b9c3ca',nf(OD.xp.length)],['oCl','Притиски','#d5dadd',nf(OD.cl.length)],['oAn','Анкери','#c0392b',nf(OD.an.length)]];
   const note=rp?`<p class="src">Трикутник відновлено з креслення АБ арк. 6 (бічний вид, розріз Б-Б, вузол Д); 1 568 у марці — габарит по блоках. Розкладку сполучників у РП не показано, прим. 4 АБ арк. 6 — «через один трикутник»; у 3D — усі проміжки в смузі 15,5 м від краю даху, далі через ряд трикутників: 1 899 проти 1 953 у специфікації. Наблизьте камеру — з’являться профілі з прорізами і болти.</p>`
                  :`<div class="note warn">Тиск під блоком 49,9 кПа розрахунковий (33,6 нормативний): утеплювач під блоками — не менше 50 кПа на стиск при 10 %, перевірити обстеженням до замовлення блоків.</div><p class="src">Лага на сніг: 151 МПа всередині, 210 біля стику, прогин 5,3 мм; шпилька 5,44 кН (арка 18 м) і 7,3 кН (арка 24 м) — 123 і 155 МПа при межі 224 (КМ.РР).</p>`;
-  return head+misLink('km')+`<dl class="kv">${kv.map(r=>`<dt>${esc(r[0])}</dt><dd>${esc(r[1])}${r[2]?`<small>${esc(r[2])}</small>`:''}</dd>`).join('')}</dl>`
+  return head+misLink('km')+`<div class="blk" id="xnb">${xPanelHTML()}</div><dl class="kv">${kv.map(r=>`<dt>${esc(r[0])}</dt><dd>${esc(r[1])}${r[2]?`<small>${esc(r[2])}</small>`:''}</dd>`).join('')}</dl>`
    +`<div class="blk"><h3>Шари</h3>${layHTML(lay)}</div>`+note
    +`<div class="blk"><h3>Порівняння</h3>${cmpTable([['Модулів на даху цеху','1 260','1 773'],['Положення модуля','15° на трикутнику','за ухилом даху'],['Блоків під модулями','5 396','5 604'],['Блоків на модуль','4,28','3,16'],['Зв’язок рядів','сполучник 700','шпилька M10'],['Зв’язок уздовж ряду','спойлер','лага, стик у гільзі']],state.proj)}</div>`
    +kmCost(); }
@@ -693,14 +694,14 @@ function hudCtx(){ const sec=state.sec, e=effSec(), rp=state.proj==='rp', L=stat
   const mEl=$('#modes'); mEl.hidden=!modes.length; mEl.innerHTML=modes.map(([k,t,on])=>`<button type="button" data-m="${k}" aria-pressed="${on}">${esc(t)}</button>`).join('');
   mEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const k=b.dataset.m; if(k==='sunNow'){ L.sunPlain=false; L.sunYear=false; } else if(k==='sunYr'){ L.sunPlain=false; L.sunYear=true; } else if(k==='sunPlain1') L.sunPlain=true; else L[k]=!L[k]; apply(); });
   const lEl=$('#legend'); lEl.hidden=!lg; lEl.innerHTML=lg; }
-function apply(){ const P=state.proj;
+function apply(){ const P=state.proj; if(XN&&(XN.proj!==P||effSec()!=='km')) closeNode(true);
   document.querySelectorAll('#proj button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===P?'true':'false'));
   document.querySelectorAll('#tabs button').forEach(b=>{ const on=b.dataset.s===state.sec; b.setAttribute('aria-selected',on?'true':'false'); if(on){ const tb=$('#tabs'), x=b.offsetLeft-tb.clientWidth/2+b.offsetWidth/2; tb.scrollTo({left:Math.max(0,x),behavior:RM?'auto':'smooth'}); } });
   const pane=$('#pane'), sec=state.sec; pane.innerHTML=sec==='bz'?panelBZ():sec==='km'?panelKM():sec==='sun'?panelSun():sec==='mis'?panelMis():panelPZ();
   pane.querySelectorAll('.lay input').forEach(inp=>inp.onchange=()=>{ state.lay[inp.dataset.k]=inp.checked; setVis(); hudCtx(); save(); });
   pane.querySelectorAll('[data-mis]').forEach(b=>b.onclick=()=>{ const id=b.dataset.mis||null; if(!id||id===state.mis){ state.mis=null; apply(); } else goMis(id); });
   pane.querySelectorAll('[data-gomis]').forEach(b=>b.onclick=()=>goMis(b.dataset.gomis));
-  pane.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ state.sunTab=b.dataset.st; apply(); });
+  pane.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ state.sunTab=b.dataset.st; apply(); }); xBind(pane);
   drawSunPath(); setVis(); hudCtx(); placeSun(); sunUI(); save(); hideTip(); rpDetail(); }
 // ================= камера
 const VIEWS={over:{t:'Огляд',p:[-38,95,-150],c:[56,6,-46]},top:{t:'Зверху',p:[56,215,-47],c:[56,0,-46.5]},ridge:{t:'Арка 18 м',p:[14,24,-30],c:[27,14.5,-41]},wh:{t:'Склад',p:[150,30,40],c:[110,4,16]},ess:{t:'Контейнери',p:[128,26,-48],c:[100,2,-68]},node:{t:'Вузол',dyn:true}};
@@ -708,7 +709,7 @@ const cams=$('#cams'); Object.entries(VIEWS).forEach(([k,v])=>{ const b=document
 let anim=null; const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function nodeView(){ if(state.proj==='rp'){ let best=null,bd=1e9; DATA.rpm.con.forEach(c=>{ const t=RT[c[0]], d=(t.X-21.7)**2+(t.Y-41)**2; if(d<bd){ bd=d; best=t; } }); const c=W(best.X,best.Y+1.09,roofZ(best.X)+0.2); return {c:[c.x,c.y,c.z],p:[c.x+3.4,c.y+1.9,c.z+1.9]}; }
   let best=null,bd=1e9; OD.xp.forEach(x=>{ if(x[4]) return; const X=LX(x[0]), d=(X-21.7)**2+(x[2]-41)**2; if(d<bd){ bd=d; best=[X,x[2]]; } }); const c=W(best[0],best[1],roofZ(best[0])+0.08); return {c:[c.x,c.y,c.z],p:[c.x+1.5,c.y+1.0,c.z+2.0]}; }
-function goCam(k){ goTo(VIEWS[k].dyn?nodeView():VIEWS[k]); }
+function goCam(k){ if(VIEWS[k].dyn){ openNodeHere(); return; } goTo(VIEWS[k]); }
 function goTo(v){ const p0=camera.position.clone(), c0=controls.target.clone(), p1=new V3(...v.p), c1=new V3(...v.c);
   if(RM){ camera.position.copy(p1); controls.target.copy(c1); need=true; rpDetail(); return; } anim={t0:performance.now(),p0,c0,p1,c1}; }
 camera.position.set(...VIEWS.over.p); controls.target.set(...VIEWS.over.c);
@@ -723,22 +724,155 @@ canvas.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
 canvas.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return; const r=canvas.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera);
   if(MARKS.visible){ const mh=ray.intersectObjects(MARKS.children.filter(o=>o.isSprite),false); if(mh.length){ goMis(mh[0].object.userData.mis); return; } }
+  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ showTip(xh[0].object.userData.info,e,r); return; } }
   const objs=PICK.filter(p=>{ let o=p.o; while(o){ if(!o.visible) return false; o=o.parent; } return !p.when||p.when(); });
   const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); return; }
-  const h=hits[0], u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; if(!inf){ hideTip(); return; }
-  tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}`; tip.hidden=false; tipT=performance.now();
+  const h=hits[0]; if(state.sec==='km'&&XCAN.has(h.object)&&openNodeAt(h.point.x,-h.point.z)) return;
+  const u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; showTip(inf,e,r); });
+function showTip(inf,e,r){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}`; tip.hidden=false; tipT=performance.now();
   const tw=tip.offsetWidth, th=tip.offsetHeight; let x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x+tw>r.width-8) x=r.width-tw-8; if(y+th>r.height-8) y=e.clientY-r.top-th-14;
-  tip.style.transform=`translate(${Math.max(8,x)}px,${Math.max(8,y)}px)`; });
-window.addEventListener('keydown',e=>{ if(e.key==='Escape') hideTip(); });
+  tip.style.transform=`translate(${Math.max(8,x)}px,${Math.max(8,y)}px)`; }
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ hideTip(); if(XN) closeNode(); } });
+
+// ================= вузол по деталях: клік по модулю або кріпленню — вузол розходиться шарами вгору, з підписами
+const XG=new THREE.Group(); scene.add(XG);
+const XMAT={}; const xm=k=>XMAT[k]||(XMAT[k]=MAT[k].clone());
+XMAT.lagS=std(0x9aa5ad,{metalness:0.5,roughness:0.45}); XMAT.lagS.color.convertSRGBToLinear();
+XMAT.modL=MAT.pvL.clone(); XMAT.modP=MAT.pvP.clone();
+XMAT.draw=new THREE.MeshBasicMaterial({color:0x1fae5a});
+const EVI=new Map(); { let e=0; RT.forEach((t,i)=>{ if(t.k%2===0) EVI.set(i,e++); }); }
+const SPI=new Map(DATA.rpm.sp.map((i,q)=>[i,q]));
+const XCAN=new Set([RPM_.mods,...RPM_.lod,...RPM_.det,...RPM_.detC,RPM_.con,RPM_.blk,RPM_.mat,RPM_.sp,RPM_.cl,ourMods,lagMesh,OUR.blk,OUR.mat,OUR.sl,OUR.cp,OUR.rods,OUR.xp,OUR.ang,OUR.cl,OUR.an]);
+const xls=$('#xls'), xbar=$('#xbar'), _xv=new V3();
+function lagAt(X,Y){ return LG.findIndex(l=>Math.abs(l[0]-X)<2e-3&&Y>=l[1]-0.01&&Y<=l[2]+0.01); }
+function rpModAt(X,Y,ok){ let b=-1,bd=9; RMOD.forEach((m,j)=>{ if(ok&&!ok(m)) return; const t=RT[m.i], d=(t.X-X)**2+(t.Y-Y)**2; if(d<bd){ bd=d; b=j; } }); return b; }
+function ourModAt(X,Y){ let b=-1,bd=9; OM.forEach((m,i)=>{ const d=((m.Xa+m.Xb)/2-X)**2+(m.Y-Y)**2; if(d<bd){ bd=d; b=i; } }); return b; }
+function xNew(proj,idx,step){ return {proj,idx,step,layers:[],hide:[],t0:0,dir:1,anim:false,shown:0}; }
+function xLayer(N,L,name,q,warn){ const g=new THREE.Group(); XG.add(g); const o={L,name,q,warn:warn||'',g,box:new THREE.Box3(),n:0,f:0}; N.layers.push(o); return o; }
+function xPart(ly,geo,mat,M,info){ const o=new THREE.Mesh(geo,mat); o.matrixAutoUpdate=false; o.matrix.copy(M); o.castShadow=true; o.receiveShadow=true; o.userData.info=info; ly.g.add(o);
+  if(!geo.boundingBox) geo.computeBoundingBox(); ly.box.union(geo.boundingBox.clone().applyMatrix4(M)); ly.n++; return o; }
+function xHide(N,im,i){ const M=new M4(); im.getMatrixAt(i,M); N.hide.push({im,i,M:M.clone()}); im.setMatrixAt(i,ZERO); im.instanceMatrix.needsUpdate=true; return M; }
+const rng=a=>{ const lo=Math.min(...a), hi=Math.max(...a); return lo===hi?nf(lo):nf(lo)+'–'+nf(hi); };
+
+// Вінниця: модуль на трьох трикутниках (крайні спільні з сусідніми модулями)
+function buildRP(j){ const m=RMOD[j], tris=[m.i-1,m.i,m.i+1], N=xNew('rp',j,0.26), t0=RT[m.i];
+  N.tris=tris; N.triSet=new Set(tris); N.cons=[]; CON.forEach((c,k)=>{ if(N.triSet.has(c.i)) N.cons.push(k); }); N.conSet=new Set(N.cons);
+  const bad=N.cons.filter(k=>CON[k].ov<=0), gaps=N.cons.map(k=>Math.round(CON[k].p*1000-1400));
+  const gB=RPM_.det[0].geometry, gR=RPM_.det[1].geometry, gS=RPM_.det[2].geometry, gH=RPM_.det[3].geometry, gC=RPM_.detC[0].geometry, gCH=RPM_.detC[1].geometry;
+  const lMat=xLayer(N,0,'Мати під баласт',tris.length*2+' шт');
+  const lBlk=xLayer(N,1,'Баласт B300300-60, 13 кг',`${tris.length*2} шт · ${tris.length*26} кг`);
+  const lCon=N.cons.length?xLayer(N,2,'Сполучник Spol-15Zn-700',N.cons.length+' шт',bad.length?`між основами рядів ${rng(gaps)} мм, на кресленні 600 — до основи не дістає`:''):null;
+  const lBase=xLayer(N,3,'Основа U 45×40×3, 1 400',tris.length+' шт');
+  const lRail=xLayer(N,4,'Пояс 1 160, стійка ≈345, болти M8',`${tris.length} + ${tris.length}`);
+  const q=SPI.get(tris[0]); const lSp=q!==undefined?xLayer(N,5,'Спойлер Vitr-240×2450','1 шт'):null;
+  const ends=[tris[0],tris[2]], nZ=ends.filter(i=>RT[i].k===0||RT[i].k===2*RT[i].n).length*2;
+  const lCl=xLayer(N,6,nZ?'Притиски W35 / Z33':'Притиски W35',nZ?`${4-nZ} / ${nZ}`:'4 шт');
+  const lMod=xLayer(N,7,'Модуль 710 Вт, 2384 × 1303','1 шт','на кресленні — 2278 × 1134 (зелена рамка): звисає за пояс 1 160 на 71,5 мм з кожного боку');
+  const triI=i=>({t:'Трикутник BalZn15-1568.1470, 15°',d:`За АБ арк. 6: основа 1 400, пояс 1 160, стійка ≈345, 3 болти M8. Ухил покрівлі під ним ${nf(Math.abs(Math.atan(roofK(RT[i].X))/D2R),1)}°.`});
+  tris.forEach(i=>{ const F=RT[i].F; xHide(N,RPM_.mat,i); xHide(N,RPM_.blk,i);
+    xPart(lMat,RPM_.mat.geometry,xm('mat'),F,{t:'Мат під баласт',d:'Під кожен блок; 5 396 за АБ арк. 8'});
+    xPart(lBlk,RPM_.blk.geometry,xm('blk'),F,{t:'Баласт B300300-60, 13 кг',d:'2 на трикутник, центри за 65 мм від торців основи, виступають за основу на 85 мм; гвинт R-LX 6,3×50 крізь основу'});
+    xPart(lBase,gB,xm('zn'),F,triI(i)); [gR,gS].forEach(g=>xPart(lRail,g,xm('zn'),F,triI(i))); xPart(lRail,gH,xm('hw'),F,{t:'Болти M8 трикутника',d:'3 комплекти на трикутник: основа — пояс, основа — стійка, стійка — пояс (АБ арк. 8)'}); });
+  N.cons.forEach(k=>{ const c=CON[k], inf={t:'Сполучник Spol-15Zn-700',d:`U 38×36×3, L 700, болт M8 у кожну основу. Крок рядів тут ${nf(c.p*1000)} мм, між основами ${nf(c.p*1000-1400)} мм — ${c.ov>0?'заходження '+c.ov+' мм':'до основи сусіднього ряду не дістає'}; на кресленні — крок 2 000, по 50 мм в основу.`};
+    xPart(lCon,gC,c.ov<=0?xm('conBad'):xm('znD'),c.M,inf); xPart(lCon,gCH,xm('hw'),c.M,inf); });
+  if(lSp){ const M=xHide(N,RPM_.sp,q); xPart(lSp,RPM_.sp.geometry,xm('sp'),M,{t:'Спойлер Vitr-240×2450',d:'Планка за стійками вздовж ряду, перекриває два трикутники (АБ арк. 6, поз. 6)'}); }
+  ends.forEach(i=>{ const e=EVI.get(i); if(e===undefined) return; const z=RT[i].k===0||RT[i].k===2*RT[i].n; [0,1].forEach(s=>{ const M=xHide(N,RPM_.cl,e*2+s); xPart(lCl,BOX,xm('al'),M,{t:z?'Притиск Z33 (крайній)':'Притиск W35 (середній)',d:'По 2 на пояс, місце — схема; АБ арк. 8: W35 — 2 520, Z33 — 3 232'}); }); });
+  const MM=xHide(N,RPM_.mods,j); xPart(lMod,BOX,XMAT.modL,MM,{t:'Модуль Shinefar SF-M21/G132710, 710 Вт',d:'2384 × 1303 × 35 (ЕТР арк. 2, PVsyst). Трикутник на АБ арк. 6 — під модуль 2278 × 1134 (зелена рамка): пояс 1 160 коротший за модуль на 143 мм.'});
+  { const hx=2.278/2.384/2, hz=1.134/1.303/2, wx=0.016/2.384, wz=0.016/1.303, fr=(x,z,sx,sz)=>{ const o=new THREE.Mesh(BOX,XMAT.draw); o.matrixAutoUpdate=false; o.matrix.copy(MM).multiply(new M4().compose(new V3(x,0.75,z),QI,new V3(sx,0.5,sz))); lMod.g.add(o); };
+    fr(0,-hz,2*hx+wx,wz); fr(0,hz,2*hx+wx,wz); fr(-hx,0,wx,2*hz); fr(hx,0,wx,2*hz); }
+  RPM_.lod.forEach(im=>tris.forEach(i=>im.setMatrixAt(i,ZERO))); N.cons.forEach(k=>RPM_.con.setMatrixAt(k,ZERO));
+  N.title='Вінниця · модуль на 3 трикутниках'; N.sub=`ухил під модулем ${nf(m.slope,1)}° · середній трикутник вищий за лінію крайніх на ${nf(Math.max(0,m.sag))} мм · різниця нахилу опор ${nf(m.dth,1)}°`;
+  N.c=W(t0.X,t0.Y,roofZ(t0.X)+0.25); return N; }
+
+// Наш Б: модуль на двох лагах — частка лаг 2,4 м, блоки, гільзи, шпильки, притиски
+function buildOurs(i){ const m=OM[i], N=xNew('ours',i,0.3), y0=m.Y-1.2, y1=m.Y+1.2, inY=(y,e=0.005)=>y>=y0-e&&y<=y1+e;
+  const la=lagAt(m.Xa,m.Y), lb=lagAt(m.Xb,m.Y), Ls=[la,lb].filter(x=>x>=0), onL=l=>l===la||l===lb, nb=OD.blk.length, ne=OD.eblk.length;
+  const B=[], MT=[]; OD.blk.forEach((b,k)=>{ if(onL(b[0])&&inY(b[1],-0.005)){ B.push([k,'b']); MT.push(k); } }); OD.eblk.forEach((b,k)=>{ if(onL(b[0])&&inY(b[1])){ B.push([nb+k,'e']); MT.push(nb+k); } });
+  OD.xblk.forEach((b,k)=>{ if(b[0]>m.Xa&&b[0]<m.Xb&&inY(b[1],0.03)) B.push([nb+ne+k,'x']); });
+  const SL=[]; OD.sl.forEach((s,k)=>{ if(onL(s[0])&&inY(s[1])) SL.push(k); });
+  const RD=[]; OD.rods.forEach((r,k)=>{ if(r[0]===la&&r[1]===lb&&inY(r[2])) RD.push(k); });
+  const XP=[]; OD.xp.forEach((x,k)=>{ if(x[0]===la&&x[1]===lb&&inY(x[2],0.03)) XP.push(k); });
+  const CL=[]; OD.cl.forEach((c,k)=>{ if(onL(c[0])&&inY(c[1],-0.005)) CL.push(k); });
+  const AN=[]; OD.an.forEach((a,k)=>{ if(onL(a[0])&&inY(a[1])) AN.push(k); });
+  const lSt=xLayer(N,0,null,'');
+  const lMat=MT.length?xLayer(N,0,'Мат 320×320×3',MT.length+' шт'):null;
+  const lBlk=xLayer(N,1,'Блок «Баласт із муфтою» 300×300×60',`${B.length} шт · ${B.length*13} кг`);
+  const lAn=AN.length?xLayer(N,1,'Анкер від сповзання',AN.length+' шт'):null;
+  const lRod=RD.length?xLayer(N,2,'Шпилька M10 1 299, права і ліва різьба',RD.length+' шт'):null;
+  const lSl=SL.length?xLayer(N,3,'Гільза 200 з муфтою M10×50, болти M10×60',SL.length+' шт'):null;
+  const lLag=xLayer(N,4,'Лага 41×41×1,5 пазом догори',`${Ls.length} × ${nf(2.4,1)} м`);
+  const lXp=XP.length?xLayer(N,4,'Крайній профіль 41×41 і кутники 160/150',`${XP.length} + ${XP.length*2}`):null;
+  const nZ=CL.filter(k=>OD.cl[k][2]).length, lCl=xLayer(N,5,nZ?'Притиски середні / Z33':'Притиски середні',nZ?`${CL.length-nZ} / ${nZ}`:CL.length+' шт');
+  const lMod=xLayer(N,6,'Модуль ZNSHINE 730 Вт, 2384 × 1303','1 шт');
+  B.forEach(([k,t])=>{ const M=xHide(N,OUR.blk,k); xPart(lBlk,BOX,xm('blk'),M,t==='b'?{t:'Блок «Баласт із муфтою» 300×300×60, 13 кг',d:'Під лагою, 575 + 1 200·k від торця; мат 320×320×3; лага — болтом M8×20 у муфту'}:t==='e'?{t:'Блок під кінцем лаги',d:'Центр за 30 мм від торця лаги, з матом'}:{t:'Блок під крайнім профілем',d:'2 на модуль, за 300 мм від осей лаг, без мата'}); });
+  MT.forEach(k=>{ const M=xHide(N,OUR.mat,k); xPart(lMat,BOX,xm('mat'),M,{t:'Мат 320×320×3',d:'Під блоком лаги, захищає покрівлю'}); });
+  AN.forEach(k=>{ const M=xHide(N,OUR.an,k); xPart(lAn,OUR.an.geometry,xm('anc'),M,{t:'Анкер від сповзання',d:'На верхній лазі ряду, що не переходить гребінь; тип і кріплення — за обстеженням покрівлі'}); });
+  RD.forEach(k=>{ const M=xHide(N,OUR.rods,k), p=OD.rods[k][3]===2; xPart(lRod,BOX,xm(p?'rodP':'rod'),M,p?{t:'Шпилька M10 через прохід',d:'570 / 790 / 1 580 мм; права / ліва різьба, контргайки'}:{t:'Шпилька M10 1 299 мм',d:'Між муфтами гільз сусідніх лаг, права різьба із заходу, ліва — зі сходу'}); });
+  SL.forEach(k=>{ const inf={t:'Гільза П 45,5×35×2, L 200, з муфтою M10×50',d:'На стику модулів під лагою, 2 болти M10×60 крізь лагу; муфта знизу — права і ліва різьба під шпильки'}; xPart(lSl,BOX,xm('sl'),xHide(N,OUR.sl,k),inf); xPart(lSl,BOX,xm('hw'),xHide(N,OUR.cp,k),inf); });
+  Ls.forEach(l=>{ const L=LG[l], a=Math.max(L[1],y0), b=Math.min(L[2],y1); xHide(N,lagMesh,l);
+    const piece=(ya,yb,ly,info)=>{ if(yb-ya<0.005) return; rf(L[0],(ya+yb)/2,0.0835); xPart(ly,BOX,XMAT.lagS,new M4().compose(_p.clone(),_q.clone(),new V3(0.041,0.041,yb-ya)),info); };
+    const li={t:'Лага 41×41×1,5 пазом догори',d:`Під модулем — ${nf(b-a,2)} м; уся лінія ${nf(L[2]-L[1],1)} м зі шматків 4 800 і 2 400, стики в гільзах 200`};
+    piece(L[1],a,lSt,li); piece(b,L[2],lSt,li); piece(a,b,lLag,li); });
+  XP.forEach(k=>{ const inf=OD.xp[k][4]?{t:'Профіль 41×41 через прохід',d:'530 / 760 / 1 540 мм на кутниках 160/150 між верхніми лагами двох схилів'}:{t:'Крайній профіль 41×41×1,5, ≈1 263 мм',d:'На краю ряду між лагами, на 2 блоках без мата; кутники 160/150 t = 8, Z33 на модулі'};
+    xPart(lXp,BOX,xm('zn'),xHide(N,OUR.xp,k),inf); [0,1].forEach(s=>xPart(lXp,BOX,xm('hw'),xHide(N,OUR.ang,k*2+s),inf)); });
+  CL.forEach(k=>{ const z=OD.cl[k][2]; xPart(lCl,BOX,xm('al'),xHide(N,OUR.cl,k),z?{t:'Притиск Z33 (крайній)',d:'На крайньому профілі або кінці лаги, болт M8 у паз лаги'}:{t:'Притиск середній',d:'Між рамами сусідніх модулів, болт M8 з гайкою з пружиною в паз лаги'}); });
+  xPart(lMod,BOX,XMAT.modP,xHide(N,ourMods,i),{t:'Модуль ZNSHINE ZXN8-BD132-730, 730 Вт',d:'2384 × 1303 × 33, паралельно покрівлі на двох лагах, низ рами на 104 мм над покрівлею'});
+  const za=roofZ(m.Xa), zb=roofZ(m.Xb);
+  N.title='Наш Б · модуль на двох лагах'; N.sub=`ухил покрівлі під модулем ${nf(Math.abs(Math.atan2(zb-za,m.Xb-m.Xa))/D2R,1)}° · модуль за ухилом даху · лаги стягнуті шпильками крізь муфти гільз`;
+  N.c=W((m.Xa+m.Xb)/2,m.Y,(za+zb)/2+0.1); return N; }
+
+// решта кріплення на час розбору — напівпрозора, щоб деталі вузла читалися
+const XDIM=['zn','znD','hw','blk','mat','sp','al','conM','conBad','lag','sl','rod','rodP','anc'];
+function xDim(on){ XDIM.forEach(k=>{ const m=MAT[k]; if(!m) return; m.transparent=on; m.opacity=on?0.16:1; m.depthWrite=!on; m.needsUpdate=true; }); need=true; }
+function xMaxL(N){ return Math.max(...N.layers.map(l=>l.L)); }
+function openNode(proj,idx,fly=true){ if(XN&&XN.proj===proj&&XN.idx===idx){ if(XN.dir<0) xPlay(1); return; } closeNode(true);
+  XN=proj==='rp'?buildRP(idx):buildOurs(idx); xDim(true); markersVis(); if(proj==='rp') rpDetail();
+  XN.layers.forEach(ly=>{ if(!ly.name) return; const el=document.createElement('div'); el.className='xl'; el.style.opacity=0; el.innerHTML=`<span>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?`<i>${esc(ly.warn)}</i>`:''}</span>`; xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight; });
+  $('#xbT').textContent=XN.title; $('#xbS').textContent=XN.sub; xbar.hidden=false; hideTip();
+  if(fly){ const top=xMaxL(XN)*XN.step, c=XN.c.clone().add(new V3(0,top*0.45,0)), asp=Math.max(0.3,camera.aspect), d=(XN.proj==='rp'?4.6:4.4)*Math.max(1,1.35/asp), dir=(XN.proj==='rp'?new V3(0.7,0.36,0.78):new V3(0.8,0.5,0.6)); if(roofK(XN.c.x)>0.02) dir.x=-dir.x; dir.normalize();
+    goTo({c:[c.x,c.y,c.z],p:[c.x+dir.x*d,c.y+dir.y*d,c.z+dir.z*d]}); }
+  xPlay(1); xPanel(); need=true; }
+function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
+  N.hide.forEach(h=>{ h.im.setMatrixAt(h.i,h.M); h.im.instanceMatrix.needsUpdate=true; });
+  if(N.proj==='rp'){ N.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,RT[i].F))); N.cons.forEach(k=>RPM_.con.setMatrixAt(k,CON[k].M)); RPM_.lod.forEach(im=>im.instanceMatrix.needsUpdate=true); RPM_.con.instanceMatrix.needsUpdate=true; rpDetail(); }
+  XG.children.slice().forEach(g=>XG.remove(g));
+  xDim(false); markersVis(); xls.innerHTML=''; xbar.hidden=true; if(!silent) xPanel(); need=true; }
+function xPlay(dir){ if(!XN) return; XN.dir=dir; XN.t0=performance.now(); XN.anim=true; const b=$('#xbTog'); b.textContent=dir>0?'Зібрати':'Розібрати'; need=true; }
+// шари: кожен наступний стартує на 110 мс пізніше; при збиранні — згори вниз
+function xTick(now){ if(!XN||!XN.anim) return; const N=XN, mx=xMaxL(N), dur=RM?1:650, gap=RM?0:110; let done=true;
+  N.layers.forEach(ly=>{ const del=(N.dir>0?ly.L:mx-ly.L)*gap, s=Math.max(0,Math.min(1,(now-N.t0-del)/dur)); if(s<1) done=false; const e=s*s*(3-2*s), f=N.dir>0?e:1-e; ly.f=f; ly.g.position.y=f*ly.L*N.step; });
+  N.shown=Math.max(...N.layers.map(l=>l.L?l.f:0)); if(done) N.anim=false; need=true; }
+function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, items=[];
+  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true;
+    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd; mn=Math.min(mn,sx); mxx=Math.max(mxx,sx); sy+=(1-_xv.y)/2*Hd; n++; }
+    items.push({ly,mn,mx:mxx,y:sy/n,front}); });
+  items.sort((a,b)=>a.y-b.y); let last=-1e9;
+  items.forEach(it=>{ const ly=it.ly, w=ly.w||ly.el.offsetWidth, h=ly.h||ly.el.offsetHeight; let y=Math.max(it.y-h/2,last+3); last=y+h; let x=it.mx+6, fl=false;
+    if(x+w>Wd-6){ x=it.mn-6-w; fl=true; } if(x<6){ x=Math.max(6,Math.min(Wd-w-6,it.mx+6)); fl=false; }
+    ly.el.classList.toggle('l',fl); ly.el.style.transform=`translate(${Math.round(x)}px,${Math.round(Math.min(Hd-h-4,y))}px)`; ly.el.style.opacity=show&&it.front?1:0; }); }
+// панель «Кріплення»: що в розібраному вузлі
+function xPanelHTML(){ const rp=state.proj==='rp';
+  if(!XN) return `<h3>Вузол по деталях</h3><p class="src">Натисніть на модуль або деталь кріплення — вузол розійдеться шарами вгору, біля кожної деталі підпис. «Зібрати» — назад, × — закрити.</p><button type="button" class="lnk" data-xnode="here">↑ Розібрати вузол у центрі екрана</button>`;
+  const rows=XN.layers.filter(l=>l.name).slice().sort((a,b)=>b.L-a.L);
+  return `<h3>Вузол по деталях · ${esc(XN.title.split(' · ')[1]||'')}</h3><table class="cmp xt"><tbody>${rows.map(l=>`<tr><td>${esc(l.name)}${l.warn?`<small class="w">${esc(l.warn)}</small>`:''}</td><td>${esc(l.q)}</td></tr>`).join('')}</tbody></table><p class="src">${esc(XN.sub)}. ${rp?'Крайні трикутники, притиски й сполучники спільні з сусідніми модулями.':'Гільзи, шпильки і притиски на межі спільні з сусідніми модулями.'}</p><button type="button" class="lnk" data-xnode="close">Закрити вузол</button>`; }
+function xPanel(){ const el=document.getElementById('xnb'); if(el){ el.innerHTML=xPanelHTML(); xBind(el); } }
+function xBind(root){ root.querySelectorAll('[data-xnode]').forEach(b=>b.onclick=()=>{ const a=b.dataset.xnode; if(a==='close') closeNode(); else if(a==='here') openNodeHere(); else if(a.startsWith('mis:')) misNode(a.slice(4)); }); }
+function openNodeAt(X,Y,fly=true){ const rp=state.proj==='rp', i=rp?rpModAt(X,Y):ourModAt(X,Y); if(i<0) return false; openNode(state.proj,i,fly); return true; }
+function openNodeDefault(){ if(state.proj==='rp'){ const hasC=m=>CON.some(c=>Math.abs(c.i-m.i)<=1); const j=rpModAt(21.7,41,hasC); if(j>=0) openNode('rp',j); return; }
+  let best=null,bd=1e9; OD.xp.forEach(x=>{ if(x[4]) return; const X=(LX(x[0])+LX(x[1]))/2, d=(X-21.7)**2+(x[2]-41)**2; if(d<bd){ bd=d; best=[X,x[2]-x[3]*1.2]; } }); if(best) openNodeAt(best[0],best[1]); }
+function openNodeHere(){ if(effSec()!=='km'){ state.sec='km'; apply(); } const t=controls.target; if(camera.position.distanceTo(t)>40||!openNodeAt(t.x,-t.z)) openNodeDefault(); }
+function misNode(id){ if(id==='con'){ const c=near(CON,c=>(RT[c.i].X-60)**2+(RT[c.i].Y-70)**2), j=RMOD.findIndex(m=>Math.abs(m.i-c.i)<=1); if(j>=0) openNode('rp',j); return; }
+  const p=MISPOS[id](); openNodeAt(p.x,-p.z); }
+$('#xbTog').onclick=()=>xPlay(XN&&XN.dir>0?-1:1); $('#xbX').onclick=()=>closeNode();
 
 // ================= цикл
 function resize(){ const v=canvas.parentElement, w=v.clientWidth, h=v.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); need=true; }
 new ResizeObserver(resize).observe(canvas.parentElement); resize();
 function loop(now){ requestAnimationFrame(loop);
   if(anim){ const t=Math.min(1,(now-anim.t0)/900), s=t*t*(3-2*t); camera.position.lerpVectors(anim.p0,anim.p1,s); controls.target.lerpVectors(anim.c0,anim.c1,s); need=true; if(t>=1) anim=null; }
-  if(controls.update()) need=true;
+  xTick(now); if(controls.update()) need=true;
   if(detT&&!anim&&now-detT>140){ detT=0; rpDetail(); }
-  if(need){ needle.style.transform=`rotate(${(controls.getAzimuthalAngle()/D2R).toFixed(1)}deg)`; renderer.render(scene,camera); need=false; } }
+  if(need){ needle.style.transform=`rotate(${(controls.getAzimuthalAngle()/D2R).toFixed(1)}deg)`; if(XN) xLabels(); renderer.render(scene,camera); need=false; } }
 // ▶ рух сонця по дню: крок 10 хв, швидкість ×1…×8
 const SUNRS={}; function riseSet(day){ if(SUNRS[day]) return SUNRS[day]; let a=null,b=null; for(let h=3;h<=22;h+=1/60){ const up=sunVec(day,h).alt>0; if(up&&a===null) a=h; if(up) b=h; } return SUNRS[day]=[a,b]; }
 let playT=null; const playBtn=$('#play'), SPDS=[1,2,4,8];
@@ -762,5 +896,5 @@ function ctxSet(o){ state.ctx=o; $('#ctx').hidden=!o; const b=$('#ctxtoggle'); b
 $('#ctxtoggle').onclick=()=>ctxSet(!state.ctx); ctxSet(state.ctx);
 const needle=$('#needle');
 apply(); $('#loading').hidden=true; requestAnimationFrame(loop);
-window.__twin={state,apply,goCam,goTo,goMis,setPlay,sheetSet,yearCalc,MARKS,camera,genNow:()=>genNow(),CURVE,MIS,VIEWS,nodeView,camInfo:()=>JSON.stringify({p:camera.position.toArray().map(v=>+v.toFixed(2)),t:controls.target.toArray().map(v=>+v.toFixed(2)),det:RPM_.cur.length,tri:renderer.info.render.triangles,calls:renderer.info.render.calls}),cam:a=>{ camera.position.set(a[0],a[1],a[2]); controls.target.set(a[3],a[4],a[5]); controls.update(); need=true; rpDetail(); }};
+window.__twin={XG,rayAt:(x,y)=>{ const r=canvas.getBoundingClientRect(); mouse.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera); const xh=ray.intersectObject(XG,true); return xh.length+' '+(xh[0]?xh[0].object.type+':'+(xh[0].object.userData.info||{}).t:''); },openNode,closeNode,openNodeHere,openNodeDefault,xPlay,misNode,getXN:()=>XN,state,apply,goCam,goTo,goMis,setPlay,sheetSet,yearCalc,MARKS,camera,genNow:()=>genNow(),CURVE,MIS,VIEWS,nodeView,camInfo:()=>JSON.stringify({p:camera.position.toArray().map(v=>+v.toFixed(2)),t:controls.target.toArray().map(v=>+v.toFixed(2)),det:RPM_.cur.length,tri:renderer.info.render.triangles,calls:renderer.info.render.calls}),cam:a=>{ camera.position.set(a[0],a[1],a[2]); controls.target.set(a[3],a[4],a[5]); controls.update(); need=true; rpDetail(); }};
 })();

@@ -56,6 +56,22 @@ button{cursor:pointer}
 .compass svg{width:38px;height:38px}
 .tip{position:absolute;left:0;top:0;z-index:6;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:6px 8px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.14);max-width:240px}
 .tip b{display:block;font-weight:650}
+/* вузол по деталях */
+.xls{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.xl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:0;font-size:11.5px;line-height:1.25;color:var(--ink);white-space:nowrap;transition:opacity .2s}
+.xl::before{content:"";width:12px;height:1px;background:var(--ink-3);flex:none}
+.xl.l{flex-direction:row-reverse}
+.xl span{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:6px;padding:2px 6px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.xl em{font-style:normal;color:var(--ink-3);margin-left:6px;font-family:var(--mono);font-size:11px}
+.xl i{display:block;font-style:normal;color:#d64545;font-size:11px;white-space:normal;max-width:230px}
+.xbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100% - 20px);background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--line);border-radius:10px;padding:5px 5px 5px 11px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.xbar .t{display:flex;flex-direction:column;min-width:0;font-size:11.5px;color:var(--ink-2);line-height:1.3}
+.xbar .t b{color:var(--ink);font-size:13px;font-weight:650}
+.xbar .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+.xbar button{flex:none;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 10px;white-space:nowrap}
+.xbar button.pri{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+.xt td small.w{display:block;color:#d64545;font:400 11.5px/1.35 var(--font)}
+.xt td:first-child{color:var(--ink)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:14px;background:var(--sky);z-index:7}
 /* нижня панель */
 .sheet{flex:none;display:flex;flex-direction:column;min-height:0;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -3px 12px rgba(0,0,0,.12);position:relative;z-index:8}
@@ -148,6 +164,8 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
   .compass{right:8px;top:8px;width:42px;height:42px} .compass svg{width:34px;height:34px}
   .sheet[data-s="half"]{height:max(260px,46svh)} .sheet[data-s="full"]{height:max(300px,86svh)}
   .tabs button{padding:8px 8px 9px;font-size:13px}
+  .xl{font-size:10.5px} .xl em{font-size:10px} .xl i{max-width:150px;font-size:10px}
+  .xbar{bottom:8px;padding:4px 4px 4px 9px} .xbar .t span{max-width:46vw} .xbar button{padding:0 8px;font-size:12.5px}
   .pane{grid-template-columns:minmax(0,1fr)}
 }
 </style>
@@ -175,6 +193,8 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
     <div class="compass" title="Північ"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
       <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-3)"/>
       <text x="0" y="-8" text-anchor="middle" font-size="8" fill="var(--surface)" font-weight="700">Пн</text></svg></div>
+    <div class="xls" id="xls" aria-hidden="true"></div>
+    <div class="xbar" id="xbar" hidden><div class="t"><b id="xbT"></b><span id="xbS"></span></div><button type="button" id="xbTog" class="pri">Зібрати</button><button type="button" id="xbX" aria-label="Закрити вузол" title="Закрити вузол">×</button></div>
     <div class="tip" id="tip" hidden></div>
     <div class="loading" id="loading">Будую модель…</div>
   </section>
