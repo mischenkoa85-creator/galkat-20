@@ -21,6 +21,7 @@ C_RC = (0.84, 0.85, 0.86)
 C_BR = (0.95, 0.86, 0.80)
 C_SOIL = (0.93, 0.91, 0.86)
 C_CONT = (0.94, 0.96, 0.98)
+C_SAND = (0.985, 0.955, 0.875)
 
 # ---- source geometry, mm ----
 L, B, H = 6058, 2438, 2896
@@ -53,7 +54,7 @@ BEAM_ST_Z = [BEAM + 50 + 200 * i for i in range(9)] + [BF - BEAM - 50]   # stirr
 COL_ST_Y = [-1450 + 200 * i for i in range(8)] + [50, 150, 250]   # column stirrups (levels, mm)
 N_ST = 2 * len(BEAM_ST_X) + 2 * len(BEAM_ST_Z) + 8 * len(COL_ST_Y)
 # channel, cover slabs, lintels
-CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 450, 80
+CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 800, 80
 SLAB_N, SLAB_L = 10, 478
 U_Z = [50 + 200 * i for i in range(25)]
 # position: (diameter, class, length mm, shape, count per unit, note)
@@ -63,8 +64,8 @@ REBAR = [
     ('f', '3', 12, 'A500C', 1200, 'Г 600 × 600', 16, 'кути балки'),
     ('f', '4', 12, 'A500C', 2240, 'Г 2040 + 200', 32, 'колони, 4 на колону'),
     ('f', '5', 8, 'A240C', 1240, 'хомут 270 × 270', N_ST, '%d балка + %d колони' % (2 * len(BEAM_ST_X) + 2 * len(BEAM_ST_Z), 8 * len(COL_ST_Y))),
-    ('c', '6', 8, 'A500C', 1640, 'П 470 + 700 + 470', len(U_Z), 'крок 200'),
-    ('c', '7', 8, 'A500C', 4840, '', 8, '4 у дні, по 2 у стінах'),
+    ('c', '6', 8, 'A500C', 2340, 'П 820 + 700 + 820', len(U_Z), 'крок 200'),
+    ('c', '7', 8, 'A500C', 4840, '', 10, '4 у дні, по 3 у стінах'),
     ('s', '8', 8, 'A500C', 750, '', 4, 'поперечні, знизу'),
     ('s', '9', 8, 'A500C', 430, '', 5, 'поздовжні'),
     ('l', '10', 10, 'A500C', 860, '', 3, 'нижні'),
@@ -95,6 +96,114 @@ V_PREP = PREP * ((LF + 2 * PREP) * (BF + 2 * PREP) - (LF - 2 * BEAM - 2 * PREP) 
 V_CHAN = ((CH_W + 2 * CH_T) * CH_T + 2 * CH_T * CH_D) * CH_L / 1e9
 V_SLABS = SLAB_N * (CH_W + 2 * CH_T) * SLAB_L * CH_COV / 1e9
 V_LINT = 2 * 900 * BEAM * 120 / 1e9
+
+# ---- cable entries in pipes (25.10.2026): the cable space is filled with sand, cables run in PE pipes ----
+# foundation-local mm: x east from the west face, z south from the north face, y level from ±0,000.
+# BESS: the channel enters the north wall; PCS: the south wall. Channel axis x = LF / 2.
+# Corrugated PE pipes are bent in place: radius ≥ 8 pipe diameters (d110 — 880 mm); the d160 bend is a welded segment bend R 1000.
+P_END, SAND_TOP, SCREED = 210, -100, 100      # pipe ends 90 mm under the container floor; sand up to −0,100; screed 100 mm C8/10
+CH_FLOOR = 20 - CH_COV - CH_D                 # channel floor, −0,860 for the 800 mm channel
+P_ROWS = (-800, -670)                         # two rows of pipes at the channel end (centres)
+P_LANES = (-195, -65, 65, 195)                # four lanes across the channel, from its axis
+P_R = 880                                     # inner bend radius of the package: 8 × d110
+P_XC = LF // 2
+
+
+def _fillet(pts, radii, seg=10):
+    """Orthogonal polyline with circular bends of the given radii at the interior corners (mm, 3D)."""
+    out = [tuple(pts[0])]
+    for i in range(1, len(pts) - 1):
+        a = [pts[i][k] - pts[i - 1][k] for k in range(3)]
+        b = [pts[i + 1][k] - pts[i][k] for k in range(3)]
+        la, lb = math.sqrt(sum(v * v for v in a)), math.sqrt(sum(v * v for v in b))
+        a = [v / la for v in a]; b = [v / lb for v in b]
+        r = radii[i - 1]
+        s = [pts[i][k] - a[k] * r for k in range(3)]
+        cen = [s[k] + b[k] * r for k in range(3)]
+        for j in range(seg + 1):
+            t = math.pi / 2 * j / seg
+            out.append(tuple(cen[k] - b[k] * r * math.cos(t) + a[k] * r * math.sin(t) for k in range(3)))
+    out.append(tuple(pts[-1]))
+    return out
+
+
+def _plen(pl):
+    return sum(math.sqrt(sum((q[k] - p[k]) ** 2 for k in range(3))) for p, q in zip(pl, pl[1:]))
+
+
+def pipe_layout():
+    """Pipes of both foundations: dicts with id, f ('B' BESS / 'P' PCS), d, kind, what, route, wp (corners), radii, pts (centreline)."""
+    P = []
+
+    def add(pid, f, d, kind, what, route, wp, radii):
+        pl = _fillet(wp, radii)
+        arcs = sum(math.pi / 2 * r for r in radii)
+        P.append({'id': pid, 'f': f, 'd': d, 'kind': kind, 'what': what, 'route': route, 'wp': wp, 'radii': radii,
+                  'pts': pl, 'L': _plen(pl), 'arc': arcs})
+    DC = 'DC: «+» і «−» 1 × 300 мм² Cu'
+    # --- BESS: south from the channel, west to the end compartment, up; concentric bends in plan and in elevation
+    xcb, xs_b = P_XC + P_LANES[0] - P_R, 1510
+    slots = [((0, 0), 'Т1', 110, 'dc', DC), ((0, 1), 'Т2', 110, 'dc', DC), ((0, 2), 'Т3', 110, 'dc', DC), ((0, 3), 'Т4', 110, 'dc', DC),
+             ((1, 0), 'Т5', 110, 'res', 'резерв DC, протяжка'), ((1, 1), 'Т6', 110, 'res', 'резерв DC, протяжка'),
+             ((1, 2), 'Т7', 90, 'aux', 'власні потреби 5 × 25…35 мм²'),
+             ((1, 3, -36), 'Т8', 63, 'ctl', 'контроль і зв’язок BMS ↔ PCS / EMS'), ((1, 3, 36), 'Т9', 63, 'res', 'резерв, протяжка')]
+    for sl, pid, d, kind, what in slots:
+        row, lane = sl[0], sl[1]
+        h, x = P_ROWS[row], P_XC + P_LANES[lane] + (sl[2] if len(sl) > 2 else 0)
+        rp, rv = x - xcb, P_END - h
+        z = BEAM + rp
+        add(pid, 'B', d, kind, what, 'канал → торцевий відсік BESS', [(x, h, -50), (x, h, z), (xs_b - rv, h, z), (xs_b - rv, P_END, z)], [rp, rv])
+    # --- PCS: north from the channel; DC east to the PCS cabinet, small pipes west to the LV / HV compartment
+    wi = BF - BEAM
+    xce, xs_p = P_XC + P_LANES[3] + P_R, 4300
+    for sl, pid, kind, what in (((0, 0), 'Т21', 'dc', DC), ((0, 1), 'Т22', 'dc', DC), ((0, 2), 'Т23', 'dc', DC), ((0, 3), 'Т24', 'dc', DC),
+                                ((1, 2), 'Т25', 'res', 'резерв DC, протяжка'), ((1, 3), 'Т26', 'res', 'резерв DC, протяжка')):
+        h, x = P_ROWS[sl[0]], P_XC + P_LANES[sl[1]]
+        rp, rv = xce - x, P_END - h
+        z = wi - rp
+        add(pid, 'P', 110, kind, what, 'канал → шафа PCS', [(x, h, BF + 50), (x, h, z), (xs_p + rv, h, z), (xs_p + rv, P_END, z)], [rp, rv])
+    xcw, xs_w = P_XC + P_LANES[0] - P_R, 1780
+    for pid, kind, d, dx, what in (('Т27', 'aux', 90, P_LANES[0], 'власні потреби BESS 5 × 25…35 мм²'),
+                                   ('Т28', 'ctl', 63, P_LANES[1] - 36, 'контроль і зв’язок BMS ↔ PCS / EMS'),
+                                   ('Т29', 'res', 63, P_LANES[1] + 36, 'резерв, протяжка')):
+        h, x = P_ROWS[1], P_XC + dx
+        rp, rv = x - xcw, P_END - h
+        z = wi - rp
+        add(pid, 'P', d, kind, what, 'канал → відсік LV / HV', [(x, h, BF + 50), (x, h, z), (xs_w - rv, h, z), (xs_w - rv, P_END, z)], [rp, rv])
+    # 6 kV line to RP «Алюміній»: down from the LV / HV compartment, welded bend R 1000, north through the wall at 0,8 m, 1 m beyond it
+    for pid, kind, x, what in (('Т30', 'kl', 679, '3 × АПвЗгаПу-6 1 × 240/50, трикутником'), ('Т31', 'res', 440, 'резерв КЛ-6 кВ, протяжка')):
+        h, rv = -800, P_END + 800
+        add(pid, 'P', 160, kind, what, 'відсік LV / HV → північна стіна → траса до РП', [(x, h + rv, BEAM + rv), (x, h, BEAM + rv), (x, h, -1000)], [rv])
+    # communication pipes 3 × PE d40 (fibre, RS-485, reserve): EMS → RP through the north wall, ККС-1 → EMS through the west wall
+    for i, (pid, kind, what) in enumerate((('Т32', 'com', 'оптика, EMS → РП'), ('Т33', 'com', 'RS-485, EMS → РП'), ('Т34', 'res', 'резерв зв’язку, протяжка'))):
+        x, h, rv = 1179 + 50 * i, -800, 350
+        add(pid, 'P', 40, kind, what, 'шафа EMS → північна стіна → траса до РП', [(x, P_END, BEAM + 50 + rv), (x, h, BEAM + 50 + rv), (x, h, -1000)], [rv])
+    for i, (pid, kind, what) in enumerate((('Т35', 'com', 'оптика, ККС-1 → EMS'), ('Т36', 'com', 'RS-485, ККС-1 → EMS'), ('Т37', 'res', 'резерв зв’язку, протяжка'))):
+        z, h, rv = 1844 + 50 * i, -800, 350
+        add(pid, 'P', 40, kind, what, 'західна стіна → шафа EMS', [(-1000, h, z), (BEAM + 50 + rv, h, z), (BEAM + 50 + rv, P_END, z)], [rv])
+    for q in P:                                   # the end under the container
+        q['end'] = [w for w in q['wp'] if w[1] == P_END][0]
+    return P
+
+
+PIPES = pipe_layout()
+
+
+def pipe_materials():
+    """Pipe lengths by diameter (centreline, +5 % to order), bends, cable seals, caps and draw cords for both foundations."""
+    tot, seals, caps, cord = {}, {}, {}, 0.0
+    for q in PIPES:
+        t = tot.setdefault(q['d'], {'n': 0, 'L': 0.0, 'b': 0})
+        t['n'] += 1; t['L'] += q['L'] / 1000.0; t['b'] += len(q['radii'])
+        inner = q['pts'][0][2] in (-50, BF + 50)          # channel ↔ container; otherwise the pipe joins a line route
+        if q['kind'] != 'res':
+            seals[q['d']] = seals.get(q['d'], 0) + (2 if inner else 1)
+        else:
+            caps[q['d']] = caps.get(q['d'], 0) + (2 if inner or q['d'] == 160 else 1)
+            if q['d'] != 40:
+                cord += q['L'] / 1000.0 + 2.0
+    order = {d: math.ceil(t['L'] * 1.05 * 2) / 2.0 for d, t in tot.items()}
+    return {'tot': tot, 'order': order, 'seals': seals, 'caps': caps, 'cord': int(math.ceil(cord))}
 
 
 
@@ -267,6 +376,16 @@ class Pen:
         if outline:
             self.rect(x, y, w_, h_, w=outline)
 
+    def sand(self, x, y, w_, h_, outline=0, seed=5):
+        """Sand fill in section: warm fill with fine grains."""
+        self.rect(x, y, w_, h_, w=0, fill=C_SAND)
+        rnd = random.Random(seed * 131 + int(x * 7 + y * 3))
+        self.c.setFillColorRGB(0.58, 0.50, 0.36)
+        for _ in range(int(w_ * h_ * 0.55)):
+            self.c.circle((x + rnd.random() * w_) * mm, (y + rnd.random() * h_) * mm, 0.1 * mm, stroke=0, fill=1)
+        if outline:
+            self.rect(x, y, w_, h_, w=outline)
+
     def brick(self, x, y, w_, h_, outline=W_CUT):
         """Brick masonry in section: warm fill, dense 45 deg hatch."""
         self.rect(x, y, w_, h_, w=0, fill=C_BR)
@@ -408,7 +527,7 @@ def frame(p, sheet_title, scale, num, total):
         p.text(x0 + 2, yy, row, 10.5, 'B')
         yy -= 5.2
     p.text(x0 + 2, y0 + 2.3, 'Джерело геометрії: Golen Power Technology, Annex 1 – Response 1 (довідкові креслення)', 5.9, col=MUTED)
-    rows = [('Стадія', 'Ескіз'), ('Масштаб', scale), ('Дата', '12.10.2026'), ('Аркуш', '%d / %d' % (num, total))]
+    rows = [('Стадія', 'Ескіз'), ('Масштаб', scale), ('Дата', '25.10.2026'), ('Аркуш', '%d / %d' % (num, total))]
     for i, (k, v) in enumerate(rows):
         yb = y0 + h_ - (i + 1) * 10
         p.text(xs + 1.5, yb + 3.6, k, 6.2, col=MUTED)
@@ -467,7 +586,7 @@ def table(p, x, y, cols, rows, size=6.8, rh=5.0, head=True):
 # =====================================================================
 def sheet_layout(c):
     p = Pen(c)
-    frame(p, ['План розміщення обладнання', 'УЗЕ на майданчику'], '1 : 100', 1, 5)
+    frame(p, ['План розміщення обладнання', 'УЗЕ на майданчику'], '1 : 100', 1, 6)
     k = 0.01
     ox, oy = 54.0, 62.0
     X = lambda x: ox + x * k
@@ -531,7 +650,7 @@ def sheet_layout(c):
     yb = table(p, rx, 270.5, [('Поз.', 10, 'c'), ('Найменування', 98, 'l'), ('Габарит Д × Ш × В, мм', 44, 'c'), ('Маса', 20, 'c')], [
         ('1', 'Контейнер BESS: LFP 314 А·год, 5 015 кВт·год, рідинне охолодження', '6058 × 2438 × 2896', '≈ 43 т'),
         ('2', 'Блок PCS 1 725 кВт з трансформатором 6 кВ (масляний), відсіки LV/HV', '6058 × 2438 × 2896', '≈ 17 т'),
-        ('3', 'Кабельний канал між блоками зі знімними плитами (попередній розрахунок)', '4900 × 600 × 450 у світлі', '—'),
+        ('3', 'Кабельний канал між блоками зі знімними плитами (попередній розрахунок)', '%d × 600 × %d у світлі' % (CH_L, CH_D), '—'),
     ], size=6.6, rh=5.4)
 
     p.text(rx, yb - 8, 'Основні показники', 8.6, 'B')
@@ -550,7 +669,7 @@ def sheet_layout(c):
         'Фундамент під блок поз. 2 виробник не надав — запросити. Для масляного трансформатора передбачити маслоприймач.',
         'Кабелі між блоками, кабель 6 кВ до точки приєднання і кабелі зв’язку постачає замовник. Траси на плані не показано.',
         'Прив’язку до місцевості й орієнтацію за сторонами світу визначити на генплані.',
-        'Кабельний канал поз. 3 і кабелі в ньому — попередній розрахунок, а не дані Golen. Остаточні перерізи — за переліком кабелів виробника. Канал проходить під зоною відчинення дверей трансформатора, тому плити мають витримувати прохід людей.',
+        'Кабельний канал поз. 3 і кабелі в ньому — попередній розрахунок, а не дані Golen. Остаточні перерізи — за переліком кабелів виробника. Канал проходить під зоною відчинення дверей трансформатора, тому плити мають витримувати прохід людей. У фундаментах — труби (аркуш ' + str(SHEET_P) + ').',
     ], width=176, size=6.6, lead=2.95, gap=0.8)
 
     # ---- hoisting sketch (end view), 1:100 ----
@@ -586,53 +705,52 @@ def sheet_layout(c):
         'Маса: BESS ≈ 43 т, блок PCS ≈ 17 т.',
     ], width=82, size=6.2, lead=2.8, gap=0.5)
 
-    # ---- cable channel section, 1:10 (preliminary sizing) ----
-    kc = 0.1
-    cx0 = rx + 84.0                       # outer left face of the channel on the sheet
-    ct = ty_ - 15.0                       # level of the cover top
+    # ---- cable channel section, 1:15 (preliminary sizing) ----
+    kc = 1 / 15.0
+    cx0 = rx + 90.0                       # outer left face of the channel on the sheet
+    ct = ty_ - 12.0                       # level of the cover top
     XC = lambda x: cx0 + x * kc
     YC = lambda y: ct + y * kc            # y in mm, 0 at the cover top, negative downwards
+    HC, YF = CH_COV + CH_D + CH_T, -(CH_COV + CH_D)
     p.text(rx + 72, ty_, 'Переріз кабельного каналу поз. 3', 8.6, 'B')
-    p.text(rx + 72, ty_ - 3.8, 'М 1 : 10 · попередній розрахунок, не дані Golen', 7.0, col=MUTED)
-    # ground on both sides (surface 20 mm below the cover top)
+    p.text(rx + 72, ty_ - 3.8, 'М 1 : 15 · попередній розрахунок, не дані Golen', 7.0, col=MUTED)
     for xa, xb in ((-60, 0), (800, 880)):
         p.line(XC(xa), YC(-20), XC(xb), YC(-20), W_VIS)
-        p.soil(XC(xa), XC(xb), YC(-20), depth=2.6)
-    p.compact(XC(-40), XC(840), YC(-630), depth=2.2)
-    p.rc(XC(0), YC(-630), 80, 10, seed=91)                       # bottom
-    p.rc(XC(0), YC(-530), 10, 45, seed=92)                       # walls
-    p.rc(XC(700), YC(-530), 10, 45, seed=93)
-    p.rc(XC(0), YC(-80), 80, 8, seed=94)                         # cover slab
-    p.rect(XC(100), YC(-530), 60, 45, w=0, fill=(1, 1, 1))
-    # shelf with small cables, earthing strip, DC cables
-    p.line(XC(100), YC(-530 + 248), XC(205), YC(-530 + 248), 0.6)
-    for xx, r_, col in ((175, 1.4, (0.48, 0.53, 0.56)), (145, 0.8, (0.56, 0.44, 0.75)), (125, 0.6, (0.18, 0.62, 0.42)), (111, 0.6, (0.18, 0.62, 0.42))):
-        p.circle(XC(xx), YC(-530 + 248) + r_ + 0.3, r_, w=W_HAIR + 0.04, fill=col)
-    p.rect(XC(640), YC(-530), 4.0, 0.5, w=W_HAIR, fill=(0.62, 0.70, 0.23))
+        p.soil(XC(xa), XC(xb), YC(-20), depth=2.2)
+    p.compact(XC(-40), XC(840), YC(-HC), depth=2.0)
+    p.rc(XC(0), YC(-HC), 800 * kc, CH_T * kc, seed=91)
+    p.rc(XC(0), YC(YF), CH_T * kc, CH_D * kc, seed=92)
+    p.rc(XC(700), YC(YF), CH_T * kc, CH_D * kc, seed=93)
+    p.rc(XC(0), YC(-CH_COV), 800 * kc, CH_COV * kc, seed=94)
+    p.rect(XC(100), YC(YF), 600 * kc, CH_D * kc, w=0, fill=(1, 1, 1))
+    ysh = YF + (P_ROWS[1] - CH_FLOOR)     # shelf at the level of the upper row of entry pipes
+    p.line(XC(100), YC(ysh), XC(205), YC(ysh), 0.6)
+    for xx, r_, col in ((175, 14, (0.48, 0.53, 0.56)), (145, 8, (0.56, 0.44, 0.75)), (125, 6, (0.18, 0.62, 0.42)), (111, 6, (0.18, 0.62, 0.42))):
+        p.circle(XC(xx), YC(ysh) + r_ * kc + 0.3, r_ * kc, w=W_HAIR + 0.04, fill=col)
+    p.rect(XC(640), YC(YF), 40 * kc, 0.5, w=W_HAIR, fill=(0.62, 0.70, 0.23))
     for i in range(8):
         col = (0.75, 0.22, 0.17) if i % 2 == 0 else (0.12, 0.18, 0.23)
-        p.circle(XC(400 - 140 + 40 * i), YC(-530) + 1.65, 1.65, w=W_HAIR + 0.04, fill=col)
+        p.circle(XC(400 - 140 + 40 * i), YC(YF) + 16.5 * kc, 16.5 * kc, w=W_HAIR + 0.04, fill=col)
 
     def callout(n, x, y, tx, ty):
         p.line(XC(x), YC(y), XC(tx), YC(ty), W_HAIR + 0.03)
         p.circle(XC(tx), YC(ty), 2.2, w=W_THIN, fill=(1, 1, 1))
         p.text(XC(tx), YC(ty) - 0.95, str(n), 6.8, 'B', anchor='c')
-    callout(1, 400, -505, 400, -400)
-    callout(2, 150, -270, 290, -190)
-    callout(3, 660, -527, 600, -450)
-    callout(4, 560, -40, 560, 55)
-    callout(5, 750, -300, 862, -230)
-    # dimensions
-    yb_ = YC(-630) - 2.6
+    callout(1, 400, YF + 25, 400, YF + 220)
+    callout(2, 150, ysh + 20, 300, ysh + 130)
+    callout(3, 660, YF + 3, 600, YF + 130)
+    callout(4, 560, -40, 560, 85)
+    callout(5, 750, -400, 875, -330)
+    yb_ = YC(-HC) - 2.4
     for a_, b_ in ((0, 100), (100, 700), (700, 800)):
-        p.dim_h(XC(a_), XC(b_), yb_, yb_ - 5.5, str(b_ - a_), size=6.4)
-    p.dim_h(XC(0), XC(800), yb_, yb_ - 11.5, '800', size=6.4)
+        p.dim_h(XC(a_), XC(b_), yb_, yb_ - 5.0, str(b_ - a_), size=6.2)
+    p.dim_h(XC(0), XC(800), yb_, yb_ - 10.5, '800', size=6.2)
     xl_ = XC(-60) - 1.0
-    for a_, b_ in ((-630, -530), (-530, -80), (-80, 0)):
-        p.dim_v(YC(a_), YC(b_), xl_, xl_ - 5.5, str(b_ - a_), size=6.4)
-    p.dim_v(YC(-630), YC(0), xl_, xl_ - 11.5, '630', size=6.4)
-    yk = yb_ - 18.5
-    for n_, t_ in ((1, '8 силових DC-кабелів 1×300 мм² Cu (4 «+» і 4 «−»), один шар'),
+    for a_, b_ in ((-HC, YF), (YF, -CH_COV), (-CH_COV, 0)):
+        p.dim_v(YC(a_), YC(b_), xl_, xl_ - 5.0, str(b_ - a_), size=6.2)
+    p.dim_v(YC(-HC), YC(0), xl_, xl_ - 10.5, str(HC), size=6.2)
+    yk = yb_ - 14.0
+    for n_, t_ in ((1, '8 силових DC-кабелів 1×300 мм² Cu (4 «+» і 4 «−»), один шар; у фундаментах — парами в трубах'),
                    (2, 'полиця: власні потреби 5×25…35 мм², контрольний кабель, зв’язок'),
                    (3, 'смуга заземлення 40×4'),
                    (4, 'знімна плита перекриття 80 мм'),
@@ -647,7 +765,7 @@ def sheet_layout(c):
 # =====================================================================
 def sheet_doors(c):
     p = Pen(c)
-    frame(p, ['Схема відчинення дверей', 'Контейнер BESS і блок PCS'], '1 : 50', 2, 5)
+    frame(p, ['Схема відчинення дверей', 'Контейнер BESS і блок PCS'], '1 : 50', 2, 6)
     k = 0.02
     ox = 64.0
     X = lambda x: ox + x * k
@@ -787,7 +905,7 @@ def sheet_doors(c):
 # =====================================================================
 def sheet_foundation(c):
     p = Pen(c)
-    frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 5)
+    frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 6)
     k = 1 / 40.0
 
     # ------------------------------------------------ plan
@@ -798,7 +916,7 @@ def sheet_foundation(c):
     # brick wall ring, then columns over it
     p.rect(X(0), Y(0), LF * k, BF * k, w=0, fill=C_BR)
     p.hatch(X(0), Y(0), LF * k, BF * k, step=0.95, ang=135)
-    p.rect(X(BEAM), Y(BEAM), (LF - 2 * BEAM) * k, (BF - 2 * BEAM) * k, w=W_CUT, fill=(1, 1, 1))
+    p.rect(X(BEAM), Y(BEAM), (LF - 2 * BEAM) * k, (BF - 2 * BEAM) * k, w=W_CUT, fill=C_SAND)
     p.rect(X(0), Y(0), LF * k, BF * k, w=W_CUT)
     for yy in (0, BF - BEAM):
         for i, xx in enumerate(COLX):
@@ -806,8 +924,8 @@ def sheet_foundation(c):
             p.rect(X(xx + 25), Y(yy + 25), 300 * k, 300 * k, w=W_THIN, dash=[0.8, 0.5])
     # container outline
     p.rect(X(OFF), Y(OFF), L * k, B * k, w=0.32, col=ACC, dash=[3, 0.8, 0.5, 0.8])
-    p.text(X(LF / 2), Y(BF / 2) + 3.2, 'Кабельний простір', 8.2, 'B', anchor='c')
-    p.text(X(LF / 2), Y(BF / 2) - 0.6, '5458 × 1838 у світлі, глибина 1800 від верху фундаменту', 6.6, anchor='c')
+    p.text(X(LF / 2), Y(BF / 2) + 3.2, 'Кабельний простір засипано піском', 8.2, 'B', anchor='c')
+    p.text(X(LF / 2), Y(BF / 2) - 0.6, '5458 × 1838 у світлі; пісок до −0,100, стяжка C8/10 100 мм; кабелі — у трубах (аркуш ' + str(SHEET_P) + ')', 6.4, anchor='c')
     p.text(X(LF / 2), Y(BF / 2) - 4.2, 'контур контейнера 6058 × 2438 (штрихпунктир)', 6.4, anchor='c', col=ACC)
     # steps at the door end (west)
     sw = 1600
@@ -870,6 +988,12 @@ def sheet_foundation(c):
     for i, xx in enumerate(COLX):
         p.rc(X(xx), Z(COL_BOT), BEAM * k, (F_TOP - COL_BOT) * k, seed=20 + i)
         p.line(X(xx + 25), Z(F_TOP) + 0.18, X(xx + 325), Z(F_TOP) + 0.18, 0.55)
+    # opening for the cable channel (only in the wall on the channel side): pipes, concrete around them, lintel ПР-1
+    p.rect(X(P_XC - CH_W / 2), Z(CH_FLOOR), CH_W * k, (-60 - CH_FLOOR) * k, w=W_THIN, fill=(0.88, 0.89, 0.90))
+    p.rc(X(P_XC - 450), Z(-60), 900 * k, 120 * k, outline=W_THIN, seed=61)
+    for q in PIPES:
+        if q['f'] == 'B':
+            p.circle(X(q['pts'][0][0]), Z(q['pts'][0][1]), q['d'] / 2.0 * k, w=W_HAIR + 0.04, fill=(1, 1, 1))
     # container (lower part) with break line
     ct = F_TOP + 950
     p.rect(X(OFF), Z(F_TOP) + 0.4, L * k, (ct - F_TOP) * k - 0.4, w=0, fill=C_CONT)
@@ -893,8 +1017,9 @@ def sheet_foundation(c):
         p.level(lx, Z(zz), t)
     # leaders
     W = (1, 1, 1)
-    p.leader(X(COLX[1] + 175), Z(-560), X(COLX[1] + 620), Z(-420), '', lines=['колона 350 × 350,', 'бетон C25'], size=6.3, bg=W)
+    p.leader(X(COLX[1] + 175), Z(-560), X(900), Z(-420), '', lines=['колона 350 × 350,', 'бетон C25'], size=6.3, bg=W)
     p.leader(X(4500), Z(-1000), X(4700), Z(-860), '', lines=['цегляна кладка,', 'розчин М20'], size=6.3, bg=W)
+    p.leader(X(P_XC + 230), Z(-300), X(4250), Z(-250), '', lines=['отвір під канал, труби Т1–Т9', 'замонолічено; лише в стіні', 'з боку каналу'], size=6.0, bg=W)
     p.leader(X(520), Z(BEAM_BOT + 170), X(760), Z(BEAM_BOT) - 9.5, 'обв’язувальна балка 350 × 350, бетон C25: 4Ø12, хомути Ø8 крок 200', size=6.3)
     p.leader(X(3800), Z(BEAM_BOT - PREP / 2), X(4020), Z(BEAM_BOT) - 12.0, '', lines=['бетонна підготовка 100 мм, C8/10 (рекомендовано),', 'під нею — ґрунт, ущільнений до kу ≥ 0,94'], size=6.3)
     p.leader(X(COLX[2] + 175), Z(F_TOP) + 0.2, X(COLX[2] + 560), Z(F_TOP + 950) + 5.5, 'закладна деталь на оголовку колони', size=6.3)
@@ -908,8 +1033,10 @@ def sheet_foundation(c):
     p.view_title(ox2 - 12, 176.5, '2–2', 'М 1 : 40')
     p.compact(X2(-250), X2(BF + 250), Z(BEAM_BOT - PREP))
     p.rect(X2(-PREP), Z(BEAM_BOT - PREP), (BF + 2 * PREP) * k, PREP * k, w=W_THIN, fill=(0.86, 0.87, 0.88))
-    # far end wall and far beam in elevation
-    p.brick_face(X2(BEAM), Z(COL_BOT), (BF - 2 * BEAM) * k, (F_TOP - COL_BOT) * k)
+    # sand fill (cut), screed, far end wall above the screed, far beam
+    p.sand(X2(BEAM), Z(COL_BOT), (BF - 2 * BEAM) * k, (SAND_TOP - COL_BOT) * k)
+    p.rect(X2(BEAM), Z(SAND_TOP), (BF - 2 * BEAM) * k, SCREED * k, w=W_THIN, fill=(0.80, 0.81, 0.82))
+    p.brick_face(X2(BEAM), Z(0), (BF - 2 * BEAM) * k, F_TOP * k)
     p.rect(X2(BEAM), Z(BEAM_BOT), (BF - 2 * BEAM) * k, BEAM * k, w=W_THIN, fill=(0.93, 0.935, 0.94))
     p.line(X2(BEAM), Z(F_TOP), X2(BF - BEAM), Z(F_TOP), W_THIN)
     # cut columns and beams
@@ -921,16 +1048,18 @@ def sheet_foundation(c):
             for dz in (A_BAR, BEAM - A_BAR):
                 p.circle(X2(xx + dx), Z(BEAM_BOT + dz), 0.42, w=0, fill=INK)
         p.line(X2(xx + 25), Z(F_TOP) + 0.18, X2(xx + 325), Z(F_TOP) + 0.18, 0.55)
-    # cable supports (schematic)
-    for xx in (BEAM + 250, BF - BEAM - 250):
-        p.line(X2(xx), Z(COL_BOT), X2(xx), Z(COL_BOT + 420), W_VIS)
-    p.line(X2(BEAM + 150), Z(COL_BOT + 420), X2(BF - BEAM - 150), Z(COL_BOT + 420), W_VIS)
-    p.line(X2(BEAM + 150), Z(COL_BOT + 250), X2(BF - BEAM - 150), Z(COL_BOT + 250), W_VIS)
-    for i in range(5):
-        p.circle(X2(BEAM + 420 + i * 250), Z(COL_BOT + 420) + 1.0, 0.9, w=W_THIN, fill=(1, 1, 1))
-    p.text(X2(BF / 2), Z(-330), 'кабельний простір', 6.8, 'B', anchor='c', bg=W)
-    p.text(X2(BF / 2), Z(-470), 'у глибині — торцева стіна', 6.0, anchor='c', col=MUTED, bg=W)
-    p.text(X2(BF / 2), Z(COL_BOT + 560), 'кабельні опори (умовно)', 6.0, anchor='c', bg=W)
+    # pipes of BESS cut by the section (x = 2175, looking west: north on the right), pipe ends above the screed
+    for q in PIPES:
+        if q['f'] != 'B':
+            continue
+        cut = [v for v in q['pts'] if abs(v[0] - (COLX[1] + BEAM / 2)) < 60]
+        if cut:
+            p.circle(X2(BF - cut[0][2]), Z(cut[0][1]), q['d'] / 2.0 * k, w=W_HAIR + 0.04, fill=(1, 1, 1))
+        x, y, z = q['end']
+        p.rect(X2(BF - z) - q['d'] / 2.0 * k, Z(0), q['d'] * k, P_END * k, w=W_HAIR + 0.04, fill=(1, 1, 1))
+    p.leader(X2(BF - 1360), Z(-735), X2(BEAM + 60), Z(-1050), '', lines=['труби Т1–Т9', '(аркуш ' + str(SHEET_P) + ')'], size=6.0, bg=W)
+    p.leader(X2(1900), Z(-1300), X2(BEAM + 60), Z(-1380), 'пісок, kу ≥ 0,95', size=6.0, bg=W)
+    p.leader(X2(700), Z(-50), X2(BEAM + 60), Z(-380), 'стяжка C8/10, 100', size=6.0, bg=W)
     # container
     p.rect(X2(OFF), Z(F_TOP) + 0.4, B * k, (ct - F_TOP) * k - 0.4, w=0, fill=C_CONT)
     p.line(X2(OFF), Z(F_TOP) + 0.4, X2(OFF + B), Z(F_TOP) + 0.4, W_VIS)
@@ -1012,6 +1141,9 @@ def sheet_foundation(c):
     p.rect(lx0, yy, 11, 5.2, w=W_VIS)
     p.text(lx0 + 13.5, yy + 1.6, 'ущільнений ґрунт основи', 6.8)
     yy -= 7.2
+    p.sand(lx0, yy, 11, 5.2, outline=W_VIS)
+    p.text(lx0 + 13.5, yy + 1.6, 'пісок (засипка кабельного простору)', 6.8)
+    yy -= 7.2
     p.line(lx0, yy + 4.6, lx0 + 11, yy + 4.6, W_VIS)
     p.soil(lx0, lx0 + 11, yy + 4.6)
     p.text(lx0 + 13.5, yy + 1.6, 'природний ґрунт', 6.8)
@@ -1025,6 +1157,8 @@ def sheet_foundation(c):
         ('Кладка, площа стін (h = 1,8 м)', '23,7 м²'),
         ('Підготовка C8/10, 100 мм', fnum(V_PREP, 2) + ' м³'),
         ('Сталь, усього (аркуш 4)', '≈ %d кг' % round(sum(steel_by('f').values()) + 8 * MN_KG)),
+        ('Пісок у кабельному просторі', fnum((LF - 2 * BEAM) * (BF - 2 * BEAM) * (SAND_TOP - COL_BOT) / 1e9, 1) + ' м³'),
+        ('Стяжка C8/10, 100 мм', fnum((LF - 2 * BEAM) * (BF - 2 * BEAM) * SCREED / 1e9, 2) + ' м³'),
     ], size=6.4, rh=4.6, head=False)
 
     ny = 55.5
@@ -1035,7 +1169,7 @@ def sheet_foundation(c):
         'Основа — ущільнений ґрунт, коефіцієнт ущільнення не менше 0,94. Під балкою рекомендую бетонну підготовку 100 мм C8/10: без неї захисний шар 40 мм не забезпечити (аркуш 4).',
         'Між колонами — цегляна кладка на розчині М20 (позначення виробника). Товщину кладки на кресленні Golen не вказано, показано умовно 350 мм.',
         'На оголовках колон — закладні деталі, раму контейнера приварити до них (вузол А). Розміри пластин і анкерів уточнити у виробника.',
-        'До заведення кабелів установити кабельні опори внизу фундаменту. Отвори для вводу кабелів і відведення води з кабельного простору на кресленні Golen не показані — передбачити проєктом.',
+        'Кабельний простір засипати піском (шарами по 200 мм, kу ≥ 0,95) до −0,100, зверху — стяжка C8/10 100 мм. Кабелі — у трубах ПЕ з резервом і протяжками (аркуш ' + str(SHEET_P) + '). У Golen тут кабельні опори в порожньому просторі — заміну погодити з Golen.',
         'Сходинки показано з боку торцевих дверей контейнера. Бік розміщення і ширину уточнити.',
         'Орієнтовний тиск під підошвою балки ≈ 120 кПа (контейнер 43 т і власна вага фундаменту ≈ 24 т на площу ≈ 5,6 м²). Перевірити за ґрунтовими умовами; глибину закладання звірити з глибиною промерзання.',
         'Креслення є ескізом і не замінює робочу документацію. Перед бетонуванням потрібні підтвердження Golen і розрахунок проєктувальника.',
@@ -1139,7 +1273,7 @@ def spec_table(p, x, y, cols, rows, size=6.0, rh=4.5, hh=5.2):
 
 def sheet_rebar(c):
     p = Pen(c)
-    frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', 4, 5)
+    frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1:40; 1:20; 1:15; 1:10', 4, 6)
     W = (1, 1, 1)
     G = ACC                                       # bars Golen did not specify (my proposal)
 
@@ -1331,9 +1465,9 @@ def sheet_rebar(c):
     p.text(sx + 10, 101.4, '200', 6.0, anchor='c')
     p.text(sx + 16, 112, 'у колону', 5.8, col=MUTED)
     p.text(sx + 16, 109.2, 'лапка — у балку', 5.8, col=MUTED)
-    slabel(94.5, '6', 'Ø8 A500C, L = 1640', G)
+    slabel(94.5, '6', 'Ø8 A500C, L = 2340', G)
     p.poly([(sx + 5, 90), (sx + 5, 79), (sx + 27, 79), (sx + 27, 90)], W_BAR, G)
-    p.text(sx + 3.6, 84.5, '470', 6.0, anchor='c', rot=90)
+    p.text(sx + 3.6, 84.5, '820', 6.0, anchor='c', rot=90)
     p.text(sx + 16, 76.4, '700', 6.0, anchor='c')
     p.text(sx + 16, 82, 'канал', 5.8, anchor='c', col=MUTED)
     p.rect(sx, 66.0, p.tw('МН-1', 6.0, 'B') + 2.2, 4.0, w=W_THIN, col=G, fill=W)
@@ -1393,48 +1527,51 @@ def sheet_rebar(c):
                                        ('Бетон', 34, 'r')], [r1, r2, r3, r4, r5, r6, r7], size=6.0, rh=4.4, hh=7.0)
     p.text(rx, yb2 - 3.6, 'Бетон: C25 — %s м³, підготовка C8/10 — %s м³. Маса сталі — без відходів і в’язального дроту.' % (fnum(c25, 2), fnum(2 * V_PREP, 2)), 6.0, col=MUTED)
 
-    # ------------------------------------------------ cable channel, 1:10
-    kc = 0.1
-    cx0, ct = 254.0, 132.0
+    # ------------------------------------------------ cable channel, 1:15
+    kc = 1 / 15.0
+    cx0, ct = 256.0, 137.0
     XC = lambda x: cx0 + x * kc
     YC = lambda y: ct + y * kc
-    p.view_title(rx, 143.5, 'Кабельний канал: армування', 'М 1 : 10 · кабелі не показано')
+    HC, YF = CH_COV + CH_D + CH_T, -(CH_COV + CH_D)
+    p.view_title(rx, 146.5, 'Кабельний канал: армування', 'М 1 : 15 · кабелі не показано')
     for xa, xb in ((-60, 0), (800, 860)):
         p.line(XC(xa), YC(-20), XC(xb), YC(-20), W_THIN)
-    p.compact(XC(-40), XC(840), YC(-630), depth=1.8)
-    p.poly([(XC(0), YC(-630)), (XC(800), YC(-630)), (XC(800), YC(-80)), (XC(700), YC(-80)), (XC(700), YC(-530)),
-            (XC(100), YC(-530)), (XC(100), YC(-80)), (XC(0), YC(-80))], W_VIS, fill=(0.95, 0.955, 0.96), close=True)
-    p.rect(XC(0), YC(-80), 80, 8, w=W_VIS, fill=(0.95, 0.955, 0.96))
-    p.poly([(XC(50), YC(-110)), (XC(50), YC(-580)), (XC(750), YC(-580)), (XC(750), YC(-110))], W_BAR, G)
+    p.compact(XC(-40), XC(840), YC(-HC), depth=1.8)
+    p.poly([(XC(0), YC(-HC)), (XC(800), YC(-HC)), (XC(800), YC(-CH_COV)), (XC(700), YC(-CH_COV)), (XC(700), YC(YF)),
+            (XC(100), YC(YF)), (XC(100), YC(-CH_COV)), (XC(0), YC(-CH_COV))], W_VIS, fill=(0.95, 0.955, 0.96), close=True)
+    p.rect(XC(0), YC(-CH_COV), 800 * kc, CH_COV * kc, w=W_VIS, fill=(0.95, 0.955, 0.96))
+    yu = -HC + 50
+    p.poly([(XC(50), YC(-CH_COV - 30)), (XC(50), YC(yu)), (XC(750), YC(yu)), (XC(750), YC(-CH_COV - 30))], W_BAR, G)
     for xx in (150, 317, 483, 650):
-        p.circle(XC(xx), YC(-572), 0.42, w=0, fill=G)
+        p.circle(XC(xx), YC(yu + 8), 0.36, w=0, fill=G)
+    wall_y = [YF + 120, YF + 120 + (CH_D - 240) // 2, YF + CH_D - 120]
     for xx in (58, 742):
-        for yy in (-420, -220):
-            p.circle(XC(xx), YC(yy), 0.42, w=0, fill=G)
+        for yy in wall_y:
+            p.circle(XC(xx), YC(yy), 0.36, w=0, fill=G)
     p.line(XC(25), YC(-51), XC(775), YC(-51), W_BAR - 0.1, G)
     for xx in (40, 220, 400, 580, 760):
-        p.circle(XC(xx), YC(-43), 0.42, w=0, fill=G)
-    pos_mark(p, XC(750), YC(-330), XC(830), YC(-300), '6', col=G)
-    pos_mark(p, XC(483), YC(-572), XC(483), YC(-430), '7', col=G)
-    pos_mark(p, XC(58), YC(-420), XC(250), YC(-330), '7', col=G)
-    pos_mark(p, XC(310), YC(-51), XC(310), YC(80), '8', col=G)
-    pos_mark(p, XC(580), YC(-43), XC(620), YC(80), '9', col=G)
+        p.circle(XC(xx), YC(-43), 0.36, w=0, fill=G)
+    pos_mark(p, XC(750), YC(-450), XC(835), YC(-400), '6', col=G)
+    pos_mark(p, XC(483), YC(yu + 8), XC(483), YC(yu + 190), '7', col=G)
+    pos_mark(p, XC(58), YC(wall_y[1]), XC(250), YC(wall_y[1] - 60), '7', col=G)
+    pos_mark(p, XC(310), YC(-51), XC(310), YC(75), '8', col=G)
+    pos_mark(p, XC(580), YC(-43), XC(620), YC(75), '9', col=G)
     flag(p, XC(700), YC(-30), XC(840), YC(-30) + 0.9, 'П-1')
-    yb_ = YC(-630) - 2.4
+    yb_ = YC(-HC) - 2.4
     for a_, b_ in ((0, 100), (100, 700), (700, 800)):
         p.dim_h(XC(a_), XC(b_), yb_, yb_ - 4.6, str(b_ - a_), size=6.0)
     p.dim_h(XC(0), XC(800), yb_, yb_ - 9.6, '800', size=6.2)
     xl_ = XC(-60) - 0.8
-    for a_, b_ in ((-630, -530), (-530, -80), (-80, 0)):
+    for a_, b_ in ((-HC, YF), (YF, -CH_COV), (-CH_COV, 0)):
         p.dim_v(YC(a_), YC(b_), xl_, xl_ - 4.6, str(b_ - a_), size=6.0)
-    p.dim_v(YC(-630), YC(0), xl_, xl_ - 9.6, '630', size=6.2)
+    p.dim_v(YC(-HC), YC(0), xl_, xl_ - 9.6, str(HC), size=6.2)
 
     # ------------------------------------------------ slab П-1, plan 1:20
     ks = 0.05
     px0, py0 = 352.0, 104.0
     XS = lambda x: px0 + x * ks
     YS = lambda z: py0 + z * ks
-    p.view_title(347, 143.5, 'Плита П-1', 'М 1 : 20 · план')
+    p.view_title(347, 146.5, 'Плита П-1', 'М 1 : 20 · план')
     p.rect(XS(0), YS(0), 800 * ks, SLAB_L * ks, w=W_VIS)
     for zz in (40, 173, 306, 438):
         p.line(XS(25), YS(zz), XS(775), YS(zz), W_BAR - 0.1, G)
@@ -1461,7 +1598,7 @@ def sheet_rebar(c):
     pos_mark(p, XL(240), YL(38), XL(350) + 6.0, YL(110), '11', col=G)
     p.dim_h(XL(0), XL(350), YL(0), YL(0) - 4.6, '350', size=6.2)
     p.dim_v(YL(0), YL(120), XL(0), XL(0) - 4.6, '120', size=6.2)
-    p.text(XL(175), YL(0) - 9.6, 'над отвором 600 × 450 у кладці', 5.8, anchor='c', col=MUTED)
+    p.text(XL(175), YL(0) - 9.6, 'над отвором 600 × %d у кладці' % CH_D, 5.8, anchor='c', col=MUTED)
 
     # ------------------------------------------------ notes
     items = [
@@ -1490,7 +1627,7 @@ def sheet_rebar(c):
 # =====================================================================
 def sheet_views(c, img_dir):
     p = Pen(c)
-    frame(p, ['Загальний вигляд', '3D-модель майданчика і фундаменту'], 'без масштабу', 5, 5)
+    frame(p, ['Загальний вигляд', '3D-модель майданчика і фундаменту'], 'без масштабу', 6, 6)
     p.view_title(26, 286.5, 'Загальний вигляд (3D-модель)')
 
     from reportlab.lib.utils import ImageReader
@@ -1506,12 +1643,12 @@ def sheet_views(c, img_dir):
     img('q_open.png', 222, 152, 190, 'б) Усі двері відчинені: BESS — з довгого боку та з торця, блок PCS — з торця і з обох довгих боків.')
     img('q_open_pcs.png', 26, 53, 132, 'в) Блок PCS із зовнішнього боку: шафи PCS у відкритій рамі, двері трансформатора.')
     img('q_found.png', 164, 53, 132, 'г) Фундаменти й кабельний канал без ґрунту, плити каналу знято.')
-    img('q_rebar.png', 302, 53, 110, 'д) Арматура (аркуш 4), бетон умовно прозорий.')
+    img('q_rebar.png', 302, 53, 110, 'д) Арматура і труби вводів (аркуші 4, 5).')
     items = [
         'Фундамент блока PCS (помаранчевий, напівпрозорий): Golen дав креслення лише для контейнера BESS.',
         'Відкрита рама з дахом над шафами PCS, висота шаф і дверей.',
         'Те, що видно за дверима, товщина кладки, ширина сходинок.',
-        'Кабельний канал і кабелі в ньому: попередній розрахунок, траса в кабельних просторах умовна.',
+        'Кабельний канал і кабелі: попередній розрахунок; виходи труб під контейнерами — умовні.',
         'Арматура: темна — за кресленням Golen, помаранчева — пропозиція (Golen не задав).',
         'Інтерактивна модель (двері, шари, арматура, перехід до креслень): mischenkoa85-creator.github.io/galkat-20',
     ]
@@ -1526,7 +1663,355 @@ def sheet_views(c, img_dir):
     c.showPage()
 
 
+# =====================================================================
+# Sheet: cable entries in pipes, BESS and PCS
+# =====================================================================
+SHEET_P = globals().get('SHEET_P', 5)
+TOT_P = globals().get('TOTAL', 6)
+PCOL = {'dc': (0.75, 0.22, 0.17), 'res': (0.45, 0.48, 0.52), 'aux': (0.30, 0.38, 0.46), 'ctl': (0.50, 0.38, 0.70),
+        'kl': (0.62, 0.36, 0.10), 'com': (0.0, 0.54, 0.48)}
+PNAME = {'dc': 'DC «+» і «−»', 'res': 'резерв, протяжка', 'aux': 'власні потреби', 'ctl': 'контроль, зв’язок BMS', 'kl': 'КЛ-6 кВ', 'com': 'зв’язок'}
+
+
+def _thick(p, pts, w, col, dash=None, alpha=1.0):
+    c = p.c
+    c.saveState()
+    c.setLineWidth(w * mm); c.setStrokeColorRGB(*col); c.setLineCap(1); c.setLineJoin(1)
+    if alpha < 1:
+        c.setStrokeAlpha(alpha)
+    c.setDash(*([[d * mm for d in dash], 0] if dash else [[], 0]))
+    path = c.beginPath(); path.moveTo(pts[0][0] * mm, pts[0][1] * mm)
+    for x, y in pts[1:]:
+        path.lineTo(x * mm, y * mm)
+    c.drawPath(path, stroke=1, fill=0)
+    c.restoreState()
+
+
+def _pipe(p, pts, d, k, kind, alpha=0.9):
+    """A pipe: band of the pipe width; a spare pipe is drawn hollow with a dashed axis."""
+    w = d * k
+    _thick(p, pts, w, PCOL[kind], alpha=alpha)
+    if kind == 'res' and w > 0.9:
+        _thick(p, pts, w - 0.5, (1, 1, 1))
+        _thick(p, pts, 0.12, PCOL[kind], dash=[0.9, 0.6])
+
+
+def _found_plan(p, X, Y, k, kind):
+    """Foundation outline in plan (north up): brick ring, columns, sand inside, container and its compartments."""
+    p.rect(X(0), Y(BF), LF * k, BF * k, w=0, fill=(0.97, 0.92, 0.88))
+    p.hatch(X(0), Y(BF), LF * k, BF * k, step=1.6, ang=135, col=(0.75, 0.62, 0.55))
+    p.rect(X(BEAM), Y(BF - BEAM), (LF - 2 * BEAM) * k, (BF - 2 * BEAM) * k, w=W_THIN, fill=C_SAND)
+    for zz in (0, BF - BEAM):
+        for xx in COLX:
+            p.rect(X(xx), Y(zz + BEAM), BEAM * k, BEAM * k, w=W_THIN, fill=C_RC)
+    p.rect(X(0), Y(BF), LF * k, BF * k, w=W_VIS)
+    p.rect(X(OFF), Y(OFF + B), L * k, B * k, w=0.28, col=ACC, dash=[3, 0.8, 0.5, 0.8])
+    if kind == 'B':
+        p.line(X(OFF + 520), Y(OFF), X(OFF + 520), Y(OFF + B), W_HAIR + 0.04, ACC, dash=[1.2, 0.8])
+    else:
+        p.line(X(OFF + 1138), Y(OFF), X(OFF + 1138), Y(OFF + B), W_HAIR + 0.04, ACC, dash=[1.2, 0.8])
+        p.line(X(OFF + LE), Y(OFF), X(OFF + LE), Y(OFF + B), W_HAIR + 0.04, ACC, dash=[1.2, 0.8])
+        p.rect(X(OFF + PX0), Y(OFF + PZ1), (PX1 - PX0) * k, (PZ1 - PZ0) * k, w=W_HAIR + 0.04, col=ACC, dash=[1.2, 0.8])
+
+
+def _pipes_plan(p, X, Y, k, f, alpha=0.85, clip=-260):
+    qs = [q for q in PIPES if q['f'] == f]
+    for q in sorted(qs, key=lambda q: sorted(v[1] for v in q['pts'])[len(q['pts']) // 2]):
+        pts = [(x, z) for x, y, z in q['pts'] if x >= clip and z >= clip and z <= BF - clip]
+        _pipe(p, [(X(x), Y(z)) for x, z in pts], q['d'], k, q['kind'], alpha)
+        if len(pts) < len(q['pts']) and q['pts'][0][2] not in (-50, BF + 50):          # goes on beyond the foundation
+            (xa, za), (xb, zb) = (pts[-2], pts[-1]) if q['pts'][-1][2] < clip else (pts[1], pts[0])
+            L_ = math.hypot(xb - xa, zb - za); ux, uz = (xb - xa) / L_, (zb - za) / L_
+            tip = (X(xb + ux * 140), Y(zb + uz * 140))
+            p.line(X(xb), Y(zb), tip[0], tip[1], W_THIN, PCOL[q['kind']])
+    for q in qs:
+        x, y, z = q['end']
+        p.circle(X(x), Y(z), q['d'] / 2.0 * k, w=W_HAIR + 0.04, col=PCOL[q['kind']], fill=(1, 1, 1))
+
+
+def _exits(p, f, x0, y0, k, xr, zr, title, sub, side='l'):
+    """Detail of the pipe exits under the container (plan, north up), with numbers and positions from the foundation faces."""
+    X = lambda x: x0 + (x - xr[0]) * k
+    Y = lambda z: y0 - (z - zr[0]) * k
+    p.view_title(x0 - 2, y0 + 7.0, title, sub)
+    p.rect(X(xr[0]), Y(zr[1]), (xr[1] - xr[0]) * k, (zr[1] - zr[0]) * k, w=0, fill=C_SAND)
+    for q in PIPES:
+        if q['f'] != f:
+            continue
+        x, y, z = q['end']
+        if not (xr[0] <= x <= xr[1] and zr[0] <= z <= zr[1]):
+            continue
+        r = q['d'] / 2.0 * k
+        p.circle(X(x), Y(z), r, w=0.28, col=PCOL[q['kind']], fill=(1, 1, 1))
+        if q['kind'] == 'dc':
+            for dx, sg, col in ((-0.38, '+', PCOL['dc']), (0.38, '−', INK)):
+                p.circle(X(x) + dx * r, Y(z), 0.33 * r, w=W_HAIR + 0.03, fill=col)
+            if side == 'l':
+                p.text(X(x) - r - 0.7, Y(z) - 0.9, q['id'], 5.2, 'B', anchor='r')
+            else:
+                p.text(X(x) + r + 0.7, Y(z) - 0.9, q['id'], 5.2, 'B')
+        elif r > 2.4:
+            p.text(X(x), Y(z) - 1.0, q['id'], 5.4 if r > 3 else 4.8, 'B', anchor='c', col=PCOL[q['kind']] if q['kind'] != 'res' else INK)
+        else:
+            p.text(X(x) + r + 0.6, Y(z) - 0.9, q['id'], 4.8, 'B', col=PCOL[q['kind']] if q['kind'] != 'res' else INK)
+    return X, Y
+
+
+def sheet_pipes(c):
+    p = Pen(c)
+    frame(p, ['Вводи кабелів у трубах · BESS і PCS', 'Плани, перерізи, виводи труб'], '1:40; 1:25; 1:15', SHEET_P, TOT_P)
+    W = (1, 1, 1)
+    k = 1 / 40.0
+    ox = 60.0
+    X = lambda x: ox + x * k
+    yp, ych = 276.0, 14.0
+    yb = yp - BF * k - ych
+    YP = lambda z: yp - z * k
+    YB = lambda z: yb - z * k
+    p.view_title(24, 286.5, 'Плани вводів', 'М 1 : 40 · кабельний простір засипано піском, контейнери умовно знято')
+    _found_plan(p, X, YP, k, 'P')
+    _found_plan(p, X, YB, k, 'B')
+    # channel between the foundations, shortened
+    ya, yb_ = YP(BF), YB(0)
+    p.rect(X(P_XC - 400), yb_, 800 * k, ya - yb_, w=0, fill=(0.86, 0.87, 0.88))
+    p.rect(X(P_XC - 300), yb_, 600 * k, ya - yb_, w=0, fill=(1, 1, 1))
+    for xx in (P_XC - 400, P_XC - 300, P_XC + 300, P_XC + 400):
+        p.line(X(xx), yb_, X(xx), ya, W_THIN)
+    ym = (ya + yb_) / 2
+    p.poly([(X(P_XC - 460), ym), (X(P_XC - 60), ym), (X(P_XC - 20), ym + 1.0), (X(P_XC + 20), ym - 1.0), (X(P_XC + 60), ym), (X(P_XC + 460), ym)], W_THIN)
+    p.text(X(P_XC + 520), ym + 0.6, 'кабельний канал 600 × %d у світлі, L = %d — умовно скорочено' % (CH_D, CH_L), 6.0)
+    p.text(X(P_XC + 520), ym - 2.4, 'DC — на дні, власні потреби й контроль — на полиці', 5.6, col=MUTED)
+    _pipes_plan(p, X, YP, k, 'P')
+    _pipes_plan(p, X, YB, k, 'B')
+    # cables in the channel stub (schematic): the packages continue into the channel
+    for q in PIPES:
+        if q['pts'][0][2] in (-50, BF + 50) and q['f'] == 'B':
+            _thick(p, [(X(q['pts'][0][0]), YB(0)), (X(q['pts'][0][0]), ym - 0.9)], 0.35, PCOL[q['kind']])
+        if q['pts'][0][2] == BF + 50 and q['f'] == 'P':
+            _thick(p, [(X(q['pts'][0][0]), YP(BF)), (X(q['pts'][0][0]), ym + 0.9)], 0.35, PCOL[q['kind']])
+    # labels
+    p.text(X(-1450), YP(BF) + 2.2, 'Фундамент', 7.0, 'B'); p.text(X(-1450), YP(BF) - 0.8, 'PCS', 7.0, 'B')
+    p.text(X(-1450), YB(BF) + 2.2, 'Фундамент', 7.0, 'B'); p.text(X(-1450), YB(BF) - 0.8, 'BESS', 7.0, 'B')
+    p.text(X(80), YP(BF - 90) + 0.4, 'LV / HV', 5.2, col=ACC)
+    p.text(X(1260), YP(BF - 90) + 0.4, 'трансформатор', 5.2, col=ACC)
+    p.text(X(OFF + PX0 + 80), YP(OFF + PZ1) - 2.6, 'шафа PCS (у відкритій рамі)', 5.2, col=ACC)
+    p.text(X(80), YB(BF - 90) + 0.4, 'торцевий відсік', 5.2, col=ACC)
+    W2 = (1, 1, 1)
+    p.leader(X(5310), YP(1048), X(4450), YP(560), '', lines=['Т21–Т26 → шафа PCS', '(вузол В)'], size=5.8, bg=W2)
+    p.leader(X(1300), YP(1308), X(1950), YP(560), '', lines=['Т27–Т29 → LV / HV', '(вузол Г)'], size=5.8, bg=W2)
+    p.leader(X(560), YP(-150), X(-1350), YP(380), '', lines=['Т30, Т31 —', 'КЛ-6 кВ і', 'резерв, до РП'], size=5.6, dot=False)
+    p.leader(X(1229), YP(-150), X(1700), YP(-180), 'Т32–Т34 — зв’язок до РП', size=5.6, dot=False)
+    p.leader(X(-150), YP(1894), X(-1350), YP(1500), '', lines=['Т35–Т37 —', 'зв’язок', 'від ККС-1'], size=5.6, dot=False)
+    p.leader(X(500), YB(1490), X(1500), YB(2000) - 0.5, 'Т1–Т9 → торцевий відсік (вузол Б)', size=5.8, bg=W2)
+    p.text(X(4300), YB(1160), 'засипка піском,', 5.8, anchor='c', col=MUTED)
+    p.text(X(4300), YB(1160) - 2.6, 'стяжка 100 мм', 5.8, anchor='c', col=MUTED)
+    # section marks 1–1 (channel end at BESS) and 2–2 (BESS package)
+    ys1 = YB(-90)
+    p.line(X(P_XC - 520), ys1, X(P_XC - 400), ys1, 0.7); p.line(X(P_XC + 400), ys1, X(P_XC + 520), ys1, 0.7)
+    for xx in (X(P_XC - 470), X(P_XC + 470)):
+        p.line(xx, ys1, xx, ys1 - 2.6, W_VIS)
+        p.poly([(xx - 0.8, ys1 - 1.6), (xx, ys1 - 3.2), (xx + 0.8, ys1 - 1.6)], w=W_THIN, fill=INK, close=True)
+    p.text(X(P_XC - 620), ys1 - 1.0, '1', 8.5, 'B', anchor='c'); p.text(X(P_XC + 620), ys1 - 1.0, '1', 8.5, 'B', anchor='c')
+    z2 = 2100
+    for xx0, xx1 in ((X(120), X(320)), (X(1700), X(1900))):
+        p.line(xx0, YB(z2), xx1, YB(z2), 0.7)
+    for xx in (X(220), X(1800)):
+        p.line(xx, YB(z2), xx, YB(z2) + 2.6, W_VIS)
+        p.poly([(xx - 0.8, YB(z2) + 1.6), (xx, YB(z2) + 3.2), (xx + 0.8, YB(z2) + 1.6)], w=W_THIN, fill=INK, close=True)
+    p.text(X(40), YB(z2) - 1.0, '2', 8.5, 'B', anchor='c'); p.text(X(1980), YB(z2) - 1.0, '2', 8.5, 'B', anchor='c')
+    # dimensions
+    p.dim_h(X(0), X(LF), YB(BF), YB(BF) - 6.5, '6158', size=6.2)
+    for yf in (YP, YB):
+        p.dim_v(yf(BF), yf(0), X(LF) + 1.0, X(LF) + 6.5, '2538', size=6.2)
+
+    # ------------------------------------------------ exit details
+    kd = 1 / 15.0
+    _exits(p, 'B', 30.0, 117.0, kd, (400, 740), (1150, 1710), 'Вузол Б', 'М 1 : 15 · BESS')
+    XB_, YB_ = (lambda x: 30.0 + (x - 400) * kd), (lambda z: 117.0 - (z - 1150) * kd)
+    p.line(XB_(OFF + 520), YB_(1150), XB_(OFF + 520), YB_(1710), W_HAIR + 0.04, ACC, dash=[1.2, 0.8])
+    p.dim_h(XB_(500), XB_(630), YB_(1710), YB_(1710) - 3.6, '130', size=5.6)
+    for i, t in enumerate(('від західної грані 500 і 630,', 'від північної 1230, крок 130;', 'пунктир — межа торцевого відсіку')):
+        p.text(XB_(400), YB_(1710) - 7.2 - 2.5 * i, t, 5.2, col=MUTED)
+    _exits(p, 'P', 84.0, 117.0, kd, (5100, 5400), (860, 1370), 'Вузол В', 'М 1 : 15 · PCS', side='r')
+    XV, YV = (lambda x: 84.0 + (x - 5100) * kd), (lambda z: 117.0 - (z - 860) * kd)
+    p.dim_h(XV(5180), XV(5310), YV(1370), YV(1370) - 3.6, '130', size=5.6)
+    for i, t in enumerate(('від західної грані 5180 і 5310,', 'від північної 918, крок 130;', 'під шафою PCS')):
+        p.text(XV(5100), YV(1370) - 7.2 - 2.5 * i, t, 5.2, col=MUTED)
+    kg = 1 / 25.0
+    xg0, yg0 = 136.0, 117.0
+    XG, YG = (lambda x: xg0 + (x - 300) * kg), (lambda z: yg0 - (z - 650) * kg)
+    p.view_title(xg0 - 2, yg0 + 7.0, 'Вузол Г', 'М 1 : 25 · PCS, LV / HV')
+    p.rect(XG(300), YG(2050), (1400 - 300) * kg, (2050 - 650) * kg, w=0, fill=C_SAND)
+    p.rect(XG(300), YG(2050), (BEAM - 300) * kg, (2050 - 650) * kg, w=W_THIN, fill=(0.97, 0.92, 0.88))
+    for q in PIPES:
+        if q['f'] == 'P' and q['id'] in ('Т27', 'Т28', 'Т29', 'Т30', 'Т31', 'Т32', 'Т33', 'Т34', 'Т35', 'Т36', 'Т37'):
+            pts = [(XG(x), YG(z)) for x, y, z in q['pts'] if 300 <= x <= 1400 and 650 <= z <= 2050]
+            if len(pts) > 1:
+                _pipe(p, pts, q['d'], kg, q['kind'])
+            x, y, z = q['end']
+            p.circle(XG(x), YG(z), q['d'] / 2.0 * kg, w=W_HAIR + 0.04, col=PCOL[q['kind']], fill=(1, 1, 1))
+    for t, x, z, dx, dy in (('Т30', 679, 1360, -1.4, 3.6), ('Т31', 440, 1360, -1.0, 3.6), ('Т27–Т29', 900, 1142, 2.2, 3.4),
+                             ('Т32–Т34', 1179, 750, -1.8, -4.4), ('Т35–Т37', 750, 1944, 2.4, -3.2)):
+        p.text(XG(x) + dx, YG(z) + dy, t, 5.2, 'B')
+    p.line(XG(BEAM), YG(650), XG(BEAM), YG(2050), W_THIN)
+    p.text(XG(1400), YG(650) + 1.0, 'до північної стіни ↑', 4.8, anchor='r', col=MUTED)
+    p.text(XG(1400), YG(2050) - 3.0, 'відстань КЛ-6 кВ — зв’язок 0,5 м', 4.8, anchor='r', col=MUTED)
+
+    # ------------------------------------------------ pipe schedule
+    rx = 236.0
+    p.text(rx, 286.5, 'Труби вводу', 8.6, 'B')
+    p.text(rx + p.tw('Труби вводу', 8.6, 'B') + 2.5, 286.5, 'ПЕ двостінні гофровані SN8; d160 — гладка SDR17', 6.4, col=MUTED)
+
+    def grp(ids):
+        qs = [q for q in PIPES if q['id'] in ids]
+        Ls = [q['L'] / 1000.0 for q in qs]
+        lo, hi = min(Ls), max(Ls)
+        return fnum(lo, 1) if abs(hi - lo) < 0.05 else '%s–%s' % (fnum(lo, 1), fnum(hi, 1))
+    rows = [('g', 'Фундамент BESS: від каналу до торцевого відсіку'),
+            ('Т1–Т4', '4', 'd110', 'DC: пара «+» і «−» 1 × 300 мм² Cu в кожній', grp(('Т1', 'Т2', 'Т3', 'Т4'))),
+            ('Т5, Т6', '2', 'd110', 'резерв DC: протяжка, заглушки', grp(('Т5', 'Т6'))),
+            ('Т7', '1', 'd90', 'власні потреби 5 × 25…35 мм²', grp(('Т7',))),
+            ('Т8', '1', 'd63', 'контроль і зв’язок BMS ↔ PCS / EMS', grp(('Т8',))),
+            ('Т9', '1', 'd63', 'резерв: протяжка, заглушки', grp(('Т9',))),
+            ('g', 'Фундамент PCS'),
+            ('Т21–Т24', '4', 'd110', 'DC: пара «+» і «−» 1 × 300 мм² Cu → шафа PCS', grp(('Т21', 'Т22', 'Т23', 'Т24'))),
+            ('Т25, Т26', '2', 'd110', 'резерв DC → шафа PCS: протяжка, заглушки', grp(('Т25', 'Т26'))),
+            ('Т27', '1', 'd90', 'власні потреби BESS → відсік LV / HV', grp(('Т27',))),
+            ('Т28', '1', 'd63', 'контроль і зв’язок → відсік LV / HV', grp(('Т28',))),
+            ('Т29', '1', 'd63', 'резерв: протяжка, заглушки', grp(('Т29',))),
+            ('Т30', '1', 'd160', 'КЛ-6 кВ 3 × АПвЗгаПу-6 1 × 240/50 → РП', grp(('Т30',))),
+            ('Т31', '1', 'd160', 'резерв КЛ-6 кВ: протяжка, заглушки', grp(('Т31',))),
+            ('Т32–Т34', '3', 'd40', 'оптика, RS-485, резерв: EMS → РП', grp(('Т32',))),
+            ('Т35–Т37', '3', 'd40', 'оптика, RS-485, резерв: ККС-1 → EMS', grp(('Т35',)))]
+    yb2 = spec_table(p, rx, 280.0, [('Труби', 17, 'l'), ('Шт.', 9, 'c'), ('Труба', 13, 'c'), ('Що в трубі', 118, 'l'), ('L, м', 20, 'c')], rows, size=5.9, rh=3.95, hh=4.6)
+    p.text(rx, yb2 - 3.4, 'L — довжина по осі в межах фундаменту (для Т30–Т37 — до 1 м за стіною), повороти — вигином труби.', 5.6, col=MUTED)
+
+    # ------------------------------------------------ materials
+    PM = pipe_materials()
+    tot, seals, caps, cord = PM['tot'], PM['seals'], PM['caps'], PM['cord']
+    sl = lambda d_: ', '.join('d%d — %d' % (k_, d_[k_]) for k_ in (110, 90, 63, 160, 40) if k_ in d_)
+    inner = (LF - 2 * BEAM) * (BF - 2 * BEAM) / 1e6
+    mrows = []
+    for d, name in ((110, 'd110'), (90, 'd90'), (63, 'd63'), (160, 'd160 SDR17'), (40, 'd40')):
+        t = tot[d]
+        mrows.append(('Труба ПЕ ' + name + ', м', fnum(PM['order'][d], 1),
+                      '%d шт.; ' % t['n'] + ('відвід 90° R 1000 зварний — %d шт.' % t['b'] if d == 160 else 'повороти вигином, R ≥ %d' % (8 * d))))
+    mrows += [('Ущільнювач кабельний на кінець труби, шт.', str(sum(seals.values())), sl(seals)),
+              ('Заглушка на резервну трубу, шт.', str(sum(caps.values())), sl(caps)),
+              ('Протяжка, шнур ПП Ø6, м', str(cord), 'резервні труби фундаментів, +1 м з кожного кінця')]
+    ym2 = yb2 - 9.0
+    p.text(rx, ym2, 'Матеріали вводів', 8.6, 'B')
+    p.text(rx + p.tw('Матеріали вводів', 8.6, 'B') + 2.5, ym2, 'на обидва фундаменти; труби — з запасом 5 %', 6.4, col=MUTED)
+    yb3 = spec_table(p, rx, ym2 - 2.5, [('Матеріал', 64, 'l'), ('К-сть', 22, 'c'), ('Примітка', 91, 'l')], mrows, size=5.9, rh=3.95, hh=4.6)
+    p.text(rx, yb3 - 3.4, 'Пісок і стяжка — на аркуші фундаменту; отвори каналу замонолітити бетоном C8/10 (≈ %s м³).' % fnum(2 * 0.6 * CH_D / 1000.0 * BEAM / 1000.0 * 0.85, 2), 5.6, col=MUTED)
+
+    # ------------------------------------------------ 1–1: channel end at the BESS wall, 1:15
+    kc = 1 / 15.0
+    cx0, ct = 252.0, yb3 - 13.0
+    XC = lambda x: cx0 + (x - (P_XC - 400)) * kc
+    YC = lambda y: ct + (y - 20) * kc
+    p.view_title(rx, yb3 - 9.5, '1–1', 'М 1 : 15 · торець каналу біля BESS')
+    HB = CH_COV + CH_D + CH_T
+    p.compact(XC(P_XC - 440), XC(P_XC + 440), YC(20 - HB), depth=1.6)
+    p.poly([(XC(P_XC - 400), YC(20 - HB)), (XC(P_XC + 400), YC(20 - HB)), (XC(P_XC + 400), YC(20 - CH_COV)), (XC(P_XC + 300), YC(20 - CH_COV)),
+            (XC(P_XC + 300), YC(CH_FLOOR)), (XC(P_XC - 300), YC(CH_FLOOR)), (XC(P_XC - 300), YC(20 - CH_COV)), (XC(P_XC - 400), YC(20 - CH_COV))],
+           W_VIS, fill=C_RC, close=True)
+    p.rect(XC(P_XC - 400), YC(20 - CH_COV), 800 * kc, CH_COV * kc, w=W_VIS, fill=(0.90, 0.91, 0.92))
+    p.rect(XC(P_XC - 450), YC(-60), 900 * kc, 120 * kc, w=W_THIN, col=MUTED, dash=[1.0, 0.6])
+    p.text(XC(P_XC + 470), YC(-30), 'ПР-1', 5.2, col=MUTED)
+    for q in PIPES:
+        if q['f'] != 'B':
+            continue
+        x, y, z = q['pts'][0]
+        r = q['d'] / 2.0 * kc
+        p.circle(XC(x), YC(y), r, w=0.28, col=PCOL[q['kind']], fill=(1, 1, 1))
+        if q['kind'] == 'dc':
+            for dx, col in ((-0.38, PCOL['dc']), (0.38, INK)):
+                p.circle(XC(x) + dx * r, YC(y), 0.33 * r, w=W_HAIR + 0.03, fill=col)
+            p.text(XC(x), YC(y) - r - 2.0, q['id'], 5.0, 'B', anchor='c')
+        else:
+            p.text(XC(x), YC(y) + r + 0.7, q['id'], 5.0, 'B', anchor='c')
+    yd = YC(20 - HB) - 2.2
+    p.dim_h(XC(P_XC - 300), XC(P_XC + 300), yd, yd - 4.0, '600', size=5.8)
+    xl = XC(P_XC - 400) - 0.8
+    for a_, b_ in ((CH_FLOOR, P_ROWS[0]), (P_ROWS[0], P_ROWS[1]), (P_ROWS[1], -60)):
+        p.dim_v(YC(a_), YC(b_), xl, xl - 4.0, str(b_ - a_), size=5.6)
+    p.dim_v(YC(CH_FLOOR), YC(20 - CH_COV), xl, xl - 8.5, str(CH_D), size=5.8)
+
+    # ------------------------------------------------ 2–2: BESS package rising to the end compartment, 1:25
+    ke = 1 / 25.0
+    ex0, ey0 = 327.0, ct - 30.0
+    XE = lambda x: ex0 + x * ke
+    YE = lambda y: ey0 + y * ke
+    p.view_title(322.0, yb3 - 9.5, '2–2', 'М 1 : 25 · BESS, вид з півдня')
+    xr_, yb0, ct_ = 1850, -950, 260
+    p.sand(XE(BEAM), YE(yb0), (xr_ - BEAM) * ke, (SAND_TOP - yb0) * ke)
+    p.rect(XE(BEAM), YE(SAND_TOP), (xr_ - BEAM) * ke, SCREED * ke, w=W_THIN, fill=(0.82, 0.83, 0.84))
+    p.brick(XE(0), YE(yb0), BEAM * ke, (F_TOP - yb0) * ke, outline=W_THIN)
+    p.breakline(XE(-60), XE(xr_), YE(yb0), W_THIN)
+    vbreak(p, XE(xr_), YE(yb0), YE(F_TOP + ct_))
+    p.rect(XE(OFF), YE(F_TOP), (xr_ - OFF) * ke, ct_ * ke, w=0, fill=C_CONT)
+    p.line(XE(OFF), YE(F_TOP), XE(xr_), YE(F_TOP), W_VIS)
+    p.line(XE(OFF), YE(F_TOP), XE(OFF), YE(F_TOP + ct_), W_VIS)
+    p.line(XE(OFF + 520), YE(F_TOP), XE(OFF + 520), YE(F_TOP + ct_), W_HAIR + 0.04, ACC, dash=[1.2, 0.8])
+    p.text(XE(1250), YE(F_TOP + 90), 'контейнер BESS', 5.4, anchor='c')
+    for q in PIPES:
+        if q['f'] == 'B' and q['id'] in ('Т1', 'Т5'):
+            pts = [(XE(x), YE(y)) for x, y, z in q['pts'] if x <= xr_ - 40 and z >= 1000]
+            _pipe(p, pts, q['d'], ke, q['kind'], alpha=1.0)
+    lx = XE(xr_) + 2.0
+    for yy, t in ((F_TOP, '+0,300'), (P_END, '+0,210'), (0, '0,000'), (SAND_TOP, '−0,100')):
+        p.line(XE(xr_) + 0.6, YE(yy), lx - 1.5, YE(yy), W_HAIR + 0.02, MUTED, dash=[0.6, 0.9])
+    for yy, t, dy in ((F_TOP, '+0,300', 1.2), (P_END, '+0,210', -0.6), (0, '0,000', -2.4), (SAND_TOP, '−0,100', -4.2)):
+        p.text(lx, YE(yy) + dy, t, 5.4)
+    for h_, rr, rr_t, t in ((P_ROWS[1], P_END - P_ROWS[1], 640, 'R 880 · Т5–Т9'), (P_ROWS[0], P_END - P_ROWS[0], 1170, 'R 1010 · Т1–Т4')):
+        a_ = math.radians(52)
+        p.text(XE(1510 - rr_t * math.cos(a_)), YE(P_END - rr_t * math.sin(a_)), t, 5.0, anchor='c', col=MUTED, bg=W)
+    p.leader(XE(1750), YE(-880), XE(1150), YE(-880) - 0.4, 'пісок, kу ≥ 0,95', size=5.0, bg=W, anchor='r')
+    p.leader(XE(1700), YE(-50), XE(1200), YE(110), 'стяжка C8/10', size=5.0, bg=W, anchor='r')
+
+    # ------------------------------------------------ legend and notes
+    ly = 54.0
+    p.text(25, ly, 'Позначення', 7.6, 'B')
+    xl0 = 25.0
+    for i, (kind, t) in enumerate((('dc', 'DC «+» і «−»'), ('aux', 'власні потреби'), ('ctl', 'контроль, зв’язок BMS'), ('kl', 'КЛ-6 кВ'), ('com', 'зв’язок'), ('res', 'резерв з протяжкою'))):
+        xx = xl0 + 22 + i * 30.0
+        _pipe(p, [(xx, ly + 0.9), (xx + 6, ly + 0.9)], 70, 1 / 40.0, kind, alpha=1.0)
+        p.text(xx + 7.6, ly, t, 5.6)
+    items = [
+        'Кабельний простір під BESS і PCS засипати середньозернистим піском шарами по 200 мм з ущільненням до kу ≥ 0,95, до −0,100; зверху — стяжка C8/10 100 мм. Від стяжки до дна контейнера лишається 300 мм.',
+        'Кабелі — лише в трубах. Повороти гофрованих труб — вигином за шаблоном, радіус не менше 8 діаметрів (d110 — 880 мм). Для d160 — зварний сегментний відвід R 1000 з гладкої труби SDR17.',
+        'У кожній DC-трубі — пара «+» і «−» одного кола. Т5, Т6 і Т25, Т26 — під п’яту пару, якщо перевірка нагріву ділянки в трубах (IEC 60287) цього вимагатиме.',
+        'Резервні труби — з протяжкою (шнур ПП Ø6, по 1 м запасу з кожного кінця) і заглушками. На обох кінцях кожної труби — бирка з номером.',
+        'Виходи труб показано за умовним розташуванням кабельних вводів. До засипки звірити з кресленням вводів Golen і з контейнером (шаблон з дна).',
+        'Отвори в кладці під канал 600 × %d після укладання труб замонолітити бетоном C8/10. Кінці труб — на 50 мм за гранню фундаменту в каналі.' % CH_D,
+        'Після прокладання кабелів кінці труб закрити кабельними ущільнювачами — від води, гризунів і газу.',
+        'Труби КЛ-6 кВ і зв’язку виходять на 1 м за фундамент і з’єднуються з трубами траси.',
+        'Засипка і труби — відступ від довідкового креслення Golen (у ньому — кабельні опори в порожньому просторі). Погодити з Golen.',
+    ]
+    ny, col_w = 48.0, 99.0
+    y1, xcol = ny, 25.0
+    for i, s in enumerate(items, 1):
+        if i == 5:
+            xcol, y1 = 25.0 + col_w + 4.0, ny
+        p.text(xcol, y1, '%d.' % i, 5.9)
+        y1 = p.para(xcol + 3.6, y1, s, col_w - 3.6, 5.9, lead=2.55) - 0.5
+    c.showPage()
+
+
+def pipes_json(path):
+    """Pipe centrelines for the 3D models (foundation-local metres)."""
+    import json
+    out = [{'id': q['id'], 'f': q['f'], 'd': q['d'], 'kind': q['kind'], 'what': q['what'], 'route': q['route'], 'L': round(q['L'] / 1000.0, 2),
+            'pts': [[round(x / 1000.0, 4), round(y / 1000.0, 4), round(z / 1000.0, 4)] for x, y, z in q['pts']]} for q in PIPES]
+    meta = {'sand_top': SAND_TOP / 1000.0, 'screed': SCREED / 1000.0, 'p_end': P_END / 1000.0, 'ch_d': CH_D / 1000.0, 'ch_floor': CH_FLOOR / 1000.0}
+    json.dump({'meta': meta, 'pipes': out}, open(path, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+
+
 if __name__ == '__main__':
+    if sys.argv[1] == '--pipes-json':
+        pipes_json(sys.argv[2])
+        sys.exit()
     out, img_dir = sys.argv[1], sys.argv[2]
     c = canvas.Canvas(out, pagesize=(PW * mm, PH * mm))
     c.setTitle('ГалКат, площадка 20: план розміщення і фундамент контейнера BESS')
@@ -1536,6 +2021,7 @@ if __name__ == '__main__':
     sheet_doors(c)
     sheet_foundation(c)
     sheet_rebar(c)
+    sheet_pipes(c)
     sheet_views(c, img_dir)
     c.save()
     print('saved', out)

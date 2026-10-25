@@ -59,6 +59,7 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(22px,3.2vw,30px)
 .legend small{margin-left:8px;color:var(--muted);font-family:var(--f-mono);font-size:11.5px;white-space:nowrap}
 .legend .sw{flex:none;width:21px;height:13px;background:var(--ghost);border:1px dashed var(--ink)}
 .legend .sw.ch{background:var(--chan);border-style:solid}
+.legend .sw.pp{border:0;background:linear-gradient(90deg,#d35400 0 45%,transparent 45% 55%,#8a9299 55%);height:9px}
 .legend .sw.rb{border:0;background:linear-gradient(var(--rebar),var(--rebar)) 0 3px/100% 3px no-repeat,linear-gradient(var(--rebar-new),var(--rebar-new)) 0 8px/100% 3px no-repeat}
 .legend .u{margin-left:auto;color:var(--muted);font-size:12px}
 .hint{position:absolute;left:10px;right:10px;width:fit-content;max-width:calc(100% - 20px);bottom:8px;font-size:12px;color:var(--muted);background:var(--tag-bg);padding:2px 8px;pointer-events:none}
@@ -126,6 +127,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <div class="row"><span class="n">2</span><span><b>Блок PCS + трансформатор</b><small>1 725 кВт · 6 кВ · ≈ 17 т</small></span></div>
         <div class="row"><span class="sw"></span><span>фундамент блока PCS показано умовно</span></div>
         <div class="row"><span class="sw ch"></span><span>кабельний канал: попередній розрахунок</span></div>
+        <div class="row" id="lg-pipes" hidden><span class="sw pp"></span><span>труби вводів ПЕ у засипці піском, кабелі в них</span></div>
         <div class="row" id="lg-rebar" hidden><span class="sw rb"></span><span>арматура: темна — за Golen, помаранчева — пропозиція</span></div>
         <div class="u">Розміри в мм, позначки рівнів у м</div>
       </div>
@@ -141,6 +143,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <button type="button" id="view-west" data-view="west" aria-pressed="false">З торця</button>
           <button type="button" id="view-found" data-view="found" aria-pressed="false">Фундамент</button>
           <button type="button" id="view-rebar" data-view="rebar" aria-pressed="false">Арматура</button>
+          <button type="button" id="view-pipes" data-view="pipes" aria-pressed="false">Труби вводів</button>
           <button type="button" id="view-chan" data-view="chan" aria-pressed="false">Канал</button>
         </div>
       </div>
@@ -150,6 +153,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <label><input type="checkbox" id="chk-containers" checked> Контейнери</label>
           <label><input type="checkbox" id="chk-found" checked> Фундаменти</label>
           <label><input type="checkbox" id="chk-rebar"> Арматура</label>
+          <label><input type="checkbox" id="chk-pipes" checked> Труби вводів</label>
           <label><input type="checkbox" id="chk-dims" checked> Розміри</label>
           <label><input type="checkbox" id="chk-tags" checked> Підписи</label>
           <label><input type="checkbox" id="chk-zone" checked> Межа зони</label>
@@ -172,7 +176,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
           <button type="button" id="open-2" data-sheet="2">2 · Двері</button>
           <button type="button" id="open-3" data-sheet="3">3 · Фундамент</button>
           <button type="button" id="open-4" data-sheet="4">4 · Армування</button>
-          <button type="button" id="open-5" data-sheet="5">5 · Вигляди</button>
+          <button type="button" id="open-5" data-sheet="5">5 · Вводи</button>
+          <button type="button" id="open-6" data-sheet="6">6 · Вигляди</button>
         </div>
         <p class="tip"><a class="dl" href="Kreslennya_GalKat_ploshchadka_20.pdf">Завантажити всі аркуші (PDF, A3)</a></p>
       </div>
@@ -231,6 +236,17 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
       </dl>
     </section>
     <section>
+      <h2>Вводи у фундаменти</h2>
+      <dl>
+        <dt>Кабельний простір</dt><dd>пісок до −0,100, стяжка 100 мм</dd>
+        <dt>DC, на блок</dt><dd>4 × ПЕ d110, пара «+» і «−»</dd>
+        <dt>Резерв DC</dt><dd>2 × d110 з протяжками</dd>
+        <dt>Власні потреби, контроль</dt><dd>d90, d63 + резерв d63</dd>
+        <dt>PCS: КЛ-6 кВ, зв’язок</dt><dd>2 × d160, 6 × d40</dd>
+        <dt>Радіус вигину</dt><dd>не менше 8 діаметрів труби</dd>
+      </dl>
+    </section>
+    <section>
       <h2>Армування (попередньо)</h2>
       <dl>
         <dt>Балка, за Golen</dt><dd>4Ø12 A500C, хомути Ø8 / 200</dd>
@@ -244,7 +260,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     <section>
       <h2>Кабельний канал (попередньо)</h2>
       <dl>
-        <dt>Внутрішній переріз</dt><dd>600 × 450 мм</dd>
+        <dt>Внутрішній переріз</dt><dd>600 × 800 мм</dd>
         <dt>Довжина між фундаментами</dt><dd>4 900 мм</dd>
         <dt>Силові DC, до 1 773 А</dt><dd>8 × (1×300 мм² Cu)</dd>
         <dt>Власні потреби (припущення)</dt><dd>5×25…35 мм² Cu</dd>
@@ -261,6 +277,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
         <li>Частину блока з шафами PCS показано як відкриту раму з дахом: на плані Golen дверцята шаф стоять усередині контуру, за 550–625 мм від краю.</li>
         <li>Те, що видно за дверима (стійки, шафи, трансформатор), намальовано схематично.</li>
         <li>Кабельний канал і кабелі: розміри з мого попереднього розрахунку, трасу в кабельних просторах і місця вводів показано умовно. Остаточно — за переліком кабелів Golen.</li>
+        <li>Засипка кабельного простору піском і труби вводів — відступ від креслення Golen (у нього кабельні опори в порожньому просторі); виходи труб під контейнерами — умовно, їх треба звірити з кресленням вводів Golen.</li>
         <li>Арматура: Golen задав лише 4Ø12 і хомути Ø8 з кроком 200 для балки. Армування колон, кутів, закладні деталі, канал, плити й перемички — моя пропозиція, її треба перевірити розрахунком. Бетонна підготовка 100 мм — теж рекомендація.</li>
       </ul>
     </section>
@@ -277,7 +294,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
       <button type="button" id="sv-tab-2" data-sheet="2" aria-pressed="false">2 · Двері</button>
       <button type="button" id="sv-tab-3" data-sheet="3" aria-pressed="false">3 · Фундамент</button>
       <button type="button" id="sv-tab-4" data-sheet="4" aria-pressed="false">4 · Армування</button>
-      <button type="button" id="sv-tab-5" data-sheet="5" aria-pressed="false">5 · Вигляди</button>
+      <button type="button" id="sv-tab-5" data-sheet="5" aria-pressed="false">5 · Вводи</button>
+      <button type="button" id="sv-tab-6" data-sheet="6" aria-pressed="false">6 · Вигляди</button>
     </div>
     <div class="sv-zoom">
       <button type="button" id="sv-out" aria-label="Зменшити">−</button>
@@ -355,6 +373,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     prep: new THREE.MeshStandardMaterial({color:0x9da2a5, roughness:1}),
     bar: new THREE.MeshStandardMaterial({color:0x3b4148, roughness:.5, metalness:.35}),
     barNew: new THREE.MeshStandardMaterial({color:0xc45f17, roughness:.5, metalness:.25}),
+    sand: new THREE.MeshStandardMaterial({color:0xdcc896, roughness:1}),
+    screed: new THREE.MeshStandardMaterial({color:0xb3b8ba, roughness:.95}),
     ghostC: new THREE.MeshStandardMaterial({color:0xd99a52, roughness:.95, transparent:true, opacity:.55}),
     ghostB: new THREE.MeshStandardMaterial({color:0xc98d4a, roughness:.95, transparent:true, opacity:.32}),
     edge: new THREE.LineBasicMaterial({color:0x1d2731, transparent:true, opacity:.5}),
@@ -382,6 +402,13 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     m.position.set(x,y,z); m.rotation.y=rotY; m.receiveShadow=true; parent.add(m); return m;
   }
 
+  // ---- cable entries in pipes (sheet 5): pipe centrelines in foundation coordinates, m — x east from the west face, y up, z south from the north face
+  const PIPES={"meta":{"sand_top":-0.1,"screed":0.1,"p_end":0.21,"ch_d":0.8,"ch_floor":-0.86},"pipes":[{"id":"Т1","f":"B","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → торцевий відсік BESS","L":3.86,"pts":[[2.884,-0.8,-0.05],[2.884,-0.8,0.35],[2.8732,-0.8,0.4877],[2.8409,-0.8,0.6219],[2.7881,-0.8,0.7495],[2.7159,-0.8,0.8673],[2.6263,-0.8,0.9723],[2.5213,-0.8,1.0619],[2.4035,-0.8,1.1341],[2.2759,-0.8,1.1869],[2.1417,-0.8,1.2192],[2.004,-0.8,1.23],[1.51,-0.8,1.23],[1.352,-0.7876,1.23],[1.1979,-0.7506,1.23],[1.0515,-0.6899,1.23],[0.9163,-0.6071,1.23],[0.7958,-0.5042,1.23],[0.6929,-0.3837,1.23],[0.6101,-0.2485,1.23],[0.5494,-0.1021,1.23],[0.5124,0.052,1.23],[0.5,0.21,1.23],[0.5,0.21,1.23]]},{"id":"Т2","f":"B","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → торцевий відсік BESS","L":4.06,"pts":[[3.014,-0.8,-0.05],[3.014,-0.8,0.35],[3.0016,-0.8,0.508],[2.9646,-0.8,0.6621],[2.9039,-0.8,0.8085],[2.8211,-0.8,0.9437],[2.7182,-0.8,1.0642],[2.5977,-0.8,1.1671],[2.4625,-0.8,1.2499],[2.3161,-0.8,1.3106],[2.162,-0.8,1.3476],[2.004,-0.8,1.36],[1.51,-0.8,1.36],[1.352,-0.7876,1.36],[1.1979,-0.7506,1.36],[1.0515,-0.6899,1.36],[0.9163,-0.6071,1.36],[0.7958,-0.5042,1.36],[0.6929,-0.3837,1.36],[0.6101,-0.2485,1.36],[0.5494,-0.1021,1.36],[0.5124,0.052,1.36],[0.5,0.21,1.36],[0.5,0.21,1.36]]},{"id":"Т3","f":"B","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → торцевий відсік BESS","L":4.27,"pts":[[3.144,-0.8,-0.05],[3.144,-0.8,0.35],[3.13,-0.8,0.5283],[3.0882,-0.8,0.7023],[3.0197,-0.8,0.8675],[2.9263,-0.8,1.0201],[2.8101,-0.8,1.1561],[2.6741,-0.8,1.2723],[2.5215,-0.8,1.3657],[2.3563,-0.8,1.4342],[2.1823,-0.8,1.476],[2.004,-0.8,1.49],[1.51,-0.8,1.49],[1.352,-0.7876,1.49],[1.1979,-0.7506,1.49],[1.0515,-0.6899,1.49],[0.9163,-0.6071,1.49],[0.7958,-0.5042,1.49],[0.6929,-0.3837,1.49],[0.6101,-0.2485,1.49],[0.5494,-0.1021,1.49],[0.5124,0.052,1.49],[0.5,0.21,1.49],[0.5,0.21,1.49]]},{"id":"Т4","f":"B","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → торцевий відсік BESS","L":4.47,"pts":[[3.274,-0.8,-0.05],[3.274,-0.8,0.35],[3.2584,-0.8,0.5487],[3.2118,-0.8,0.7425],[3.1356,-0.8,0.9266],[3.0315,-0.8,1.0965],[2.902,-0.8,1.248],[2.7505,-0.8,1.3775],[2.5806,-0.8,1.4816],[2.3965,-0.8,1.5578],[2.2027,-0.8,1.6044],[2.004,-0.8,1.62],[1.51,-0.8,1.62],[1.352,-0.7876,1.62],[1.1979,-0.7506,1.62],[1.0515,-0.6899,1.62],[0.9163,-0.6071,1.62],[0.7958,-0.5042,1.62],[0.6929,-0.3837,1.62],[0.6101,-0.2485,1.62],[0.5494,-0.1021,1.62],[0.5124,0.052,1.62],[0.5,0.21,1.62],[0.5,0.21,1.62]]},{"id":"Т5","f":"B","d":110,"kind":"res","what":"резерв DC, протяжка","route":"канал → торцевий відсік BESS","L":3.66,"pts":[[2.884,-0.67,-0.05],[2.884,-0.67,0.35],[2.8732,-0.67,0.4877],[2.8409,-0.67,0.6219],[2.7881,-0.67,0.7495],[2.7159,-0.67,0.8673],[2.6263,-0.67,0.9723],[2.5213,-0.67,1.0619],[2.4035,-0.67,1.1341],[2.2759,-0.67,1.1869],[2.1417,-0.67,1.2192],[2.004,-0.67,1.23],[1.51,-0.67,1.23],[1.3723,-0.6592,1.23],[1.2381,-0.6269,1.23],[1.1105,-0.5741,1.23],[0.9927,-0.5019,1.23],[0.8877,-0.4123,1.23],[0.7981,-0.3073,1.23],[0.7259,-0.1895,1.23],[0.6731,-0.0619,1.23],[0.6408,0.0723,1.23],[0.63,0.21,1.23],[0.63,0.21,1.23]]},{"id":"Т6","f":"B","d":110,"kind":"res","what":"резерв DC, протяжка","route":"канал → торцевий відсік BESS","L":3.86,"pts":[[3.014,-0.67,-0.05],[3.014,-0.67,0.35],[3.0016,-0.67,0.508],[2.9646,-0.67,0.6621],[2.9039,-0.67,0.8085],[2.8211,-0.67,0.9437],[2.7182,-0.67,1.0642],[2.5977,-0.67,1.1671],[2.4625,-0.67,1.2499],[2.3161,-0.67,1.3106],[2.162,-0.67,1.3476],[2.004,-0.67,1.36],[1.51,-0.67,1.36],[1.3723,-0.6592,1.36],[1.2381,-0.6269,1.36],[1.1105,-0.5741,1.36],[0.9927,-0.5019,1.36],[0.8877,-0.4123,1.36],[0.7981,-0.3073,1.36],[0.7259,-0.1895,1.36],[0.6731,-0.0619,1.36],[0.6408,0.0723,1.36],[0.63,0.21,1.36],[0.63,0.21,1.36]]},{"id":"Т7","f":"B","d":90,"kind":"aux","what":"власні потреби 5 × 25…35 мм²","route":"канал → торцевий відсік BESS","L":4.06,"pts":[[3.144,-0.67,-0.05],[3.144,-0.67,0.35],[3.13,-0.67,0.5283],[3.0882,-0.67,0.7023],[3.0197,-0.67,0.8675],[2.9263,-0.67,1.0201],[2.8101,-0.67,1.1561],[2.6741,-0.67,1.2723],[2.5215,-0.67,1.3657],[2.3563,-0.67,1.4342],[2.1823,-0.67,1.476],[2.004,-0.67,1.49],[1.51,-0.67,1.49],[1.3723,-0.6592,1.49],[1.2381,-0.6269,1.49],[1.1105,-0.5741,1.49],[0.9927,-0.5019,1.49],[0.8877,-0.4123,1.49],[0.7981,-0.3073,1.49],[0.7259,-0.1895,1.49],[0.6731,-0.0619,1.49],[0.6408,0.0723,1.49],[0.63,0.21,1.49],[0.63,0.21,1.49]]},{"id":"Т8","f":"B","d":63,"kind":"ctl","what":"контроль і зв’язок BMS ↔ PCS / EMS","route":"канал → торцевий відсік BESS","L":4.21,"pts":[[3.238,-0.67,-0.05],[3.238,-0.67,0.35],[3.2228,-0.67,0.543],[3.1776,-0.67,0.7313],[3.1035,-0.67,0.9102],[3.0023,-0.67,1.0753],[2.8766,-0.67,1.2226],[2.7293,-0.67,1.3483],[2.5642,-0.67,1.4495],[2.3853,-0.67,1.5236],[2.197,-0.67,1.5688],[2.004,-0.67,1.584],[1.51,-0.67,1.584],[1.3723,-0.6592,1.584],[1.2381,-0.6269,1.584],[1.1105,-0.5741,1.584],[0.9927,-0.5019,1.584],[0.8877,-0.4123,1.584],[0.7981,-0.3073,1.584],[0.7259,-0.1895,1.584],[0.6731,-0.0619,1.584],[0.6408,0.0723,1.584],[0.63,0.21,1.584],[0.63,0.21,1.584]]},{"id":"Т9","f":"B","d":63,"kind":"res","what":"резерв, протяжка","route":"канал → торцевий відсік BESS","L":4.32,"pts":[[3.31,-0.67,-0.05],[3.31,-0.67,0.35],[3.2939,-0.67,0.5543],[3.2461,-0.67,0.7536],[3.1677,-0.67,0.9429],[3.0606,-0.67,1.1176],[2.9275,-0.67,1.2735],[2.7716,-0.67,1.4066],[2.5969,-0.67,1.5137],[2.4076,-0.67,1.5921],[2.2083,-0.67,1.6399],[2.004,-0.67,1.656],[1.51,-0.67,1.656],[1.3723,-0.6592,1.656],[1.2381,-0.6269,1.656],[1.1105,-0.5741,1.656],[0.9927,-0.5019,1.656],[0.8877,-0.4123,1.656],[0.7981,-0.3073,1.656],[0.7259,-0.1895,1.656],[0.6731,-0.0619,1.656],[0.6408,0.0723,1.656],[0.63,0.21,1.656],[0.63,0.21,1.656]]},{"id":"Т21","f":"P","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → шафа PCS","L":4.12,"pts":[[2.884,-0.8,2.588],[2.884,-0.8,2.188],[2.8996,-0.8,1.9893],[2.9462,-0.8,1.7955],[3.0224,-0.8,1.6114],[3.1265,-0.8,1.4415],[3.256,-0.8,1.29],[3.4075,-0.8,1.1605],[3.5774,-0.8,1.0564],[3.7615,-0.8,0.9802],[3.9553,-0.8,0.9336],[4.154,-0.8,0.918],[4.3,-0.8,0.918],[4.458,-0.7876,0.918],[4.6121,-0.7506,0.918],[4.7585,-0.6899,0.918],[4.8937,-0.6071,0.918],[5.0142,-0.5042,0.918],[5.1171,-0.3837,0.918],[5.1999,-0.2485,0.918],[5.2606,-0.1021,0.918],[5.2976,0.052,0.918],[5.31,0.21,0.918],[5.31,0.21,0.918]]},{"id":"Т22","f":"P","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → шафа PCS","L":3.92,"pts":[[3.014,-0.8,2.588],[3.014,-0.8,2.188],[3.028,-0.8,2.0097],[3.0698,-0.8,1.8357],[3.1383,-0.8,1.6705],[3.2317,-0.8,1.5179],[3.3479,-0.8,1.3819],[3.4839,-0.8,1.2657],[3.6365,-0.8,1.1723],[3.8017,-0.8,1.1038],[3.9757,-0.8,1.062],[4.154,-0.8,1.048],[4.3,-0.8,1.048],[4.458,-0.7876,1.048],[4.6121,-0.7506,1.048],[4.7585,-0.6899,1.048],[4.8937,-0.6071,1.048],[5.0142,-0.5042,1.048],[5.1171,-0.3837,1.048],[5.1999,-0.2485,1.048],[5.2606,-0.1021,1.048],[5.2976,0.052,1.048],[5.31,0.21,1.048],[5.31,0.21,1.048]]},{"id":"Т23","f":"P","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → шафа PCS","L":3.72,"pts":[[3.144,-0.8,2.588],[3.144,-0.8,2.188],[3.1564,-0.8,2.03],[3.1934,-0.8,1.8759],[3.2541,-0.8,1.7295],[3.3369,-0.8,1.5943],[3.4398,-0.8,1.4738],[3.5603,-0.8,1.3709],[3.6955,-0.8,1.2881],[3.8419,-0.8,1.2274],[3.996,-0.8,1.1904],[4.154,-0.8,1.178],[4.3,-0.8,1.178],[4.458,-0.7876,1.178],[4.6121,-0.7506,1.178],[4.7585,-0.6899,1.178],[4.8937,-0.6071,1.178],[5.0142,-0.5042,1.178],[5.1171,-0.3837,1.178],[5.1999,-0.2485,1.178],[5.2606,-0.1021,1.178],[5.2976,0.052,1.178],[5.31,0.21,1.178],[5.31,0.21,1.178]]},{"id":"Т24","f":"P","d":110,"kind":"dc","what":"DC: «+» і «−» 1 × 300 мм² Cu","route":"канал → шафа PCS","L":3.51,"pts":[[3.274,-0.8,2.588],[3.274,-0.8,2.188],[3.2848,-0.8,2.0503],[3.3171,-0.8,1.9161],[3.3699,-0.8,1.7885],[3.4421,-0.8,1.6707],[3.5317,-0.8,1.5657],[3.6367,-0.8,1.4761],[3.7545,-0.8,1.4039],[3.8821,-0.8,1.3511],[4.0163,-0.8,1.3188],[4.154,-0.8,1.308],[4.3,-0.8,1.308],[4.458,-0.7876,1.308],[4.6121,-0.7506,1.308],[4.7585,-0.6899,1.308],[4.8937,-0.6071,1.308],[5.0142,-0.5042,1.308],[5.1171,-0.3837,1.308],[5.1999,-0.2485,1.308],[5.2606,-0.1021,1.308],[5.2976,0.052,1.308],[5.31,0.21,1.308],[5.31,0.21,1.308]]},{"id":"Т25","f":"P","d":110,"kind":"res","what":"резерв DC, протяжка","route":"канал → шафа PCS","L":3.51,"pts":[[3.144,-0.67,2.588],[3.144,-0.67,2.188],[3.1564,-0.67,2.03],[3.1934,-0.67,1.8759],[3.2541,-0.67,1.7295],[3.3369,-0.67,1.5943],[3.4398,-0.67,1.4738],[3.5603,-0.67,1.3709],[3.6955,-0.67,1.2881],[3.8419,-0.67,1.2274],[3.996,-0.67,1.1904],[4.154,-0.67,1.178],[4.3,-0.67,1.178],[4.4377,-0.6592,1.178],[4.5719,-0.6269,1.178],[4.6995,-0.5741,1.178],[4.8173,-0.5019,1.178],[4.9223,-0.4123,1.178],[5.0119,-0.3073,1.178],[5.0841,-0.1895,1.178],[5.1369,-0.0619,1.178],[5.1692,0.0723,1.178],[5.18,0.21,1.178],[5.18,0.21,1.178]]},{"id":"Т26","f":"P","d":110,"kind":"res","what":"резерв DC, протяжка","route":"канал → шафа PCS","L":3.31,"pts":[[3.274,-0.67,2.588],[3.274,-0.67,2.188],[3.2848,-0.67,2.0503],[3.3171,-0.67,1.9161],[3.3699,-0.67,1.7885],[3.4421,-0.67,1.6707],[3.5317,-0.67,1.5657],[3.6367,-0.67,1.4761],[3.7545,-0.67,1.4039],[3.8821,-0.67,1.3511],[4.0163,-0.67,1.3188],[4.154,-0.67,1.308],[4.3,-0.67,1.308],[4.4377,-0.6592,1.308],[4.5719,-0.6269,1.308],[4.6995,-0.5741,1.308],[4.8173,-0.5019,1.308],[4.9223,-0.4123,1.308],[5.0119,-0.3073,1.308],[5.0841,-0.1895,1.308],[5.1369,-0.0619,1.308],[5.1692,0.0723,1.308],[5.18,0.21,1.308],[5.18,0.21,1.308]]},{"id":"Т27","f":"P","d":90,"kind":"aux","what":"власні потреби BESS 5 × 25…35 мм²","route":"канал → відсік LV / HV","L":3.39,"pts":[[2.884,-0.67,2.588],[2.884,-0.67,2.188],[2.8732,-0.67,2.0503],[2.8409,-0.67,1.9161],[2.7881,-0.67,1.7885],[2.7159,-0.67,1.6707],[2.6263,-0.67,1.5657],[2.5213,-0.67,1.4761],[2.4035,-0.67,1.4039],[2.2759,-0.67,1.3511],[2.1417,-0.67,1.3188],[2.004,-0.67,1.308],[1.78,-0.67,1.308],[1.6423,-0.6592,1.308],[1.5081,-0.6269,1.308],[1.3805,-0.5741,1.308],[1.2627,-0.5019,1.308],[1.1577,-0.4123,1.308],[1.0681,-0.3073,1.308],[0.9959,-0.1895,1.308],[0.9431,-0.0619,1.308],[0.9108,0.0723,1.308],[0.9,0.21,1.308],[0.9,0.21,1.308]]},{"id":"Т28","f":"P","d":63,"kind":"ctl","what":"контроль і зв’язок BMS ↔ PCS / EMS","route":"канал → відсік LV / HV","L":3.53,"pts":[[2.978,-0.67,2.588],[2.978,-0.67,2.188],[2.966,-0.67,2.0356],[2.9303,-0.67,1.887],[2.8718,-0.67,1.7458],[2.792,-0.67,1.6155],[2.6927,-0.67,1.4993],[2.5765,-0.67,1.4],[2.4462,-0.67,1.3202],[2.305,-0.67,1.2617],[2.1564,-0.67,1.226],[2.004,-0.67,1.214],[1.78,-0.67,1.214],[1.6423,-0.6592,1.214],[1.5081,-0.6269,1.214],[1.3805,-0.5741,1.214],[1.2627,-0.5019,1.214],[1.1577,-0.4123,1.214],[1.0681,-0.3073,1.214],[0.9959,-0.1895,1.214],[0.9431,-0.0619,1.214],[0.9108,0.0723,1.214],[0.9,0.21,1.214],[0.9,0.21,1.214]]},{"id":"Т29","f":"P","d":63,"kind":"res","what":"резерв, протяжка","route":"канал → відсік LV / HV","L":3.65,"pts":[[3.05,-0.67,2.588],[3.05,-0.67,2.188],[3.0371,-0.67,2.0244],[2.9988,-0.67,1.8648],[2.936,-0.67,1.7131],[2.8502,-0.67,1.5732],[2.7436,-0.67,1.4484],[2.6188,-0.67,1.3418],[2.4789,-0.67,1.256],[2.3272,-0.67,1.1932],[2.1676,-0.67,1.1549],[2.004,-0.67,1.142],[1.78,-0.67,1.142],[1.6423,-0.6592,1.142],[1.5081,-0.6269,1.142],[1.3805,-0.5741,1.142],[1.2627,-0.5019,1.142],[1.1577,-0.4123,1.142],[1.0681,-0.3073,1.142],[0.9959,-0.1895,1.142],[0.9431,-0.0619,1.142],[0.9108,0.0723,1.142],[0.9,0.21,1.142],[0.9,0.21,1.142]]},{"id":"Т30","f":"P","d":160,"kind":"kl","what":"3 × АПвЗгаПу-6 1 × 240/50, трикутником","route":"відсік LV / HV → північна стіна → траса до РП","L":2.93,"pts":[[0.679,0.21,1.36],[0.679,0.21,1.36],[0.679,0.052,1.3476],[0.679,-0.1021,1.3106],[0.679,-0.2485,1.2499],[0.679,-0.3837,1.1671],[0.679,-0.5042,1.0642],[0.679,-0.6071,0.9437],[0.679,-0.6899,0.8085],[0.679,-0.7506,0.6621],[0.679,-0.7876,0.508],[0.679,-0.8,0.35],[0.679,-0.8,-1.0]]},{"id":"Т31","f":"P","d":160,"kind":"res","what":"резерв КЛ-6 кВ, протяжка","route":"відсік LV / HV → північна стіна → траса до РП","L":2.93,"pts":[[0.44,0.21,1.36],[0.44,0.21,1.36],[0.44,0.052,1.3476],[0.44,-0.1021,1.3106],[0.44,-0.2485,1.2499],[0.44,-0.3837,1.1671],[0.44,-0.5042,1.0642],[0.44,-0.6071,0.9437],[0.44,-0.6899,0.8085],[0.44,-0.7506,0.6621],[0.44,-0.7876,0.508],[0.44,-0.8,0.35],[0.44,-0.8,-1.0]]},{"id":"Т32","f":"P","d":40,"kind":"com","what":"оптика, EMS → РП","route":"шафа EMS → північна стіна → траса до РП","L":2.61,"pts":[[1.179,0.21,0.75],[1.179,-0.45,0.75],[1.179,-0.5048,0.7457],[1.179,-0.5582,0.7329],[1.179,-0.6089,0.7119],[1.179,-0.6557,0.6832],[1.179,-0.6975,0.6475],[1.179,-0.7332,0.6057],[1.179,-0.7619,0.5589],[1.179,-0.7829,0.5082],[1.179,-0.7957,0.4548],[1.179,-0.8,0.4],[1.179,-0.8,-1.0]]},{"id":"Т33","f":"P","d":40,"kind":"com","what":"RS-485, EMS → РП","route":"шафа EMS → північна стіна → траса до РП","L":2.61,"pts":[[1.229,0.21,0.75],[1.229,-0.45,0.75],[1.229,-0.5048,0.7457],[1.229,-0.5582,0.7329],[1.229,-0.6089,0.7119],[1.229,-0.6557,0.6832],[1.229,-0.6975,0.6475],[1.229,-0.7332,0.6057],[1.229,-0.7619,0.5589],[1.229,-0.7829,0.5082],[1.229,-0.7957,0.4548],[1.229,-0.8,0.4],[1.229,-0.8,-1.0]]},{"id":"Т34","f":"P","d":40,"kind":"res","what":"резерв зв’язку, протяжка","route":"шафа EMS → північна стіна → траса до РП","L":2.61,"pts":[[1.279,0.21,0.75],[1.279,-0.45,0.75],[1.279,-0.5048,0.7457],[1.279,-0.5582,0.7329],[1.279,-0.6089,0.7119],[1.279,-0.6557,0.6832],[1.279,-0.6975,0.6475],[1.279,-0.7332,0.6057],[1.279,-0.7619,0.5589],[1.279,-0.7829,0.5082],[1.279,-0.7957,0.4548],[1.279,-0.8,0.4],[1.279,-0.8,-1.0]]},{"id":"Т35","f":"P","d":40,"kind":"com","what":"оптика, ККС-1 → EMS","route":"західна стіна → шафа EMS","L":2.61,"pts":[[-1.0,-0.8,1.844],[0.4,-0.8,1.844],[0.4548,-0.7957,1.844],[0.5082,-0.7829,1.844],[0.5589,-0.7619,1.844],[0.6057,-0.7332,1.844],[0.6475,-0.6975,1.844],[0.6832,-0.6557,1.844],[0.7119,-0.6089,1.844],[0.7329,-0.5582,1.844],[0.7457,-0.5048,1.844],[0.75,-0.45,1.844],[0.75,0.21,1.844]]},{"id":"Т36","f":"P","d":40,"kind":"com","what":"RS-485, ККС-1 → EMS","route":"західна стіна → шафа EMS","L":2.61,"pts":[[-1.0,-0.8,1.894],[0.4,-0.8,1.894],[0.4548,-0.7957,1.894],[0.5082,-0.7829,1.894],[0.5589,-0.7619,1.894],[0.6057,-0.7332,1.894],[0.6475,-0.6975,1.894],[0.6832,-0.6557,1.894],[0.7119,-0.6089,1.894],[0.7329,-0.5582,1.894],[0.7457,-0.5048,1.894],[0.75,-0.45,1.894],[0.75,0.21,1.894]]},{"id":"Т37","f":"P","d":40,"kind":"res","what":"резерв зв’язку, протяжка","route":"західна стіна → шафа EMS","L":2.61,"pts":[[-1.0,-0.8,1.944],[0.4,-0.8,1.944],[0.4548,-0.7957,1.944],[0.5082,-0.7829,1.944],[0.5589,-0.7619,1.944],[0.6057,-0.7332,1.944],[0.6475,-0.6975,1.944],[0.6832,-0.6557,1.944],[0.7119,-0.6089,1.944],[0.7329,-0.5582,1.944],[0.7457,-0.5048,1.944],[0.75,-0.45,1.944],[0.75,0.21,1.944]]}]};
+  const PIPE_BY=Object.fromEntries(PIPES.pipes.map(q=>[q.id,q]));
+  const pipeMat=c=>new THREE.MeshStandardMaterial({color:c, roughness:.6, transparent:true, opacity:.55, depthWrite:false});
+  M.pipe={dc:pipeMat(0xd35400), res:pipeMat(0x8a9299), aux:pipeMat(0x55606b), ctl:pipeMat(0x8e6fbf), kl:pipeMat(0xe08a1e), com:pipeMat(0x00897b)};
+  function polyTube(pts,r,mat){ const cp=new THREE.CurvePath(); for(let i=1;i<pts.length;i++) cp.add(new THREE.LineCurve3(new THREE.Vector3(...pts[i-1]),new THREE.Vector3(...pts[i])));
+    const m=new THREE.Mesh(new THREE.TubeGeometry(cp,Math.max(8,pts.length*3),r,10,false),mat); m.receiveShadow=true; return m; }
   // ---- foundation (Golen reference type): ring beam, 8 columns, brick infill ----
   function foundation(x0,z0,ghost,withSteps){
     const g=new THREE.Group(); g.position.set(x0-OFF,0,z0-OFF);
@@ -400,6 +427,11 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     box(g,LF+2*P,P,BEAM+2*P,mp,-P,yP,-P,sh); box(g,LF+2*P,P,BEAM+2*P,mp,-P,yP,BF-BEAM-P,sh);
     box(g,BEAM+2*P,P,BF-2*BEAM-2*P,mp,-P,yP,BEAM+P,sh); box(g,BEAM+2*P,P,BF-2*BEAM-2*P,mp,LF-BEAM-P,yP,BEAM+P,sh);
     g.userData.cage=cage(g,LF,BF);
+    // cable space filled with sand up to −0,100, screed 100 mm; the cables run in PE pipes (sheet 5)
+    box(g,LF-2*BEAM,-0.1-yB,BF-2*BEAM,M.sand,BEAM,yB,BEAM,{shadow:false});
+    box(g,LF-2*BEAM,0.1,BF-2*BEAM,M.screed,BEAM,-0.1,BEAM,{shadow:false});
+    const gp=new THREE.Group(); g.add(gp); g.userData.pipes=gp;
+    PIPES.pipes.filter(q=>q.f===(withSteps?'B':'P')).forEach(q=>gp.add(polyTube(q.pts,q.d/2000,M.pipe[q.kind])));
     return g;
   }
   // ---- reinforcement (sheet 4). Beam bars and stirrups after Golen; corner bars, columns, plates' anchors: proposal ----
@@ -621,11 +653,11 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   boards(tagsSkid,'2','Блок PCS + трансформатор','PCS');
   [['LV / HV',0.6],['Трансформатор',2.13],['PCS',4.59]].forEach(a=> flat(plate([{t:a[0],em:0.25,w:600}],{pad:0.06,maxW:1.9}),tagsSkid,a[1],yR,B-0.36));
   flat(plate([{t:'Фундамент блока PCS',em:0.3,w:600},{t:'показано умовно',em:0.3}],{pad:0.1}),tagsFound,X1+2.6,0.06,Z_SKID+B/2).userData.obj='fpcs';
-  flat(plate([{t:'Кабельний простір',em:0.36,w:600},{t:'5458 × 1838, глибина 1800',em:0.26,mono:true,muted:true}],{pad:0.1}),tagsFound,X0+L/2,-(COL_H-F_TOP)+0.03,Z_BESS+B/2).userData.obj='fbess';
+  flat(plate([{t:'Засипка піском, стяжка 100',em:0.34,w:600},{t:'кабелі — у трубах ПЕ, аркуш 5',em:0.25,mono:true,muted:true}],{pad:0.1}),tagsFound,X0+L/2+0.9,0.02,Z_BESS+B/2+0.35).userData.obj='fbess';
 
   // ---- cable channel between the two foundations (own preliminary sizing, not from the Golen drawings) ----
   const gChan=new THREE.Group(); scene.add(gChan); gChan.userData.obj='chan';
-  const CH={w:0.6,d:0.45,t:0.1,cov:0.08,top:0.02};                        // inner width and depth, wall, cover slab, cover top level
+  const CH={w:0.6,d:PIPES.meta.ch_d,t:0.1,cov:0.08,top:0.02};                        // inner width and depth, wall, cover slab, cover top level
   const xc=X0+L/2, zA=Z_SKID+B+OFF, zB=Z_BESS-OFF, chL=zB-zA;             // 4.9 m between the foundation faces
   const yIn=CH.top-CH.cov, yFl=yIn-CH.d;                                  // underside of the covers, channel floor
   box(gChan,CH.w+2*CH.t,CH.t,chL,M.concrete,xc-CH.w/2-CH.t,yFl-CH.t,zA,{uv:[1,6]});
@@ -634,13 +666,13 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   const mCov=new THREE.MeshStandardMaterial({color:0xc9cdd0,roughness:.95});
   for(let i=0;i<10;i++) box(gCov,CH.w+2*CH.t,CH.cov,chL/10-0.012,mCov,xc-CH.w/2-CH.t,yIn,zA+i*chL/10+0.006);
   // openings through the brick infill of both foundations, lintel above each
-  const mHole=new THREE.MeshBasicMaterial({color:0x161d24});
+  const mHole=new THREE.MeshStandardMaterial({color:0x9ea4a7,roughness:.95});            // opening filled with C8/10 around the pipes
   [zA-BEAM-0.004,zB-0.004].forEach(z=>{
     box(gChan,CH.w,CH.d,BEAM+0.008,mHole,xc-CH.w/2,yFl,z,{edges:false,shadow:false});
     box(gChan,CH.w+0.3,0.12,BEAM+0.008,M.concrete,xc-CH.w/2-0.15,yIn,z);
   });
-  box(gChan,0.1,0.012,chL,M.steel,xc-CH.w/2,yFl+0.248,zA,{edges:false,shadow:false});                       // shelf for the small cables
-  box(gChan,0.04,0.005,chL+2*(BEAM+0.5),new THREE.MeshStandardMaterial({color:0x9fb23a,roughness:.7}),xc+0.24,yFl+0.001,zA-BEAM-0.5,{edges:false,shadow:false}); // earthing strip
+  box(gChan,0.1,0.012,chL,M.steel,xc-CH.w/2,yFl+0.19-0.025,zA,{edges:false,shadow:false});                   // shelf at the upper row of entry pipes
+  box(gChan,0.04,0.005,chL,new THREE.MeshStandardMaterial({color:0x9fb23a,roughness:.7}),xc+0.24,yFl+0.001,zA,{edges:false,shadow:false}); // earthing strip
   // cables: straight runs joined by rounded corners
   const gCab=new THREE.Group(); gChan.add(gCab);
   const cabMat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55});
@@ -655,13 +687,16 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     cp.add(new THREE.LineCurve3(prev,P[P.length-1]));
     const m=new THREE.Mesh(new THREE.TubeGeometry(cp,96,r,8,false),mat); m.receiveShadow=true; gCab.add(m); return m;
   }
-  const yDC=yFl+0.02, yShelf=yFl+0.275, yUp=F_TOP+0.2;
-  // 8 DC cables, 4 per pole, one layer: PCS cabinet -> channel -> electrical area of the BESS container
-  for(let i=0;i<8;i++){ const d=-0.14+0.04*i, zS=Z_SKID+1.75-(0.14-d), zN=Z_BESS+0.55+(d+0.14);
-    cable([[X0+4.6,yUp,zS],[X0+4.6,yDC,zS],[xc+d,yDC,zS],[xc+d,yDC,zN],[X0+0.42,yDC,zN],[X0+0.42,yUp,zN]],0.0165,i%2?mNeg:mPos,0.3); }
-  // auxiliary supply, control and communication cables on the shelf: LV compartment -> channel -> BESS
-  [[-0.225,0.014,mAux],[-0.255,0.008,mCtl],[-0.275,0.006,mCom],[-0.289,0.006,mCom]].forEach(a=>{ const d=a[0], zS=Z_SKID+0.62-(d+0.289), zN=Z_BESS+0.40+(d+0.289);
-    cable([[X0+0.6,yUp,zS],[X0+0.6,yShelf,zS],[xc+d,yShelf,zS],[xc+d,yShelf,zN],[X0+0.62,yShelf,zN],[X0+0.62,yUp,zN]],a[1],a[2],0.2); });
+  // cables: from under the PCS container down its pipe to the channel, along the channel, up the BESS pipe (sheet 5)
+  const pw=(zf,q)=>q.pts.map(v=>[X0-OFF+v[0],v[1],zf-OFF+v[2]]);
+  function run(a,b,r,lift){ const A=pw(Z_SKID,PIPE_BY[a]).slice().reverse(), Bp=pw(Z_BESS,PIPE_BY[b]), ea=A[A.length-1], sb=Bp[0], y0=lift?Math.max(ea[1],sb[1]):yFl+r+0.003;
+    return [[A[0][0],F_TOP,A[0][2]]].concat(A,[[ea[0],y0,ea[2]+0.12],[sb[0],y0,sb[2]-0.12]],Bp,[[Bp[Bp.length-1][0],F_TOP,Bp[Bp.length-1][2]]]); }
+  const side=(pts,d)=>pts.map((q,i)=>{ let k=Math.max(1,i), tx=0, tz=0;
+    for(let j=k;j<pts.length;j++){ tx=pts[j][0]-pts[j-1][0]; tz=pts[j][2]-pts[j-1][2]; if(Math.hypot(tx,tz)>1e-6) break; }
+    const l=Math.hypot(tx,tz)||1; return [q[0]-tz/l*d,q[1],q[2]+tx/l*d]; });
+  [['Т21','Т1'],['Т22','Т2'],['Т23','Т3'],['Т24','Т4']].forEach(([a,b])=>{ const pts=run(a,b,0.017,false);
+    gCab.add(polyTube(side(pts,0.019),0.0165,mPos)); gCab.add(polyTube(side(pts,-0.019),0.0165,mNeg)); });
+  gCab.add(polyTube(run('Т27','Т7',0.02,true),0.019,mAux)); gCab.add(polyTube(run('Т28','Т8',0.01,true),0.009,mCtl));
   // reinforcement of the channel, cover slabs and lintels (proposal, sheet 4)
   const rbChan=new THREE.Group(); rbChan.visible=false; gChan.add(rbChan);
   const rbCov=new THREE.Group(); rbCov.visible=false; gCov.add(rbCov);
@@ -669,7 +704,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     const u=[], l=[], yU=yFl-CH.t+0.05, yTop=yIn-0.03, xl=xc-CH.w/2-CH.t/2, xr=xc+CH.w/2+CH.t/2;
     for(let i=0;i<25;i++){ const z=zA+0.05+0.2*i; u.push([xl,yTop,z,xl,yU,z],[xl,yU,z,xr,yU,z],[xr,yU,z,xr,yTop,z]); }
     [-0.25,-0.083,0.083,0.25].forEach(d=> l.push([xc+d,yU+0.008,zA+0.03,xc+d,yU+0.008,zB-0.03]));
-    [xl+0.008,xr-0.008].forEach(x=>[-0.40,-0.20].forEach(y=> l.push([x,y,zA+0.03,x,y,zB-0.03])));
+    [xl+0.008,xr-0.008].forEach(x=>[yFl+0.12,yFl+CH.d/2,yFl+CH.d-0.12].forEach(y=> l.push([x,y,zA+0.03,x,y,zB-0.03])));
     bars(rbChan,u,0.004,M.barNew); bars(rbChan,l,0.004,M.barNew);
     const t=[], s=[];
     [zA-BEAM-0.004,zB-0.004].forEach(z0=>{ [0.05,0.175,0.30].forEach(dz=> t.push([xc-0.43,yIn+0.03,z0+dz,xc+0.43,yIn+0.03,z0+dz]));
@@ -682,7 +717,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     bars(rbCov,a,0.004,M.barNew); bars(rbCov,b,0.004,M.barNew);
   })();
   const tagsChan=new THREE.Group(); gChan.add(tagsChan);
-  (function(){ const m=plate([{t:'Кабельний канал 600 × 450',em:0.32,w:600},{t:'L = 4900 · попередній розрахунок',em:0.24,mono:true,muted:true}],{pad:0.1});
+  (function(){ const m=plate([{t:'Кабельний канал 600 × 800',em:0.32,w:600},{t:'L = 4900 · попередній розрахунок',em:0.24,mono:true,muted:true}],{pad:0.1});
     flat(m,tagsChan,xc+CH.w/2+CH.t+0.25+m.scale.x/2,0.06,(zA+zB)/2); })();
 
   // ---- dimensions: lines on the ground, numbers lying along them ----
@@ -752,7 +787,8 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     west:{p:[-W/2-13,4.2,2.5],t:[0,1.0,1.2]},
     found:{p:[bc.x-11.5,6.4,bc.z+14.5],t:[bc.x-0.3,1.9,bc.z]},
     chan:{p:[-5.2,8.6,1.4],t:[0.3,-0.4,0.05]},
-    rebar:{p:[bc.x-6.8,3.1,bc.z+6.0],t:[bc.x+0.2,-0.9,bc.z-0.3]}
+    rebar:{p:[bc.x-6.8,3.1,bc.z+6.0],t:[bc.x+0.2,-0.9,bc.z-0.3]},
+    pipes:{p:[X0-6.2,5.6,(Z_SKID+B+Z_BESS)/2+3.4],t:[X0+2.4,-0.8,(Z_SKID+B+Z_BESS)/2]}
   };
   let cam=null;
   // narrow viewports (phones) need the camera further back to keep the whole site in frame
@@ -763,9 +799,12 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     if(reduce){ camera.position.copy(p); controls.target.copy(t); camera.fov=f; camera.updateProjectionMatrix(); cam=null; }
     else cam={p0:camera.position.clone(),t0:controls.target.clone(),f0:camera.fov,p1:p,t1:t,f1:f,s:performance.now()};
     document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===name?'true':'false'));
+    pipesOn=name==='pipes';
     if(name==='found'){ setLift(3.2); setGround('glass'); }
     else if(name==='rebar'){ setLift(4); setGround('off'); setRebar(true); setDims(false); }
+    else if(name==='pipes'){ setLift(4); setGround('off'); setRebar(false); setDims(false); $('chk-pipes').checked=true; setPipes(true); }
     else setLift(0);
+    applyXray();
   }
   function setLift(v){ st.liftT=v; $('lift').value=v; $('lift-out').textContent=v.toFixed(1).replace('.',',')+' м'; if(reduce) st.lift=v; }
   let groundMode='glass';
@@ -787,16 +826,21 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   $('chk-zone').addEventListener('change',e=>{ gZone.visible=e.target.checked; });
   $('chk-chan').addEventListener('change',e=>{ gChan.visible=e.target.checked; });
   $('chk-cov').addEventListener('change',e=>{ gCov.visible=e.target.checked; });
-  const XRAY=[M.concrete,M.brick,M.ghostC,M.ghostB,M.prep,mCov,mHole];
+  const XRAY=[M.concrete,M.brick,M.ghostC,M.ghostB,M.prep,mCov,mHole,M.sand,M.screed];
   XRAY.forEach(m=>{ m.userData.base={t:m.transparent,o:m.opacity,d:m.depthWrite}; });
-  let rebarOn=false;
+  let rebarOn=false, pipesOn=false;
+  // see-through concrete, brick and sand: with the reinforcement shown or in the pipes view
+  function applyXray(){ const on=rebarOn||pipesOn; $('lg-pipes').hidden=!pipesOn;
+    XRAY.forEach(m=>{ const b=m.userData.base; m.transparent=on||b.t; m.opacity=on?Math.min(b.o,m===M.sand?0.12:0.15):b.o; m.depthWrite=on?false:b.d; m.needsUpdate=true; }); }
   function setRebar(on){
     rebarOn=on; $('chk-rebar').checked=on; $('lg-rebar').hidden=!on;
     [fBess.userData.cage,fPcs.userData.cage,rbChan,rbCov].forEach(g=>{ g.visible=on; });
-    XRAY.forEach(m=>{ const b=m.userData.base; m.transparent=on||b.t; m.opacity=on?Math.min(b.o,0.15):b.o; m.depthWrite=on?false:b.d; m.needsUpdate=true; });
+    applyXray();
     if(on&&!gFound.visible){ gFound.visible=true; $('chk-found').checked=true; }
     hover(null);
   }
+  function setPipes(on){ [fBess.userData.pipes,fPcs.userData.pipes].forEach(g=>{ g.visible=on; }); if(on&&!gFound.visible){ gFound.visible=true; $('chk-found').checked=true; } }
+  $('chk-pipes').addEventListener('change',e=>setPipes(e.target.checked));
   $('chk-rebar').addEventListener('change',e=>setRebar(e.target.checked));
   function doorsAll(v){ leaves.forEach(l=>{ l.t=v; }); doorState(); }
   function doorState(){ const n=leaves.filter(l=>l.t).length;
@@ -826,11 +870,12 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
     chan:{s:1,r:[0.72,0.41,0.995,0.86],name:'Кабельний канал',note:'Кабельний канал між блоками: переріз із розкладкою кабелів. Це попередній розрахунок, не дані Golen; на плані цього ж аркуша канал показано між фундаментами.'},
     site:{s:1,r:null,name:'Майданчик',note:'Майданчик: розміщення обох блоків, відступи 5000 мм і схема стропування.'},
     armf:{s:4,r:[0.04,0.02,0.56,0.83],name:'Армування фундаменту',note:'Армування фундаменту: план балки, каркас колони, перерізи, форми стержнів, специфікація і відомість сталі. Чорним — за кресленням Golen, помаранчевим — пропозиція.'},
+    pipes:{s:5,r:[0.03,0.02,0.56,0.62],name:'Вводи кабелів у трубах',note:'Вводи кабелів у трубах: плани фундаментів BESS і PCS, виводи труб під контейнерами, перерізи, таблиця труб і матеріали. Кабельний простір засипано піском.'},
     armc:{s:4,r:[0.555,0.49,0.99,0.83],name:'Армування кабельного каналу',note:'Кабельний канал, плита П-1 і перемичка ПР-1: армування за попереднім розрахунком. Специфікація — вгорі цього аркуша.'}
   };
   // with the reinforcement shown, the foundations and the channel lead to the reinforcement sheet
-  const tgt=id=>!rebarOn?id:(id==='fbess'||id==='fpcs')?'armf':id==='chan'?'armc':id;
-  const SHEET_NAME={1:'План розміщення',2:'Схема відчинення дверей',3:'Фундамент контейнера BESS',4:'Армування',5:'3D-вигляди'};
+  const tgt=id=>pipesOn&&(id==='fbess'||id==='fpcs'||id==='chan')?'pipes':!rebarOn?id:(id==='fbess'||id==='fpcs')?'armf':id==='chan'?'armc':id;
+  const SHEET_NAME={1:'План розміщення',2:'Схема відчинення дверей',3:'Фундамент контейнера BESS',4:'Армування',5:'Вводи кабелів у трубах',6:'3D-вигляди'};
   // outline shown around the object under the mouse
   function outline(parent,w,h,d,x,y,z){ const l=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,d)),M.hover);
     l.position.set(x+w/2,y+h/2,z+d/2); l.renderOrder=20; l.visible=false; parent.add(l); return l; }
@@ -922,7 +967,7 @@ ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;
   requestAnimationFrame(frame);
   // test hook for static captures
   doorState();
-  window.__model={go,setLift,setGround,st,camera,controls,VIEWS,doorsAll,leaves,openSheet,closeSheet,setMode,setRebar,fBess,fPcs,rbChan,rbCov};
+  window.__model={go,setLift,setGround,st,camera,controls,VIEWS,doorsAll,leaves,openSheet,closeSheet,setMode,setRebar,setPipes,fBess,fPcs,rbChan,rbCov};
 })();
 </script>
 </body>

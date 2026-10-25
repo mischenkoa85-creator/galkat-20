@@ -10,8 +10,8 @@ import stamp
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', 'src', 'draw.py')
 DATA = json.load(open(os.path.join(HERE, 'route_data.json'), encoding='utf-8'))
-DATE = '21.10.2026'
-TOTAL = 9
+DATE = '25.10.2026'
+TOTAL = 10
 _B = DATA['bess'][0]
 CH_LEN = int(round(((_B['pcs'][1] - _B['bess'][1]) - 2 * 1.269) * 1000 / 10.0)) * 10     # розрив між фундаментами, мм
 SLAB_N_ = int(math.ceil(CH_LEN / 500.0))                                                     # плити П-1 ≤ 500 мм завширшки
@@ -31,10 +31,10 @@ def load_variant(v, sheets):
         s = rep(s, 'COL_ST_Y = [-1450 + 200 * i for i in range(8)] + [50, 150, 250]', 'COL_ST_Y = [-1050 + 200 * i for i in range(6)] + [50, 150, 250]')
         s = rep(s, "('f', '4', 12, 'A500C', 2240, 'Г 2040 + 200', 32,", "('f', '4', 12, 'A500C', 1890, 'Г 1690 + 200', 32,")
     # кабельний канал між фундаментами: довжина — за фактичним розривом BESS ↔ PCS (22.10.2026: строго навпроти ГПУ, розрив 5462 мм)
-    s = rep(s, "CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 450, 80", "CH_L, CH_W, CH_T, CH_D, CH_COV = %d, 600, 100, 450, 80" % CH_LEN)
+    s = rep(s, "CH_L, CH_W, CH_T, CH_D, CH_COV = 4900, 600, 100, 800, 80", "CH_L, CH_W, CH_T, CH_D, CH_COV = %d, 600, 100, 800, 80" % CH_LEN)
     s = rep(s, "SLAB_N, SLAB_L = 10, 478", "SLAB_N, SLAB_L = %d, %d" % (SLAB_N_, SLAB_L_))
     s = rep(s, "U_Z = [50 + 200 * i for i in range(25)]", "U_Z = [50 + 200 * i for i in range(int((CH_L - 100) // 200) + 1)] + ([CH_L - 50] if (CH_L - 100) % 200 else [])")
-    s = rep(s, "('c', '7', 8, 'A500C', 4840, '', 8,", "('c', '7', 8, 'A500C', CH_L - 60, '', 8,")
+    s = rep(s, "('c', '7', 8, 'A500C', 4840, '', 10,", "('c', '7', 8, 'A500C', CH_L - 60, '', 10,")
     s = rep(s, "('s', '9', 8, 'A500C', 430, '', 5,", "('s', '9', 8, 'A500C', SLAB_L - 48, '', 5,")
     s = rep(s, "'c': 'Кабельний канал, монолітний, L = 4900, 1 шт.',", "'c': 'Кабельний канал, монолітний, L = %d, 1 шт.' % CH_L,")
     s = rep(s, "'s': 'Плита перекриття П-1, 800 × 478 × 80, на 1 шт. (усього %d)' % SLAB_N,", "'s': 'Плита перекриття П-1, 800 × %d × 80, на 1 шт. (усього %d)' % (SLAB_L, SLAB_N),")
@@ -45,9 +45,8 @@ def load_variant(v, sheets):
     s = rep(s, "    p.dim_h(XC(0), XC(800), yb_, yb_ - 9.6, '800', size=6.2)\n", "")   # над основним написом
     s = rep(s, "assert LF == 6158 and BF == 2538", "assert LF == 6158 and BF == 2538\nLV = lambda z: ('−' if z < 0 else '+' if z > 0 else '') + ('%.3f' % (abs(z) / 1000.0)).replace('.', ',')")
     # ---- аркуш «Фундамент»
-    s = rep(s, "frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 5)",
+    s = rep(s, "frame(p, ['Фундамент контейнера BESS', 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', 3, 6)",
             "frame(p, ['Фундамент BESS і PCS · варіант %d · %s' % (VARIANT, VDEPTH), 'План, розрізи 1–1 і 2–2, вузол А'], '1 : 40; 1 : 10', SHEET_F, TOTAL)")
-    s = rep(s, "'5458 × 1838 у світлі, глибина 1800 від верху фундаменту'", "'5458 × 1838 у світлі, глибина %d від верху фундаменту' % (F_TOP - COL_BOT)")
     s = rep(s, "    for zz, t in ((F_TOP, '+0,300'), (0, '0,000'), (COL_BOT, '−1,500'), (BEAM_BOT, '−1,850')):\n        p.line(X(LF) + 1.2",
             "    for zz, t in ((F_TOP, '+0,300'), (0, '0,000'), (COL_BOT, LV(COL_BOT)), (BEAM_BOT, LV(BEAM_BOT))):\n        p.line(X(LF) + 1.2")
     s = rep(s, "p.dim_v(Z(BEAM_BOT), Z(F_TOP), xr, xr + 24, '2150')", "p.dim_v(Z(BEAM_BOT), Z(F_TOP), xr, xr + 24, str(F_TOP - BEAM_BOT))")
@@ -64,8 +63,8 @@ def load_variant(v, sheets):
     # ---- аркуш «Армування»: позначки прив'язано до низу балки й низу колон
     a0 = s.index('def sheet_rebar(c):'); a1 = s.index('# Sheet 5: 3D views')
     r = s[a0:a1]
-    r = rep(r, "frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', 4, 5)",
-            "frame(p, ['Армування фундаменту · варіант %d · %s' % (VARIANT, VDEPTH), 'Каркаси, специфікація, кабельний канал'], '1 : 40; 1 : 20; 1 : 10', SHEET_R, TOTAL)")
+    r = rep(r, "frame(p, ['Армування фундаменту', 'Каркаси, специфікація, кабельний канал'], '1:40; 1:20; 1:15; 1:10', 4, 6)",
+            "frame(p, ['Армування фундаменту · варіант %d · %s' % (VARIANT, VDEPTH), 'Каркаси, специфікація, кабельний канал'], '1:40; 1:20; 1:15; 1:10', SHEET_R, TOTAL)")
     r = rep(r, "YE = lambda y: ey0 + (y + 1950) * kk", "YE = lambda y: ey0 + (y - (BEAM_BOT - PREP)) * kk")
     r = rep(r, "(F_TOP + 1500) * kk", "(F_TOP - COL_BOT) * kk")
     r = rep(r, "chain = [(250, 300, '50'), (-50, 250, '3×100'), (-1450, -50, '7×200 = 1400'), (-1500, -1450, '50')]",
@@ -81,7 +80,7 @@ def load_variant(v, sheets):
     r = rep(r, "p.text(sx + 5.6, 115, '2040', 6.0, anchor='c', rot=90)", "p.text(sx + 5.6, 115, str(POS4 - 200), 6.0, anchor='c', rot=90)")
     s = s[:a0] + r + s[a1:]
     m = types.ModuleType('draw_v%d' % v)
-    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'TOTAL': TOTAL, 'VDEPTH': '1,80 м' if v == 1 else '1,50 м',
+    m.__dict__.update({'VARIANT': v, 'SHEET_F': sheets[0], 'SHEET_R': sheets[1], 'SHEET_P': 10, 'TOTAL': TOTAL, 'VDEPTH': '1,80 м' if v == 1 else '1,50 м',
                        'STAMP': stamp.draw, 'types': types, 'SRC_STAMP': 'Golen Power Technology, Annex 1 – Response 1, Reference Foundation Drawing of 5MWh BESS Container'})
     exec(compile(s, 'draw_v%d.py' % v, 'exec'), m.__dict__)
     m.POS4 = [x for x in m.REBAR if x[1] == '4'][0][4]
@@ -129,13 +128,14 @@ if __name__ == '__main__':
     route_sheets.sheet_apron(c, m1, DATA, q)
     m1.sheet_foundation(c); m1.sheet_rebar(c)
     m2.sheet_foundation(c); m2.sheet_rebar(c)
+    m1.sheet_pipes(c)
     c.save()
     print('saved', out)
-    # фундамент окремо для друку: варіант 1 (1,80 м) — аркуші 6–7, варіант 2 (1,50 м) — аркуші 8–9
+    # фундамент окремо для друку: варіант 1 (1,80 м) — аркуші 6–7, варіант 2 (1,50 м) — аркуші 8–9; аркуш 10 (вводи в трубах) — в обох
     from pypdf import PdfReader, PdfWriter
     rd = PdfReader(out); od = os.path.dirname(os.path.abspath(out))
-    for v, pages, name, t in ((1, (5, 6), 'kreslennya-fundament-bess-var1-1-80.pdf', 'варіант 1, 1,80 м (низ −1,850)'),
-                              (2, (7, 8), 'kreslennya-fundament-bess-var2-1-50.pdf', 'варіант 2, 1,50 м (низ −1,500)')):
+    for v, pages, name, t in ((1, (5, 6, 9), 'kreslennya-fundament-bess-var1-1-80.pdf', 'варіант 1, 1,80 м (низ −1,850)'),
+                              (2, (7, 8, 9), 'kreslennya-fundament-bess-var2-1-50.pdf', 'варіант 2, 1,50 м (низ −1,500)')):
         w = PdfWriter()
         for i in pages:
             w.add_page(rd.pages[i])
