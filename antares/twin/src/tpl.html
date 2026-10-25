@@ -58,18 +58,29 @@ button{cursor:pointer}
 .tip b{display:block;font-weight:650}
 /* вузол по деталях */
 .xls{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
-.xl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:0;font-size:11.5px;line-height:1.25;color:var(--ink);white-space:nowrap;transition:opacity .2s}
-.xl::before{content:"";width:12px;height:1px;background:var(--ink-3);flex:none}
-.xl.l{flex-direction:row-reverse}
-.xl span{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:6px;padding:2px 6px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.xl em{font-style:normal;color:var(--ink-3);margin-left:6px;font-family:var(--mono);font-size:11px}
-.xl i{display:block;font-style:normal;color:#d64545;font-size:11px;white-space:normal;max-width:230px}
-.xbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100% - 20px);background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--line);border-radius:10px;padding:5px 5px 5px 11px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.xbar .t{display:flex;flex-direction:column;min-width:0;font-size:11.5px;color:var(--ink-2);line-height:1.3}
+.xln{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.xln path{fill:none;stroke:var(--ink-3);stroke-width:1;opacity:.85}
+.xln path.on{stroke:var(--ink);stroke-width:1.6;opacity:1}
+.xl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font-size:11.5px;line-height:1.2;color:var(--ink);white-space:nowrap;background:color-mix(in srgb,var(--surface) 93%,transparent);border:1px solid var(--line);border-radius:6px;padding:3px 7px 3px 4px;box-shadow:0 1px 3px rgba(0,0,0,.08);pointer-events:auto;cursor:pointer;transition:opacity .2s;font-family:var(--font)}
+.xl b{font:700 10.5px/16px var(--mono);min-width:16px;height:16px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);text-align:center}
+.xl em{font-style:normal;color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.xl i.w{font-style:normal;color:#d64545;font-weight:700}
+.xl.on{background:var(--ink);color:var(--surface);border-color:var(--ink)} .xl.on em{color:var(--surface)} .xl.on b{background:var(--surface);color:var(--ink)}
+.xmk{position:absolute;left:0;top:0;width:24px;height:24px;padding:0;border-radius:50%;background:var(--surface);border:1.5px solid var(--ink-2);color:var(--ink);font:700 12px/20px var(--mono);text-align:center;pointer-events:auto;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.22);transition:opacity .2s}
+.xmk.w{border-color:#d64545;color:#d64545}
+.xmk.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.xbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;width:max-content;max-width:min(820px,calc(100% - 20px));background:color-mix(in srgb,var(--surface) 95%,transparent);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 11px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.xbar .t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;font-size:11.5px;color:var(--ink-2);line-height:1.3;max-width:560px}
 .xbar .t b{color:var(--ink);font-size:13px;font-weight:650}
-.xbar .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
-.xbar button{flex:none;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 10px;white-space:nowrap}
-.xbar button.pri{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+.xbar .t b em{font-style:normal;font:500 11.5px var(--mono);color:var(--ink-3);margin-left:4px}
+.xbar .t span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.xbar .t i{font-style:normal;color:#d64545}
+.xbb{display:flex;gap:4px;flex:none;align-items:center}
+.xbb button{flex:none;height:30px;min-width:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 9px;white-space:nowrap}
+.xbb button.pri{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+.xbb button[aria-pressed="true"]{border-color:var(--ink-2);background:var(--surface-3);font-weight:600}
+.xt tr[data-xsel]{cursor:pointer} .xt tr.on td{background:var(--surface-2)}
+.xt b.xn{display:inline-block;font:700 10.5px/16px var(--mono);min-width:16px;height:16px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);text-align:center;margin-right:6px}
 .xt td small.w{display:block;color:#d64545;font:400 11.5px/1.35 var(--font)}
 .xt td:first-child{color:var(--ink)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:14px;background:var(--sky);z-index:7}
@@ -164,8 +175,10 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
   .compass{right:8px;top:8px;width:42px;height:42px} .compass svg{width:34px;height:34px}
   .sheet[data-s="half"]{height:max(260px,46svh)} .sheet[data-s="full"]{height:max(300px,86svh)}
   .tabs button{padding:8px 8px 9px;font-size:13px}
-  .xl{font-size:10.5px} .xl em{font-size:10px} .xl i{max-width:150px;font-size:10px}
-  .xbar{bottom:8px;padding:4px 4px 4px 9px} .xbar .t span{max-width:46vw} .xbar button{padding:0 8px;font-size:12.5px}
+  .xl{font-size:10.5px} .xl em{font-size:10px}
+  .xbar{left:8px;right:8px;bottom:8px;transform:none;width:auto;max-width:none;flex-wrap:wrap;gap:6px;padding:7px 7px 6px 10px}
+  .xbar .t{flex:1 1 100%;max-width:none} .xbar .t span{-webkit-line-clamp:3}
+  .xbb{width:100%;justify-content:flex-end} .xbb button{height:32px;padding:0 10px;font-size:13px} .xbb .sp{margin-right:auto}
   .pane{grid-template-columns:minmax(0,1fr)}
 }
 </style>
@@ -194,7 +207,7 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
       <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-3)"/>
       <text x="0" y="-8" text-anchor="middle" font-size="8" fill="var(--surface)" font-weight="700">Пн</text></svg></div>
     <div class="xls" id="xls" aria-hidden="true"></div>
-    <div class="xbar" id="xbar" hidden><div class="t"><b id="xbT"></b><span id="xbS"></span></div><button type="button" id="xbTog" class="pri">Зібрати</button><button type="button" id="xbX" aria-label="Закрити вузол" title="Закрити вузол">×</button></div>
+    <div class="xbar" id="xbar" hidden><div class="t"><b id="xbT"></b><span id="xbS"></span><i id="xbW" hidden></i></div><div class="xbb"><button type="button" id="xbPrev" class="sp" aria-label="Деталь вище" title="Деталь вище">‹</button><button type="button" id="xbNext" aria-label="Деталь нижче" title="Деталь нижче">›</button><button type="button" id="xbLab" aria-pressed="true" title="Підписи деталей біля моделі">Підписи</button><button type="button" id="xbTog" class="pri">Зібрати</button><button type="button" id="xbX" aria-label="Закрити вузол" title="Закрити вузол">×</button></div></div>
     <div class="tip" id="tip" hidden></div>
     <div class="loading" id="loading">Будую модель…</div>
   </section>

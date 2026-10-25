@@ -724,9 +724,9 @@ canvas.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
 canvas.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return; const r=canvas.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera);
   if(MARKS.visible){ const mh=ray.intersectObjects(MARKS.children.filter(o=>o.isSprite),false); if(mh.length){ goMis(mh[0].object.userData.mis); return; } }
-  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ showTip(xh[0].object.userData.info,e,r); return; } }
+  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ const k=xh[0].object.parent.userData.ly, ly=XN.layers[k]; xSel(ly&&ly.name&&XN.sel!==k?k:null); hideTip(); return; } }
   const objs=PICK.filter(p=>{ let o=p.o; while(o){ if(!o.visible) return false; o=o.parent; } return !p.when||p.when(); });
-  const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); return; }
+  const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); if(XN) xSel(null); return; }
   const h=hits[0]; if(state.sec==='km'&&XCAN.has(h.object)&&openNodeAt(h.point.x,-h.point.z)) return;
   const u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; showTip(inf,e,r); });
 function showTip(inf,e,r){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}`; tip.hidden=false; tipT=performance.now();
@@ -748,8 +748,8 @@ function lagAt(X,Y){ return LG.findIndex(l=>Math.abs(l[0]-X)<2e-3&&Y>=l[1]-0.01&
 function rpModAt(X,Y,ok){ let b=-1,bd=9; RMOD.forEach((m,j)=>{ if(ok&&!ok(m)) return; const t=RT[m.i], d=(t.X-X)**2+(t.Y-Y)**2; if(d<bd){ bd=d; b=j; } }); return b; }
 function ourModAt(X,Y){ let b=-1,bd=9; OM.forEach((m,i)=>{ const d=((m.Xa+m.Xb)/2-X)**2+(m.Y-Y)**2; if(d<bd){ bd=d; b=i; } }); return b; }
 function xNew(proj,idx,step){ return {proj,idx,step,layers:[],hide:[],t0:0,dir:1,anim:false,shown:0}; }
-function xLayer(N,L,name,q,warn){ const g=new THREE.Group(); XG.add(g); const o={L,name,q,warn:warn||'',g,box:new THREE.Box3(),n:0,f:0}; N.layers.push(o); return o; }
-function xPart(ly,geo,mat,M,info){ const o=new THREE.Mesh(geo,mat); o.matrixAutoUpdate=false; o.matrix.copy(M); o.castShadow=true; o.receiveShadow=true; o.userData.info=info; ly.g.add(o);
+function xLayer(N,L,name,q,warn){ const g=new THREE.Group(); XG.add(g); const o={L,name,q,warn:warn||'',g,box:new THREE.Box3(),n:0,f:0,i:N.layers.length,d:''}; g.userData.ly=o.i; N.layers.push(o); return o; }
+function xPart(ly,geo,mat,M,info){ const o=new THREE.Mesh(geo,mat); o.matrixAutoUpdate=false; o.matrix.copy(M); o.castShadow=true; o.receiveShadow=true; o.userData.info=info; ly.g.add(o); if(!ly.d&&info&&info.d) ly.d=info.d;
   if(!geo.boundingBox) geo.computeBoundingBox(); ly.box.union(geo.boundingBox.clone().applyMatrix4(M)); ly.n++; return o; }
 function xHide(N,im,i){ const M=new M4(); im.getMatrixAt(i,M); N.hide.push({im,i,M:M.clone()}); im.setMatrixAt(i,ZERO); im.instanceMatrix.needsUpdate=true; return M; }
 const rng=a=>{ const lo=Math.min(...a), hi=Math.max(...a); return lo===hi?nf(lo):nf(lo)+'–'+nf(hi); };
@@ -825,12 +825,20 @@ function buildOurs(i){ const m=OM[i], N=xNew('ours',i,0.3), y0=m.Y-1.2, y1=m.Y+1
 const XDIM=['zn','znD','hw','blk','mat','sp','al','conM','conBad','lag','sl','rod','rodP','anc'];
 function xDim(on){ XDIM.forEach(k=>{ const m=MAT[k]; if(!m) return; m.transparent=on; m.opacity=on?0.16:1; m.depthWrite=!on; m.needsUpdate=true; }); need=true; }
 function xMaxL(N){ return Math.max(...N.layers.map(l=>l.L)); }
+// підписи: на комп'ютері — колонкою справа з виносками, на телефоні — лише номери шарів; повний текст — у картці внизу
+const xPhone=()=>canvas.parentElement.clientWidth<700;
+const xLabOn=()=>state.lay.xlab!==undefined?!!state.lay.xlab:!xPhone();
 function openNode(proj,idx,fly=true){ if(XN&&XN.proj===proj&&XN.idx===idx){ if(XN.dir<0) xPlay(1); return; } closeNode(true);
-  XN=proj==='rp'?buildRP(idx):buildOurs(idx); xDim(true); markersVis(); if(proj==='rp') rpDetail();
-  XN.layers.forEach(ly=>{ if(!ly.name) return; const el=document.createElement('div'); el.className='xl'; el.style.opacity=0; el.innerHTML=`<span>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?`<i>${esc(ly.warn)}</i>`:''}</span>`; xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight; });
-  $('#xbT').textContent=XN.title; $('#xbS').textContent=XN.sub; xbar.hidden=false; hideTip();
+  XN=proj==='rp'?buildRP(idx):buildOurs(idx); XN.sel=null; xDim(true); markersVis(); if(proj==='rp') rpDetail();
+  const named=XN.layers.filter(l=>l.name); named.slice().sort((a,b)=>a.L-b.L||a.i-b.i).forEach((l,k)=>l.num=k+1); XN.nav=named.slice().sort((a,b)=>b.L-a.L||b.i-a.i).map(l=>l.i);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','xln'); xls.appendChild(svg); XN.svg=svg;
+  named.forEach(ly=>{ const ln=document.createElementNS('http://www.w3.org/2000/svg','path'); svg.appendChild(ln); ly.ln=ln;
+    const el=document.createElement('button'); el.type='button'; el.className='xl'; el.innerHTML=`<b>${ly.num}</b>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?'<i class="w">⚠</i>':''}`; el.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight;
+    const mk=document.createElement('button'); mk.type='button'; mk.className='xmk'+(ly.warn?' w':''); mk.textContent=ly.num; mk.setAttribute('aria-label',ly.name); mk.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(mk); ly.mk=mk; });
+  xbar.hidden=false; xCard(); hideTip(); xLabBtn();
   if(fly){ const top=xMaxL(XN)*XN.step, c=XN.c.clone().add(new V3(0,top*0.45,0)), asp=Math.max(0.3,camera.aspect), d=(XN.proj==='rp'?4.6:4.4)*Math.max(1,1.35/asp), dir=(XN.proj==='rp'?new V3(0.7,0.36,0.78):new V3(0.8,0.5,0.6)); if(roofK(XN.c.x)>0.02) dir.x=-dir.x; dir.normalize();
-    goTo({c:[c.x,c.y,c.z],p:[c.x+dir.x*d,c.y+dir.y*d,c.z+dir.z*d]}); }
+    const p=c.clone().addScaledVector(dir,d); if(xLabOn()&&asp>1.2){ const R=new V3(dir.z,0,-dir.x).normalize(), sh=Math.min(1.4,0.3*d*Math.tan(19*D2R)*asp); c.addScaledVector(R,sh); p.addScaledVector(R,sh); }
+    goTo({c:[c.x,c.y,c.z],p:[p.x,p.y,p.z]}); }
   xPlay(1); xPanel(); need=true; }
 function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
   N.hide.forEach(h=>{ h.im.setMatrixAt(h.i,h.M); h.im.instanceMatrix.needsUpdate=true; });
@@ -838,25 +846,41 @@ function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
   XG.children.slice().forEach(g=>XG.remove(g));
   xDim(false); markersVis(); xls.innerHTML=''; xbar.hidden=true; if(!silent) xPanel(); need=true; }
 function xPlay(dir){ if(!XN) return; XN.dir=dir; XN.t0=performance.now(); XN.anim=true; const b=$('#xbTog'); b.textContent=dir>0?'Зібрати':'Розібрати'; need=true; }
+// вибраний шар — решта вузла бліда; картка внизу
+const XDM=new Map(); function xDimMat(m){ let d=XDM.get(m); if(!d){ d=m.clone(); d.transparent=true; d.opacity=0.16; d.depthWrite=false; XDM.set(m,d); } return d; }
+function xSel(k){ if(!XN) return; XN.sel=k;
+  XN.layers.forEach(ly=>{ const dim=k!==null&&ly.i!==k; ly.g.traverse(o=>{ if(!o.isMesh) return; if(!o.userData.m0) o.userData.m0=o.material; o.material=dim?xDimMat(o.userData.m0):o.userData.m0; });
+    if(ly.el){ ly.el.classList.toggle('on',ly.i===k); ly.mk.classList.toggle('on',ly.i===k); } });
+  xCard(); document.querySelectorAll('#xnb [data-xsel]').forEach(r=>r.classList.toggle('on',+r.dataset.xsel===k)); need=true; }
+function xCard(){ if(!XN) return; const ly=XN.sel!==null?XN.layers[XN.sel]:null;
+  $('#xbT').innerHTML=ly?`${ly.num}. ${esc(ly.name)} <em>${esc(ly.q)}</em>`:esc(XN.title);
+  $('#xbS').textContent=ly?(ly.d||''):XN.sub+(xPhone()?' · натисніть на номер або деталь':''); const w=$('#xbW'); w.textContent=ly?ly.warn:''; w.hidden=!(ly&&ly.warn); }
+function xNav(st){ if(!XN) return; const L=XN.nav, p=XN.sel===null?-1:L.indexOf(XN.sel); xSel(p<0?(st>0?L[0]:L[L.length-1]):L[(p+st+L.length)%L.length]); }
+function xLabBtn(){ const b=$('#xbLab'); b.setAttribute('aria-pressed',String(xLabOn())); need=true; }
 // шари: кожен наступний стартує на 110 мс пізніше; при збиранні — згори вниз
 function xTick(now){ if(!XN||!XN.anim) return; const N=XN, mx=xMaxL(N), dur=RM?1:650, gap=RM?0:110; let done=true;
   N.layers.forEach(ly=>{ const del=(N.dir>0?ly.L:mx-ly.L)*gap, s=Math.max(0,Math.min(1,(now-N.t0-del)/dur)); if(s<1) done=false; const e=s*s*(3-2*s), f=N.dir>0?e:1-e; ly.f=f; ly.g.position.y=f*ly.L*N.step; });
   N.shown=Math.max(...N.layers.map(l=>l.L?l.f:0)); if(done) N.anim=false; need=true; }
-function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, items=[];
-  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true;
-    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd; mn=Math.min(mn,sx); mxx=Math.max(mxx,sx); sy+=(1-_xv.y)/2*Hd; n++; }
-    items.push({ly,mn,mx:mxx,y:sy/n,front}); });
-  items.sort((a,b)=>a.y-b.y); let last=-1e9;
-  items.forEach(it=>{ const ly=it.ly, w=ly.w||ly.el.offsetWidth, h=ly.h||ly.el.offsetHeight; let y=Math.max(it.y-h/2,last+3); last=y+h; let x=it.mx+6, fl=false;
-    if(x+w>Wd-6){ x=it.mn-6-w; fl=true; } if(x<6){ x=Math.max(6,Math.min(Wd-w-6,it.mx+6)); fl=false; }
-    ly.el.classList.toggle('l',fl); ly.el.style.transform=`translate(${Math.round(x)}px,${Math.round(Math.min(Hd-h-4,y))}px)`; ly.el.style.opacity=show&&it.front?1:0; }); }
+const xVis=(el,on)=>{ el.style.visibility=on?'visible':'hidden'; el.style.opacity=on?1:0; };
+function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, lab=xLabOn(), items=[];
+  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true, ry=0;
+    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd, syy=(1-_xv.y)/2*Hd; if(sx>mxx){ mxx=sx; ry=syy; } mn=Math.min(mn,sx); sy+=syy; n++; }
+    items.push({ly,mn,mx:mxx,ry,y:sy/n,front}); });
+  items.sort((a,b)=>a.y-b.y);
+  const top=62, bot=Hd-(xbar.hidden?0:xbar.offsetHeight+16)-6;
+  if(lab){ let last=-1e9; items.forEach(it=>{ const h=it.ly.h; it.ty=Math.max(it.y-h/2,last+4,top); last=it.ty+h; });
+    const over=last-bot; if(over>0) items.forEach(it=>it.ty=Math.max(top,it.ty-over));
+    items.forEach(it=>{ const ly=it.ly, x=Wd-10-ly.w, y=Math.round(it.ty), on=show&&it.front; ly.el.style.transform=`translate(${Math.round(x)}px,${y}px)`; xVis(ly.el,on); xVis(ly.mk,false);
+      const ax=Math.min(it.mx+4,x-8), ay=it.ry*0.5+it.y*0.5; ly.ln.setAttribute('d',`M${x-2},${y+ly.h/2}L${x-14},${y+ly.h/2}L${ax},${ay}`); ly.ln.style.visibility=on?'visible':'hidden'; ly.ln.classList.toggle('on',ly.i===XN.sel); }); }
+  else { let last=-1e9; items.forEach(it=>{ const ly=it.ly, s=24; let y=Math.max(it.y-s/2,last+3,top); last=y+s; let x=it.mx+6; if(x>Wd-s-6) x=Math.max(6,it.mn-s-6);
+      ly.mk.style.transform=`translate(${Math.round(x)}px,${Math.round(Math.min(bot-s,y))}px)`; xVis(ly.mk,show&&it.front); xVis(ly.el,false); ly.ln.style.visibility='hidden'; }); } }
 // панель «Кріплення»: що в розібраному вузлі
 function xPanelHTML(){ const rp=state.proj==='rp';
   if(!XN) return `<h3>Вузол по деталях</h3><p class="src">Натисніть на модуль або деталь кріплення — вузол розійдеться шарами вгору, біля кожної деталі підпис. «Зібрати» — назад, × — закрити.</p><button type="button" class="lnk" data-xnode="here">↑ Розібрати вузол у центрі екрана</button>`;
   const rows=XN.layers.filter(l=>l.name).slice().sort((a,b)=>b.L-a.L);
-  return `<h3>Вузол по деталях · ${esc(XN.title.split(' · ')[1]||'')}</h3><table class="cmp xt"><tbody>${rows.map(l=>`<tr><td>${esc(l.name)}${l.warn?`<small class="w">${esc(l.warn)}</small>`:''}</td><td>${esc(l.q)}</td></tr>`).join('')}</tbody></table><p class="src">${esc(XN.sub)}. ${rp?'Крайні трикутники, притиски й сполучники спільні з сусідніми модулями.':'Гільзи, шпильки і притиски на межі спільні з сусідніми модулями.'}</p><button type="button" class="lnk" data-xnode="close">Закрити вузол</button>`; }
+  return `<h3>Вузол по деталях · ${esc(XN.title.split(' · ')[1]||'')}</h3><table class="cmp xt"><tbody>${rows.map(l=>`<tr data-xsel="${l.i}" class="${XN.sel===l.i?'on':''}"><td><b class="xn">${l.num}</b>${esc(l.name)}${l.warn?`<small class="w">${esc(l.warn)}</small>`:''}</td><td>${esc(l.q)}</td></tr>`).join('')}</tbody></table><p class="src">${esc(XN.sub)}. ${rp?'Крайні трикутники, притиски й сполучники спільні з сусідніми модулями.':'Гільзи, шпильки і притиски на межі спільні з сусідніми модулями.'}</p><button type="button" class="lnk" data-xnode="close">Закрити вузол</button>`; }
 function xPanel(){ const el=document.getElementById('xnb'); if(el){ el.innerHTML=xPanelHTML(); xBind(el); } }
-function xBind(root){ root.querySelectorAll('[data-xnode]').forEach(b=>b.onclick=()=>{ const a=b.dataset.xnode; if(a==='close') closeNode(); else if(a==='here') openNodeHere(); else if(a.startsWith('mis:')) misNode(a.slice(4)); }); }
+function xBind(root){ root.querySelectorAll('[data-xsel]').forEach(r=>r.onclick=()=>{ const k=+r.dataset.xsel; xSel(XN&&XN.sel===k?null:k); }); root.querySelectorAll('[data-xnode]').forEach(b=>b.onclick=()=>{ const a=b.dataset.xnode; if(a==='close') closeNode(); else if(a==='here') openNodeHere(); else if(a.startsWith('mis:')) misNode(a.slice(4)); }); }
 function openNodeAt(X,Y,fly=true){ const rp=state.proj==='rp', i=rp?rpModAt(X,Y):ourModAt(X,Y); if(i<0) return false; openNode(state.proj,i,fly); return true; }
 function openNodeDefault(){ if(state.proj==='rp'){ const hasC=m=>CON.some(c=>Math.abs(c.i-m.i)<=1); const j=rpModAt(21.7,41,hasC); if(j>=0) openNode('rp',j); return; }
   let best=null,bd=1e9; OD.xp.forEach(x=>{ if(x[4]) return; const X=(LX(x[0])+LX(x[1]))/2, d=(X-21.7)**2+(x[2]-41)**2; if(d<bd){ bd=d; best=[X,x[2]-x[3]*1.2]; } }); if(best) openNodeAt(best[0],best[1]); }
@@ -864,6 +888,7 @@ function openNodeHere(){ if(effSec()!=='km'){ state.sec='km'; apply(); } const t
 function misNode(id){ if(id==='con'){ const c=near(CON,c=>(RT[c.i].X-60)**2+(RT[c.i].Y-70)**2), j=RMOD.findIndex(m=>Math.abs(m.i-c.i)<=1); if(j>=0) openNode('rp',j); return; }
   const p=MISPOS[id](); openNodeAt(p.x,-p.z); }
 $('#xbTog').onclick=()=>xPlay(XN&&XN.dir>0?-1:1); $('#xbX').onclick=()=>closeNode();
+$('#xbPrev').onclick=()=>xNav(-1); $('#xbNext').onclick=()=>xNav(1); $('#xbLab').onclick=()=>{ state.lay.xlab=!xLabOn(); xLabBtn(); save(); };
 
 // ================= цикл
 function resize(){ const v=canvas.parentElement, w=v.clientWidth, h=v.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); need=true; }

@@ -63,18 +63,29 @@ button{cursor:pointer}
 .tip b{display:block;font-weight:650}
 /* вузол по деталях */
 .xls{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
-.xl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:0;font-size:11.5px;line-height:1.25;color:var(--ink);white-space:nowrap;transition:opacity .2s}
-.xl::before{content:"";width:12px;height:1px;background:var(--ink-3);flex:none}
-.xl.l{flex-direction:row-reverse}
-.xl span{background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--line);border-radius:6px;padding:2px 6px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.xl em{font-style:normal;color:var(--ink-3);margin-left:6px;font-family:var(--mono);font-size:11px}
-.xl i{display:block;font-style:normal;color:#d64545;font-size:11px;white-space:normal;max-width:230px}
-.xbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100% - 20px);background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--line);border-radius:10px;padding:5px 5px 5px 11px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.xbar .t{display:flex;flex-direction:column;min-width:0;font-size:11.5px;color:var(--ink-2);line-height:1.3}
+.xln{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.xln path{fill:none;stroke:var(--ink-3);stroke-width:1;opacity:.85}
+.xln path.on{stroke:var(--ink);stroke-width:1.6;opacity:1}
+.xl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font-size:11.5px;line-height:1.2;color:var(--ink);white-space:nowrap;background:color-mix(in srgb,var(--surface) 93%,transparent);border:1px solid var(--line);border-radius:6px;padding:3px 7px 3px 4px;box-shadow:0 1px 3px rgba(0,0,0,.08);pointer-events:auto;cursor:pointer;transition:opacity .2s;font-family:var(--font)}
+.xl b{font:700 10.5px/16px var(--mono);min-width:16px;height:16px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);text-align:center}
+.xl em{font-style:normal;color:var(--ink-3);font-family:var(--mono);font-size:11px}
+.xl i.w{font-style:normal;color:#d64545;font-weight:700}
+.xl.on{background:var(--ink);color:var(--surface);border-color:var(--ink)} .xl.on em{color:var(--surface)} .xl.on b{background:var(--surface);color:var(--ink)}
+.xmk{position:absolute;left:0;top:0;width:24px;height:24px;padding:0;border-radius:50%;background:var(--surface);border:1.5px solid var(--ink-2);color:var(--ink);font:700 12px/20px var(--mono);text-align:center;pointer-events:auto;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.22);transition:opacity .2s}
+.xmk.w{border-color:#d64545;color:#d64545}
+.xmk.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.xbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:8px;width:max-content;max-width:min(820px,calc(100% - 20px));background:color-mix(in srgb,var(--surface) 95%,transparent);border:1px solid var(--line);border-radius:10px;padding:6px 6px 6px 11px;backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.xbar .t{display:flex;flex-direction:column;min-width:0;flex:1 1 auto;font-size:11.5px;color:var(--ink-2);line-height:1.3;max-width:560px}
 .xbar .t b{color:var(--ink);font-size:13px;font-weight:650}
-.xbar .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
-.xbar button{flex:none;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 10px;white-space:nowrap}
-.xbar button.pri{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+.xbar .t b em{font-style:normal;font:500 11.5px var(--mono);color:var(--ink-3);margin-left:4px}
+.xbar .t span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.xbar .t i{font-style:normal;color:#d64545}
+.xbb{display:flex;gap:4px;flex:none;align-items:center}
+.xbb button{flex:none;height:30px;min-width:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 9px;white-space:nowrap}
+.xbb button.pri{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+.xbb button[aria-pressed="true"]{border-color:var(--ink-2);background:var(--surface-3);font-weight:600}
+.xt tr[data-xsel]{cursor:pointer} .xt tr.on td{background:var(--surface-2)}
+.xt b.xn{display:inline-block;font:700 10.5px/16px var(--mono);min-width:16px;height:16px;border-radius:50%;background:var(--surface-2);color:var(--ink-2);text-align:center;margin-right:6px}
 .xt td small.w{display:block;color:#d64545;font:400 11.5px/1.35 var(--font)}
 .xt td:first-child{color:var(--ink)}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:14px;background:var(--sky);z-index:7}
@@ -169,8 +180,10 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
   .compass{right:8px;top:8px;width:42px;height:42px} .compass svg{width:34px;height:34px}
   .sheet[data-s="half"]{height:max(260px,46svh)} .sheet[data-s="full"]{height:max(300px,86svh)}
   .tabs button{padding:8px 8px 9px;font-size:13px}
-  .xl{font-size:10.5px} .xl em{font-size:10px} .xl i{max-width:150px;font-size:10px}
-  .xbar{bottom:8px;padding:4px 4px 4px 9px} .xbar .t span{max-width:46vw} .xbar button{padding:0 8px;font-size:12.5px}
+  .xl{font-size:10.5px} .xl em{font-size:10px}
+  .xbar{left:8px;right:8px;bottom:8px;transform:none;width:auto;max-width:none;flex-wrap:wrap;gap:6px;padding:7px 7px 6px 10px}
+  .xbar .t{flex:1 1 100%;max-width:none} .xbar .t span{-webkit-line-clamp:3}
+  .xbb{width:100%;justify-content:flex-end} .xbb button{height:32px;padding:0 10px;font-size:13px} .xbb .sp{margin-right:auto}
   .pane{grid-template-columns:minmax(0,1fr)}
 }
 </style>
@@ -199,7 +212,7 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
       <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-3)"/>
       <text x="0" y="-8" text-anchor="middle" font-size="8" fill="var(--surface)" font-weight="700">Пн</text></svg></div>
     <div class="xls" id="xls" aria-hidden="true"></div>
-    <div class="xbar" id="xbar" hidden><div class="t"><b id="xbT"></b><span id="xbS"></span></div><button type="button" id="xbTog" class="pri">Зібрати</button><button type="button" id="xbX" aria-label="Закрити вузол" title="Закрити вузол">×</button></div>
+    <div class="xbar" id="xbar" hidden><div class="t"><b id="xbT"></b><span id="xbS"></span><i id="xbW" hidden></i></div><div class="xbb"><button type="button" id="xbPrev" class="sp" aria-label="Деталь вище" title="Деталь вище">‹</button><button type="button" id="xbNext" aria-label="Деталь нижче" title="Деталь нижче">›</button><button type="button" id="xbLab" aria-pressed="true" title="Підписи деталей біля моделі">Підписи</button><button type="button" id="xbTog" class="pri">Зібрати</button><button type="button" id="xbX" aria-label="Закрити вузол" title="Закрити вузол">×</button></div></div>
     <div class="tip" id="tip" hidden></div>
     <div class="loading" id="loading">Будую модель…</div>
   </section>
@@ -955,9 +968,9 @@ canvas.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
 canvas.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return; const r=canvas.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera);
   if(MARKS.visible){ const mh=ray.intersectObjects(MARKS.children.filter(o=>o.isSprite),false); if(mh.length){ goMis(mh[0].object.userData.mis); return; } }
-  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ showTip(xh[0].object.userData.info,e,r); return; } }
+  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ const k=xh[0].object.parent.userData.ly, ly=XN.layers[k]; xSel(ly&&ly.name&&XN.sel!==k?k:null); hideTip(); return; } }
   const objs=PICK.filter(p=>{ let o=p.o; while(o){ if(!o.visible) return false; o=o.parent; } return !p.when||p.when(); });
-  const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); return; }
+  const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); if(XN) xSel(null); return; }
   const h=hits[0]; if(state.sec==='km'&&XCAN.has(h.object)&&openNodeAt(h.point.x,-h.point.z)) return;
   const u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; showTip(inf,e,r); });
 function showTip(inf,e,r){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}`; tip.hidden=false; tipT=performance.now();
@@ -979,8 +992,8 @@ function lagAt(X,Y){ return LG.findIndex(l=>Math.abs(l[0]-X)<2e-3&&Y>=l[1]-0.01&
 function rpModAt(X,Y,ok){ let b=-1,bd=9; RMOD.forEach((m,j)=>{ if(ok&&!ok(m)) return; const t=RT[m.i], d=(t.X-X)**2+(t.Y-Y)**2; if(d<bd){ bd=d; b=j; } }); return b; }
 function ourModAt(X,Y){ let b=-1,bd=9; OM.forEach((m,i)=>{ const d=((m.Xa+m.Xb)/2-X)**2+(m.Y-Y)**2; if(d<bd){ bd=d; b=i; } }); return b; }
 function xNew(proj,idx,step){ return {proj,idx,step,layers:[],hide:[],t0:0,dir:1,anim:false,shown:0}; }
-function xLayer(N,L,name,q,warn){ const g=new THREE.Group(); XG.add(g); const o={L,name,q,warn:warn||'',g,box:new THREE.Box3(),n:0,f:0}; N.layers.push(o); return o; }
-function xPart(ly,geo,mat,M,info){ const o=new THREE.Mesh(geo,mat); o.matrixAutoUpdate=false; o.matrix.copy(M); o.castShadow=true; o.receiveShadow=true; o.userData.info=info; ly.g.add(o);
+function xLayer(N,L,name,q,warn){ const g=new THREE.Group(); XG.add(g); const o={L,name,q,warn:warn||'',g,box:new THREE.Box3(),n:0,f:0,i:N.layers.length,d:''}; g.userData.ly=o.i; N.layers.push(o); return o; }
+function xPart(ly,geo,mat,M,info){ const o=new THREE.Mesh(geo,mat); o.matrixAutoUpdate=false; o.matrix.copy(M); o.castShadow=true; o.receiveShadow=true; o.userData.info=info; ly.g.add(o); if(!ly.d&&info&&info.d) ly.d=info.d;
   if(!geo.boundingBox) geo.computeBoundingBox(); ly.box.union(geo.boundingBox.clone().applyMatrix4(M)); ly.n++; return o; }
 function xHide(N,im,i){ const M=new M4(); im.getMatrixAt(i,M); N.hide.push({im,i,M:M.clone()}); im.setMatrixAt(i,ZERO); im.instanceMatrix.needsUpdate=true; return M; }
 const rng=a=>{ const lo=Math.min(...a), hi=Math.max(...a); return lo===hi?nf(lo):nf(lo)+'–'+nf(hi); };
@@ -1056,12 +1069,20 @@ function buildOurs(i){ const m=OM[i], N=xNew('ours',i,0.3), y0=m.Y-1.2, y1=m.Y+1
 const XDIM=['zn','znD','hw','blk','mat','sp','al','conM','conBad','lag','sl','rod','rodP','anc'];
 function xDim(on){ XDIM.forEach(k=>{ const m=MAT[k]; if(!m) return; m.transparent=on; m.opacity=on?0.16:1; m.depthWrite=!on; m.needsUpdate=true; }); need=true; }
 function xMaxL(N){ return Math.max(...N.layers.map(l=>l.L)); }
+// підписи: на комп'ютері — колонкою справа з виносками, на телефоні — лише номери шарів; повний текст — у картці внизу
+const xPhone=()=>canvas.parentElement.clientWidth<700;
+const xLabOn=()=>state.lay.xlab!==undefined?!!state.lay.xlab:!xPhone();
 function openNode(proj,idx,fly=true){ if(XN&&XN.proj===proj&&XN.idx===idx){ if(XN.dir<0) xPlay(1); return; } closeNode(true);
-  XN=proj==='rp'?buildRP(idx):buildOurs(idx); xDim(true); markersVis(); if(proj==='rp') rpDetail();
-  XN.layers.forEach(ly=>{ if(!ly.name) return; const el=document.createElement('div'); el.className='xl'; el.style.opacity=0; el.innerHTML=`<span>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?`<i>${esc(ly.warn)}</i>`:''}</span>`; xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight; });
-  $('#xbT').textContent=XN.title; $('#xbS').textContent=XN.sub; xbar.hidden=false; hideTip();
+  XN=proj==='rp'?buildRP(idx):buildOurs(idx); XN.sel=null; xDim(true); markersVis(); if(proj==='rp') rpDetail();
+  const named=XN.layers.filter(l=>l.name); named.slice().sort((a,b)=>a.L-b.L||a.i-b.i).forEach((l,k)=>l.num=k+1); XN.nav=named.slice().sort((a,b)=>b.L-a.L||b.i-a.i).map(l=>l.i);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','xln'); xls.appendChild(svg); XN.svg=svg;
+  named.forEach(ly=>{ const ln=document.createElementNS('http://www.w3.org/2000/svg','path'); svg.appendChild(ln); ly.ln=ln;
+    const el=document.createElement('button'); el.type='button'; el.className='xl'; el.innerHTML=`<b>${ly.num}</b>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?'<i class="w">⚠</i>':''}`; el.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight;
+    const mk=document.createElement('button'); mk.type='button'; mk.className='xmk'+(ly.warn?' w':''); mk.textContent=ly.num; mk.setAttribute('aria-label',ly.name); mk.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(mk); ly.mk=mk; });
+  xbar.hidden=false; xCard(); hideTip(); xLabBtn();
   if(fly){ const top=xMaxL(XN)*XN.step, c=XN.c.clone().add(new V3(0,top*0.45,0)), asp=Math.max(0.3,camera.aspect), d=(XN.proj==='rp'?4.6:4.4)*Math.max(1,1.35/asp), dir=(XN.proj==='rp'?new V3(0.7,0.36,0.78):new V3(0.8,0.5,0.6)); if(roofK(XN.c.x)>0.02) dir.x=-dir.x; dir.normalize();
-    goTo({c:[c.x,c.y,c.z],p:[c.x+dir.x*d,c.y+dir.y*d,c.z+dir.z*d]}); }
+    const p=c.clone().addScaledVector(dir,d); if(xLabOn()&&asp>1.2){ const R=new V3(dir.z,0,-dir.x).normalize(), sh=Math.min(1.4,0.3*d*Math.tan(19*D2R)*asp); c.addScaledVector(R,sh); p.addScaledVector(R,sh); }
+    goTo({c:[c.x,c.y,c.z],p:[p.x,p.y,p.z]}); }
   xPlay(1); xPanel(); need=true; }
 function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
   N.hide.forEach(h=>{ h.im.setMatrixAt(h.i,h.M); h.im.instanceMatrix.needsUpdate=true; });
@@ -1069,25 +1090,41 @@ function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
   XG.children.slice().forEach(g=>XG.remove(g));
   xDim(false); markersVis(); xls.innerHTML=''; xbar.hidden=true; if(!silent) xPanel(); need=true; }
 function xPlay(dir){ if(!XN) return; XN.dir=dir; XN.t0=performance.now(); XN.anim=true; const b=$('#xbTog'); b.textContent=dir>0?'Зібрати':'Розібрати'; need=true; }
+// вибраний шар — решта вузла бліда; картка внизу
+const XDM=new Map(); function xDimMat(m){ let d=XDM.get(m); if(!d){ d=m.clone(); d.transparent=true; d.opacity=0.16; d.depthWrite=false; XDM.set(m,d); } return d; }
+function xSel(k){ if(!XN) return; XN.sel=k;
+  XN.layers.forEach(ly=>{ const dim=k!==null&&ly.i!==k; ly.g.traverse(o=>{ if(!o.isMesh) return; if(!o.userData.m0) o.userData.m0=o.material; o.material=dim?xDimMat(o.userData.m0):o.userData.m0; });
+    if(ly.el){ ly.el.classList.toggle('on',ly.i===k); ly.mk.classList.toggle('on',ly.i===k); } });
+  xCard(); document.querySelectorAll('#xnb [data-xsel]').forEach(r=>r.classList.toggle('on',+r.dataset.xsel===k)); need=true; }
+function xCard(){ if(!XN) return; const ly=XN.sel!==null?XN.layers[XN.sel]:null;
+  $('#xbT').innerHTML=ly?`${ly.num}. ${esc(ly.name)} <em>${esc(ly.q)}</em>`:esc(XN.title);
+  $('#xbS').textContent=ly?(ly.d||''):XN.sub+(xPhone()?' · натисніть на номер або деталь':''); const w=$('#xbW'); w.textContent=ly?ly.warn:''; w.hidden=!(ly&&ly.warn); }
+function xNav(st){ if(!XN) return; const L=XN.nav, p=XN.sel===null?-1:L.indexOf(XN.sel); xSel(p<0?(st>0?L[0]:L[L.length-1]):L[(p+st+L.length)%L.length]); }
+function xLabBtn(){ const b=$('#xbLab'); b.setAttribute('aria-pressed',String(xLabOn())); need=true; }
 // шари: кожен наступний стартує на 110 мс пізніше; при збиранні — згори вниз
 function xTick(now){ if(!XN||!XN.anim) return; const N=XN, mx=xMaxL(N), dur=RM?1:650, gap=RM?0:110; let done=true;
   N.layers.forEach(ly=>{ const del=(N.dir>0?ly.L:mx-ly.L)*gap, s=Math.max(0,Math.min(1,(now-N.t0-del)/dur)); if(s<1) done=false; const e=s*s*(3-2*s), f=N.dir>0?e:1-e; ly.f=f; ly.g.position.y=f*ly.L*N.step; });
   N.shown=Math.max(...N.layers.map(l=>l.L?l.f:0)); if(done) N.anim=false; need=true; }
-function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, items=[];
-  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true;
-    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd; mn=Math.min(mn,sx); mxx=Math.max(mxx,sx); sy+=(1-_xv.y)/2*Hd; n++; }
-    items.push({ly,mn,mx:mxx,y:sy/n,front}); });
-  items.sort((a,b)=>a.y-b.y); let last=-1e9;
-  items.forEach(it=>{ const ly=it.ly, w=ly.w||ly.el.offsetWidth, h=ly.h||ly.el.offsetHeight; let y=Math.max(it.y-h/2,last+3); last=y+h; let x=it.mx+6, fl=false;
-    if(x+w>Wd-6){ x=it.mn-6-w; fl=true; } if(x<6){ x=Math.max(6,Math.min(Wd-w-6,it.mx+6)); fl=false; }
-    ly.el.classList.toggle('l',fl); ly.el.style.transform=`translate(${Math.round(x)}px,${Math.round(Math.min(Hd-h-4,y))}px)`; ly.el.style.opacity=show&&it.front?1:0; }); }
+const xVis=(el,on)=>{ el.style.visibility=on?'visible':'hidden'; el.style.opacity=on?1:0; };
+function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, lab=xLabOn(), items=[];
+  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true, ry=0;
+    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd, syy=(1-_xv.y)/2*Hd; if(sx>mxx){ mxx=sx; ry=syy; } mn=Math.min(mn,sx); sy+=syy; n++; }
+    items.push({ly,mn,mx:mxx,ry,y:sy/n,front}); });
+  items.sort((a,b)=>a.y-b.y);
+  const top=62, bot=Hd-(xbar.hidden?0:xbar.offsetHeight+16)-6;
+  if(lab){ let last=-1e9; items.forEach(it=>{ const h=it.ly.h; it.ty=Math.max(it.y-h/2,last+4,top); last=it.ty+h; });
+    const over=last-bot; if(over>0) items.forEach(it=>it.ty=Math.max(top,it.ty-over));
+    items.forEach(it=>{ const ly=it.ly, x=Wd-10-ly.w, y=Math.round(it.ty), on=show&&it.front; ly.el.style.transform=`translate(${Math.round(x)}px,${y}px)`; xVis(ly.el,on); xVis(ly.mk,false);
+      const ax=Math.min(it.mx+4,x-8), ay=it.ry*0.5+it.y*0.5; ly.ln.setAttribute('d',`M${x-2},${y+ly.h/2}L${x-14},${y+ly.h/2}L${ax},${ay}`); ly.ln.style.visibility=on?'visible':'hidden'; ly.ln.classList.toggle('on',ly.i===XN.sel); }); }
+  else { let last=-1e9; items.forEach(it=>{ const ly=it.ly, s=24; let y=Math.max(it.y-s/2,last+3,top); last=y+s; let x=it.mx+6; if(x>Wd-s-6) x=Math.max(6,it.mn-s-6);
+      ly.mk.style.transform=`translate(${Math.round(x)}px,${Math.round(Math.min(bot-s,y))}px)`; xVis(ly.mk,show&&it.front); xVis(ly.el,false); ly.ln.style.visibility='hidden'; }); } }
 // панель «Кріплення»: що в розібраному вузлі
 function xPanelHTML(){ const rp=state.proj==='rp';
   if(!XN) return `<h3>Вузол по деталях</h3><p class="src">Натисніть на модуль або деталь кріплення — вузол розійдеться шарами вгору, біля кожної деталі підпис. «Зібрати» — назад, × — закрити.</p><button type="button" class="lnk" data-xnode="here">↑ Розібрати вузол у центрі екрана</button>`;
   const rows=XN.layers.filter(l=>l.name).slice().sort((a,b)=>b.L-a.L);
-  return `<h3>Вузол по деталях · ${esc(XN.title.split(' · ')[1]||'')}</h3><table class="cmp xt"><tbody>${rows.map(l=>`<tr><td>${esc(l.name)}${l.warn?`<small class="w">${esc(l.warn)}</small>`:''}</td><td>${esc(l.q)}</td></tr>`).join('')}</tbody></table><p class="src">${esc(XN.sub)}. ${rp?'Крайні трикутники, притиски й сполучники спільні з сусідніми модулями.':'Гільзи, шпильки і притиски на межі спільні з сусідніми модулями.'}</p><button type="button" class="lnk" data-xnode="close">Закрити вузол</button>`; }
+  return `<h3>Вузол по деталях · ${esc(XN.title.split(' · ')[1]||'')}</h3><table class="cmp xt"><tbody>${rows.map(l=>`<tr data-xsel="${l.i}" class="${XN.sel===l.i?'on':''}"><td><b class="xn">${l.num}</b>${esc(l.name)}${l.warn?`<small class="w">${esc(l.warn)}</small>`:''}</td><td>${esc(l.q)}</td></tr>`).join('')}</tbody></table><p class="src">${esc(XN.sub)}. ${rp?'Крайні трикутники, притиски й сполучники спільні з сусідніми модулями.':'Гільзи, шпильки і притиски на межі спільні з сусідніми модулями.'}</p><button type="button" class="lnk" data-xnode="close">Закрити вузол</button>`; }
 function xPanel(){ const el=document.getElementById('xnb'); if(el){ el.innerHTML=xPanelHTML(); xBind(el); } }
-function xBind(root){ root.querySelectorAll('[data-xnode]').forEach(b=>b.onclick=()=>{ const a=b.dataset.xnode; if(a==='close') closeNode(); else if(a==='here') openNodeHere(); else if(a.startsWith('mis:')) misNode(a.slice(4)); }); }
+function xBind(root){ root.querySelectorAll('[data-xsel]').forEach(r=>r.onclick=()=>{ const k=+r.dataset.xsel; xSel(XN&&XN.sel===k?null:k); }); root.querySelectorAll('[data-xnode]').forEach(b=>b.onclick=()=>{ const a=b.dataset.xnode; if(a==='close') closeNode(); else if(a==='here') openNodeHere(); else if(a.startsWith('mis:')) misNode(a.slice(4)); }); }
 function openNodeAt(X,Y,fly=true){ const rp=state.proj==='rp', i=rp?rpModAt(X,Y):ourModAt(X,Y); if(i<0) return false; openNode(state.proj,i,fly); return true; }
 function openNodeDefault(){ if(state.proj==='rp'){ const hasC=m=>CON.some(c=>Math.abs(c.i-m.i)<=1); const j=rpModAt(21.7,41,hasC); if(j>=0) openNode('rp',j); return; }
   let best=null,bd=1e9; OD.xp.forEach(x=>{ if(x[4]) return; const X=(LX(x[0])+LX(x[1]))/2, d=(X-21.7)**2+(x[2]-41)**2; if(d<bd){ bd=d; best=[X,x[2]-x[3]*1.2]; } }); if(best) openNodeAt(best[0],best[1]); }
@@ -1095,6 +1132,7 @@ function openNodeHere(){ if(effSec()!=='km'){ state.sec='km'; apply(); } const t
 function misNode(id){ if(id==='con'){ const c=near(CON,c=>(RT[c.i].X-60)**2+(RT[c.i].Y-70)**2), j=RMOD.findIndex(m=>Math.abs(m.i-c.i)<=1); if(j>=0) openNode('rp',j); return; }
   const p=MISPOS[id](); openNodeAt(p.x,-p.z); }
 $('#xbTog').onclick=()=>xPlay(XN&&XN.dir>0?-1:1); $('#xbX').onclick=()=>closeNode();
+$('#xbPrev').onclick=()=>xNav(-1); $('#xbNext').onclick=()=>xNav(1); $('#xbLab').onclick=()=>{ state.lay.xlab=!xLabOn(); xLabBtn(); save(); };
 
 // ================= цикл
 function resize(){ const v=canvas.parentElement, w=v.clientWidth, h=v.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); need=true; }
