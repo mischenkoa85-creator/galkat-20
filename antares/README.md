@@ -7,6 +7,8 @@
 
 **Нове (23.10.2026): дах у 3D — сонце, тіні, проходи, генерація, варіанти Б і А:** https://mischenkoa85-creator.github.io/galkat-20/antares/roof/ (папка `roof/`, опис у `roof/README.md`).
 
+**3D-двійник (25.10.2026): Вінницький проєкт і наш варіант Б на одній сцені, невідповідності РП, генерація за місяці й рік:** https://mischenkoa85-creator.github.io/galkat-20/antares/twin/ (папка `twin/`, опис у `twin/README.md`).
+
 Або відкрийте `index.html` у браузері (three.js r128 підтягується з CDN).
 
 ## Інтерфейс
