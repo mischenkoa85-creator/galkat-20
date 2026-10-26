@@ -3,7 +3,7 @@
 {
 const OB=grp('obst',G.site);
 const om=(c,o)=>std(c,o||{});
-const OBM={brick:om(0xd9d6cc), conc:om(0xb7b5ad), steel:om(0x8d989f,{metalness:0.5,roughness:0.45}), rust:om(0x8f6a4c,{roughness:0.7}), white:om(0xeceeee,{roughness:0.5}),
+const OBM={brick:om(0xd9d6cc), conc:om(lin(0x9a9993)), steel:om(0x8d989f,{metalness:0.5,roughness:0.45}), rust:om(0x8f6a4c,{roughness:0.7}), white:om(0xeceeee,{roughness:0.5}),
   dark:om(0x3b4248), cream:om(0xe8e0cb,{roughness:0.6}), cable:om(0x1d2125,{roughness:0.55}), fan:om(0x6d757b,{metalness:0.4,roughness:0.5})};
 const fn=id=>{ const i=FOTO.p.findIndex(p=>p[0]===id); return i<0?'':'№ '+(i+1); };
 const info=(o,t,d)=>{ o.userData.info={t,d}; PICK.push({o}); return o; };
@@ -41,17 +41,10 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
   [0.6,2.6].forEach(y=>parts.push(box(2.75,0.2,0.15,OBM.steel,59.3,z+H,-y,OB)));
   [58,60.6].forEach(x=>parts.push(box(0.15,0.2,4.6,OBM.steel,x,z+H-0.45,-(0.5),OB)));
   parts.forEach(o=>info(o,'Сталевий портал на південному краї даху',`Фото ${fn('124309')}, ${fn('124315')}: балки виходять за парапет — схоже на раму для підйому вантажів. Вантажопідйомність невідома (таблички на фото не видно). Розміри — оцінка.`)); }
-// --- зовнішні сталеві сходи на південному фасаді (майданчики через ≈3,2 м)
-{ const x0=61.2, x1=65.2, y0=-3.0, y1=-0.55, top=RX(63)+1.2, n=Math.round(top/3.2), dh=top/n, par=[];
-  [[x0,y0],[x1,y0],[x0,y1],[x1,y1]].forEach(([x,y])=>par.push(box(0.12,top,0.12,OBM.steel,x,top/2,-y,OB)));
-  for(let k=1;k<=n;k++){ const h=k*dh; par.push(box(1.3,0.08,y1-y0,OBM.rust,k%2?x1-0.65:x0+0.65,h,-(y0+y1)/2,OB));
-    const L=x1-x0-1.3, len=Math.hypot(L,dh), f=box(len,0.06,0.9,OBM.steel,(x0+x1)/2,h-dh/2,-(y0+0.5),OB); f.rotation.z=(k%2?1:-1)*Math.atan2(dh,L); par.push(f); }
-  par.forEach(o=>info(o,'Зовнішні сталеві сходи на дах (південний фасад)',`Фото ${fn('124421')}, ${fn('144546')}: майданчики й сходинки сильно поіржавілі — перевірити перед щоденним використанням. Розміри — оцінка.`)); }
-// --- дизель-генератор у південному проїзді (положення приблизне)
-info(box(4.6,2.3,1.7,OBM.cream,69.6,1.15,3.9,OB),'Дизель-генератор DALGAKIRAN у кожусі',`Фото ${fn('144546')}: південний проїзд біля пожежних сходів. Що живить і як вмикається (АВР) — з'ясувати: від цього залежить острівний режим УЗЕ. Положення приблизне.`);
+// --- зовнішні сходи і ДГУ — деталізовано у fasad.js
 // --- існуючі кабелі на кронштейнах («лапках») уздовж східного і північного фасадів, 2 яруси
-{ const route=(h,o)=>new THREE.CatmullRomCurve3([[96.64+o,30],[96.64+o,92],[96.64+o,95.9],[96.0,96.59+o],[92,96.59+o],[24.2,96.59+o]].map(([x,y])=>W(x,y,h)),false,'catmullrom',0.05);
-  const tiers=[[5.6,0.2,0.045],[6.1,0.2,0.06]], inf=`Фото ${fn('143858')}, ${fn('144002')}, ${fn('144004')}: 2 яруси кабелів на кронштейнах, ≈5,6 і 6,1 м від землі (оцінка за фото). Трасу між фото не простежено — у моделі від ТП-5913 уздовж східного і північного фасадів. Можна використати під лінії УЗЕ: з'ясувати, що це за кабелі, чи є місце на кронштейнах і яке на них навантаження.`;
+{ const route=(h,o)=>new THREE.CatmullRomCurve3([[96.64+o,30],[96.64+o,92],[96.64+o,95.9],[96.0,96.59+o],[92,96.59+o],[0.6,96.59+o]].map(([x,y])=>W(x,y,h)),false,'catmullrom',0.05);
+  const tiers=[[5.6,0.2,0.045],[6.1,0.2,0.06]], inf=`Фото ${fn('143858')}, ${fn('144002')}, ${fn('144004')}: 2 яруси кабелів на кронштейнах, ≈5,6 і 6,1 м від землі (оцінка за фото). Трасу між фото не простежено — у моделі від ТП-5913 уздовж східного фасаду і всього північного до північно-західного кута (на фото ${fn('144221')} кабель видно і там). Можна використати під лінії УЗЕ: з'ясувати, що це за кабелі, чи є місце на кронштейнах і яке на них навантаження.`;
   tiers.forEach(([h,o,r])=>{ const c=route(h,o); info(mesh(new THREE.TubeGeometry(c,600,r,6,false),OBM.cable,OB),'Існуючі кабелі на фасаді (кронштейни-«лапки»)',inf);
     const L=c.getLength(), n=Math.floor(L/1.2), br=inst(new THREE.BoxGeometry(0.06,0.05,1),OBM.steel,n,OB,false);
     for(let i=0;i<n;i++){ const t=i/n, p=c.getPointAt(t), tg=c.getTangentAt(t), nx=new V3(-tg.z,0,tg.x).normalize();   // кронштейн — від стіни до кабелю
@@ -100,8 +93,9 @@ function fShow(i,fly=true){ fI=(i+FOTO.p.length)%FOTO.p.length; const p=FOTO.p[f
   SPR.forEach(o=>o.material.opacity=0.4); controls.maxPolarAngle=Math.PI*0.6; requestAnimationFrame(fOff); if(fly) fFly(fI); else stHide(null); need=true; }
 function fFly(i){ const p=FOTO.p[i], pos=W(p[1],p[2],hOf(p)); stHide(p[3]==null?null:i); if(p[3]==null){ goTo({p:[pos.x+14,pos.y+12,pos.z+14],c:[pos.x,pos.y-2,pos.z]}); return; }
   const a=p[3]*D2R, pitch=p[4]==='R'?-0.08:isSt(p)?-0.35:0.14, dx=Math.sin(a), dz=-Math.cos(a), L=12; if(isSt(p)) pos.z=3.4;   // камера — за зовнішнім краєм сходів
+  camera.fov=(p[6]||23)<20?72:58; camera.updateProjectionMatrix();   // ширше, як на фото (EXIF: 13 мм — надширокий, 23 мм — основний)
   goTo({p:[pos.x-dx*0.3,pos.y,pos.z-dz*0.3],c:[pos.x+dx*L*Math.cos(pitch),pos.y+L*Math.sin(pitch),pos.z+dz*L*Math.cos(pitch)]}); }
-function fClose(){ fv.hidden=true; fI=-1; cur.visible=false; stHide(null); SPR.forEach(o=>o.material.opacity=1); fOff(); controls.maxPolarAngle=Math.PI*0.495; need=true; }
+function fClose(){ fv.hidden=true; fI=-1; cur.visible=false; stHide(null); SPR.forEach(o=>o.material.opacity=1); if(camera.fov!==38){ camera.fov=38; camera.updateProjectionMatrix(); } fOff(); controls.maxPolarAngle=Math.PI*0.495; need=true; }
 // центр кадру — у вільній від фото частині 3D (на ПК фото справа, на телефоні — зверху)
 function fOff(){ if(fv.hidden){ if(camera.view&&camera.view.enabled){ camera.clearViewOffset(); need=true; } return; }
   const c=canvas.getBoundingClientRect(), r=fv.getBoundingClientRect(), w=c.width, h=c.height; if(!w||!h) return;
