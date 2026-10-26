@@ -156,7 +156,7 @@ const RPM_={}, ND=24; let XN=null;
   const MODL=new M4().compose(new V3(0,MOD_H,-MOD_X),new Q().setFromAxisAngle(XA,15*D2R),new V3(2.384,0.035,1.303));
   const im=inst(BOX,MAT.pvLr,RMOD.length,P); RMOD.forEach((m,j)=>{ im.setMatrixAt(j,_M.copy(RT[m.i].F).multiply(MODL)); im.setColorAt(j,white); });
   im.userData.info=j=>{ const m=RMOD[j]; return {t:'Модуль Shinefar SF-M21/G132710, 710 Вт',d:`Альбомно на трикутниках 15°. Ухил покрівлі під модулем ${nf(m.slope,1)}°; середній трикутник вищий за лінію крайніх на ${nf(Math.max(0,m.sag),0)} мм; різниця нахилу опор ${nf(m.dth,1)}°.`}; };
-  PICK.push({o:im,when:()=>!(state.sec==='km'&&state.lay.ghost)}); RPM_.mods=im;
+  PICK.push({o:im}); RPM_.mods=im;   // напівпрозорі модулі теж ловлять клік — вузол відкривається і по модулю
   // спойлер Vitr-240×2450 на стійках, від трикутника 2j на схід
   const sp=DATA.rpm.sp, spm=inst(partGeo('spoiler'),MAT.sp,sp.length,P); sp.forEach((i,j)=>spm.setMatrixAt(j,RT[i].F)); RPM_.sp=spm;
   spm.userData.info=()=>({t:'Спойлер Vitr-240×2450',d:'Планка за стійками вздовж ряду, перекриває два трикутники (АБ арк. 6, поз. 6)'}); PICK.push({o:spm,when:()=>state.sec==='km'});
@@ -179,7 +179,7 @@ const RPM_={}, ND=24; let XN=null;
 const conOf=new Map(CON.map((c,j)=>[c.i,j]));
 function rpDetail(){ if(!G.rp.visible) return; const tg=controls.target, near=camera.position.distanceTo(tg)<34;
   RPM_.cur.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,RT[i].F))); RPM_.curC.forEach(j=>RPM_.con.setMatrixAt(j,CON[j].M));
-  const xr=XN&&XN.proj==='rp'?XN:null; if(xr){ xr.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,ZERO))); xr.cons.forEach(j=>RPM_.con.setMatrixAt(j,ZERO)); }
+  const xr=XN&&XN.tris?XN:null; if(xr){ xr.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,ZERO))); xr.cons.forEach(j=>RPM_.con.setMatrixAt(j,ZERO)); }
   let pick=[];
   if(near){ const tx=tg.x, ty=-tg.z; pick=RT.map((t,i)=>[(t.X-tx)**2+(t.Y-ty)**2,i]).filter(a=>a[0]<14*14&&!(xr&&xr.triSet.has(a[1]))).sort((a,b)=>a[0]-b[0]).slice(0,ND).map(a=>a[1]); }
   const pc=pick.filter(i=>conOf.has(i)).map(i=>conOf.get(i)).filter(j=>!(xr&&xr.conSet.has(j)));
@@ -196,7 +196,7 @@ OM.forEach((m,i)=>{ const za=roofZ(m.Xa)+0.104, zb=roofZ(m.Xb)+0.104, ang=Math.a
   _q.setFromAxisAngle(ZA,ang); const up=new V3(-Math.sin(ang),Math.cos(ang),0);
   _p.copy(W((m.Xa+m.Xb)/2,m.Y,(za+zb)/2)).addScaledVector(up,0.0175); _M.compose(_p,_q,_s.set(L,0.035,2.384)); ourMods.setMatrixAt(i,_M); });
 const BLK=DATA.ours.blocks;
-ourMods.userData.info=i=>state.sec==='bz'?{t:`Модуль · блок каркаса ${OM[i].b}`,d:(b=>b?`Блок ${b.no}: ${b.n} ліній лаг, ${nf(b.mods)} модулів; 2 приєднання до провідника вирівнювання`:'')(BLK.find(x=>x.no===OM[i].b))}:{t:'Модуль ZNSHINE ZXN8-BD132-730, 730 Вт',d:'Паралельно покрівлі на лагах 41×41, низ рами на 104 мм над покрівлею'}; PICK.push({o:ourMods,when:()=>!(state.sec==='km'&&state.lay.ghost)});
+ourMods.userData.info=i=>state.sec==='bz'?{t:`Модуль · блок каркаса ${OM[i].b}`,d:(b=>b?`Блок ${b.no}: ${b.n} ліній лаг, ${nf(b.mods)} модулів; 2 приєднання до провідника вирівнювання`:'')(BLK.find(x=>x.no===OM[i].b))}:{t:'Модуль ZNSHINE ZXN8-BD132-730, 730 Вт',d:'Паралельно покрівлі на лагах 41×41, низ рами на 104 мм над покрівлею'}; PICK.push({o:ourMods});
 const LG=DATA.ours.lines, LX=i=>LG[i][0];
 // кадр у точці X, Y, висота h над покрівлею вздовж нормалі
 function rf(X,Y,h,out){ const k=roofK(X), a=Math.atan(k); _q.setFromAxisAngle(ZA,a); const up=new V3(-Math.sin(a),Math.cos(a),0); _p.copy(W(X,Y,roofZ(X))).addScaledVector(up,h); return _p; }
@@ -937,7 +937,7 @@ function hudCtx(){ const sec=state.sec, e=effSec(), rp=state.proj==='rp', L=stat
   const mEl=$('#modes'); mEl.hidden=!modes.length; mEl.innerHTML=modes.map(([k,t,on])=>`<button type="button" data-m="${k}" aria-pressed="${on}">${esc(t)}</button>`).join('');
   mEl.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const k=b.dataset.m; if(k==='sunNow'){ L.sunPlain=false; L.sunYear=false; } else if(k==='sunYr'){ L.sunPlain=false; L.sunYear=true; } else if(k==='sunPlain1') L.sunPlain=true; else if(k.startsWith('eCol')) L.eCol={eColS:'s',eColB:'b',eColK:'K'}[k]; else L[k]=!L[k]; apply(); });
   const lEl=$('#legend'); lEl.hidden=!lg; lEl.innerHTML=lg; }
-function apply(){ const P=state.proj; if(XN&&(XN.proj!==P||effSec()!=='km')) closeNode(true);
+function apply(){ const P=state.proj; if(XN&&(XN.proj!==P||effSec()!==XN.sec)) closeNode(true);
   document.querySelectorAll('#proj button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===P?'true':'false'));
   document.querySelectorAll('#tabs button').forEach(b=>{ const on=b.dataset.s===state.sec; b.setAttribute('aria-selected',on?'true':'false'); if(on){ const tb=$('#tabs'), x=b.offsetLeft-tb.clientWidth/2+b.offsetWidth/2; tb.scrollTo({left:Math.max(0,x),behavior:RM?'auto':'smooth'}); } });
   const pane=$('#pane'), sec=state.sec; pane.innerHTML=sec==='bz'?panelBZ():sec==='km'?panelKM():sec==='sun'?panelSun():sec==='mis'?panelMis():sec==='uze'?panelUZE():sec==='ep'?panelEP():panelPZ();
@@ -967,17 +967,30 @@ function hideTip(){ tip.hidden=true; }
 let tipT=0;
 let down=null;
 canvas.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; });
-canvas.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return; const r=canvas.getBoundingClientRect();
+canvas.addEventListener('pointerup',e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>(e.pointerType==='touch'?12:5)) return; const r=canvas.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera);
+  // два натискання підряд (клац-клац) — елемент розбирається, у будь-якому розділі
+  const now=performance.now(), dbl=xTap&&now-xTap.t<420&&Math.hypot(e.clientX-xTap.x,e.clientY-xTap.y)<(e.pointerType==='touch'?36:12); xTap=dbl?null:{t:now,x:e.clientX,y:e.clientY};
+  if(dbl&&xDouble(e,r)) return;
   if(MARKS.visible){ const mh=ray.intersectObjects(MARKS.children.filter(o=>o.isSprite),false); if(mh.length){ goMis(mh[0].object.userData.mis); return; } }
   if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ const k=xh[0].object.parent.userData.ly, ly=XN.layers[k]; xSel(ly&&ly.name&&XN.sel!==k?k:null); hideTip(); return; } }
-  const objs=PICK.filter(p=>{ let o=p.o; while(o){ if(!o.visible) return false; o=o.parent; } return !p.when||p.when(); });
-  const hits=ray.intersectObjects(objs.map(p=>p.o),false); if(!hits.length){ hideTip(); if(XN) xSel(null); return; }
+  const hits=pickHits(); if(!hits.length){ hideTip(); if(XN) xSel(null); return; }
   const h=hits[0]; if(state.sec==='km'&&XCAN.has(h.object)&&openNodeAt(h.point.x,-h.point.z)) return;
   if(EPX&&state.sec==='ep'&&state.proj==='ours'){ if(h.object===EP.box){ epSelect({t:'b',i:h.instanceId}); hideTip(); return; } const si=EP.pickMod(h.object,h.instanceId); if(si>=0){ epSelect({t:'s',i:si}); hideTip(); return; }
     if(si===-2){ showTip({t:'Місце без модуля',d:'У робочому варіанті стрінгів Б цей модуль не ставимо (24 на даху, 4 на складі)'},e,r); return; } }
-  const u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; showTip(inf,e,r); });
-function showTip(inf,e,r){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}`; tip.hidden=false; tipT=performance.now();
+  const u=h.object.userData.info, inf=typeof u==='function'?u(h.instanceId):u; showTip(inf,e,r,xCanOpen(h.object)); });
+let xTap=null; const XB=[];   // XB — розбори інших елементів: {has(obj), build(obj, instanceId, point) → N}; заповнюється в montage.js
+const pickHits=()=>{ const objs=PICK.filter(p=>{ let o=p.o; while(o){ if(!o.visible) return false; o=o.parent; } return !p.when||p.when(); }); return ray.intersectObjects(objs.map(p=>p.o),false); };
+const xCanOpen=o=>XCAN.has(o)||XB.some(b=>b.has(o));
+function xDouble(e,r){ if(effSec()==='bud') return false;
+  if(XN&&performance.now()-XN.at<800) return true;                       // вузол відкрило перше натискання (розділ «Кріплення модулів»)
+  if(state.sheet&&state.sheet!=='peek') sheetSet('peek');                // панель згортається — розібраному вузлу і підписам потрібен екран
+  if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ xPlay(XN.dir>0?-1:1); hideTip(); return true; } }
+  const hits=pickHits(); if(!hits.length) return false; const h=hits[0], o=h.object;
+  if(XCAN.has(o)){ const X=h.point.x, Y=-h.point.z, i=state.proj==='rp'?rpModAt(X,Y):ourModAt(X,Y); if(i>=0){ hideTip(); openNode(state.proj,i); return true; } }
+  const b=XB.find(b=>b.has(o)); if(b){ closeNode(true); const N=b.build(o,h.instanceId,h.point); if(N){ N.kind=N.kind||'el'; N.proj=state.proj; hideTip(); xShow(N); return true; } }
+  showTip({t:'Цей елемент не розбирається',d:'Деталей його складу в даних проєкту немає.'},e,r); return true; }
+function showTip(inf,e,r,dbl){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}${dbl?'<small style="display:block;margin-top:4px;color:var(--ink-3)">Двічі натисніть — розбереться</small>':''}`; tip.hidden=false; tipT=performance.now();
   const tw=tip.offsetWidth, th=tip.offsetHeight; let x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x+tw>r.width-8) x=r.width-tw-8; if(y+th>r.height-8) y=e.clientY-r.top-th-14;
   tip.style.transform=`translate(${Math.max(8,x)}px,${Math.max(8,y)}px)`; }
 window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ hideTip(); if(XN) closeNode(); } });
@@ -1071,28 +1084,30 @@ function buildOurs(i){ const m=OM[i], N=xNew('ours',i,0.3), y0=m.Y-1.2, y1=m.Y+1
 
 // решта кріплення на час розбору — напівпрозора, щоб деталі вузла читалися
 const XDIM=['zn','znD','hw','blk','mat','sp','al','conM','conBad','lag','sl','rod','rodP','anc'];
-function xDim(on){ XDIM.forEach(k=>{ const m=MAT[k]; if(!m) return; m.transparent=on; m.opacity=on?0.16:1; m.depthWrite=!on; m.needsUpdate=true; }); need=true; }
+function xDim(on,keys){ (keys||XDIM).forEach(k=>{ const m=MAT[k]; if(!m) return; m.transparent=on; m.opacity=on?0.16:1; m.depthWrite=!on; m.needsUpdate=true; }); need=true; }
 function xMaxL(N){ return Math.max(...N.layers.map(l=>l.L)); }
 // підписи: на комп'ютері — колонкою справа з виносками, на телефоні — лише номери шарів; повний текст — у картці внизу
 const xPhone=()=>canvas.parentElement.clientWidth<700;
 const xLabOn=()=>state.lay.xlab!==undefined?!!state.lay.xlab:!xPhone();
-function openNode(proj,idx,fly=true){ if(XN&&XN.proj===proj&&XN.idx===idx){ if(XN.dir<0) xPlay(1); return; } closeNode(true);
-  XN=proj==='rp'?buildRP(idx):buildOurs(idx); XN.sel=null; xDim(true); markersVis(); if(proj==='rp') rpDetail();
+function openNode(proj,idx,fly=true){ if(XN&&XN.kind==='mod'&&XN.proj===proj&&XN.idx===idx){ if(XN.dir<0) xPlay(1); return; } closeNode(true);
+  const N=proj==='rp'?buildRP(idx):buildOurs(idx); N.kind='mod'; xShow(N,fly); }
+// показати розібраний вузол будь-якого елемента (модуль із кріпленням, щит, лоток, контейнер, щогла…): N — з xNew / xLayer / xPart
+function xShow(N,fly=true){ XN=N; XN.sel=null; XN.sec=effSec(); XN.at=performance.now(); xDim(true,N.dim); markersVis(); if(N.tris) rpDetail(); (N.unhide||[]).forEach(o=>o.visible=false);
   const named=XN.layers.filter(l=>l.name); named.slice().sort((a,b)=>a.L-b.L||a.i-b.i).forEach((l,k)=>l.num=k+1); XN.nav=named.slice().sort((a,b)=>b.L-a.L||b.i-a.i).map(l=>l.i);
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('class','xln'); xls.appendChild(svg); XN.svg=svg;
   named.forEach(ly=>{ const ln=document.createElementNS('http://www.w3.org/2000/svg','path'); svg.appendChild(ln); ly.ln=ln;
     const el=document.createElement('button'); el.type='button'; el.className='xl'; el.innerHTML=`<b>${ly.num}</b>${esc(ly.name)}<em>${esc(ly.q)}</em>${ly.warn?'<i class="w">⚠</i>':''}`; el.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(el); ly.el=el; ly.w=el.offsetWidth; ly.h=el.offsetHeight;
     const mk=document.createElement('button'); mk.type='button'; mk.className='xmk'+(ly.warn?' w':''); mk.textContent=ly.num; mk.setAttribute('aria-label',ly.name); mk.onclick=()=>xSel(XN.sel===ly.i?null:ly.i); xls.appendChild(mk); ly.mk=mk; });
   xbar.hidden=false; xCard(); hideTip(); xLabBtn();
-  if(fly){ const top=xMaxL(XN)*XN.step, c=XN.c.clone().add(new V3(0,top*0.45,0)), asp=Math.max(0.3,camera.aspect), d=(XN.proj==='rp'?4.6:4.4)*Math.max(1,1.35/asp), dir=(XN.proj==='rp'?new V3(0.7,0.36,0.78):new V3(0.8,0.5,0.6)); if(roofK(XN.c.x)>0.02) dir.x=-dir.x; dir.normalize();
+  if(fly){ const top=XN.top!=null?XN.top:xMaxL(XN)*XN.step, c=XN.c.clone().add(new V3(0,top*0.45,0)), asp=Math.max(0.3,camera.aspect), d=(XN.vd||(XN.proj==='rp'?4.6:4.4))*Math.max(1,1.35/asp), dir=XN.vdir?XN.vdir.clone():(XN.proj==='rp'?new V3(0.7,0.36,0.78):new V3(0.8,0.5,0.6)); if(!XN.vdir&&roofK(XN.c.x)>0.02) dir.x=-dir.x; dir.normalize();
     const p=c.clone().addScaledVector(dir,d); if(xLabOn()&&asp>1.2){ const R=new V3(dir.z,0,-dir.x).normalize(), sh=Math.min(1.4,0.3*d*Math.tan(19*D2R)*asp); c.addScaledVector(R,sh); p.addScaledVector(R,sh); }
     goTo({c:[c.x,c.y,c.z],p:[p.x,p.y,p.z]}); }
   xPlay(1); xPanel(); need=true; }
 function closeNode(silent){ if(!XN) return; const N=XN; XN=null;
   N.hide.forEach(h=>{ h.im.setMatrixAt(h.i,h.M); h.im.instanceMatrix.needsUpdate=true; });
-  if(N.proj==='rp'){ N.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,RT[i].F))); N.cons.forEach(k=>RPM_.con.setMatrixAt(k,CON[k].M)); RPM_.lod.forEach(im=>im.instanceMatrix.needsUpdate=true); RPM_.con.instanceMatrix.needsUpdate=true; rpDetail(); }
-  XG.children.slice().forEach(g=>XG.remove(g));
-  xDim(false); markersVis(); xls.innerHTML=''; xbar.hidden=true; if(!silent) xPanel(); need=true; }
+  if(N.tris){ N.tris.forEach(i=>RPM_.lod.forEach(im=>im.setMatrixAt(i,RT[i].F))); N.cons.forEach(k=>RPM_.con.setMatrixAt(k,CON[k].M)); RPM_.lod.forEach(im=>im.instanceMatrix.needsUpdate=true); RPM_.con.instanceMatrix.needsUpdate=true; rpDetail(); }
+  (N.unhide||[]).forEach(o=>o.visible=true); XG.children.slice().forEach(g=>XG.remove(g));
+  xDim(false,N.dim); markersVis(); xls.innerHTML=''; xbar.hidden=true; if(!silent) xPanel(); need=true; }
 function xPlay(dir){ if(!XN) return; XN.dir=dir; XN.t0=performance.now(); XN.anim=true; const b=$('#xbTog'); b.textContent=dir>0?'Зібрати':'Розібрати'; need=true; }
 // вибраний шар — решта вузла бліда; картка внизу
 const XDM=new Map(); function xDimMat(m){ let d=XDM.get(m); if(!d){ d=m.clone(); d.transparent=true; d.opacity=0.16; d.depthWrite=false; XDM.set(m,d); } return d; }
@@ -1107,12 +1122,12 @@ function xNav(st){ if(!XN) return; const L=XN.nav, p=XN.sel===null?-1:L.indexOf(
 function xLabBtn(){ const b=$('#xbLab'); b.setAttribute('aria-pressed',String(xLabOn())); need=true; }
 // шари: кожен наступний стартує на 110 мс пізніше; при збиранні — згори вниз
 function xTick(now){ if(!XN||!XN.anim) return; const N=XN, mx=xMaxL(N), dur=RM?1:650, gap=RM?0:110; let done=true;
-  N.layers.forEach(ly=>{ const del=(N.dir>0?ly.L:mx-ly.L)*gap, s=Math.max(0,Math.min(1,(now-N.t0-del)/dur)); if(s<1) done=false; const e=s*s*(3-2*s), f=N.dir>0?e:1-e; ly.f=f; ly.g.position.y=f*ly.L*N.step; });
+  N.layers.forEach(ly=>{ const del=(N.dir>0?ly.L:mx-ly.L)*gap, s=Math.max(0,Math.min(1,(now-N.t0-del)/dur)); if(s<1) done=false; const e=s*s*(3-2*s), f=N.dir>0?e:1-e; ly.f=f; if(ly.ex) ly.g.position.copy(ly.ex).multiplyScalar(f); else ly.g.position.y=f*ly.L*N.step; });
   N.shown=Math.max(...N.layers.map(l=>l.L?l.f:0)); if(done) N.anim=false; need=true; }
 const xVis=(el,on)=>{ el.style.visibility=on?'visible':'hidden'; el.style.opacity=on?1:0; };
 function xLabels(){ if(!XN) return; camera.updateMatrixWorld(); const v=canvas.parentElement, Wd=v.clientWidth, Hd=v.clientHeight, show=XN.shown>0.6, lab=xLabOn(), items=[];
-  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, dy=ly.g.position.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true, ry=0;
-    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x,y+dy,z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd, syy=(1-_xv.y)/2*Hd; if(sx>mxx){ mxx=sx; ry=syy; } mn=Math.min(mn,sx); sy+=syy; n++; }
+  XN.layers.forEach(ly=>{ if(!ly.el||ly.box.isEmpty()) return; const b=ly.box, off=ly.g.position, dy=off.y; let mn=1e9, mxx=-1e9, sy=0, n=0, front=true, ry=0;
+    for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]){ _xv.set(x+off.x,y+dy,z+off.z).project(camera); if(_xv.z>1) front=false; const sx=(_xv.x+1)/2*Wd, syy=(1-_xv.y)/2*Hd; if(sx>mxx){ mxx=sx; ry=syy; } mn=Math.min(mn,sx); sy+=syy; n++; }
     items.push({ly,mn,mx:mxx,ry,y:sy/n,front}); });
   items.sort((a,b)=>a.y-b.y);
   const top=62, bot=Hd-(xbar.hidden?0:xbar.offsetHeight+16)-6;
@@ -1146,7 +1161,7 @@ function loop(now){ requestAnimationFrame(loop);
   xTick(now); if(UZ.lbl&&G.uze&&G.uze.visible){ UZ.lbl.visible=camera.position.distanceTo(UZC)<62; }
   if(controls.update()) need=true;
   if(detT&&!anim&&now-detT>140){ detT=0; rpDetail(); }
-  if(need){ needle.style.transform=`rotate(${(controls.getAzimuthalAngle()/D2R).toFixed(1)}deg)`; if(XN) xLabels(); renderer.render(scene,camera); need=false; } }
+  if(need){ needle.style.transform=`rotate(${(controls.getAzimuthalAngle()/D2R).toFixed(1)}deg)`; if(XN){ if(XN.unhide) XN.unhide.forEach(o=>o.visible=false); xLabels(); } renderer.render(scene,camera); need=false; } }
 // ▶ рух сонця по дню: крок 10 хв, швидкість ×1…×8
 const SUNRS={}; function riseSet(day){ if(SUNRS[day]) return SUNRS[day]; let a=null,b=null; for(let h=3;h<=22;h+=1/60){ const up=sunVec(day,h).alt>0; if(up&&a===null) a=h; if(up) b=h; } return SUNRS[day]=[a,b]; }
 let playT=null; const playBtn=$('#play'), SPDS=[1,2,4,8];

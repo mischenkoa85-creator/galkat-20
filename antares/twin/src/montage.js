@@ -1341,7 +1341,7 @@ try{ new ResizeObserver(()=>{ if(MT.active) viewOffset(); }).observe(UI.ci); new
 // ================= нижня панель розділу (аркуш): акти, зразок, змонтовано
 function pane(force){ if(state.sec!=='bud'||!MT.T) return; const T=MT.T, t=MT.t, s=T.shotAt(t), a=s.act, smp=T.samp.find(x=>t>=x.t0&&t<x.t1)||null, key=T.proj+'|'+a.no+'|'+(smp?T.samp.indexOf(smp):-1); const P=$('#pane');
   if(force||MT.paneKey!==key||!P.querySelector('.mtq')){ MT.paneKey=key; const rp=T.proj==='rp'; const sm=smp||T.samp.find(x=>x.t0>=a.t0&&x.t0<a.t1);
-    P.innerHTML=`<div class="ph"><span class="eyebrow ${rp?'rp':'ours'}">${rp?'Вінницький проєкт · РП 2025/12-07':'Наш варіант Б · E-Systems'} · Будівництво</span><h2>Монтаж: ${T.acts.length} актів, ${fmtT(T.T)} при ×1</h2><p>▶ і повзунок — під моделлю; ×2 / ×5 прискорюють фронти, зразки й перші штуки — завжди ×1. Торкання моделі — вільна камера; «Камера: авто» — повернути.</p></div>`
+    P.innerHTML=`<div class="ph"><span class="eyebrow ${rp?'rp':'ours'}">${rp?'Вінницький проєкт · РП 2025/12-07':'Наш варіант Б · E-Systems'} · Будівництво</span><h2>Монтаж: ${T.acts.length} актів, ${fmtT(T.T)} при ×1</h2><p>▶ і повзунок — під моделлю; ×2 / ×5 прискорюють фронти, зразки й перші штуки — завжди ×1. Торкання моделі — вільна камера; «Камера: авто» — повернути. Два натискання на виріб — перехід до його зразка.</p></div>`
      +`<div class="blk"><h3>Акти</h3><ol class="mtst">${T.acts.map(x=>`<li><button type="button" data-mst="${x.no}" ${x===a?'aria-current="true"':''} class="${t>=x.t1?'done':''}"><em>${x.no}</em><span>${esc(x.title)}</span><small>${fmtT(x.t0)}</small></button></li>`).join('')}</ol></div>`
      +`<div class="blk"><h3>${esc(a.title)}</h3><p class="src" style="margin:0 0 6px">${esc(a.lead||'')}</p>${sm?`<table class="cmp mtq"><thead><tr><th>Зразок</th><th>Маса</th><th>К-сть</th><th>Разом</th></tr></thead><tbody>${sm.parts.filter(p=>p.nm).map((p,i)=>`<tr><td><b class="num">${i+1}.</b> ${esc(p.nm)}${p.sz?`<br><small>${esc(p.sz)}</small>`:''}</td><td>${fm(p.m)}</td><td>${esc(p.qs||fq(p.q??''))}</td><td>${p.m!=null&&typeof p.q==='number'?ft(p.m*p.q):'—'}</td></tr>`).join('')}</tbody></table>`:''}</div>`
      +`<div class="blk"><h3>Змонтовано</h3><table class="cmp mtq"><thead><tr><th>Елемент</th><th>Є / усього</th><th>Маса</th></tr></thead><tbody>${T.cnt.map((c,i)=>`<tr data-ci="${i}"><td>${esc(c.nm)}${c.note?`<br><small>${esc(c.note)}</small>`:''}</td><td class="n" data-cn="${i}"></td><td data-cm="${i}"></td></tr>`).join('')}</tbody></table>`
@@ -1423,7 +1423,126 @@ window.__twin.mt={MT,CAM,jump:t=>{ jump(t); step(0,false); },play:setPlayM,cur:(
   video:on=>{ MT.video=!!on; if(on){ MT.play=false; } },
   warm:(t,secs,dt)=>{ jump(Math.max(0,t-secs)); step(0,false); for(let tt=Math.max(0,t-secs);tt<t;tt+=dt){ MT.t=tt; MT.dirty=true; step(dt,false); } },
   frame:(t,dt)=>{ MT.t=t; MT.dirty=true; if(MT.play) MT.play=false; step(dt,false); ui(false); renderer.render(scene,camera); need=false; return [camera.position.toArray(),controls.target.toArray(),CAM.az,CAM.el,Math.exp(CAM.lD)]; },
+  dbg:()=>({rpBZ,ourMods,OM,RP,WHI}),
   look:(q,az,el,d)=>{ const z=surfZ(q[0],q[1]), tg=W(q[0],q[1],(z==null?0:z)+q[2]), c=Math.cos(el); camera.position.set(tg.x+d*c*Math.sin(az),tg.y+d*Math.sin(el),tg.z+d*c*Math.cos(az)); controls.target.copy(tg); camera.lookAt(tg); camera.updateMatrixWorld(); MT.T.post.forEach(f=>f()); renderer.render(scene,camera); need=false; return camera.position.toArray(); },
   camTrack:(t0,t1,dt)=>{ const T=MT.T, out=[]; let tt=t0, prev=null; MT.jumped=true; while(tt<=t1){ MT.t=tt; const spec=T.camSpec(tt); let cut=false; if(prev!=null){ const i=ub(T.cutT,prev); cut=i<T.cutT.length&&T.cutT[i]<=tt; } prev=tt; if(MT.jumped||cut){ camReset(spec); MT.jumped=false; CAM.fl=null; camApply(0); } else { camStep(spec,dt); camApply(dt); } out.push([tt,camera.position.x,camera.position.y,camera.position.z,controls.target.x,controls.target.y,controls.target.z,CAM.az,CAM.el,Math.exp(CAM.lD),cut?1:0]); tt+=dt; } return out; }};
+// ================= Два натискання підряд — елемент розбирається (будь-який розділ). Вузли — тим самим механізмом, що й «Вузол по деталях»:
+// xNew / xLayer / xPart / xHide у app.js; xShow показує, підписи й картка — спільні. ly.ex — куди деталь відходить (м, світові осі), без нього — вгору за рівнем.
+{
+const XL=(N,L,name,q,ex,warn)=>{ const ly=xLayer(N,L,name,q,warn); if(ex) ly.ex=new V3(ex[0],ex[1],ex[2]); return ly; };
+const XT=(F,x,y,z)=>F.clone().multiply(T_(x,y,z));
+const TR=v=>new M4().makeTranslation(v.x,v.y,v.z);
+const blkG=gMerge([gTint(gB(0.32,0.003,0.32,0,0.0015,0),0x262626),gTint(gB(0.3,0.06,0.3,0,0.033,0),0x9d9a93),gTint(gC(0.0075,0.0012,8,'y',0,0.0634,0),0xb8902f)]);
+const hOf=(X,Y)=>{ const z=surfZ(X,Y); return z===null?0.3:z; };
+const geoOf=new Map(); const G_=(k,f)=>{ if(!geoOf.has(k)) geoOf.set(k,f()); return geoOf.get(k); };
+
+// ---------- 1. Щит PV 7/1 (Наш Б): блоки, рама, корпус, начиння, двері, козирок — як у зразку монтажу 6.1
+function boxNode(i){ const E=EPX, b=E.boxes[i]; if(!b) return null; const R=!!b.r, h=hOf(b.X,b.Y), F=TR(W(b.X,b.Y,h)), N=xNew(state.proj,i,0.3); N.dim=[];
+  xHide(N,EP.box,i); if(R) for(let k=0;k<4;k++){ xHide(N,EP.frame,i*4+k); xHide(N,EP.bblk,i*4+k); } if(oBZ&&oBZ.boxes) xHide(N,oBZ.boxes,i);
+  const y0=R?0.70:0.45, up=R?0.62:0.35, Fb=XT(F,0,y0,0), NB=E.boxes.length, NR=E.boxes.filter(x=>x.r).length;
+  if(R){ const iB={t:'Блок 300×300×60 з матом, 13,4 кг',d:'4 під раму щита; рама — болтами M8×20 у муфти блоків'};
+    const lB=XL(N,0,'Блок з матом під раму',`4 шт · ${nf(4*13.4,1)} кг`); [[-0.25,-0.45],[-0.25,0.45],[0.25,-0.45],[0.25,0.45]].forEach(([dx,dy])=>xPart(lB,blkG,MM.vc,XT(F,dx,0,-dy),iB));
+    const iR={t:'Рама 41×41×2,5 HDG, 14 кг',d:'Опорні 2 × 1 200 на блоках, стійки 2 × 900, поперечки 2 × 600; щит на 4 кронштейнах'};
+    const lR=XL(N,1,'Опорні профілі 41×41, 1 200','2 шт',[0,0.2,0]); [-0.25,0.25].forEach(x=>xPart(lR,G_('br'+x,()=>gB(0.041,0.041,1.2,x,HL+0.0205,0)),MM.frame,F,iR));
+    const lP=XL(N,2,'Стійки 900 і поперечки 600 (рама 14 кг)',`2 + 2 · рам ${NR}`,[0,0.36,0]); [-0.25,0.25].forEach(x=>xPart(lP,G_('bp'+x,()=>gB(0.041,0.9,0.041,x,0.104+0.45,-0.13)),MM.frame,F,iR));
+    [0.52,0.88].forEach(y=>xPart(lP,G_('bb'+y,()=>gB(0.6,0.041,0.041,0,y,-0.089)),MM.frame,F,iR)); }
+  const iC={t:'Щит PV 7/1, IP66, ≥ 600 × 500 × 200',d:'Клас II, 4 кронштейни; низ +0,450, верх +0,950 над покрівлею'+(R?'':'. Кріплення на скаті складу не визначено (питання власнику)')};
+  const lC=XL(N,3,'Корпус щита PV 7/1, IP66, ≥ 600 × 500 × 200',`клас II · щитів ${NB}`,[0,up,0],R?'':'Кріплення на скаті складу не визначено');
+  [gB(0.6,0.5,0.012,0,0,-0.094),gB(0.012,0.5,0.2,-0.294,0,0),gB(0.012,0.5,0.2,0.294,0,0),gB(0.6,0.012,0.2,0,0.244,0),gB(0.6,0.012,0.2,0,-0.244,0)].forEach((g,k)=>xPart(lC,G_('bc'+k,()=>g),MM.cab,Fb,iC));
+  [[-0.27,0.2],[0.27,0.2],[-0.27,-0.2],[0.27,-0.2]].forEach(([x,y],k)=>xPart(lC,G_('bk'+k,()=>gB(0.03,0.04,0.03,x+Math.sign(x)*0.03,y,-0.12)),MM.hw,Fb,iC));
+  const Fi=XT(Fb,0,0,-0.085), fw=[0,up,0.42];
+  const lF=XL(N,4,'14 запобіжників gPV 32 А 10×38','на обох полюсах кожного стрінга',fw);
+  [0.12,-0.04].forEach((y,k)=>xPart(lF,G_('din'+k,()=>gB(0.5,0.035,0.008,0,y,0)),MM.al,Fi,{t:'DIN-рейка',d:'Під запобіжники'}));
+  for(let k=0;k<14;k++){ const c=k%7, r=Math.floor(k/7), inf={t:'Запобіжник gPV 32 А 10×38',d:`Вхід ${c+1}, полюс ${r?'«−»':'«+»'}`}; xPart(lF,G_('fu'+k,()=>gB(0.018,0.085,0.06,-0.21+c*0.036,0.12-r*0.16,0.03)),MM.white,Fi,inf); xPart(lF,G_('fc'+k,()=>gB(0.012,0.02,0.002,-0.21+c*0.036,0.15-r*0.16,0.061)),r?MM.black:MM.red,Fi,inf); }
+  const lS=XL(N,4,'Роз\'єднувач 2P ≥ 200 А DC-PV2','',[0.12,up,0.48]); xPart(lS,G_('sw',()=>gB(0.075,0.11,0.07,0.19,0.1,0.035)),MM.dark,Fi,{t:'Роз\'єднувач 2P ≥ 200 А DC-PV2',d:'Вимикає вихід щита'}); xPart(lS,G_('swh',()=>gB(0.03,0.05,0.02,0.19,0.1,0.08)),MM.red,Fi,{t:'Роз\'єднувач',d:''});
+  const lD=XL(N,4,'ОПН PV тип 1+2','Ucpv ≥ 1 000 В, Up ≤ 4,0 кВ — F1 за Томом 7',[0.16,up,0.36]); xPart(lD,G_('spd',()=>gB(0.054,0.09,0.065,0.19,-0.06,0.032)),MM.white,Fi,{t:'ОПН PV тип 1+2 (F1)',d:'Ucpv ≥ 1 000 В, Up ≤ 4,0 кВ — Том 7'}); xPart(lD,G_('spdw',()=>gB(0.03,0.012,0.002,0.19,-0.04,0.066)),MM.green,Fi,{t:'ОПН',d:''});
+  const lM=XL(N,4,'Контроль струму 8 кан. Modbus','адреса = вхід QF',[0,up-0.06,0.5]); xPart(lM,G_('mon',()=>gB(0.12,0.06,0.05,0,-0.155,0.03)),MM.blue,Fi,{t:'Контроль струму 8 кан.',d:'Modbus; адреса = вхід QF'});
+  const lE=XL(N,4,'Шина PE','',[0,up-0.1,0.3]); xPart(lE,G_('pe',()=>gB(0.3,0.015,0.015,-0.05,-0.215,0.01)),MM.yellow,Fi,{t:'Шина PE',d:''});
+  const lK=XL(N,4,'7 пар MC4 знизу','входи стрінгів XS1…XS7',[0,up-0.22,0.18]); for(let k=0;k<7;k++) [-1,1].forEach(s=>xPart(lK,G_('mc'+k+s,()=>gC(0.009,0.05,10,'y',-0.18+k*0.06+s*0.012,-0.27,0)),s<0?MM.black:MM.dark,Fb,{t:'Конектори MC4',d:`Вхід XS${k+1}: «+» і «−»`}));
+  const sc=new THREE.MeshStandardMaterial({color:lc(KCOL[b.K]||0x888888),roughness:0.5});
+  const lDr=XL(N,5,'Двері з колірною смугою контейнера',b.K,[-0.72,up,0.1]); xPart(lDr,G_('dr',()=>gB(0.6,0.5,0.012,0,0,0.1)),MM.cab,Fb,{t:'Двері щита',d:'Смуга — колір контейнера '+b.K}); xPart(lDr,G_('drs',()=>gB(0.5,0.05,0.004,0,0.22,0.108)),sc,Fb,{t:'Колірна смуга',d:b.K}); xPart(lDr,G_('drh',()=>gB(0.04,0.08,0.012,0.24,0,0.112)),MM.dark,Fb,{t:'Ручка',d:''});
+  const lV=XL(N,6,'Козирок 650 × 350','1,3 кг',[0,up+0.42,0]); xPart(lV,G_('cv',()=>gB(0.65,0.012,0.35,0,0.285,0.03)),MM.frame,Fb,{t:'Козирок 650 × 350, 1,3 кг',d:'Над щитом'});
+  N.title=`${b.n} · щит PV 7/1 → ${b.K}`; N.sub=`${b.s.length} стрінгів, ${nf(b.kWp,1)} кВтп, Iмп ${nf(b.Imp,1)} А; вихід Al 2 × 1×${b.Al}, ${nf(b.L,1)} м; маса щита у зборі — немає в даних`;
+  N.c=W(b.X,b.Y,h+y0); N.top=0.9; N.vd=2.6; N.vdir=new V3(0.55,0.42,1); return N; }
+
+// ---------- 2. Лоток з опорами (Наш Б): ділянка ±0,9 м від точки — опори, траверси, лоток, кабелі, кришка
+function trayNode(hit){ const E=EPX, P=hit.point, X=P.x, Y=-P.z; let best=null, bd=1e9;
+  E.runs.forEach((r,ri)=>{ const vx=r[2]-r[0], vy=r[3]-r[1], L2=vx*vx+vy*vy||1, u=Math.max(0,Math.min(1,((X-r[0])*vx+(Y-r[1])*vy)/L2)), d=Math.hypot(r[0]+vx*u-X,r[1]+vy*u-Y); if(d<bd){ bd=d; best=ri; } });
+  if(best===null||bd>1.2) return null; const r=E.runs[best], t=r[4], typ=E.types[t], TWd=E.tw[typ][0]/1000, THd=E.tw[typ][1]/1000, im=EP.tray[t], N=xNew(state.proj,best,0.3); N.dim=[];
+  const dir=new V3(r[2]-r[0],0,-(r[3]-r[1])).normalize(), M=new M4(), p=new V3(), q=new Q(), s=new V3(), hw=0.9;
+  const pieces=[]; for(let k=0;k<im.count;k++){ im.getMatrixAt(k,M); M.decompose(p,q,s); if(s.x<1e-4) continue; const dx=p.x-P.x, dz=p.z-P.z, along=dx*dir.x+dz*dir.z, lat=Math.abs(-dx*dir.z+dz*dir.x); if(Math.abs(along)<=hw&&lat<0.06) pieces.push({k,p:p.clone(),q:q.clone(),L:s.x}); }
+  if(!pieces.length) return null; pieces.forEach(o=>xHide(N,im,o.k));
+  const sups=[]; E.sup.forEach((sp,k)=>{ if(sp[2]!==t) return; const w=W(sp[0],sp[1],0), dx=w.x-P.x, dz=w.z-P.z, along=dx*dir.x+dz*dir.z, lat=Math.abs(-dx*dir.z+dz*dir.x); if(Math.abs(along)<=hw+0.1&&lat<0.08) sups.push(k); });
+  const NS=E.sup.length, Q_=E.Q.trays[typ];
+  const lB=XL(N,0,'Опора: блок 300×300×60 з матом',`${sups.length} шт тут · ${nf(NS)} усього`), lT=XL(N,1,'Траверса 41×41×2,5 + болт M8×20 у муфту','поперек лотка',[0,0.12,0]);
+  sups.forEach(k=>{ const sp=E.sup[k], h=hOf(sp[0],sp[1]); xHide(N,EP.blk,k); const Mt=xHide(N,EP.trav,k); xPart(lB,blkG,MM.vc,TR(W(sp[0],sp[1],h)),{t:'Блок 300×300×60 з матом, 13,4 кг',d:'Опора лотка, крок 1,5 м; лоток не кріпиться до покрівлі'});
+    xPart(lT,BOX,MM.trayD,Mt,{t:'Траверса 41×41×2,5',d:`Довжина ${nf((TWd+0.1)*1000,0)} мм; лоток — 2 болти M8 у гайки з пружиною`}); xPart(lT,G_('bh',()=>gHex(0.013,0.0053,'y',0,0,0)),MM.hw,TR(W(sp[0],sp[1],h+0.104)),{t:'Болт M8×20 у муфту блока',d:''}); });
+  const lL=XL(N,2,`Лоток ${typ} перфорований`,`${nf(Q_.all,1)} м усього`,[0,0.3,0]), lW=XL(N,3,'Кабелі в лотку',r[5]?`${r[5]} лін. Al${r[6]?' + 1×6':''}`:'кабелі 1×6',[0,0.52,0]), lV=XL(N,4,'Кришка лотка','на всю трасу',[0,0.74,0]);
+  const nAl=(r[5]||0)*2, dAl=0.026, cols=Math.max(1,Math.floor((TWd-0.01)/(dAl+0.004)));
+  pieces.forEach(o=>{ const F=new M4().compose(o.p,o.q,ONE3), L=o.L, iL={t:`Лоток ${typ} з кришкою`,d:`Заповнення ${nf(r[8]*100,0)} % (≤ 40 %); ділянка ${nf(r[7],1)} м`};
+    xPart(lL,gB(L,0.0015,TWd,0,-THd/2,0),MM.tray,F,iL); xPart(lL,gB(L,THd,0.0015,0,0,TWd/2),MM.tray,F,iL); xPart(lL,gB(L,THd,0.0015,0,0,-TWd/2),MM.tray,F,iL);
+    xPart(lV,gB(L,0.0015,TWd+0.006,0,THd/2+0.003,0),MM.trayD,F,{t:'Кришка лотка',d:'На всю трасу; лоток над водою не лежить — над ендовами містки'});
+    for(let c=0;c<nAl;c++){ const col=c%cols, row=Math.floor(c/cols); xPart(lW,gC(dAl/2,L,8,'x',0,-THd/2+dAl/2+row*dAl,-TWd/2+0.006+dAl/2+col*(dAl+0.004)),MM.al,F,{t:'Лінія Al 2 × 1×120…240',d:`${r[5]} лін. на ділянці; від щита до ШВ`}); }
+    if(r[6]||!r[5]) [MM.red,MM.black].forEach((m,j)=>xPart(lW,gC(0.0035,L,6,'x',0,-THd/2+0.004+(nAl?Math.ceil(nAl/cols)*dAl:0),TWd/2-0.012-j*0.01),m,F,{t:j?'Кабель 1×6 «−»':'Кабель 1×6 «+»',d:'Від стрінгів до щита; кількість по ділянці — у кабельному журналі'})); });
+  N.title=`Лоток ${typ} · ділянка ${nf(r[7],1)} м`; N.sub=`${r[5]?r[5]+' лін. Al':'лише кабелі 1×6'}${r[6]&&r[5]?' + кабелі 1×6':''}; заповнення ${nf(r[8]*100,0)} %; опори «блок з матом + траверса», крок 1,5 м; маса лотків — немає в даних`;
+  N.c=P.clone(); N.top=0.8; N.vd=2.4; N.vdir=new V3(-dir.z*0.9+dir.x*0.35,0.55,dir.x*0.9+dir.z*0.35); return N; }
+
+// ---------- 3. Контейнер Golen LES-H20 на плиті Фп-1 (Наш Б): ЩПС, плита, сітки, закладні, корпус, двері, кондиціонери
+function golenNode(hit){ if(!BS) return null; const P=hit.point, X=P.x, Y=-P.z; let k=null; BS.K.forEach(q=>{ const s=q.slab; if(X>=s[0]-1.5&&X<=s[1]+1.5&&Y>=s[2]-1.5&&Y<=s[3]+1.5) k=q; }); if(!k) return null;
+  const grp=ESS.find(o=>o.isGroup&&o.children.some(c=>c.userData.info&&String(c.userData.info.t||'').startsWith(k.id+' · Golen'))); if(!grp) return null;
+  const sl=ESS.find(o=>o.isMesh&&o.userData.info&&String(o.userData.info.t||'').startsWith('Фундамент Фп-1 · '+k.id));
+  const N=xNew(state.proj,BS.K.indexOf(k),0.3); N.dim=[]; N.unhide=[grp].concat(sl?[sl]:[]); grp.updateMatrixWorld(true);
+  const s=k.slab, cx=(s[0]+s[1])/2, cy=(s[2]+s[3])/2, Ls=s[1]-s[0], Ds=s[3]-s[2], F=TR(W(cx,cy,0));
+  const l0=XL(N,0,'ЩПС 350 під плитою','ущільнення ≥ 98 %',[0,0.36,0]); xPart(l0,gB(Ls+0.2,0.35,Ds+0.2,0,-0.125,0),MM.conc,F,{t:'Щебенево-піщана суміш 350 мм',d:'Під плитою Фп-1 (том 8, арк. 3); у моделі показано над землею'});
+  const l1=XL(N,1,'Плита Фп-1 7 058 × 3 438 × 250','C20/25 F100 W4, верх +0,300',[0,0.9,0]); xPart(l1,gB(Ls,0.25,Ds,0,0.175,0),MM.slab,F,{t:'Плита Фп-1 7 058 × 3 438 × 250',d:'Бетон C20/25 F100 W4, верх +0,300; майданчик обслуговування 1 м (том 8, арк. 3)'});
+  const l2=XL(N,2,'2 сітки Ø12 A500C, крок 200','у плиті',[0,1.45,0]); const nx=Math.floor((Ls-0.1)/0.2)+1, nz=Math.floor((Ds-0.1)/0.2)+1, ir={t:'Сітка Ø12 A500C, крок 200',d:'2 сітки в плиті Фп-1, захисний шар — за томом 8'};
+  [0.1,0.25].forEach(y=>{ xPart(l2,G_('rx'+nz+y,()=>gMerge(Array.from({length:nz},(_,j)=>gC(0.006,Ls-0.1,6,'x',0,y,-Ds/2+0.05+j*0.2)))),MM.steelD,F,ir); xPart(l2,G_('rz'+nx+y,()=>gMerge(Array.from({length:nx},(_,j)=>gC(0.006,Ds-0.1,6,'z',-Ls/2+0.05+j*0.2,y+0.012,0)))),MM.steelD,F,ir); });
+  const gc=grp.position, l3=XL(N,3,'4 закладні МН-1','під кути контейнера (у 3D умовно)',[0,1.95,0]); [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([a,c])=>xPart(l3,G_('mn',()=>gB(0.3,0.012,0.3,0,0,0)),MM.steelD,TR(new V3(gc.x+a*2.85,0.306,gc.z+c*1.05)),{t:'Закладна МН-1',d:'4 шт у плиті (том 8, арк. 3); розмір і положення — за кресленням, у 3D умовно під кутовими фітингами'}));
+  const lB=XL(N,4,'Контейнер 20 фт 6 058 × 2 438 × 2 896','≈ 20 т, IP54',[0,2.45,0]), lD=XL(N,5,'Двері відсіків','4 спереду + 1 у торці',[0,2.45,1.3]), lA=XL(N,5,'Кондиціонери на стінах','2 спереду, 4 ззаду',[0,4.0,0]);
+  const iB={t:`${k.id} · Golen LES-H20-1205W500C-PS`,d:'20 фт, IP54, ≈ 20 т; АКБ 1 205 кВт·год (5 кластерів × 241), PCS 500 кВт, 12 PV-входів по 60 кВт; повітряне охолодження, аерозольне пожежогасіння'};
+  grp.children.forEach(o=>{ if(!(o.isMesh)) return; const m=o.material, M=o.matrixWorld.clone(); let ly=lB, inf=iB;
+    if(m===UZM.door){ ly=lD; inf={t:'Двері відсіку',d:'Відсіки АКБ, DC/DC (QF1…QF12 — автомати PV-входів) і PCS; торцеві двері — вхід'}; } else if(m===UZM.ac){ ly=lA; inf={t:'Кондиціонер',d:'Повітряне охолодження контейнера'}; }
+    if(o.isInstancedMesh){ const c=new THREE.InstancedMesh(o.geometry,m,o.count); for(let j=0;j<o.count;j++){ o.getMatrixAt(j,_m2); c.setMatrixAt(j,_m2); } c.matrixAutoUpdate=false; c.matrix.copy(M); c.castShadow=true; c.userData.info=inf; ly.g.add(c);
+      if(!o.geometry.boundingBox) o.geometry.computeBoundingBox(); for(let j=0;j<o.count;j++){ o.getMatrixAt(j,_m2); ly.box.union(o.geometry.boundingBox.clone().applyMatrix4(M.clone().multiply(_m2))); } return; }
+    xPart(ly,o.geometry,m,M,inf); });
+  N.title=`${k.id} · Golen LES-H20 на плиті Фп-1`; N.sub='АКБ 1 205 кВт·год, PCS 500 кВт, 12 PV-входів; що де всередині (кластери АКБ, PCS, DC/DC) — немає в даних, тому начиння не показано';
+  N.c=W(cx,cy,1.4); N.top=2.6; N.vd=12.5; N.vdir=new V3(0.62,0.5,1); return N; }
+
+// ---------- 4. Щогла блискавкозахисту (Вінниця): основи 30 + 15 кг, щогла
+function mastNode(i){ const m=RP.masts[i]; if(!m) return null; const N=xNew('rp',i,0.3); N.dim=[]; const h=m[2], z=(()=>{ const M=new M4(); rpBZ.masts[1].getMatrixAt(i,M); return new V3().setFromMatrixPosition(M).y-0.09; })(), F=TR(W(m[0],m[1],z));
+  xHide(N,rpBZ.masts[0],i); xHide(N,rpBZ.masts[1],i);
+  const iB={t:'Бетонна основа щогли',d:'Комплект FS: основи 30 + 15 кг, Ø 300 / 400 (каталог FS); висота основ — немає в даних, у 3D умовно'};
+  const l0=XL(N,0,'Основа бетонна Ø 400, 30 кг','каталог FS'); xPart(l0,G_('mb0',()=>gC(0.2,0.1,24,'y',0,0.05,0)),MM.conc,F,iB);
+  const l1=XL(N,1,'Основа бетонна Ø 300, 15 кг','каталог FS',[0,0.35,0]); xPart(l1,G_('mb1',()=>gC(0.15,0.09,24,'y',0,0.145,0)),MM.conc,F,iB);
+  const l2=XL(N,2,h===4?'Щогла М-04/40, 4 м':'Щогла М-05/60, 6 м',h===4?'51 шт':'2 шт',[0,0.75,0]); xPart(l2,G_('mr'+h,()=>gC(0.045,h,12,'y',0,0.19+h/2,0)),MAT.mast||MM.zn,F,{t:h===4?'Щогла М-04/40, 4 м':'Щогла М-05/60, 6 м',d:h===4?'Захисний кут 68°, радіус на рівні основи 9,9 м (БЗ арк. 2); комплект 47,5 кг':'Біля майданчика MS-3; радіус 6,4 м'});
+  N.title=(h===4?'Щогла М-04/40':'Щогла М-05/60')+' на бетонних основах'; N.sub='РП 2025/12-07, БЗ арк. 2; 53 щогли (51 × 4 м і 2 × 6 м), дріт Ø8 на тримачах, 44 спуски';
+  N.c=W(m[0],m[1],z+h*0.4); N.top=1.2; N.vd=h+3.2; N.vdir=new V3(0.7,0.25,0.8); return N; }
+
+// ---------- реєстр: що розбирається подвійним натисканням (модулі з кріпленням — у app.js)
+XB.push({has:o=>o===EP.box||(oBZ&&o===oBZ.boxes), build:(o,id)=>boxNode(id)});
+XB.push({has:o=>(EP.tray&&EP.tray.includes(o))||o===EP.blk||o===EP.trav||o===EP.fit||o===EP.vx, build:(o,id,p)=>trayNode({point:p})});
+XB.push({has:o=>!!(o.isMesh&&state.proj==='ours'&&ESS.some(g=>g.isGroup&&g.children.includes(o)))||!!(o.userData&&o.userData.info&&String(o.userData.info.t||'').startsWith('Фундамент Фп-1')), build:(o,id,p)=>golenNode({point:p})});
+XB.push({has:o=>!!(rpBZ.masts&&(o===rpBZ.masts[0]||o===rpBZ.masts[1])), build:(o,id)=>mastNode(id)});
+
+// ---------- підказка один раз: «двічі натисніть — розбереться»
+{ const k='antares-twin-dbl'; let seen=false; try{ seen=localStorage.getItem(k)==='1'; }catch(e){}
+  const el=document.createElement('div'); el.className='xhint'; el.textContent='Двічі натисніть на елемент — він розбереться'; el.hidden=true;
+  const st=document.createElement('style'); st.textContent='.xhint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;background:var(--ink);color:var(--surface);font-size:13px;padding:7px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none;transition:opacity .4s;white-space:nowrap}';
+  document.head.appendChild(st); (document.getElementById('view')||canvas.parentElement).appendChild(el);
+  if(!seen){ setTimeout(()=>{ el.hidden=false; setTimeout(()=>{ el.style.opacity=0; setTimeout(()=>el.hidden=true,500); },6500); },2500); try{ localStorage.setItem(k,'1'); }catch(e){} } }
+
+// ---------- «Будівництво»: два натискання на виріб — перехід до його зразка (початок кадру зі зразком того етапу, де виріб з'являється)
+{ let dn=null, tap=null;
+  const actOf=o=>{ const T=MT.T; if(!T) return null; for(const u of T.ups){ const ims=u.ims||null; if(ims&&ims.includes(o)) return u.act; } for(const sm of T.samp){ let q=o; while(q){ if(q===sm.root) return T.shotAt(sm.t0).act; q=q.parent; } } return null; };
+  canvas.addEventListener('pointerdown',e=>{ dn=[e.clientX,e.clientY]; });
+  canvas.addEventListener('pointerup',e=>{ if(!MT.active||!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>(e.pointerType==='touch'?12:5)) return;
+    const now=performance.now(), dbl=tap&&now-tap.t<420&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)<(e.pointerType==='touch'?36:12); tap=dbl?null:{t:now,x:e.clientX,y:e.clientY}; if(!dbl) return;
+    const T=MT.T, r=canvas.getBoundingClientRect();
+    const L=[]; T.root.traverse(o=>{ if(!o.isMesh||o.isLineSegments2) return; let q=o; while(q){ if(!q.visible) return; q=q.parent; } L.push(o); });
+    let h=null; for(const [dx,dy] of [[0,0],[6,0],[-6,0],[0,6],[0,-6]]){ mouse.set((e.clientX+dx-r.left)/r.width*2-1,-(e.clientY+dy-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera); h=ray.intersectObjects(L,false).find(x=>actOf(x.object)); if(h) break; } if(!h) return; const a=actOf(h.object), sh=a.shots.find(s=>s.parts)||a.shots[0]; if(!sh) return;
+    jump(sh.t0+0.01); MT.free=false; UI.cam.setAttribute('aria-pressed','true'); UI.cam.innerHTML=CAMH('авто'); setPlayM(true); });
+  const up0=TL.prototype.up; TL.prototype.up=function(o){ if(o&&typeof o==='object') o.act=this.cur; return up0.call(this,o); }; }
+}
+
 }
 
