@@ -104,6 +104,7 @@ for k in TOT: TOT[k]['kwp'] = round(TOT[k]['n'] * PW, 2); TOT[k]['kwh_kwp'] = ro
 allk = sum(t['kwh'] for t in TOT.values()); alln = sum(t['n'] for t in TOT.values())
 TOT['all'] = dict(n=alln, kwp=round(alln * PW, 2), kwh=round(allk), kwh_kwp=round(allk / (alln * PW)))
 print(TOT)
-OUT = dict(beta=BETA, rows=ROWS, tot=TOT, mo=[round(float(Emo[m].sum())) for m in range(12)],
+KEEP = np.array([not (m['f'] == 'E' and m['row'] < 3) for m in MODS])
+OUT = dict(beta=BETA, rows=ROWS, tot=TOT, mo=[round(float(Emo[m].sum())) for m in range(12)], mo_keep=[round(float(Emo[m][KEEP].sum())) for m in range(12)],
            mods=[[m['f'], m['row'], m['top'], m['s'], round(float(Ekwh[i]), 1)] for i, m in enumerate(MODS)])
 json.dump(OUT, open('/home/claude/work/sun/fac25.json', 'w'), ensure_ascii=False, indent=1)
