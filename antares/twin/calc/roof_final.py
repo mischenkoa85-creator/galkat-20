@@ -42,6 +42,7 @@ R = dict(zones=ZONES, drop=DROP, xw=XW, base=summ(base), old_twin=dict(n=len(OM)
          west_loss_old=round((sum(twk[key(c)] for c in old) - sum(c['kwh'] for c in old)) / 1000, 1),
          new_y=round(np.mean([c['kwh'] for c in base if not c['old']]) / 0.73), int_ratio=round(float(np.mean([c['kwh'] / twk[key(c)] for c in inter if c['old']])), 3),
          fac=dict(n=319, kwp=232.9, mwh=170.6))
+R['cnt']['new_all'] = R['cnt']['new'] + sum(1 for c in NSTR if not c['old']); R['cnt']['str_old'] = sum(1 for c in NSTR if c['old'])
 R['wh'] = dict(n=176, kwp=128.5, mwh=148.7)
 R['ep'] = dict(n=1925, roof=1749, kwp=1405.25, mwh=1348.8, roof_mwh=1200.1, mism=23.9)
 R['total'] = dict(n=R['base']['n'] + 176 + 319, st=R['base']['st'] + 16 + 29, kwp=round((R['base']['n'] + 176 + 319) * 0.73, 1), mwh=round(R['base']['mwh'] + 148.7 + 170.6, 1))

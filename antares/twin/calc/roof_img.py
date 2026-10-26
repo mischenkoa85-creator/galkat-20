@@ -31,7 +31,7 @@ B = R['base']
 ax.set_title(f"Дах цеху — розкладка 26.10 без вентиляції: {nf(B['n'])} модулів = {B['st']} стрінгів × 11 · {nf(B['kwp'], 1)} кВтп · {nf(B['mwh'], 1)} МВт·год за рік",
              fontsize=8.2, loc='left', color=INK, weight='bold')
 cnt = R['cnt']
-H = [Patch(facecolor=OLD, label=f"лишаються з розкладки 25.10 — {nf(cnt['old'])}"), Patch(facecolor=NEW, label=f"нові місця, де стояла вентиляція — {cnt['new']}"),
+H = [Patch(facecolor=OLD, label=f"лишаються з розкладки 25.10 — {nf(cnt['old'])}"), Patch(facecolor=NEW, label=f"нові місця, де стояла вентиляція — {cnt['new']} (ще {cnt['new_all'] - cnt['new']} прибрано під стрінги)"),
      Patch(facecolor='none', edgecolor=RED, ls='--', label=f"прибрані: тінь західної будівлі {cnt['west']} (4 колонки), кондиціонери {cnt['ac']}, портал {cnt['portal']}"),
      Patch(facecolor='none', edgecolor=STR, ls='--', label=f"прибрані під стрінги по 11 — {cnt['str']} найслабших"),
      Patch(facecolor='none', edgecolor=AC, ls='--', label='кондиціонери: рама + 1 м, прохід від виходу, труби; портал'),
