@@ -7,7 +7,7 @@
 двосхилі ліхтарі (гребінь +LH над основою — оцінка за фото, креслення показує лише плиту), рама кондиціонерів, сходи, усі грані даху.
 Генерація — модель двійника (Meteonorm 8.1, ясні/хмарні дні, крок 10 хв), 3 точки на модуль уздовж Y, горизонт 72 напрями."""
 import json, math, sys, csv, numpy as np
-D = 'calc/'; TW = 'src/'
+D = '/home/claude/work/sun/'; TW = '/home/claude/work/twin/'
 LH = float(sys.argv[1]) if len(sys.argv) > 1 else 1.5          # висота гребеня ліхтаря над його основою, м (оцінка)
 LCX = float(sys.argv[2]) if len(sys.argv) > 2 else 0.25        # відступ модуля від основи ліхтаря поперек (X), м
 WX = json.load(open(TW + 'wx.json'))
@@ -38,7 +38,7 @@ def lanterns(h):
         m = box(L['x0'], L['x1'], L['y0'], L['y1']); xc = (L['x0'] + L['x1']) / 2; hw = (L['x1'] - L['x0']) / 2
         H[m] = np.maximum(RZ[m], L['zb'] + h * (1 - np.abs(XX[m] - xc) / hw))
 lanterns(LH)
-put(box(61.45, 62.95, 7, 19), np.float32(float(roofZ(62.2)) + 2.15))                    # рама 11 кондиціонерів (фото)
+AC = S['ac']; put(box(AC['x0'], AC['x1'], AC['y0'], AC['y1']), np.float32(max(float(roofZ(AC['x0'])), float(roofZ(AC['x1']))) + AC['h']))   # рама кондиціонерів 14,5 × 2,4 × 2,2 (власник 27.10)
 for x0, x1, y0, y1, h in [(58.4, 65.6, -2.45, -0.5, 15.9 + 3.9), (-0.5, 19.5, 96.6, 107.1, 4.5), (96.8, 103.0, -0.4, 34.6, 4.5), (110, 124, -5, 26, 13.2),
                           (66.0, 71.0, -2.7, -0.95, 2.4), (55.9, 58.35, -3.2, -0.75, 2.6)]:
     put(box(x0, x1, y0, y1), np.float32(h))
@@ -49,7 +49,8 @@ def Hat(x, y):
 LM, DM, GAP, MRG = 2.384, 1.303, 0.022, 0.12
 FAC = [p for p in PR if p['what'].startswith('грань') or p['what'].startswith('ліхтар')]
 ROWS = [3.482 + 2.406 * k for k in range(12)] + [34.845 + 2.406 * k for k in range(12)] + [66.208 + 2.406 * k for k in range(12)]
-ZONES = [dict(k='ac', n='рама кондиціонерів + 1 м, прохід від виходу, труби', x=(60.1, 65.5), y=(2.0, 20.5)),
+ZONES = [dict(k='ac', n='рама кондиціонерів 14,5 × 2,4 м + 1 м для обслуговування', x=tuple(AC['zone']['x']), y=tuple(AC['zone']['y'])),
+         dict(k='ac', n='прохід від виходу на дах до рами', x=tuple(AC['exit']['x']), y=tuple(AC['exit']['y'])),
          dict(k='portal', n='стійки порталу + 0,3 м', x=(57.6, 60.9), y=(0.3, 3.0)),
          dict(k='door', n='прохід від дверей західної будівлі', x=(-0.6, 1.6), y=(85.0, 88.0))]
 ov = lambda a0, a1, b0, b1: a0 < b1 and b0 < a1

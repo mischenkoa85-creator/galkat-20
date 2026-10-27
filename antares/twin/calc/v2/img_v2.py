@@ -3,7 +3,7 @@ import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Polygon, Patch
 from matplotlib.lines import Line2D
 plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 8})
-D = 'calc/v2/'; R = json.load(open(D + 'final_v2.json'))
+D = '/home/claude/work/sun/v2/'; R = json.load(open(D + 'final_v2.json'))
 nf = lambda v, n=0: (f'{v:,.{n}f}').replace(',', ' ').replace('.', ',')
 INK, MUT, RED, AC, STR = '#1d2a33', '#5b6770', '#b4461b', '#7a3fa0', '#c9781c'
 CLS = [(5, '#22345f', 'тінь до 5 %'), (10, '#3f6fb5', '5–10 %'), (15, '#86a9d6', '10–15 %')]
@@ -23,7 +23,8 @@ for xa, xb, y, s, kwh, loss, tilt, face, sp in R['mods']:
     elif s in ('shade', 'ac', 'portal', 'door', 'str'):
         ax.add_patch(Rectangle((xa + 0.08, y0 + 0.05), xb - xa - 0.16, 2.284, facecolor='none', edgecolor={'shade': RED, 'str': STR}.get(s, AC), lw=0.45, ls=(0, (1.6, 1.0))))
 for z in R['ZONES']: ax.add_patch(Rectangle((z['x'][0], z['y'][0]), z['x'][1] - z['x'][0], z['y'][1] - z['y'][0], facecolor='none', edgecolor=AC, lw=0.8, ls=(0, (3, 1.5)), zorder=5))
-ax.add_patch(Rectangle((61.45, 7), 1.5, 12, facecolor=AC, lw=0, zorder=6))
+_d = open('/home/claude/work/twin/data.js', encoding='utf-8').read(); _A = json.loads(_d[_d.find('{'):_d.rfind('}') + 1])['site']['ac']
+ax.add_patch(Rectangle((_A['x0'], _A['y0']), _A['x1'] - _A['x0'], _A['y1'] - _A['y0'], facecolor=AC, lw=0, zorder=6))
 ax.add_patch(Rectangle((58.4, -2.45), 7.2, 1.95, facecolor='#9aa7b3', lw=0)); ax.text(62, -3.7, 'сходи', fontsize=6, ha='center')
 for i, (sp, x) in enumerate([('1–4', 9.0), ('4–7', 27.1), ('7–10', 45.2), ('10–13', 63.3), ('13–17', 84.4)]):
     s = R['span'][i]; ax.text(x, 97.6, f"осі {sp}\n{s['n']} мод.", ha='center', va='bottom', fontsize=6.4, color=INK)
@@ -37,7 +38,7 @@ ax.legend(handles=H, loc='upper left', bbox_to_anchor=(0, -0.04), ncol=3, fontsi
 ax.text(1.0, -0.03, 'Північ угорі, схід праворуч. Модулі довгою стороною вздовж будівлі, по 2 на грань.', transform=ax.transAxes, fontsize=6, color=MUT, ha='right', va='top')
 ax.set_xlim(-13.5, 98); ax.set_ylim(-5, 104); ax.set_aspect('equal'); ax.tick_params(labelsize=6, length=2); ax.set_xticks(range(0, 100, 12)); ax.set_yticks(range(0, 100, 12))
 for sp_ in ax.spines.values(): sp_.set_visible(False)
-fig.tight_layout(); fig.savefig(D + 'plan_v2.png', bbox_inches='tight'); fig.savefig('calc/Розкладка_модулів_на_даху_за_розрізом_1-1_Антарес_27.10.2026.png', bbox_inches='tight'); plt.close(fig)
+fig.tight_layout(); fig.savefig(D + 'plan_v2.png', bbox_inches='tight'); fig.savefig('/home/claude/work/sun/Розкладка_модулів_на_даху_за_розрізом_1-1_Антарес_27.10.2026.png', bbox_inches='tight'); plt.close(fig)
 # ---------- розріз (вертикаль ×3)
 VX = 3.0; Y = min(R['ROWS'], key=lambda v: abs(v - 50))
 fig, ax = plt.subplots(figsize=(10, 3.3), dpi=170)

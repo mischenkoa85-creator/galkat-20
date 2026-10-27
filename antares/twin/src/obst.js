@@ -29,12 +29,24 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
   box(0.05,0.05,97,OBM.steel,96.5,HV+1.1,-48.045,OB);
   const n=Math.floor(97/2.4)+1, po=inst(new THREE.BoxGeometry(0.045,0.6,0.045),OBM.steel,n,OB);
   for(let i=0;i<n;i++){ _M.compose(new V3(96.5,HV+0.8,-(-0.5+i*2.4)),QI,ONE); po.setMatrixAt(i,_M); } }
-// --- рама з 11 зовнішніми блоками кондиціонерів біля південного виходу (положення й розміри — за фото)
-{ const X=62.2, Y0=7, Y1=19, z=RX(X), L=Y1-Y0;
-  const fr=box(1.5,0.5,L,OBM.white,X,z+0.25,-(Y0+Y1)/2,OB);
-  info(fr,'11 зовнішніх блоків кондиціонерів на сталевій рамі',`Фото ${fn('123324')}, ${fn('123438')}: рама на підкладках, труби до парапету. Положення й розміри — за фото (±3 м), звірити рулеткою; у двійнику поруч — група перешкод з креслень.`);
-  for(let i=0;i<11;i++){ const y=Y0+0.55+i*(L-1.1)/10, u=box(0.75,1.65,0.95,OBM.white,X,z+0.5+0.825,-y,OB); u.userData.info=fr.userData.info; PICK.push({o:u});
-    [0.4,-0.4].forEach(dz=>{ const f=mesh(new THREE.CylinderGeometry(0.3,0.3,0.02,20),OBM.fan,OB,false); f.rotation.z=Math.PI/2; f.position.set(X+0.38,z+0.5+0.825+dz,-y); }); } }
+// --- рама кондиціонерів: 14,5 × 2,4 × 2,2 м (розміри — власник 27.10, 11:35); положення — за фото 27.10 (оцінка ±2 м)
+{ const A=S.ac||{x0:67.2,x1:69.6,y0:6.5,y1:21,h:2.2}, X0=A.x0, X1=A.x1, Y0=A.y0, Y1=A.y1, L=Y1-Y0, Xc=(X0+X1)/2, top=Math.max(RX(X0),RX(X1))+A.h, deck=top-1.6;
+  const legs=[], NL=6, parts=[];
+  for(let k=0;k<NL;k++){ const y=Y0+0.15+k*(L-0.3)/(NL-1); [X0+0.05,X1-0.05].forEach(x=>{ const z0=RX(x), h=deck-z0; parts.push(box(0.08,h,0.08,OBM.white,x,z0+h/2,-y,OB));
+      parts.push(box(0.45,0.03,0.45,OBM.conc,x,z0+0.015,-y,OB)); });
+    if(k<NL-1){ const yb=y+(L-0.3)/(NL-1)/2; [X0+0.05,X1-0.05].forEach(x=>{ const z0=RX(x), h=deck-z0, len=Math.hypot(h*0.75,(L-0.3)/(NL-1)/2);
+        [-1,1].forEach(sg=>{ const b=box(0.05,len,0.05,OBM.white,x,z0+h*0.62,-(yb+sg*(L-0.3)/(NL-1)/4),OB); b.rotation.x=sg*Math.atan2((L-0.3)/(NL-1)/2,h*0.75); parts.push(b); }); }); } }
+  [X0+0.05,X1-0.05].forEach(x=>parts.push(box(0.1,0.12,L,OBM.white,x,deck-0.06,-(Y0+Y1)/2,OB)));
+  for(let k=0;k<NL;k++){ const y=Y0+0.15+k*(L-0.3)/(NL-1); parts.push(box(X1-X0,0.1,0.08,OBM.white,Xc,deck-0.05,-y,OB)); }
+  const inf=`Рама ${nf(A.L||L,1)} × ${nf(A.W||X1-X0,1)} м, висота з блоками ${nf(A.h,1)} м (розміри — власник 27.10). Біла сталева рама на стійках з підкосами, опори на латках; два ряди зовнішніх блоків Midea: уздовж заходу — двовентиляторні (вентилятори на захід), уздовж сходу — блоки з бічними решітками, біля південного кінця — великі блоки VRF; труби в утепленні йдуть у короб під рамою. Положення — за фото 27.10: на схід від дефлекторів, південніше ліхтаря 4, від виходу на дах праворуч (X ${nf(X0,1)}–${nf(X1,1)}, Y ${nf(Y0,1)}–${nf(Y1,1)} м, оцінка ±2 м) — звірити рулеткою від виходу. Модулі даху — не ближче 1 м; тінь рами на сусідні модулі в розрахунку врахована.`;
+  parts.forEach(o=>info(o,'Рама зовнішніх блоків кондиціонерів',inf));
+  const unit=(x,y,w,d,h,face,fans)=>{ const u=box(d,h,w,OBM.white,x,deck+h/2,-y,OB); info(u,'Зовнішній блок кондиціонера на рамі',inf);
+    if(fans) [h*0.25,-h*0.25].forEach(dz=>{ const f=mesh(new THREE.CylinderGeometry(w*0.36,w*0.36,0.02,20),OBM.fan,OB,false); f.rotation.z=Math.PI/2; f.position.set(x+face*(d/2+0.01),deck+h/2+dz,-y); });
+    else { const g=box(0.02,h*0.8,w*0.8,OBM.steel,x+face*(d/2+0.005),deck+h/2,-y,OB); } };
+  const NW=13; for(let k=0;k<NW;k++) unit(X0+0.25,Y0+0.6+k*(L-1.2)/(NW-1),0.95,0.4,1.4,-1,true);
+  [[1.3,1.6],[1.3,1.6],[1.3,1.6]].forEach(([w,h],k)=>unit(X1-0.45,Y0+0.8+k*1.4,w,0.75,h,1,false));
+  for(let k=0;k<8;k++) unit(X1-0.5,Y0+5.2+k*1.15,1.0,0.7,1.5,1,false);
+  const duct=box(0.6,0.3,1.2,OBM.steel,Xc,deck-0.35,-(Y0+1.2),OB); info(duct,'Короб труб під рамою кондиціонерів',inf); }
 // --- сталевий портал на південному краї (балки виступають за парапет)
 { const z=RX(59.3), H=3.4, posts=[[58,0.6],[60.6,0.6],[58,2.6],[60.6,2.6]];
   const parts=[]; posts.forEach(([x,y])=>parts.push(box(0.15,H,0.15,OBM.steel,x,z+H/2,-y,OB)));

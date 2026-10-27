@@ -13,7 +13,7 @@ const SUNV2=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,metalne
 // ---------- старі ліхтарі-коробки і вентиляцію (прибрано 26.10) ховаємо; тіні вентиляції не рахуємо
 G.site.children.filter(o=>o.material===MAT.lan||o.material===MAT.obs).forEach(o=>o.visible=false); OBSC.length=0;
 // ---------- перешкоди для тіней (як у розрахунку calc/v2/roof_v2.py)
-{ const zA=roofZ(62.2); OBX.push([-12.15,-0.15,-0.5,96.59,0,HV+6.8],[61.45,62.95,7,19,zA-0.1,zA+2.15],[58.4,65.6,-2.45,-0.5,0,19.8],[110,124,-5,26,0,13.2],
+{ const AC=S.ac||{x0:67.2,x1:69.6,y0:6.5,y1:21,h:2.2}, zA=Math.max(roofZ(AC.x0),roofZ(AC.x1)); OBX.push([-12.15,-0.15,-0.5,96.59,0,HV+6.8],[AC.x0,AC.x1,AC.y0,AC.y1,Math.min(roofZ(AC.x0),roofZ(AC.x1))-0.1,zA+AC.h],[58.4,65.6,-2.45,-0.5,0,19.8],[110,124,-5,26,0,13.2],
   [66,71,-2.7,-0.95,0,2.4],[55.9,58.35,-3.2,-0.75,0,2.6],[42.6,46.6,-3.3,-0.9,0,2.6],[79.5,85.5,-2.3,-0.5,0,3.7],[25.6,31.4,96.59,98.2,0,4.6]);
   if(BS) BS.K.forEach(k=>OBX.push([k.box[0],k.box[1],k.box[2],k.box[3],0,3.2])); }
 // ---------- ліхтарі обох сценаріїв (двосхилі, фото 123334, 123924, 123951)
@@ -35,7 +35,7 @@ function modM(xa,xb,y,lift,th){ const za=roofZ(xa)+0.12, zb=roofZ(xb)+0.12, ang=
   _q.setFromAxisAngle(ZA,ang); const up=new V3(-Math.sin(ang),Math.cos(ang),0);
   _p.copy(W((xa+xb)/2,y,(za+zb)/2)).addScaledVector(up,0.0165+lift); _M.compose(_p,_q,_s.set(L-(lift?0.1:0),th,LM-0.02-(lift?0.1:0))); return _M; }
 const RCOL={shade:0xb4461b,ac:0x7a3fa0,portal:0x7a3fa0,door:0x7a3fa0,str:0xc9781c};
-const WHY={shade:'тінь понад 15 % за рік (західна будівля, ліхтар, сусідні грані)',ac:'зона рами з 11 кондиціонерами: рама + 1 м, прохід від виходу, труби',portal:'стійки сталевого порталу на південному краї',door:'прохід від дверей західної будівлі',str:'найслабше місце — прибрано, щоб модулі ділились на стрінги по 11'};
+const WHY={shade:'тінь понад 15 % за рік (західна будівля, ліхтар, рама кондиціонерів, сусідні грані)',ac:'рама кондиціонерів 14,5 × 2,4 м + 1 м для обслуговування або прохід від виходу на дах до рами',portal:'стійки сталевого порталу на південному краї',door:'прохід від дверей західної будівлі',str:'найслабше місце — прибрано, щоб модулі ділились на стрінги по 11'};
 const rmMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.55,depthWrite:false});
 const RM={};   // RM[k] = {ok:[], rem:[], im, rim, grp}
 ['A','B'].forEach(k=>{ const S=SC[k], g=grp('v2r'+k,RG), ok=S.mods.filter(m=>m[3]==='ok'), rem=S.mods.filter(m=>RCOL[m[3]]);
