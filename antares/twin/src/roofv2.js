@@ -4,9 +4,12 @@
 //  А — ліхтар 2,87 м за розрізом, гребінь 1,5 м (оцінка), «доміки» над ліхтарем (07:29); дах 1 936 модулів.
 // Сонце: тіні (західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи) і потужність цих модулів, дуги сонця за сезонами з годинами.
 {
-const R2=ROOFV2, SC={A:R2.A,B:R2.B}, LM=2.384, DM=1.303;
-if(state.lay.v2===undefined) state.lay.v2=true; if(!state.lay.lanSc) state.lay.lanSc='B'; if(state.lay.lanMods===undefined) state.lay.lanMods=true;
-const sc=()=>state.lay.lanSc==='A'?'A':'B';
+const R2=ROOFV2, SC=Object.assign({A:R2.A,B:R2.B},R2.C?{C:R2.C,D:R2.D,E:R2.E}:{}), LM=2.384, DM=1.303;
+const LK=k=>'CDE'.includes(k)?'C':k;   // C, D, E — один ліхтар (v3, за рулеткою 27.10), різні варіанти розкладки А / Б / В
+const SLAB={A:'«ліхтар 2,87»',B:'«ліхтар 3,40»',C:'v3 · А (усі місця)',D:'v3 · Б (від 1 050 кВт·год/м²)',E:'v3 · В (від 1 100 кВт·год/м²)'};
+const LTXT={A:'ліхтар 2,87 за розрізом',B:'ліхтар 3,40 × 1,74 за РП',C:'ліхтар 3,66 × 1,89 за рулеткою, дефлектори за супутником'};
+if(state.lay.v2===undefined) state.lay.v2=true; if(!state.lay.lanSc||(SC.C&&!state.lay.v3seen)){ state.lay.lanSc=SC.C?'C':'B'; if(SC.C) state.lay.lanMods=false; state.lay.v3seen=true; }   // v3: ліхтарі світлопрозорі — модулі на них лише за рішенням власника if(state.lay.lanMods===undefined) state.lay.lanMods=true;
+const sc=()=>SC[state.lay.lanSc]?state.lay.lanSc:(SC.C?'C':'B');
 const V2ON=()=>state.proj==='ours'&&!!state.lay.v2&&['pz','sun'].includes(effSec())&&!state.lay.rad;
 const RG=grp('roofv2',G.ours), LG=grp('lanv2',G.site);
 const SUNV2=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,metalness:0.1});
@@ -19,14 +22,14 @@ G.site.children.filter(o=>o.material===MAT.lan||o.material===MAT.obs).forEach(o=
 // ---------- ліхтарі обох сценаріїв (двосхилі, фото 123334, 123924, 123951)
 const lanM=std(0xe6ebe2,{metalness:0.05,roughness:0.25,transparent:true,opacity:0.6,depthWrite:false}), lanE=std(0x9da3a6,{roughness:0.8});   // схили — світлопрозорий полікарбонат (фото 27.10)
 const fnL=(...ids)=>ids.map(id=>FOTO.p.findIndex(p=>p[0]===id)+1).filter(n=>n>0).join(', ');
-const LANO={A:[],B:[]};
-['A','B'].forEach(k=>SC[k].lan.forEach((l,i)=>{ const [x0,x1,y0,y1,zb,h]=l, xc=(x0+x1)/2, z0=Math.min(roofZ(x0),roofZ(x1))-0.3;
+const LANO={A:[],B:[],C:[]};
+['A','B'].concat(SC.C?['C']:[]).forEach(k=>SC[k].lan.forEach((l,i)=>{ const [x0,x1,y0,y1,zb,h]=l, xc=(x0+x1)/2, z0=Math.min(roofZ(x0),roofZ(x1))-0.3;
   const shp=new THREE.Shape([new THREE.Vector2(x0,z0),new THREE.Vector2(x1,z0),new THREE.Vector2(x1,zb),new THREE.Vector2(xc,zb+h),new THREE.Vector2(x0,zb)]);
   const o=mesh(new THREE.ExtrudeGeometry(shp,{depth:y1-y0,bevelEnabled:false}),[lanE,lanM],LG); o.position.z=-y1; LANO[k].push(o);
-  o.userData.info={t:`Світловий ліхтар ${i+1} — ${k==='B'?'за РП: 3,40 × 1,74 м':'за розрізом 1-1: 2,87 м, гребінь ≈1,5 м (оцінка)'}`,
-    d:`${nf(x1-x0,2)} × ${nf(y1-y0,1)} м, гребінь на ${nf(h,2)} м над основою (+${nf(zb+h,2)}), схили ${nf(Math.atan2(h,(x1-x0)/2)/D2R,0)}°. ${k==='B'?'На розрізі 1-1 у цьому місці — плита 2,87 м: ймовірно, отвір, а ліхтар ширший (центри РП і розрізу розходяться на 0,03–0,46 м). ':''}Обміри 27.10 (рулетка, фото № ${fnL('111904','111907','111925')}): гребінь ≈1,89 м над покрівлею, по низу ≈3,66 м — у моделі й розрахунках поки ${k==='B'?'3,40 × 1,74':'2,87 × 1,5'}. Схили — світлопрозорий полікарбонат в алюмінієвих профілях, під ліхтарем сітка (фото № ${fnL('111955','112136','112235','112242')}): модулі на ліхтарях затінять цех. Щипці — сталевий лист.`}; PICK.push({o}); }));
+  o.userData.info={t:`Світловий ліхтар ${i+1} — ${k==='C'?'за рулеткою 27.10: 3,66 × 1,89 м':k==='B'?'за РП: 3,40 × 1,74 м':'за розрізом 1-1: 2,87 м, гребінь ≈1,5 м (оцінка)'}`,
+    d:`${nf(x1-x0,2)} × ${nf(y1-y0,1)} м, гребінь на ${nf(h,2)} м над основою (+${nf(zb+h,2)}), схили ${nf(Math.atan2(h,(x1-x0)/2)/D2R,0)}°. ${k==='B'?'На розрізі 1-1 у цьому місці — плита 2,87 м: ймовірно, отвір, а ліхтар ширший (центри РП і розрізу розходяться на 0,03–0,46 м). ':''}Обміри 27.10 (рулетка, фото № ${fnL('111904','111907','111925')}): гребінь ≈1,89 м над покрівлею, по низу ≈3,66 м — ${k==='C'?'розрахунок v3 — саме за цими обмірами':`у цьому сценарії — ${k==='B'?'3,40 × 1,74':'2,87 × 1,5'}`}. Схили — світлопрозорий полікарбонат в алюмінієвих профілях, під ліхтарем сітка (фото № ${fnL('111955','112136','112235','112242')}): модулі на ліхтарях затінять цех. Щипці — сталевий лист.`}; PICK.push({o}); }));
 function setLanGeo(){ const k=V2ON()?sc():'B', S=SC[k], dm=k==='A'&&V2ON()&&state.lay.lanMods;
-  LANO.A.forEach(o=>o.visible=k==='A'); LANO.B.forEach(o=>o.visible=k==='B');
+  Object.keys(LANO).forEach(q=>LANO[q].forEach(o=>o.visible=LK(k)===q));
   LANG.length=0; S.lan.forEach((l,i)=>{ const L={xc:(l[0]+l[1])/2,hw:(l[1]-l[0])/2,y0:l[2],y1:l[3],zb:l[4],h:l[5]};
     if(dm){ const g=S.dom.geo[i], t=Math.tan(S.dom.th*D2R); L.dm={zr:g.zr+0.033,hw:S.dom.hs+0.01,t}; L.y0=Math.min(L.y0,g.y0); L.y1=Math.max(L.y1,g.y0+g.n*1.325); }
     LANG.push(L); });
@@ -35,16 +38,16 @@ function setLanGeo(){ const k=V2ON()?sc():'B', S=SC[k], dm=k==='A'&&V2ON()&&stat
 function modM(xa,xb,y,lift,th){ const za=roofZ(xa)+0.12, zb=roofZ(xb)+0.12, ang=Math.atan2(zb-za,xb-xa), L=Math.hypot(xb-xa,zb-za)-0.02;
   _q.setFromAxisAngle(ZA,ang); const up=new V3(-Math.sin(ang),Math.cos(ang),0);
   _p.copy(W((xa+xb)/2,y,(za+zb)/2)).addScaledVector(up,0.0165+lift); _M.compose(_p,_q,_s.set(L-(lift?0.1:0),th,LM-0.02-(lift?0.1:0))); return _M; }
-const RCOL={shade:0xb4461b,ac:0x7a3fa0,portal:0x7a3fa0,door:0x7a3fa0,str:0xc9781c};
-const WHY={shade:'тінь понад 15 % за рік (західна будівля, ліхтар, рама кондиціонерів, сусідні грані)',ac:'рама кондиціонерів 14,5 × 2,4 м + 1 м для обслуговування або прохід від виходу на дах до рами',portal:'стійки сталевого порталу на південному краї',door:'прохід від дверей західної будівлі',str:'найслабше місце — прибрано, щоб модулі ділились на стрінги по 11'};
+const RCOL={shade:0xb4461b,ac:0x7a3fa0,portal:0x7a3fa0,door:0x7a3fa0,exit:0x7a3fa0,str:0xc9781c,defl:0x6b4a2e,thr:0x8f9aa1};
+const WHY={shade:'тінь понад 15 % за рік (західна будівля, ліхтар, рама кондиціонерів, сусідні грані)',ac:'рама кондиціонерів 14,5 × 2,4 м + 1 м для обслуговування або прохід від виходу на дах до рами',portal:'стійки сталевого порталу на південному краї',door:'прохід від дверей західної будівлі',str:'найслабше місце — прибрано, щоб модулі ділились на стрінги по 11',exit:'вихід на дах і портал (X 62–70 — за фото й супутником, уточнити) або прохід від виходу до рами',defl:'дефлектор, «грибок» або труба на даху + 0,3 м (за супутником Google і РП)',thr:'опромінення нижче порогу цього варіанта — у варіанті не ставимо'};
 const rmMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.55,depthWrite:false});
 const RM={};   // RM[k] = {ok:[], rem:[], im, rim, grp}
-['A','B'].forEach(k=>{ const S=SC[k], g=grp('v2r'+k,RG), ok=S.mods.filter(m=>m[3]==='ok'), rem=S.mods.filter(m=>RCOL[m[3]]);
+Object.keys(SC).forEach(k=>{ const S=SC[k], g=grp('v2r'+k,RG), ok=S.mods.filter(m=>m[3]==='ok'), rem=S.mods.filter(m=>RCOL[m[3]]);
   const im=inst(BOX,MAT.pvPo,ok.length,g); ok.forEach((m,i)=>{ im.setMatrixAt(i,modM(m[0],m[1],m[2],0,0.033)); im.setColorAt(i,white); }); im.instanceMatrix.needsUpdate=true;
   const rg=grp('v2rr'+k,g), rim=inst(BOX,rmMat,rem.length,rg,false); rem.forEach((m,i)=>{ rim.setMatrixAt(i,modM(m[0],m[1],m[2],0.03,0.02)); rim.setColorAt(i,new THREE.Color(RCOL[m[3]])); }); rim.instanceMatrix.needsUpdate=true;
-  const B=S.base, tot=`Дах цеху ${k==='B'?'(ліхтар 3,40 × 1,74 за РП)':'(ліхтар 2,87 за розрізом 1-1)'}: ${nf(B.n)} модулів = ${B.st} стрінгів × 11, ${nf(B.kwp,1)} кВтп, ${nf(B.mwh,1)} МВт·год за рік (${nf(B.y)} кВт·год/кВтп).`;
-  im.userData.info=i=>{ const m=ok[i]; return {t:`Модуль даху 27.10 · сценарій ${k==='B'?'«ліхтар 3,40»':'«ліхтар 2,87»'}`,d:`На грані покрівлі, книжково вздовж будівлі, 0,12 м над покрівлею. ≈${nf(m[4])} кВт·год за рік (${nf(m[4]/0.73)} на 1 кВтп), тінь забирає ${nf(m[5]||0,1)} %. ${tot}`}; };
-  rim.userData.info=i=>{ const m=rem[i]; return {t:`Прибрано: ${WHY[m[3]]}`,d:`Тут модуль дав би ≈${nf(m[4]||0)} кВт·год за рік${m[5]!=null?` (тінь ${nf(m[5],1)} %)`:''}. ${tot}`}; };
+  const B=S.base, tot=`Дах цеху ${LK(k)==='C'?`${SLAB[k]}`:k==='B'?'(ліхтар 3,40 × 1,74 за РП)':'(ліхтар 2,87 за розрізом 1-1)'}: ${nf(B.n)} модулів = ${B.st} стрінгів × 11, ${nf(B.kwp,1)} кВтп, ${nf(B.mwh,1)} МВт·год за рік (${nf(B.y)} кВт·год/кВтп)${B.mism!=null?`, з втратами на різну освітленість у стрінгах (−${nf(B.mism,2)} %)`:''}.`;
+  im.userData.info=i=>{ const m=ok[i]; return {t:`Модуль даху · ${SLAB[k]}${m[7]!=null&&m[7]>=0?` · стрінг ${m[7]+1}`:''}`,d:`На грані покрівлі, книжково вздовж будівлі, 0,12 м над покрівлею. ≈${nf(m[4])} кВт·год за рік (${nf(m[4]/0.73)} на 1 кВтп), тінь забирає ${nf(m[5]||0,1)} %${m[6]!=null?`; опромінення площини модуля ${nf(m[6])} кВт·год/м²`:''}. ${tot}`}; };
+  rim.userData.info=i=>{ const m=rem[i]; return {t:`Прибрано: ${WHY[m[3]]}`,d:`${m[4]!=null?`Тут модуль дав би ≈${nf(m[4]||0)} кВт·год за рік${m[5]!=null?` (тінь ${nf(m[5],1)} %)`:''}${m[6]!=null?`, опромінення ${nf(m[6])} кВт·год/м²`:''}. `:''}${tot}`}; };
   PICK.push({o:im,when:()=>g.visible},{o:rim,when:()=>rg.visible});
   RM[k]={ok,rem,im,rim,g,rg}; });
 // ---------- А: «доміки» над ліхтарями 2,87 (два модулі книжково сходяться над гребенем, винос 0,10 м)
@@ -63,25 +66,27 @@ dmods.forEach((m,i)=>{ dIm.setMatrixAt(i,domM(m,0)); dIm.setColorAt(i,m[5]?white
   fr.userData.info={t:'Рама «доміку» — схема',d:`2 рейки на схил уздовж ліхтаря, стійки по краях ліхтаря через ≈2,65 м до ферм / плит (не до ліхтаря). Вітер на «домік» ≈2 м на +19,6 м і сніг, що з'їжджає на модулі даху, — перевірити в КМ. ${t}`}; ps.userData.info=fr.userData.info;
   PICK.push({o:dIm,when:()=>DG.visible},{o:fr,when:()=>DG.visible}); }
 // ---------- Б: книжково рівно по схилах ліхтаря 3,40 × 1,74 (верхні краї біля гребеня, нижні — біля основи)
-const FG2=grp('v2fB',RG), FB=SC.B.flush, thB=FB.th*D2R, cB=Math.cos(thB), sB=Math.sin(thB);
-const fmods=FB.mods, fIm=inst(BOX,MAT.pvL,fmods.length,FG2), lzB=l=>{ const L=SC.B.lan[l-1]; return [(L[0]+L[1])/2,L[4],L[5]]; };
+const FL={}; ['B'].concat(SC.C?['C']:[]).forEach(FK=>{ const FG2=grp('v2f'+FK,RG), FB=SC[FK].flush, thB=FB.th*D2R, cB=Math.cos(thB), sB=Math.sin(thB);
+const fmods=FB.mods, fIm=inst(BOX,MAT.pvL,fmods.length,FG2), lzB=l=>{ const L=SC[FK].lan[l-1]; return [(L[0]+L[1])/2,L[4],L[5]]; };
 function flM(m){ const [xc,zb,h]=lzB(m[0]), sg=m[1]==='E'?1:-1, sa=0.02+LM/2, o=0.12+0.0165; _q.setFromAxisAngle(ZA,-sg*thB);
   _p.set(xc+sg*(sa*cB+o*sB),zb+h-sa*sB+o*cB,-(m[2]+DM/2)); _M.compose(_p,_q,_s.set(LM-0.01,0.033,DM-0.02)); return _M; }
 fmods.forEach((m,i)=>{ fIm.setMatrixAt(i,flM(m)); fIm.setColorAt(i,m[5]?white:lin(0xe0a040)); }); fIm.instanceMatrix.needsUpdate=true;
-{ const seg=[]; SC.B.lan.forEach((l,li)=>{ const ms=fmods.filter(m=>m[0]===li+1); if(!ms.length) return; const [xc,zb,h]=lzB(li+1), y0=Math.min(...ms.map(m=>m[2]))-0.05, y1=Math.max(...ms.map(m=>m[2]))+DM+0.05;
+{ const seg=[]; SC[FK].lan.forEach((l,li)=>{ const ms=fmods.filter(m=>m[0]===li+1); if(!ms.length) return; const [xc,zb,h]=lzB(li+1), y0=Math.min(...ms.map(m=>m[2]))-0.05, y1=Math.max(...ms.map(m=>m[2]))+DM+0.05;
     [-1,1].forEach(sg=>[0.02+0.54,0.02+LM-0.54].forEach(sa=>seg.push([xc+sg*(sa*cB+0.06*sB),zb+h-sa*sB+0.06*cB,y0,y1]))); });
   const fr=inst(BOX,MAT.zn,seg.length,FG2); seg.forEach(([x,z,y0,y1],i)=>{ _M.compose(_p.set(x,z,-(y0+y1)/2),QI,_s.set(0.041,0.041,y1-y0)); fr.setMatrixAt(i,_M); }); fr.instanceMatrix.needsUpdate=true;
-  const K=FB.K, t=`Книжково по схилах 4 ліхтарів 3,40 × 1,74 (РП): ${K.places} місць, ${K.n} модулів = ${K.st} стрінги, ${nf(K.kwp,1)} кВтп, ${nf(K.mwh,1)} МВт·год (схід ${nf(K.E)}, захід ${nf(K.W)} кВт·год/кВтп); модулі даху від їхньої тіні −${nf(K.roof_loss,1)} → чистими +${nf(K.net,1)}. ${K.left} модулів поза стрінгами (${nf(K.left_mwh,1)} МВт·год) — на освітлення під ліхтарем.`;
-  fIm.userData.info=i=>{ const m=fmods[i]; return {t:`Модуль на схилі ліхтаря ${m[0]}: на ${m[1]==='E'?'схід':'захід'} ${nf(FB.th,0)}°${m[5]?'':' · поза стрінгами'}`,d:`Книжково, 0,12 м над схилом; верхній край — на 20 мм від гребеня, унизу лишається 29 мм. ≈${nf(m[3])} кВт·год за рік (${nf(m[3]/0.73)} на 1 кВтп), тінь ${nf(m[4],1)} %.${m[5]?'':' Не входить у стрінг по 11 — на світлодіоди під ліхтарем напряму (ідея власника 07:41).'} ${t}`}; };
+  const K=FB.K, t=`Книжково по схилах 4 ліхтарів ${FK==='C'?'3,66 × 1,89 (рулетка 27.10; схили світлопрозорі — цех стане темнішим)':'3,40 × 1,74 (РП)'}: ${K.places} місць, ${K.n} модулів = ${K.st} стрінги, ${nf(K.kwp,1)} кВтп, ${nf(K.mwh,1)} МВт·год (схід ${nf(K.E)}, захід ${nf(K.W)} кВт·год/кВтп); модулі даху від їхньої тіні −${nf(K.roof_loss,1)} → чистими +${nf(K.net,1)}. ${K.left} модулів поза стрінгами (${nf(K.left_mwh,1)} МВт·год) — на освітлення під ліхтарем.`;
+  fIm.userData.info=i=>{ const m=fmods[i]; return {t:`Модуль на схилі ліхтаря ${m[0]}: на ${m[1]==='E'?'схід':'захід'} ${nf(FB.th,0)}°${m[5]?'':' · поза стрінгами'}`,d:`Книжково, 0,12 м над схилом; верхній край — на 20 мм від гребеня, унизу лишається ${FK==='C'?'≈0,23 м':'29 мм'}. ≈${nf(m[3])} кВт·год за рік (${nf(m[3]/0.73)} на 1 кВтп), тінь ${nf(m[4],1)} %.${m[5]?'':' Не входить у стрінг по 11 — на світлодіоди під ліхтарем напряму (ідея власника 07:41).'} ${t}`}; };
   fr.userData.info={t:'Рейки на схилі ліхтаря — схема',d:`2 рейки на схил горизонтально вздовж ліхтаря (поперек довгої сторони модуля, як в інструкції ZNSHINE), притиски на довгих сторонах на 540 мм від кінців. Кріплення — до каркаса ліхтаря або його опорної рами; чи витримає каркас — немає в даних. Кут 46° — погодити з ZNSHINE. ${t}`};
   PICK.push({o:fIm,when:()=>FG2.visible},{o:fr,when:()=>FG2.visible}); }
+  FL[FK]={FG2,FB,fmods,fIm}; });
+const FLK=k=>FL[LK(k)]||FL.B;
 // ---------- сонце: геометрія модулів для тіней (та сама модель, що в розділі «Сонце»)
 const BLDv=(x,y,z)=>[x,y,z];
 function mkGeom(c,n,ha,hb){ const la=Math.hypot(...ha), lb=Math.hypot(...hb), A=la>=lb?ha:hb, B=la>=lb?hb:ha, s=[];
   [-0.75,-0.25,0.25,0.75].forEach(u=>[-0.5,0.5].forEach(v=>s.push(c.map((x,i)=>x+A[i]*u+B[i]*v+n[i]*0.012)))); return {qc:c,n,a:ha,b:hb,a2:la*la,b2:lb*lb,s}; }
 const GV={roof:[],lan:[],fac:[],can:[]}, VS={roof:null,lan:null,fac:null,can:null}, FMAP=[], LIDX=[];   // LIDX: модуль на ліхтарі → індекс у GV.lan (−1 — поза стрінгами, на освітлення)
 const FP=window.__twin.facpv||null;
-function buildGV(){ const k=sc(); GV.roof=meshGeoms(RM[k].im,RM[k].ok.length); LIDX.length=0; GV.lan=[]; if(state.lay.lanMods){ const all=k==='A'?meshGeoms(dIm,dmods.length):meshGeoms(fIm,fmods.length), ms=k==='A'?dmods:fmods; ms.forEach((m,i)=>{ LIDX.push(m[5]?GV.lan.length:-1); if(m[5]) GV.lan.push(all[i]); }); }
+function buildGV(){ const k=sc(); GV.roof=meshGeoms(RM[k].im,RM[k].ok.length); LIDX.length=0; GV.lan=[]; if(state.lay.lanMods){ const F=FLK(k), all=k==='A'?meshGeoms(dIm,dmods.length):meshGeoms(F.fIm,F.fmods.length), ms=k==='A'?dmods:F.fmods; ms.forEach((m,i)=>{ LIDX.push(m[5]?GV.lan.length:-1); if(m[5]) GV.lan.push(all[i]); }); }
   GV.fac=[]; GV.can=[]; FMAP.length=0;
   if(FP&&state.lay.fac25){ FACPV.vert.forEach((m,j)=>{ const [f,s,h,Wd,Hd]=m, sc_=s+Wd/2, hc=h+Hd/2;
       const c=f==='S'?[sc_,-0.5-0.10-0.035,hc]:[96.64+0.10+0.035,sc_,hc], n=f==='S'?[0,-1,0]:[1,0,0], ha=f==='S'?[Wd/2,0,0]:[0,Wd/2,0], hb=[0,0,Hd/2];
@@ -89,7 +94,7 @@ function buildGV(){ const k=sc(); GV.roof=meshGeoms(RM[k].im,RM[k].ok.length); L
     GV.can=meshGeoms(FP.pc,FACPV.can.length); }
   Object.keys(VS).forEach(q=>VS[q]=new Float32Array(GV[q].length)); }
 function litV2(g,set,d){ let lit=0; for(const o of g.s){ let hit;
-    if(set==='roof'||set==='lan') hit=shopRoofHit(o,d)||OBX.some(b=>rayBox(o,d,b));
+    if(set==='roof'||set==='lan') hit=shopRoofHit(o,d)||OBX.some(b=>rayBox(o,d,b))||OBSC.some(c=>rayCyl(o,d,c));
     else hit=OBX.some(b=>rayBox(o,d,b))||TPB.some(b=>rayBox(o,d,b))||(set==='fac'&&GV.can.some(q=>quadHit(o,d,q)));
     if(!hit) lit++; } return lit/g.s.length; }
 const CFG25={P:0.730,U:25,eta:0.235,L:LOSS};
@@ -106,7 +111,7 @@ const _gn=genNow; genNow=function(){ const r=_gn(); if(V2ON()&&!wxStep(state.day
 // фарбування: тінь зараз / тінь за рік (річні дані — розрахунок calc/v2)
 function paintV2(on){ const k=sc(), yr=on&&state.lay.sunYear, R=RM[k];
   R.im.material=on?SUNV2:MAT.pvPo; R.ok.forEach((m,i)=>R.im.setColorAt(i,!on?white:yr?lcol((m[5]||0)/100):fcol(VS.roof[i]??1))); R.im.instanceColor.needsUpdate=true;
-  const im=k==='A'?dIm:fIm, ms=k==='A'?dmods:fmods; im.material=on?SUNV2:MAT.pvL;
+  const im=k==='A'?dIm:FLK(k).fIm, ms=k==='A'?dmods:FLK(k).fmods; im.material=on?SUNV2:MAT.pvL;
   ms.forEach((m,i)=>im.setColorAt(i,!m[5]?(on?lin(0xc3c8cc):lin(0xe0a040)):!on?white:yr?lcol(m[4]/100):fcol(VS.lan&&LIDX[i]>=0?VS.lan[LIDX[i]]:1))); im.instanceColor.needsUpdate=true;
   if(FP){ const f=FP; [f.pvL,f.pvP,f.pc].forEach(o=>{ if(o) o.material=on&&!yr?SUNV2:(o===f.pvL?MAT.pvL:MAT.pvP); });
     if(f.IDX){ ['L','P'].forEach(t=>{ const o=t==='L'?f.pvL:f.pvP; f.IDX[t].forEach((k_,i)=>o.setColorAt(i,on&&!yr&&VS.fac&&VS.fac.length?fcol(VS.fac[k_]):white)); o.instanceColor.needsUpdate=true; });
@@ -166,13 +171,14 @@ function sunPathBlock(){ const rows=DAYS.map((dd,i)=>{ const D=DINFO[i]; return 
 const _su=sunUI; sunUI=function(){ _su(); const el=document.getElementById('pSun'); if(!el) return; if(SUNNOW.alt>0){ const r=128*(1-SUNNOW.alt/(Math.PI/2)); el.setAttribute('cx',(150+r*Math.sin(SUNNOW.az)).toFixed(1)); el.setAttribute('cy',(150-r*Math.cos(SUNNOW.az)).toFixed(1)); el.style.display=''; } else el.style.display='none'; };
 const _ps=panelSun; panelSun=function(){ let h=_ps(); const T=state.sunTab||'day';
   if(V2ON()){ const v=v2Sum(), K=v.L&&v.L.K;
-    const blk=`<div class="blk"><h3>Наш Б · дах за розрізом 1-1 (27.10)</h3><p class="src">У «Сонці» — модулі 27.10: дах ${nf(v.n.roof)} (${v.k==='B'?'ліхтар 3,40 × 1,74 за РП':'ліхтар 2,87 за розрізом'})${v.n.lan?`, на ліхтарях ${nf(v.n.lan)} (${v.k==='B'?'книжково по схилах':'«доміки»'})`:''}${v.n.fac?`, фасади ${nf(v.n.fac)}`:''}, склад ${nf(v.n.wh)} — разом ${nf(v.N)} модулів, ${nf(v.N*0.73,1)} кВтп. Тіні рахуються наживо: західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи, козирок над вертикальними модулями сходу. «За рік» — з розрахунку 27.10 (calc/v2, ${R2.date})${v.roofLoss?`, мінус тінь від модулів на ліхтарях (−${nf(v.roofLoss,1)} МВт·год на даху)`:''}. Перемикач ліхтаря — над моделлю.</p></div>`;
+    const blk=`<div class="blk"><h3>Наш Б · дах за розрізом 1-1 (27.10)</h3><p class="src">У «Сонці» — модулі 27.10: дах ${nf(v.n.roof)} (${LTXT[LK(v.k)]}${LK(v.k)==='C'?`, ${SLAB[v.k]}`:''})${v.n.lan?`, на ліхтарях ${nf(v.n.lan)} (${v.k==='A'?'«доміки»':'книжково по схилах'})`:''}${v.n.fac?`, фасади ${nf(v.n.fac)}`:''}, склад ${nf(v.n.wh)} — разом ${nf(v.N)} модулів, ${nf(v.N*0.73,1)} кВтп. Тіні рахуються наживо: західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи, козирок над вертикальними модулями сходу. «За рік» — з розрахунку ${LK(v.k)==='C'?'v3 (calc/v3, 27.10, вечір)':`27.10 (calc/v2, ${R2.date})`}${v.roofLoss?`, мінус тінь від модулів на ліхтарях (−${nf(v.roofLoss,1)} МВт·год на даху)`:''}. Перемикач ліхтаря — над моделлю.</p></div>`;
     h=h.replace('<div class="blk">',blk+'<div class="blk">');
     if(T==='year') h=h.replace(/1[\s  ]953/g,nf(v.N)).replace(/1[\s  ]425,69/g,nf(v.N*0.73,1)); }
   if(T==='day'){ const i=h.indexOf('<div class="blk"><h3>Обидва проєкти за добу'); h=i>0?h.slice(0,i)+sunPathBlock()+h.slice(i):h+sunPathBlock(); }
   return h; };
 // ---------- панель «Загальне»
 const _pz=panelPZ; panelPZ=function(){ const h=_pz.apply(this,arguments); if(!V2ON()) return h; const k=sc(), A=SC.A, B=SC.B, F=R2.fac.tot;
+  if(LK(k)==='C'&&window.__twin.v3panel) return window.__twin.v3panel(k)+h;
   const row=(t,a,b,cls)=>`<tr class="${cls||''}"><td>${t}</td><td class="${k==='A'?'cur':''}">${a}</td><td class="${k==='B'?'cur':''}">${b}</td></tr>`;
   const tA=A.base.n+A.dom.K.n, tB=B.base.n+B.flush.K.n, mA=A.base.mwh-A.dom.K.roof_loss+A.dom.K.mwh, mB=B.base.mwh-B.flush.K.roof_loss+B.flush.K.mwh;
   return `<div class="ph"><span class="eyebrow ours">Наш варіант Б · дах за розрізом 1-1 · 27.10</span><h2>${nf(k==='B'?tB:tA)} модулів на даху цеху і ліхтарях</h2><p>Покрівля — грані по ≈3 м за кресленням замовника (ендови +15,90, гребені +17,66 і +18,15), а не гладкі арки. Ліхтар обміряно рулеткою 27.10: гребінь ≈1,89 м над покрівлею, по низу ≈3,66 м, схили — світлопрозорий полікарбонат (модулі на ліхтарях затінять цех). Розрахунок поки за двома сценаріями (3,40 × 1,74 і 2,87 × 1,5) — перемикач над моделлю; під обміри ще не перераховано.</p></div>
@@ -187,19 +193,20 @@ const _pz=panelPZ; panelPZ=function(){ const h=_pz.apply(this,arguments); if(!V2
 const _hud=hudCtx; hudCtx=function(){ _hud.apply(this,arguments); const s=state.sec; if(state.proj!=='ours'||!(s==='pz'||effSec()==='sun')||state.lay.rad) return;
   const m=$('#modes'), add=(key,t,on,fn)=>{ const b=document.createElement('button'); b.type='button'; b.dataset.m=key; b.textContent=t; b.setAttribute('aria-pressed',String(!!on)); b.onclick=()=>{ fn(); CURVE_RESET(); apply(); save(); }; m.appendChild(b); };
   add('v2',`Дах 27.10 · ${nf(SC[sc()].base.n)}`,state.lay.v2,()=>state.lay.v2=!state.lay.v2);
-  if(state.lay.v2){ add('scB','Ліхтар 3,40 · книжково',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A');
+  if(state.lay.v2){ if(SC.C){ add('scC','v3 · А усі місця',sc()==='C',()=>state.lay.lanSc='C'); add('scD','Б · від 1 050',sc()==='D',()=>state.lay.lanSc='D'); add('scE','В · від 1 100',sc()==='E',()=>state.lay.lanSc='E'); }
+    add('scB','Ліхтар 3,40',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A');
     add('lanM',`На ліхтарях · +${nf(SC[sc()][sc()==='A'?'dom':'flush'].K.n)}`,state.lay.lanMods,()=>state.lay.lanMods=!state.lay.lanMods); }
   m.hidden=false;
   if(effSec()==='sun'&&V2ON()&&state.lay.lanMods&&!state.lay.sunPlain){ const l=$('#legend'); if(l&&!l.hidden) l.insertAdjacentHTML('beforeend','<span><i class="sw" style="background:#c3c8cc"></i>на ліхтарях поза стрінгами</span>'); }
-  if(s==='pz'&&V2ON()){ const l=$('#legend'); l.innerHTML=`<span class="t">Наш Б · дах за розрізом 1-1</span><span>${nf(SC[sc()].base.n)} модулів на гранях</span><span><i class="sw" style="background:#b4461b"></i>прибрано: тінь</span><span><i class="sw" style="background:#7a3fa0"></i>кондиціонери, портал, двері</span><span><i class="sw" style="background:#c9781c"></i>під стрінги</span><span><i class="sw" style="background:#e0a040"></i>поза стрінгами — на освітлення</span>`; l.hidden=false; } };
+  if(s==='pz'&&V2ON()){ const l=$('#legend'); l.innerHTML=`<span class="t">Наш Б · ${LK(sc())==='C'?SLAB[sc()]:'дах за розрізом 1-1'}</span><span>${nf(SC[sc()].base.n)} модулів на гранях</span>${LK(sc())==='C'?'<span><i class="sw" style="background:#6b4a2e"></i>дефлектори, труби</span><span><i class="sw" style="background:#8f9aa1"></i>нижче порогу варіанта</span>':'<span><i class="sw" style="background:#b4461b"></i>прибрано: тінь</span>'}<span><i class="sw" style="background:#7a3fa0"></i>кондиціонери, портал, двері</span><span><i class="sw" style="background:#c9781c"></i>під стрінги</span><span><i class="sw" style="background:#e0a040"></i>поза стрінгами — на освітлення</span>`; l.hidden=false; } };
 function CURVE_RESET(){ Object.keys(CURVE).forEach(q=>delete CURVE[q]); GNOW=null; }
 // ---------- видимість
 let lastKey='';
 const _sv=setVis; setVis=function(){ _sv.apply(this,arguments); const on=V2ON(), k=sc(), sun=effSec()==='sun';
-  RG.visible=on; RM.A.g.visible=on&&k==='A'; RM.B.g.visible=on&&k==='B'; RM.A.rg.visible=RM.A.g.visible&&!sun; RM.B.rg.visible=RM.B.g.visible&&!sun;
-  DG.visible=on&&k==='A'&&!!state.lay.lanMods; FG2.visible=on&&k==='B'&&!!state.lay.lanMods;
+  RG.visible=on; Object.keys(RM).forEach(q=>{ RM[q].g.visible=on&&k===q; RM[q].rg.visible=RM[q].g.visible&&!sun; });
+  DG.visible=on&&k==='A'&&!!state.lay.lanMods; Object.keys(FL).forEach(q=>FL[q].FG2.visible=on&&k!=='A'&&LK(k)===q&&!!state.lay.lanMods);
   if(on){ ourMods.visible=false; lagMesh.visible=false; if(oBZ.boxes) oBZ.boxes.visible=false; ['blk','mat','sl','cp','rods','xp','ang','cl','an'].forEach(q=>{ if(OUR[q]) OUR[q].visible=false; }); } setLanGeo();
   const key=[on,k,state.lay.lanMods,state.lay.fac25].join('|'); if(key!==lastKey){ lastKey=key; buildGV(); CURVE_RESET(); }
   yrApply(); if(!on) paintV2(false); };
-window.__twin.v2={SC,RM,GV,VS,V2ON,v2Sum,DINFO,HORZ}; apply();
+window.__twin.v2={SC,RM,GV,VS,V2ON,v2Sum,DINFO,HORZ,LK,SLAB,FL,sc}; if(window.__twin.v3init) window.__twin.v3init(); apply();
 }

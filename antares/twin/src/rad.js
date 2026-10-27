@@ -12,8 +12,8 @@ const RXp=X=>roofZ(Math.max(0,Math.min(96.64,X)))+1.2;
 function build(k){ const C=RADD.cells[k], list=[];
   for(let j=0;j<C.ny;j++) for(let i=0;i<C.nx;i++){ const n=j*C.nx+i, e=C.e[n]; if(!e||(C.w&&C.w[n]==='1')) continue; list.push([i,j,n]); }
   const im=new THREE.InstancedMesh(k==='roof'||k.startsWith('wh')?PH:PL,RMAT,list.length); im.userData.cells=list; im.frustumCulled=false;
-  list.forEach(([i,j,n],m)=>{ const s=C.s0+i, t=C.t0+j;
-    if(k==='roof'){ const x0=Math.max(-0.15,s-0.5), x1=Math.min(96.64,s+0.5), y0=Math.max(-0.5,t-0.5), y1=Math.min(96.59,t+0.5), z0=roofZ(x0)+0.07, z1=roofZ(x1)+0.07;
+  const RS=C.res||1; list.forEach(([i,j,n],m)=>{ const s=C.s0+i*RS, t=C.t0+j*RS;
+    if(k==='roof'){ const x0=Math.max(-0.15,s-RS/2), x1=Math.min(96.64,s+RS/2), y0=Math.max(-0.5,t-RS/2), y1=Math.min(96.59,t+RS/2), z0=roofZ(x0)+0.07, z1=roofZ(x1)+0.07;
       ps.set((x0+x1)/2,(z0+z1)/2,-(y0+y1)/2); q.setFromEuler(eu.set(0,0,Math.atan2(z1-z0,x1-x0))); sc.set(Math.hypot(x1-x0,z1-z0),1,(y1-y0)); }
     else if(k.startsWith('wh')){ const p=k.slice(2), y0=t-0.5, y1=t+0.5, z0=WHF[p](s,y0)+0.07, z1=WHF[p](s,y1)+0.07;
       ps.set(s,(z0+z1)/2,-t); q.setFromEuler(eu.set(Math.atan2(z1-z0,1),0,0)); sc.set(1,1,Math.hypot(1,z1-z0)); }
@@ -22,9 +22,9 @@ function build(k){ const C=RADD.cells[k], list=[];
       sc.set((a1-a0)*GAP,(h1-h0)*GAP,1); }
     M.compose(ps,q,sc); im.setMatrixAt(m,M); im.setColorAt(m,RCL[cls(C.e[n])]); });
   im.instanceMatrix.needsUpdate=true; im.instanceColor.needsUpdate=true; RG.add(im);
-  im.userData.info=id=>{ const [i,j,n]=list[id], e=C.e[n], l=C.l[n], s=C.s0+i, t=C.t0+j, F=['S','N','E'].includes(k);
+  im.userData.info=id=>{ const [i,j,n]=list[id], e=C.e[n], l=C.l[n], RS=C.res||1, s=C.s0+i*RS, t=C.t0+j*RS, F=['S','N','E'].includes(k);
     const where=k==='roof'||k.startsWith('wh')?`X ${nf(s,1)}, Y ${nf(t,1)}`:`${k==='E'?'Y':'X'} ${nf(s,1)} м, висота ${nf(t-0.5,0)}–${nf(t+0.5,0)} м`;
-    return {t:`${NM[k]}: ${where}`, d:`${nf0(e)} кВт·год/м² за рік — ${nf0(e/GHI*100)} % від горизонтальної площини без тіні (${nf0(GHI)}). Тінь і закрите небо забирають ${l} %.${F?' Вертикальна площина.':''}`}; };
+    return {t:`${NM[k]}: ${where}${k==='roof'&&C.v3?' · клітинка 0,5 × 0,5 м':''}`, d:`${nf0(e)} кВт·год/м² за рік — ${nf0(e/GHI*100)} % від горизонтальної площини без тіні (${nf0(GHI)}). Тінь і закрите небо забирають ${l} %.${F?' Вертикальна площина.':''}`}; };
   PICK.push({o:im,when:()=>RG.visible}); return im; }
 ['roof','S','N','E','whA','whB','whC1'].forEach(build);
 // ---------- режим у розділі «Сонце і генерація»
@@ -43,8 +43,8 @@ function radPanel(){ const S=RADD.st, SN={roof:'Дах цеху',whA:'Склад
   <p class="src">м² — вільна площа: на даху без ліхтарів, перешкод і рами кондиціонерів; на фасадах без вікон, воріт і того, що стоїть упритул (ТП, тамбури, сходи, ДГУ). «10 %–макс.»: 10 % площі мають менше першого числа. Горизонтальна площина без тіні — ${nf0(GHI)} кВт·год/м² (Meteonorm 8.1).</p></div>
   <div class="blk"><h3>Площа за класами, м²</h3><table class="cmp"><thead><tr><th>кВт·год/м²</th><th>дах</th><th>склад</th><th>Пд</th><th>Сх</th><th>Пн</th></tr></thead><tbody>${RADD.cln.map((c,i)=>{ const v=[S.roof.cls[i],S.whA.cls[i]+S.whB.cls[i]+S.whC1.cls[i],S.S.cls[i],S.E.cls[i],S.N.cls[i]];
     return `<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${RC[i]};margin-right:6px"></i>${c}</td>${v.map(x=>`<td>${x?nf0(x):'—'}</td>`).join('')}</tr>`; }).join('')}</tbody></table></div>
-  <div class="blk"><h3>Що видно</h3><p class="src" style="font-size:13px;color:var(--ink-2)">Північний фасад отримує ≈${nf0(S.N.mean)} кВт·год/м² — у ${nf(S.roof.mean/S.N.mean,1)} раза менше за дах: майже лише розсіяне світло. Південний — ≈${nf0(S.S.mean)}, східний — ≈${nf0(S.E.mean)}. На даху: уздовж західної будівлі біля стіни −45 %, за 4 м −28 %, за 7 м −13 %; смуга 0,5 м під південним парапетом −65 %, наступний метр −17 %; під північним парапетом −23 %; під східним −33 %. ≥ 1 100 кВт·год/м² — ${nf0(S.roof.cls[4]+S.roof.cls[5])} м² даху з ${nf0(S.roof.area)}. Найкраще — південні схили складу A і B (≈1 250).</p>
-  <p class="src">Розрахунок 26.10: клімат і модель як у генерації двійника (Meteonorm 8.1, ясні і хмарні дні під місячні суми, крок 10 хв, альбедо 0,2) + тінь розсіяного світла від будівель і парапетів. Тіні — від західної будівлі (≈6,8 м над дахом, ширина умовна), парапетів, ліхтарів, 42 перешкод, рами кондиціонерів, ТП, адмінкорпусу, сходів, ДГУ, контейнерів УЗЕ. Дерева й далекі будинки не враховано. Розміри за фото — оцінка. Наступний крок — розкладка панелей за цією картою.</p></div>`; }
+  <div class="blk"><h3>Що видно</h3><p class="src" style="font-size:13px;color:var(--ink-2)">Північний фасад отримує ≈${nf0(S.N.mean)} кВт·год/м² — у ${nf(S.roof.mean/S.N.mean,1)} раза менше за дах: майже лише розсіяне світло. Південний — ≈${nf0(S.S.mean)}, східний — ≈${nf0(S.E.mean)}. На даху (v3): уздовж західної будівлі біля стіни −${RADD.v3txt?RADD.v3txt.w0:45} %, за 4 м −${RADD.v3txt?RADD.v3txt.w4:28} %, за 7 м −${RADD.v3txt?RADD.v3txt.w7:13} %; смуга 0,5 м під південним парапетом −${RADD.v3txt?RADD.v3txt.s0:65} %, наступний метр −${RADD.v3txt?RADD.v3txt.s1:17} %; під північним парапетом −${RADD.v3txt?RADD.v3txt.n0:23} %; під східним −${RADD.v3txt?RADD.v3txt.e0:33} %; за кожним дефлектором — тінь на північ. ≥ 1 100 кВт·год/м² — ${nf0(S.roof.cls[4]+S.roof.cls[5])} м² даху з ${nf0(S.roof.area)}. Найкраще — південні схили складу A і B (≈1 250).</p>
+  <p class="src">Дах цеху — розрахунок v3 (27.10, вечір): сітка 0,5 × 0,5 м по гранях за розрізом 1-1, ліхтарі 3,66 × 1,89 і парапети 1,37 м (рулетка), дефлектори й труби за супутником Google і РП, рама кондиціонерів; натисніть на клітинку — її значення. Склад і фасади — розрахунок 26.10: клімат і модель як у генерації двійника (Meteonorm 8.1, ясні і хмарні дні під місячні суми, крок 10 хв, альбедо 0,2) + тінь розсіяного світла від будівель і парапетів. Тіні — від західної будівлі (≈6,8 м над дахом, ширина умовна), парапетів, ліхтарів, 42 перешкод, рами кондиціонерів, ТП, адмінкорпусу, сходів, ДГУ, контейнерів УЗЕ. Дерева й далекі будинки не враховано. Розміри за фото — оцінка. Наступний крок — розкладка панелей за цією картою.</p></div>`; }
 const ps0=panelSun; panelSun=function(){ return radOn()?radPanel():ps0.apply(this,arguments); };
 window.__twin.rad={RG,on:()=>{ state.lay.rad=true; apply(); }};
 if(state.lay.rad) apply();
