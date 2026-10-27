@@ -12,7 +12,8 @@ const LTXT={A:'ліхтар 2,87 за розрізом',B:'ліхтар 3,40 × 
 if(state.lay.v2===undefined) state.lay.v2=true; if(!state.lay.lanSc||(SC.C&&!state.lay.v3seen)){ state.lay.lanSc=SC.C?'C':'B'; if(SC.C) state.lay.lanMods=false; state.lay.v3seen=true; }   // v3: ліхтарі світлопрозорі — модулі на них лише за рішенням власника if(state.lay.lanMods===undefined) state.lay.lanMods=true;
 if(LFD['22']&&!state.lay.lf22seen){ state.lay.lanF=22; state.lay.lanMods=false; state.lay.lf22seen=true; }   // 27.10, 22:29: «перерахувати тіні, якщо кладемо замість ліхтаря на 22°» — показати 22° одразу
 if(state.lay.lanF===undefined) state.lay.lanF=state.lay.lan13?13:0;
-const sc=()=>SC[state.lay.lanSc]?state.lay.lanSc:(SC.C?'C':'B');
+if(LFD['22']&&!state.lay.v35seen){ state.lay.lanSc='C'; state.lay.lanF=22; state.lay.lanMods=false; state.lay.v35seen=true; }   // 27.10, 22:45: у збережених налаштуваннях лишався ранковий «домік» над ліхтарем 2,87 — відкриваємо одразу каркас 22°
+const sc=()=>SC[state.lay.lanSc]&&!(SC.C&&'AB'.includes(state.lay.lanSc))?state.lay.lanSc:(SC.C?'C':'B');   // ранкові сценарії 27.10 (ліхтар 3,40 і 2,87 · «домік») замінено обмірами v3 — у двійнику більше не показуємо
 const V2ON=()=>state.proj==='ours'&&!!state.lay.v2&&['pz','sun'].includes(effSec())&&!state.lay.rad;
 const LFK=()=>(V2ON()&&sc()==='C'&&LF[state.lay.lanF])?String(state.lay.lanF):'';   // активний каркас: '13', '22' або ''
 const L13ON=()=>!!LFK();
@@ -226,7 +227,7 @@ const _hud=hudCtx; hudCtx=function(){ _hud.apply(this,arguments); const s=state.
   const m=$('#modes'), add=(key,t,on,fn)=>{ const b=document.createElement('button'); b.type='button'; b.dataset.m=key; b.textContent=t; b.setAttribute('aria-pressed',String(!!on)); b.onclick=()=>{ fn(); CURVE_RESET(); apply(); save(); }; m.appendChild(b); };
   add('v2',`Дах 27.10 · ${nf(SC[sc()].base.n)}`,state.lay.v2,()=>state.lay.v2=!state.lay.v2);
   if(state.lay.v2){ if(SC.C){ add('scC','v3 · А усі місця',sc()==='C',()=>state.lay.lanSc='C'); add('scD','Б · від 1 050',sc()==='D',()=>state.lay.lanSc='D'); add('scE','В · від 1 100',sc()==='E',()=>state.lay.lanSc='E'); }
-    add('scB','Ліхтар 3,40',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A');
+    if(!SC.C){ add('scB','Ліхтар 3,40',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A'); }
     if(sc()==='C') Object.keys(LF).sort((a,b)=>b-a).forEach(q=>add('lf'+q,`Ліхтарі → каркас ${q}° · +${nf(LFD[q].K.n)}`,LFK()===q,()=>{ state.lay.lanF=String(state.lay.lanF)===q?0:+q; if(state.lay.lanF) state.lay.lanMods=false; }));
     add('lanM',`${LK(sc())==='C'?'На склі ліхтарів':'На ліхтарях'} · +${nf(SC[sc()][sc()==='A'?'dom':'flush'].K.n)}`,state.lay.lanMods&&!L13ON(),()=>{ state.lay.lanMods=!state.lay.lanMods; if(state.lay.lanMods) state.lay.lanF=0; }); }
   m.hidden=false;
