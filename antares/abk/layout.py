@@ -5,15 +5,22 @@ AL = dict(x0=108.3, x1=127.5, y0=6.6, y1=20.3, h=10.0); AB = dict(x0=108.5, x1=1
 XC, HW = (AB['x0'] + AB['x1']) / 2, (AB['x1'] - AB['x0']) / 2
 zA = lambda x: AB['h'] + AB['f'] * np.clip(1 - ((np.asarray(x) - XC) / HW) ** 2, 0, 1)
 STAIR = (116.3, 121.5, 8.0, 17.8); ZST = 12.6
-VENTS = [(111.4, 40.4), (120.8, 40.4), (116.6, 27.8), (119.6, 21.9), (122.2, 21.9)]; VR, VH = 0.6, 0.74
+# Вентшахти на арці (x, y, радіус, висота, тип, джерело). Тип: v — кругла тумба в бітумі, o — низька з рудою кришкою, h — оцинкований ковпак на тумбі.
+# 28.10: додано 3 за фото 27.10 (110750–110806, 110837, 110909–110912) і супутником Google (темні плями): Пд-Зх кут, руда біля Пд-Сх кута, поруч з ковпаком на півночі.
+VENTS = [(111.0, 22.0, 0.6, 0.74, 'v', 'new'), (119.6, 21.9, 0.6, 0.74, 'v', ''), (122.2, 21.9, 0.6, 0.74, 'v', ''), (126.1, 21.4, 0.45, 0.45, 'o', 'new'),
+         (116.6, 27.8, 0.6, 0.74, 'v', ''), (111.4, 40.4, 0.6, 0.74, 'v', ''), (120.8, 40.4, 0.6, 0.75, 'h', ''), (119.6, 39.7, 0.6, 0.74, 'v', 'new')]
+VR, VH = 0.6, 0.74
+# Сталева драбина з дугами (фото 27.10 110806, 110837, 111154; 26.10 123523): стоїть на даху південного блоку біля Пн-Сх кута надбудови,
+# спирається на південний парапет основного блоку; оцінка ±0,5 м. Біля неї модулів не ставимо: смуга X ±1,0 м від верху на стіні і коридор на нижньому даху.
+LADDER = dict(x0=123.2, y0=16.5, z0=10.0, x1=122.6, y1=20.3, z1=14.75, ext=0.9, w=0.5, clr=1.0)
 BOXES = [(116.8, 42.3, 0.6, 0.7, 1.5), (118.0, 43.0, 0.9, 0.6, 0.45)]
 PAR_LO, PAR_W, PAR_E, PAR_G = 0.5, 0.5, 0.7, 0.5
 MRG, MV, MST = 0.5, 0.3, 1.0
 TG = math.radians(15); C15, S15 = math.cos(TG), math.sin(TG); DEP = DM * C15; RISE = DM * S15; HLOW = 0.15
 def hits_obst(x0, x1, y0, y1):
-    for vx, vy in VENTS:
+    for vx, vy, vr, *_ in VENTS:
         dx = max(x0 - vx, 0, vx - x1); dy = max(y0 - vy, 0, vy - y1)
-        if dx * dx + dy * dy < (VR + MV) ** 2: return True
+        if dx * dx + dy * dy < (vr + MV) ** 2: return True
     return any(x0 < bx + dx / 2 + MV and bx - dx / 2 - MV < x1 and y0 < by + dy / 2 + MV and by - dy / 2 - MV < y1 for bx, by, dx, dy, h in BOXES)
 def segs(lo, hi, w, pitch):
     n = int((hi - lo + (pitch - w)) // pitch); s = lo + (hi - lo - (n * pitch - (pitch - w))) / 2; return [s + i * pitch for i in range(n)]
@@ -39,10 +46,16 @@ for a, b in ((x0, STAIR[0] - MST), (STAIR[1] + MST, x1)):
         xb = xa + DEP; lo = xa if fc == 'W' else xb
         for y in ysl:
             low.append(dict(xa=round(xa, 3), xb=round(xb, 3), lo=round(lo, 3), y0=round(y, 3), y1=round(y + LM, 3), face=fc))
-# 2 місця поза стрінгами (за звітом К1, рисунок «Розкладки»): західний схил правої пари, два північні ряди
+# 2 місця поза стрінгами (за звітом К1, рисунок «Розкладки»): західний схил правої пари, два північні ряди.
+# 28.10: саме там стоїть драбина — ці 2 місця прибрано зовсім (коридор драбини X ±0,25+0,6 м від осі, Y від основи −1,0 м до стіни).
 for m in low:
     m['used'] = not (m['face'] == 'W' and m['xa'] > 120 and m['y0'] > 14)
+L_ = LADDER; lx0, lx1 = min(L_['x0'], L_['x1']) - L_['w'] / 2 - 0.6, max(L_['x0'], L_['x1']) + L_['w'] / 2 - 0.0
+lad_hit = lambda m: m['xa'] < lx1 and m['xb'] > lx0 and m['y1'] > L_['y0'] - 1.0
+removed_low = [m for m in low if lad_hit(m)]
+assert all(not m['used'] for m in removed_low), 'драбина зачепила б модуль у стрінгу'
+low = [m for m in low if not lad_hit(m)]
 print('arch', len(arch), 'ncol', ncol, 'rows', len(ys), 'faces', {f: sum(1 for m in arch if m['face'] == f) for f in 'EW'}, 'tilt max', max(m['tilt'] for m in arch))
-print('low', len(low), 'used', sum(m['used'] for m in low), sorted({(m['xa'], m['face']) for m in low}))
-geo = dict(AL=AL, AB=AB, stair=STAIR, zst=ZST, vents=VENTS, vr=VR, vh=VH, boxes=BOXES, par=dict(lo=PAR_LO, w=PAR_W, e=PAR_E, g=PAR_G), hlow=HLOW, dep=round(DEP, 4), rise=round(RISE, 4), lm=LM, dm=DM)
+print('low', len(low), 'used', sum(m['used'] for m in low), 'removed for ladder', len(removed_low), sorted({(m['xa'], m['face']) for m in low}))
+geo = dict(AL=AL, AB=AB, stair=STAIR, zst=ZST, vents=VENTS, vr=VR, vh=VH, boxes=BOXES, ladder=LADDER, par=dict(lo=PAR_LO, w=PAR_W, e=PAR_E, g=PAR_G), hlow=HLOW, dep=round(DEP, 4), rise=round(RISE, 4), lm=LM, dm=DM)
 json.dump(dict(geo=geo, arch=arch, low=low), open('abk_k1.json', 'w'), ensure_ascii=False)

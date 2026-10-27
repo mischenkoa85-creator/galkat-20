@@ -84,25 +84,26 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
   <aside>
     <div>
       <h1>АБК Антарес — СЕС на даху</h1>
-      <p class="sub">Адмінкорпус ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А · варіант К1 з розрахунку 27.10.2026</p>
+      <p class="sub">Адмінкорпус ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А · варіант К1 з розрахунку 27.10.2026, перешкоди на дахах уточнено 28.10</p>
     </div>
-    <div class="k" aria-label="Варіант К1 без модулів на стінах">
-      <div><b>132</b><span>модулі = 12 стрінгів × 11</span></div>
-      <div><b>96,4</b><span>кВтп, ZNSHINE 730 Вт</span></div>
-      <div><b>88,7</b><span>МВт·год за рік, 921 кВт·год/кВтп</span></div>
-      <div><b>29 536 $</b><span>під ключ без ПДВ, окупність 2,6 р.</span></div>
+    <div class="k" aria-label="Дахи без модулів на стінах, стрінги по 11, як у К1">
+      <div><b>121</b><span>модуль = 11 стрінгів × 11 (у К1 — 132)</span></div>
+      <div><b>88,3</b><span>кВтп, ZNSHINE 730 Вт (у К1 — 96,4)</span></div>
+      <div><b>≈81,0</b><span>МВт·год за рік — пропорційно К1 (було 88,7)</span></div>
+      <div><b>137</b><span>місць: арка 95, нижній дах 33, стіни 9</span></div>
     </div>
+    <p class="note" style="margin:0"><b>Що змінилося 28.10.</b> За фото 27.10 і супутником Google на арці 8 круглих тумб, а не 5: додано тумбу біля південно-західного кута, низьку з рудою кришкою біля південно-східного і ще одну поруч з оцинкованим ковпаком на півночі — місць на арці 95 замість 99. З нижнього даху на арку веде сталева драбина (верх біля X ≈122,6): на стіні біля неї модулів не ставимо, на нижньому даху там прибрано 2 місця, які в К1 і так були поза стрінгами. Кошторис К1 (29 536 $, окупність 2,6 р.) — на 132 модулі, треба перерахувати.</p>
     <div>
       <h2>По дахах</h2>
       <table>
         <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
-        <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">99 = 9 стр.</td><td class="r">69,4</td><td class="r">961</td></tr>
+        <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">95 місць → 88 = 8 стр.</td><td class="r">≈61,7</td><td class="r">961</td></tr>
         <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
-        <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">11 = 1 стр.</td><td class="r">≈6,2</td><td class="r">≈770</td></tr>
+        <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">9 — на стрінг бракує 2</td><td class="r">≈5,1</td><td class="r">≈770</td></tr>
       </table>
-      <p class="note" style="margin:6px 0 0"><b>З модулями на стінах:</b> 143 модулі = 13 стрінгів, 104,4 кВтп, ≈94,9 МВт·год за рік. Стіни — оцінка: 770 кВт·год/кВтп, як у вертикальних модулів на південному фасаді цеху (той самий розрахунок тіней); окремо для цих місць не рахували, кошторис стін — ні.</p>
-      <p class="note" style="margin:6px 0 0">Південні стіни: 9 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід і 4 на схід від надбудови; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
-      <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 35 місць, 2 найслабші (у тіні надбудови) — поза стрінгами, показані контуром. Колір: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід.</p>
+      <p class="note" style="margin:6px 0 0">Якщо лишити стрінги по 11, як у К1: на арці 8 стрінгів (88 модулів), 7 найслабших місць вільні; К1 було 99 = 9 стрінгів, 69,4 МВт·год. Енергія арки й стін — пропорційно К1 на модуль, окремо не рахували. Стіни: 770 кВт·год/кВтп — як у вертикальних модулів на південному фасаді цеху.</p>
+      <p class="note" style="margin:6px 0 0">Південні стіни: 7 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід від надбудови, 2 на схід — між драбиною і кутом; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Було 4 на схід — 2 знято через драбину. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
+      <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 33 місця = 33 модулі. Два місця К1 поза стрінгами (західний схил правої пари, два північні ряди) прибрано — там стоїть драбина. Колір: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід.</p>
     </div>
     <div>
       <h2>Показати</h2>
@@ -132,14 +133,14 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <p class="note" style="margin:6px 0 0">Сонячний час, Київ 50,4° пн. ш. Узимку видно, як надбудова сходів і стіна основного блоку затіняють нижній дах.</p>
     </div>
     <div class="warn">
-      <b>Що оцінка, а що виміряно.</b> План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.
+      <b>Що оцінка, а що виміряно.</b> План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Тумб на арці 8: 5 — як у К1, 3 додано 28.10 за фото 27.10 і супутником; положення нових і драбини — ±0,5 м. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.
     </div>
     <div class="note">
       <h2>Виміряти на місці</h2>
       <ul>
         <li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li>
         <li>висоту парапетів і південного блоку;</li>
-        <li>де вихід на дах і як ходити між дахами;</li>
+        <li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li>
         <li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li>
       </ul>
       <p style="margin-top:8px">Розкладка — <span class="mono">calc/v3/abk.py</span>, звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p>
@@ -239,7 +240,7 @@ function nadb(y0, y1, H, name, col, hc, info) {
 }
 const EPH = 'Висота — за рядами цегли на фото 26.10 (123523) і 27.10 (112733): 75 мм на ряд, ±0,15 м від даху південного блоку (сам дах +10,0 — оцінка). Довжина частин — за фото, план 5,2 × 9,8 м — супутник.';
 nadb(SPLIT, s3, 3.3, 'північна', 0xd4dade, 1.08, ['Надбудова сходів — північна частина (вища)',
-  `5,2 × 3,85 м, ≈3,3 м над дахом південного блоку (верх ≈+13,3). Плаский дах у парапеті ≈0,3 м: рулонна бітумна покрівля заведена на парапет, зверху бетонні плити. Знизу ≈1,1 м обшито світлим оцинкованим профлистом. На фото від цієї частини до основного блоку йде сталева драбина. ${EPH}`]);
+  `5,2 × 3,85 м, ≈3,3 м над дахом південного блоку (верх ≈+13,3). Плаский дах у парапеті ≈0,3 м: рулонна бітумна покрівля заведена на парапет, зверху бетонні плити. Знизу ≈1,1 м обшито світлим оцинкованим профлистом. Біля її північно-східного кута стоїть сталева драбина на основний блок. ${EPH}`]);
 nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова сходів — південна частина (нижча)',
   `5,2 × 5,95 м, ≈2,25 м над дахом південного блоку (верх ≈+12,25). Плаский дах у парапеті ≈0,3 м, бітумна покрівля, бетонні плити по парапету. Знизу ≈1,0 м — сірий профлист. ${EPH}`]);
 // ---------- основний блок (АБ): стіни + арка одним видавленням
@@ -268,10 +269,49 @@ nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова �
   }
 })();
 // вентшахти і вентвиходи
-G.vents.forEach(([x, y], i) => {
-  const c = new THREE.Mesh(new THREE.CylinderGeometry(G.vr, G.vr, G.vh, 24), mat.zn); c.position.copy(P(x, y, zA(x) + G.vh / 2)); c.castShadow = c.receiveShadow = true; groups.bld.add(c);
-  c.userData.info = ['Вентшахта на арці', `Ø1,2 м (рулетка), висота ≈0,74 м над покрівлею. Навколо — 0,3 м без модулів. X ${x.toString().replace('.', ',')}, Y ${y.toString().replace('.', ',')} м.`]; picks.push(c);
+// тумби — бетон у бітумі, верх з мохом (фото 27.10); 28.10 додано 3 за фото і супутником
+const tumbS = M(0x2f3336, {roughness: 0.95}), tumbT = M(0x66704a, {roughness: 1}), rust = M(0xa4562f, {roughness: 0.6, metalness: 0.3});
+const fx = v => v.toString().replace('.', ',');
+G.vents.forEach(([x, y, r, h, kind, src]) => {
+  const z0 = zA(x), add = (geo, m, zc) => { const c = new THREE.Mesh(geo, m); c.position.copy(P(x, y, zc)); c.castShadow = c.receiveShadow = true; groups.bld.add(c); return c; };
+  const NEW = src === 'new' ? ' Додано 28.10 за фото 27.10 і супутником Google — у розрахунку К1 її не було.' : '';
+  let parts;
+  if (kind === 'o') {                                     // низька тумба з рудою металевою кришкою
+    parts = [add(new THREE.CylinderGeometry(r - 0.03, r - 0.03, h - 0.06, 24), tumbS, z0 + (h - 0.06) / 2), add(new THREE.CylinderGeometry(r, r, 0.06, 24), rust, z0 + h - 0.03)];
+    parts.forEach(c => c.userData.info = ['Вентвихід з рудою кришкою', `Низька кругла тумба Ø≈${fx(2 * r)} м, ≈${fx(h)} м над покрівлею, зверху руда металева кришка (фото 27.10 110804, 110806). Біля Пд-Сх кута, X ${fx(x)}, Y ${fx(y)} м (±0,5).${NEW}`]);
+  } else if (kind === 'h') {                              // оцинкований ковпак-«півциліндр» на низькій тумбі
+    const ped = add(new THREE.CylinderGeometry(0.45, 0.45, 0.3, 24), [tumbS, tumbT, tumbS], z0 + 0.15);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.9, 20, 1, false, 0, Math.PI), mat.zn); cap.rotation.z = Math.PI / 2; cap.rotation.y = Math.PI / 2;
+    cap.position.copy(P(x, y, z0 + 0.3 + 0.12)); cap.castShadow = true; groups.bld.add(cap);
+    const bs = add(new THREE.BoxGeometry(0.9, 0.12, 0.64), mat.zn, z0 + 0.36); bs.rotation.y = Math.PI / 2;
+    parts = [ped, cap, bs];
+    parts.forEach(c => c.userData.info = ['Оцинкований ковпак на тумбі', `Півциліндр ≈0,9 × 0,64 м на круглій тумбі, верх ≈${fx(h)} м над покрівлею (фото 27.10 110907–110910; на супутнику — світла пляма). X ${fx(x)}, Y ${fx(y)} м. Навколо — 0,3 м без модулів.`]);
+  } else {
+    parts = [add(new THREE.CylinderGeometry(r, r, h, 28), [tumbS, tumbT, tumbS], z0 + h / 2)];
+    parts[0].userData.info = ['Вентшахта на арці', `Кругла тумба Ø${fx(2 * r)} м (рулетка), ≈${fx(h)} м над покрівлею, обклеєна бітумом. Навколо — 0,3 м без модулів. X ${fx(x)}, Y ${fx(y)} м.${NEW}`];
+  }
+  parts.forEach(c => picks.push(c));
 });
+// ---------- сталева драбина з дугами: з нижнього даху на арку (фото 27.10 110806, 110837, 111154; 26.10 123523), оцінка ±0,5 м
+(function () {
+  const L = G.ladder, A = P(L.x0, L.y0, L.z0), B = P(L.x1, L.y1, L.z1), d = B.clone().sub(A), len = d.length() + L.ext; d.normalize();
+  const u = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize(), n = new THREE.Vector3().crossVectors(u, d).normalize();
+  const steel = M(0x5e4334, {roughness: 0.7, metalness: 0.45}), info = ['Сталева драбина з дугами',
+    `Стоїть на даху південного блоку біля Пн-Сх кута надбудови і спирається на південний парапет основного блоку біля X ≈${fx(L.x1)} м; верх з дугами виступає ≈${fx(L.ext)} м над парапетом. Це шлях з нижнього даху на арку — біля неї модулів не ставимо: на стіні вільно ±${fx(L.clr)} м, на нижньому даху прибрано 2 місця «доміку» (вони й так були поза стрінгами). Положення — за фото 27.10 (110806, 110837, 111154) і 26.10 (123523), ±0,5 м; чи закріплена — не видно.`];
+  const Y = new THREE.Vector3(0, 1, 0);
+  const rod = (p, q, r) => { const v = q.clone().sub(p), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, v.length(), 8), steel);
+    m.position.copy(p).addScaledVector(v, 0.5); m.quaternion.setFromUnitVectors(Y, v.normalize()); m.castShadow = true; m.userData.info = info; groups.bld.add(m); picks.push(m); return m; };
+  const at = (s, a = 0, b = 0) => A.clone().addScaledVector(d, s).addScaledVector(u, a).addScaledVector(n, b);
+  const hw = L.w / 2;
+  rod(at(0, -hw), at(len, -hw), 0.03); rod(at(0, hw), at(len, hw), 0.03);                       // тятиви
+  for (let s = 0.3; s < len - 0.05; s += 0.3) rod(at(s, -hw), at(s, hw), 0.012);                  // щаблі
+  const R0 = hw + 0.08, s0 = 2.2, hoops = [];                                                    // дуги огородження від 2,2 м
+  for (let s = s0; s <= len + 0.01; s += 0.8) hoops.push(Math.min(s, len));
+  if (hoops[hoops.length - 1] < len - 0.2) hoops.push(len);
+  const tor = new THREE.TorusGeometry(R0, 0.012, 6, 20, Math.PI), basis = new THREE.Matrix4().makeBasis(u, n, d);
+  hoops.forEach(s => { const t = new THREE.Mesh(tor, steel); t.quaternion.setFromRotationMatrix(basis); t.position.copy(at(s)); t.castShadow = true; t.userData.info = info; groups.bld.add(t); picks.push(t); });
+  for (const th of [Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4]) rod(at(s0, R0 * Math.cos(th), R0 * Math.sin(th)), at(len, R0 * Math.cos(th), R0 * Math.sin(th)), 0.01);
+})();
 G.boxes.forEach(([x, y, dx, dy, h], i) => box(dx, h, dy, mat.zn, x, y, zA(x) + h / 2, null, [i ? 'Низький вентвихід' : 'Високий вентвихід', `${dx.toString().replace('.', ',')} × ${dy.toString().replace('.', ',')} м, висота ≈${h.toString().replace('.', ',')} м над покрівлею (оцінка). Оцинкований.`]));
 // ---------- контекст: край цеху і ТП-5913
 const cx0 = 84, cx1 = 96.64;
@@ -325,7 +365,7 @@ document.getElementById('nE').textContent = nE; document.getElementById('nW').te
     } else {
       mesh = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(G.dm, T, G.lm)), new THREE.LineDashedMaterial({color: 0x9aa5ad, dashSize: 0.25, gapSize: 0.15}));
       mesh.computeLineDistances();
-      mesh.userData.info = ['Місце поза стрінгами', 'Найслабше місце нижнього даху (тінь надбудови сходів) — у стрінг по 11 не увійшло, модуль не ставиться. На нижньому даху 35 місць, 33 модулі = 3 стрінги.'];
+      mesh.userData.info = ['Місце поза стрінгами', 'Місце нижнього даху поза стрінгами — модуль не ставиться.'];
       const hit = new THREE.Mesh(new THREE.BoxGeometry(G.dm, 0.05, G.lm), new THREE.MeshBasicMaterial({visible: false})); mesh.add(hit); hit.userData.info = mesh.userData.info; picks.push(hit);
     }
     mesh.position.copy(P(xm, ym, zc + T / 2)); mesh.rotation.z = -sg * tg; groups.low.add(mesh); if (m.used) picks.push(mesh);
@@ -354,7 +394,8 @@ const WALLM = [];
 (function () {
   const GAPW = 0.022, off = 0.1, zb = AL.h + 0.5;
   const fill = (a, b, w) => { const n = Math.floor((b - a + GAPW) / (w + GAPW)), st = a + (b - a - (n * (w + GAPW) - GAPW)) / 2; return Array.from({length: n}, (_, i) => st + i * (w + GAPW)); };
-  for (const [a, b] of [[AB.x0 + 0.5, s0 - 0.5], [s1 + 0.5, AB.x1 - 0.5]])
+  // 28.10: на схід від надбудови стоїть драбина (верх біля X 122,6) — на стіні ±1,0 м від неї вільно, тому схід — від 123,6
+  for (const [a, b] of [[AB.x0 + 0.5, s0 - 0.5], [Math.max(s1 + 0.5, G.ladder.x1 + G.ladder.clr), AB.x1 - 0.5]])
     fill(a, b, G.dm).forEach(x => WALLM.push({x0: x, x1: x + G.dm, z0: zb, z1: zb + G.lm, y: AB.y0, how: 'P', where: 'Південна стіна основного блоку над нижнім дахом'}));
   fill(s0 + 0.2, s1 - 0.2, G.lm).forEach(x => WALLM.push({x0: x, x1: x + G.lm, z0: zb, z1: zb + G.dm, y: s2, how: 'L', where: 'Південна стіна надбудови (нижча частина)'}));
   const railG = new THREE.BoxGeometry(1, 0.041, 0.041), R2 = new THREE.InstancedMesh(railG, mat.frame, WALLM.length * 2), o = new THREE.Object3D(); let k = 0;
@@ -381,6 +422,7 @@ const LB = [
   [P((s0 + s1) / 2, (SPLIT + s3) / 2, AL.h + 3.3 + 0.9), 'Надбудова, пн. частина +13,3'],
   [P((s0 + s1) / 2, (s2 + SPLIT) / 2, AL.h + 2.25 + 0.9), 'Надбудова, пд. частина +12,25'],
   [P(90, 50, 17.3), 'Цех'], [P(99.8, 17, 5.6), 'ТП-5913'],
+  [P(124.6, 17.4, 15.4), 'Драбина'],
   [P(132, 50, 0.3), 'Пн ↑', 'n'],
 ];
 const lab = document.getElementById('labels'); LB.forEach(l => { const d = document.createElement('div'); d.className = 'lbl' + (l[2] ? ' ' + l[2] : ''); d.textContent = l[1]; lab.appendChild(d); l.d = d; });
