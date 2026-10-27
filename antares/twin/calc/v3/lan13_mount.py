@@ -65,7 +65,7 @@ for l in range(1, len(F) + 1):
         ii = idx(l, s); m = len(ii) // 11; t1 = sum(seng(ii[k * 11:(k + 1) * 11])[0] for k in range(m)); t2 = sum(seng(ii[len(ii) - (k + 1) * 11:len(ii) - k * 11])[0] for k in range(m))
         pure.append((m * 11, max(t1, t2)))
 R['pure'] = dict(n=sum(a for a, b in pure), mwh=round(sum(b for a, b in pure) / 1000, 2))
-J13 = json.load(open(V + ('lan22_t13.json' if TT == 13 else 'lan22.json')))['modes']['V1']
+J13 = json.load(open(V + (('lan22.json' if TT == 22 else f'lan22_t{TT}.json'))))['modes']['V1']
 R['max'] = dict(n=J13['lan']['n'], st=J13['lan']['st'], mwh=J13['lan']['mwh'])
 R['roof'] = dict(n=J13['roof']['n'], st=J13['roof']['st'], mwh=J13['roof']['mwh'], base=1092.94)
 # рейки: по 2 на схил, довжина = ряд модулів + 0,1 м з кожного боку
@@ -76,7 +76,8 @@ R['runs'] = [dict(l=k[0], side=k[1], y0=round(v[0], 2), y1=round(v[1], 2), len=r
 R['rail_m'] = round(sum(2 * (r['len'] + 0.2) for r in R['runs']), 1)
 R['clamps_mid'] = sum(2 * 2 * (r['n'] - 1) for r in R['runs']) // 2        # середній притиск — спільний на 2 модулі: 2 рейки × (n−1)
 R['clamps_end'] = sum(2 * 2 for r in R['runs'])                             # кінцеві: 2 рейки × 2 кінці ряду
-R['rail_up'] = round((0.02 + CL) * ct, 3); R['rail_lo'] = round((0.02 + LM - CL) * ct, 3); R['edge'] = round((0.02 + LM) * ct, 3)
+FH = float(os.environ.get('FRAME_HALF', '1.5')); R['frame_half'] = FH
+R['rail_up'] = round((0.02 + CL) * ct, 3); R['rail_lo'] = round((0.02 + LM - CL) * ct, 3); R['edge'] = round((0.02 + LM) * ct, 3); R['console'] = round(R['rail_lo'] - FH, 3); R['frame_rise'] = round(FH * math.tan(math.radians(TT)), 3)
 json.dump(R, open(V + f'lan{TT}_mount.json', 'w'), ensure_ascii=False)
 print('places', len(MODS), '→ у стрінгах', n, '=', len(PLAN), 'стрінгів,', R['kwp'], 'кВтп,', R['mwh'], 'МВт·год,', R['y'], 'кВт·год/кВтп, mism', R['mism'], '%')
 print('pure', R['pure'], 'max', R['max'], 'roof', R['roof'])

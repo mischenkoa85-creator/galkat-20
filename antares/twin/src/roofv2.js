@@ -10,9 +10,9 @@ const LK=k=>'CDE'.includes(k)?'C':k;   // C, D, E — один ліхтар (v3,
 const SLAB={A:'«ліхтар 2,87»',B:'«ліхтар 3,40»',C:'v3 · А (усі місця)',D:'v3 · Б (від 1 050 кВт·год/м²)',E:'v3 · В (від 1 100 кВт·год/м²)'};
 const LTXT={A:'ліхтар 2,87 за розрізом',B:'ліхтар 3,40 × 1,74 за РП',C:'ліхтар 3,66 × 1,89 за рулеткою, дефлектори за супутником'};
 if(state.lay.v2===undefined) state.lay.v2=true; if(!state.lay.lanSc||(SC.C&&!state.lay.v3seen)){ state.lay.lanSc=SC.C?'C':'B'; if(SC.C) state.lay.lanMods=false; state.lay.v3seen=true; }   // v3: ліхтарі світлопрозорі — модулі на них лише за рішенням власника if(state.lay.lanMods===undefined) state.lay.lanMods=true;
-if(LFD['22']&&!state.lay.lf22seen){ state.lay.lanF=22; state.lay.lanMods=false; state.lay.lf22seen=true; }   // 27.10, 22:29: «перерахувати тіні, якщо кладемо замість ліхтаря на 22°» — показати 22° одразу
+const LFL={'12':'за фото','17':'на око'}, LF0=LFD['12']?12:+Object.keys(LFD)[0]||0;   // 27.10, 23:08: власник — каркас 3,0 м, кутники 16–18° на око; за 4 фото — ≈12°
 if(state.lay.lanF===undefined) state.lay.lanF=state.lay.lan13?13:0;
-if(LFD['22']&&!state.lay.v35seen){ state.lay.lanSc='C'; state.lay.lanF=22; state.lay.lanMods=false; state.lay.v35seen=true; }   // 27.10, 22:45: у збережених налаштуваннях лишався ранковий «домік» над ліхтарем 2,87 — відкриваємо одразу каркас 22°
+if(LF0&&(!state.lay.v36seen||!LFD[state.lay.lanF]&&state.lay.lanF)){ state.lay.lanSc='C'; state.lay.lanF=LF0; state.lay.lanMods=false; state.lay.v36seen=true; }   // кути 13°/22° замінено на 12° (фото) і 17° (на око власника)
 const sc=()=>SC[state.lay.lanSc]&&!(SC.C&&'AB'.includes(state.lay.lanSc))?state.lay.lanSc:(SC.C?'C':'B');   // ранкові сценарії 27.10 (ліхтар 3,40 і 2,87 · «домік») замінено обмірами v3 — у двійнику більше не показуємо
 const V2ON=()=>state.proj==='ours'&&!!state.lay.v2&&['pz','sun'].includes(effSec())&&!state.lay.rad;
 const LFK=()=>(V2ON()&&sc()==='C'&&LF[state.lay.lanF])?String(state.lay.lanF):'';   // активний каркас: '13', '22' або ''
@@ -92,11 +92,11 @@ const FLK=k=>FL[LK(k)]||FL.B;
 if(SC.C) Object.keys(LFD).forEach(TK=>{ const L13D=LFD[TK]; const G13=grp('v2lf'+TK,RG), Gg=grp('v2lfg'+TK,G13), th=L13D.tilt*D2R, c=Math.cos(th), s=Math.sin(th), K=L13D.K, MT=L13D.mount, FR=L13D.F, STR=L13D.strings;
   const roofM=std(0x6f777c,{roughness:0.9}), endM=std(0x9da3a6,{roughness:0.8});
   const T=`Ліхтарі розібрати, на каркасі ≈${nf(L13D.tilt,0)}° — ${nf(K.n)} модулів = ${K.st} стрінги по 11, ${nf(K.kwp,2)} кВтп, ${nf(K.mwh,1)} МВт·год за рік (${nf(K.y)} кВт·год/кВтп, тінь −${nf((1-K.mwh/K.un)*100,1)} %). Стрінг — 11 сусідніх модулів одного схилу одного ліхтаря, без кабелів між ліхтарями; по 1 щиту PV 7/1 біля торця ліхтаря. Дах цеху з нижчими ліхтарями — ${nf(K.roof,1)} МВт·год (+${nf(K.roof-SC.C.sum.mwh,1)}).`;
-  const ANG=`Кут каркаса: за фото зсередини ≈13° (№ ${fnL('112242','112246')}; еталон — схили скління 46°), власник на око — 20–22°; тут — ${nf(L13D.tilt,0)}°. Виміряти рівнем: при 22° ці модулі дають ${nf(LFD['22']?LFD['22'].K.mwh:0,1)}, при 13° — ${nf(LFD['13']?LFD['13'].K.mwh:0,1)} МВт·год за рік.`;
-  FR.forEach((f,i)=>{ const [xc,y0,y1,zb,ze,zr]=f, l=SC.C.lan[i], x0=l[0], x1=l[1], hw=(x1-x0)/2, z0=Math.min(roofZ(x0),roofZ(x1))-0.3, zr2=zr-0.02, ze2=zr2-hw*Math.tan(th);
+  const ANG=`Кут кутників каркаса: за 4 фото зсередини ≈12° (№ ${fnL('112235','112237','112242','112246')}: 11,6–13,1° на обох схилах; скло ліхтаря на тих самих фото — 47–48°), власник на око — 16–18°; тут — ${nf(L13D.tilt,0)}°. Ширина каркаса по низу — ${nf(2*L13D.mount.frame_half,1)} м (власник), гребінь каркаса на ${nf(L13D.mount.frame_rise,2)} м вище низу. Від кута ці модулі дають ${Object.keys(LFD).map(q=>`${q}° — ${nf(LFD[q].K.mwh,1)}`).join(', ')} МВт·год за рік — виміряти рівнем.`;
+  FR.forEach((f,i)=>{ const [xc,y0,y1,zb,ze,zr]=f, hw=L13D.mount.frame_half||1.5, x0=xc-hw, x1=xc+hw, z0=Math.min(roofZ(x0),roofZ(x1))-0.3, zr2=zr-0.02, ze2=zr2-hw*Math.tan(th);
     const shp=new THREE.Shape([new THREE.Vector2(x0,z0),new THREE.Vector2(x1,z0),new THREE.Vector2(x1,ze2),new THREE.Vector2(xc,zr2),new THREE.Vector2(x0,ze2)]);
     const o=mesh(new THREE.ExtrudeGeometry(shp,{depth:y1-y0,bevelEnabled:false}),[endM,roofM],G13); o.position.z=-y1;
-    o.userData.info={t:`Ліхтар ${i+1}: скління знято, нова покрівля на каркасі ≈${nf(L13D.tilt,0)}°`,d:`По низу — як нинішній ліхтар ${nf(x1-x0,2)} м, ${nf(y1-y0,1)} м уздовж; гребінь на ${nf(zr-zb,2)} м над основою (було 1,89). Полікарбонат і дерев'яну конструкцію знімаємо, сталевий каркас лишається, зверху — нова покрівля прорізу (≈${nf(L13D.cost.area)} м² на 4 ліхтарі; ціни ще немає). ${ANG} Цех стане темнішим — освітлення замість ліхтарів окремо. ${T}`};
+    o.userData.info={t:`Ліхтар ${i+1}: скління знято, нова покрівля на каркасі ≈${nf(L13D.tilt,0)}°`,d:`Каркас по низу ${nf(x1-x0,1)} м, ${nf(y1-y0,1)} м уздовж; модулі з рейками — до ${nf(zr-zb+0.16,2)} м над покрівлею біля ліхтаря (зараз гребінь 1,89). Полікарбонат і дерев'яну конструкцію знімаємо, сталевий каркас лишається, зверху — нова покрівля прорізу (≈${nf(L13D.cost.area)} м² на 4 ліхтарі; ціни ще немає). ${ANG} Цех стане темнішим — освітлення замість ліхтарів окремо. ${T}`};
     PICK.push({o,when:()=>G13.visible}); });
   const use=L13D.mods.filter(m=>m[4]>=0), gh=L13D.mods.filter(m=>m[4]<0);
   const mM=(m,lift,tk)=>{ const f=FR[m[0]-1], sg=m[1]==='E'?1:-1, sa=0.02+LM/2, o=0.12+0.0165+lift; _q.setFromAxisAngle(ZA,-sg*th);
@@ -228,7 +228,7 @@ const _hud=hudCtx; hudCtx=function(){ _hud.apply(this,arguments); const s=state.
   add('v2',`Дах 27.10 · ${nf(SC[sc()].base.n)}`,state.lay.v2,()=>state.lay.v2=!state.lay.v2);
   if(state.lay.v2){ if(SC.C){ add('scC','v3 · А усі місця',sc()==='C',()=>state.lay.lanSc='C'); add('scD','Б · від 1 050',sc()==='D',()=>state.lay.lanSc='D'); add('scE','В · від 1 100',sc()==='E',()=>state.lay.lanSc='E'); }
     if(!SC.C){ add('scB','Ліхтар 3,40',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A'); }
-    if(sc()==='C') Object.keys(LF).sort((a,b)=>b-a).forEach(q=>add('lf'+q,`Ліхтарі → каркас ${q}° · +${nf(LFD[q].K.n)}`,LFK()===q,()=>{ state.lay.lanF=String(state.lay.lanF)===q?0:+q; if(state.lay.lanF) state.lay.lanMods=false; }));
+    if(sc()==='C') Object.keys(LF).sort((a,b)=>a-b).forEach(q=>add('lf'+q,`Ліхтарі → каркас ${q}°${LFL[q]?' ('+LFL[q]+')':''} · +${nf(LFD[q].K.n)}`,LFK()===q,()=>{ state.lay.lanF=String(state.lay.lanF)===q?0:+q; if(state.lay.lanF) state.lay.lanMods=false; }));
     add('lanM',`${LK(sc())==='C'?'На склі ліхтарів':'На ліхтарях'} · +${nf(SC[sc()][sc()==='A'?'dom':'flush'].K.n)}`,state.lay.lanMods&&!L13ON(),()=>{ state.lay.lanMods=!state.lay.lanMods; if(state.lay.lanMods) state.lay.lanF=0; }); }
   m.hidden=false;
   if(effSec()==='sun'&&V2ON()&&state.lay.lanMods&&!state.lay.sunPlain){ const l=$('#legend'); if(l&&!l.hidden) l.insertAdjacentHTML('beforeend','<span><i class="sw" style="background:#c3c8cc"></i>на ліхтарях поза стрінгами</span>'); }

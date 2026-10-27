@@ -13,7 +13,7 @@ def roof_energy(L, C):
     h_ = L.horizon; L.horizon = lambda P_: np.zeros((len(P_), L.NA), np.float32); ST0, _ = L.run_steps(np.array(P), np.array(N)); E0 = L.mod_kwh(ST0, len(C)); L.horizon = h_
     return E, E0
 import importlib
-for tilt in ('22', '13'):
+for tilt in os.environ.get('TILTS', '22,13,12,17').split(','):
     os.environ['TILT'] = tilt
     if 'lan22' in sys.modules: L = importlib.reload(sys.modules['lan22'])
     else: import lan22 as L
@@ -27,4 +27,4 @@ for tilt in ('22', '13'):
     print(tilt, len(C), {k: (v['mwh'], v['un']) for k, v in OUT.items() if isinstance(v, dict) and 'mwh' in v})
 json.dump(OUT, open('/home/claude/work/sun/v3/shade_lan.json', 'w'))
 b, n = OUT['base']['mwh'], OUT['none']['mwh']
-for k in ('base', 't22', 't13', 'none'): print(k, OUT[k]['mwh'], 'від ліхтарів:', round(n - OUT[k]['mwh'], 2), 'МВт·год', round((n - OUT[k]['mwh']) / (n - b) * 100), '% від нинішньої')
+for k in ['base'] + ['t' + t for t in os.environ.get('TILTS', '22,13,12,17').split(',')] + ['none']: print(k, OUT[k]['mwh'], 'від ліхтарів:', round(n - OUT[k]['mwh'], 2), 'МВт·год', round((n - OUT[k]['mwh']) / (n - b) * 100), '% від нинішньої')
