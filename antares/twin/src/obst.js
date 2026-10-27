@@ -23,7 +23,7 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
   const sh=new THREE.Shape([new THREE.Vector2(-0.15,HV-0.3),new THREE.Vector2(96.64,HV-0.3)].concat(pts.reverse()));
   const g=new THREE.ExtrudeGeometry(sh,{depth:0.25,bevelEnabled:false});
   [[0.25,'південний'],[-96.59,'північний']].forEach(([z,nm])=>{ const m=mesh(g,OBM.conc,OB); m.position.z=z;
-    info(m,`Парапет — ${nm} торець цеху`,`≈1,2 м над покрівлею біля ендов (за кладкою сусідньої стіни, фото ${fn('123945')}); уздовж арок іде уступами (фото ${fn('124411')}), у моделі — плавно. Бетон з металевим фартухом. Як опору для кріплення чи страховки — лише після обстеження.`); });
+    info(m,`Парапет — ${nm} торець цеху`,`${nm==='південний'?`Рулетка 27.10: ≈1,37 м в ендові, ≈1,65 м на уступі біля сталевої стійки (фото № ${fn('113629').slice(2)}, ${fn('113649').slice(2)}); по парапету — кабель на кліпсах (фото № ${fn('113634').slice(2)}). У моделі й розрахунку тіней поки 1,2 м. `:''}≈1,2 м над покрівлею біля ендов (за кладкою сусідньої стіни, фото ${fn('123945')}); уздовж арок іде уступами (фото ${fn('124411')}), у моделі — плавно. Бетон з металевим фартухом. Як опору для кріплення чи страховки — лише після обстеження.`); });
   const e=box(0.25,0.8,97.09,OBM.conc,96.515,HV+0.1,-48.045,OB);
   info(e,'Парапет — східний край','≈0,5 м над покрівлею, по верху — огорожа з труб ≈1,1 м (фото '+fn('123646')+', '+fn('143858')+'). Висоти — оцінка за фото.');
   box(0.05,0.05,97,OBM.steel,96.5,HV+1.1,-48.045,OB);
@@ -46,7 +46,16 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
   const NW=13; for(let k=0;k<NW;k++) unit(X0+0.25,Y0+0.6+k*(L-1.2)/(NW-1),0.95,0.4,1.4,-1,true);
   [[1.3,1.6],[1.3,1.6],[1.3,1.6]].forEach(([w,h],k)=>unit(X1-0.45,Y0+0.8+k*1.4,w,0.75,h,1,false));
   for(let k=0;k<8;k++) unit(X1-0.5,Y0+5.2+k*1.15,1.0,0.7,1.5,1,false);
-  const duct=box(0.6,0.3,1.2,OBM.steel,Xc,deck-0.35,-(Y0+1.2),OB); info(duct,'Короб труб під рамою кондиціонерів',inf); }
+  const duct=box(0.6,0.3,1.2,OBM.steel,Xc,deck-0.35,-(Y0+1.2),OB); info(duct,'Короб труб під рамою кондиціонерів',inf);
+  // північний торець (фото 27.10, 11:29–11:30): 4 щитки 2 × 2 з прозорими дверцятами, під ними кабелі в білих гофрах
+  const eb=std(lin(0x6f7a80),{roughness:0.5}), eg=std(lin(0x9fb6c4),{roughness:0.15,metalness:0.2,transparent:true,opacity:0.7});
+  [[-0.21,0.25],[0.21,0.25],[-0.21,0.72],[0.21,0.72]].forEach(([dx,dz])=>{ info(box(0.4,0.44,0.2,eb,Xc+dx,deck+dz,-(Y1+0.12),OB),'Щитки живлення кондиціонерів (північний торець рами)',
+    `4 щитки 2 × 2 з прозорими дверцятами на північному торці рами, кабелі в білих гофрах під ними (фото № ${fn('112942').slice(2)}, ${fn('113009').slice(2)}). Між опорами торця ≈2,20 м (рулетка, фото № ${fn('113002').slice(2)}). Розміри щитків — оцінка.`);
+    box(0.34,0.36,0.01,eg,Xc+dx,deck+dz,-(Y1+0.225),OB); }); }
+// --- водостічна воронка біля південного парапету (фото 27.10): центр ≈0,87 м від стіни; ендова — оцінка за фото
+{ const x=72, y=0.25+0.87, z=RX(x); const c=mesh(new THREE.CylinderGeometry(0.22,0.26,0.16,16),OBM.rust,OB); c.position.set(x,z+0.08,-y);
+  const r=mesh(new THREE.TorusGeometry(0.45,0.03,6,24),OBM.dark,OB); r.rotation.x=Math.PI/2; r.position.set(x,z+0.02,-y);
+  [c,r].forEach(o=>info(o,'Водостічна воронка (лівневка)',`Чавунний ковпак із сіткою в ендові біля південного парапету; центр ≈0,87 м від стіни парапету (рулетка, фото № ${fn('113707').slice(2)}, ${fn('113713').slice(2)}, ${fn('113720').slice(2)}). Ендова (X ≈72 м) — оцінка за фото. Біля воронки модулі не ставити: обійти ≈0,5 м. Інші воронки в моделі ще не нанесено.`)); }
 // --- сталевий портал на південному краї (балки виступають за парапет)
 { const z=RX(59.3), H=3.4, posts=[[58,0.6],[60.6,0.6],[58,2.6],[60.6,2.6]];
   const parts=[]; posts.forEach(([x,y])=>parts.push(box(0.15,H,0.15,OBM.steel,x,z+H/2,-y,OB)));
@@ -65,7 +74,7 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
 // ================= точки зйомки: станції (підпис — номери фото), стрілки погляду; натискання — фото і камера на місце зйомки
 const FG=new THREE.Group(); scene.add(FG); FG.name='foto';
 const isSt=p=>p[4]==='S'&&p[1]===63&&p[2]>-2;   // з верхнього майданчика сходів
-const hOf=p=>p[4]==='R'?RX(p[1])+1.6:isSt(p)?RX(63)+2.8:p[4]==='T'?5.4:1.6;
+const ONR=p=>p[4]==='R'||p[4]==='L'||p[4]==='B', hOf=p=>ONR(p)?RX(p[1])+1.6:p[4]==='A'?13.2+1.6:isSt(p)?RX(63)+2.8:p[4]==='T'?5.4:1.6;   // A — дах адмінкорпусу (13,2 м у моделі)
 const ST=new Map(); FOTO.p.forEach((p,i)=>{ const k=p[1]+','+p[2]; if(!ST.has(k)) ST.set(k,[]); ST.get(k).push(i); });
 const rng=ns=>{ const o=[]; let a=ns[0],b=ns[0]; for(const n of ns.slice(1)){ if(n===b+1) b=n; else { o.push(a===b?a:a+'–'+b); a=b=n; } } o.push(a===b?a:a+'–'+b); return o.join(', '); };
 function pillTex(txt,col){ const c=document.createElement('canvas'), x=c.getContext('2d'); x.font='700 40px system-ui,sans-serif'; const w=Math.ceil(x.measureText(txt).width)+64; c.width=w; c.height=64;
@@ -83,7 +92,7 @@ ST.forEach((idx)=>{ const p=FOTO.p[idx[0]], col=FOTO.g[p[4]][1], pos=W(p[1],p[2]
 const cur=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(),new V3()]),new THREE.LineBasicMaterial({color:0xd64545,depthTest:false})); cur.renderOrder=20; cur.visible=false; FG.add(cur);
 // перемикач «Фото» у верхньому рядку
 const FKEY='antares-twin-foto'; let fOn=true; try{ fOn=localStorage.getItem(FKEY)!=='0'; }catch(e){}
-const fb=document.createElement('button'); fb.type='button'; fb.className='hbtn fchip'; fb.id='fotoChip'; fb.title='Точки зйомки фото обстеження 26.10.2026'; fb.innerHTML='📷&#xFE0E;<span>Фото</span>';
+const fb=document.createElement('button'); fb.type='button'; fb.className='hbtn fchip'; fb.id='fotoChip'; fb.title='Точки зйомки фото обстеження 26 і 27.10.2026'; fb.innerHTML='📷&#xFE0E;<span>Фото</span>';
 const hrow=$('#misChip').parentNode; hrow.insertBefore(fb,$('#misChip'));
 const fst=document.createElement('style'); fst.textContent=`.hbtn.fchip{display:inline-flex;align-items:center;gap:4px;padding:0 9px;white-space:nowrap;font-weight:600}.hbtn.fchip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .fview{position:absolute;right:10px;top:62px;z-index:9;width:min(42%,500px);max-height:calc(100% - 72px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden;display:flex;flex-direction:column}
@@ -95,16 +104,16 @@ const fst=document.createElement('style'); fst.textContent=`.hbtn.fchip{display:
 const fv=document.createElement('div'); fv.className='fview'; fv.hidden=true; $('#view').appendChild(fv);
 const DIRN=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 let fI=-1;
-function fShow(i,fly=true){ fI=(i+FOTO.p.length)%FOTO.p.length; const p=FOTO.p[fI], col=FOTO.g[p[4]][1], src='foto/20261026_'+p[0]+(p[0]==='123910'?'.mp4':'.jpg');
-  const media=p[0]==='123910'?`<video src="${src}" autoplay loop muted playsinline poster="foto/20261026_123910.jpg"></video>`:`<a href="${src}" target="_blank" rel="noopener" title="Відкрити фото повністю"></a><img src="${src}" alt="${esc(p[5])}">`;
-  fv.innerHTML=`<div class="fi">${media}</div><div class="fn"><b style="background:${col}">№ ${fI+1}</b><span>${p[0].slice(0,2)}:${p[0].slice(2,4)}:${p[0].slice(4)} · ${esc(FOTO.g[p[4]][0])}${p[3]==null?'':' · погляд '+DIRN[Math.floor(((p[3]+22.5)%360)/45)]}</span></div>
+function fShow(i,fly=true){ fI=(i+FOTO.p.length)%FOTO.p.length; const p=FOTO.p[fI], col=FOTO.g[p[4]][1], dt=p[7]||'20261026', vid=!p[7]&&p[0]==='123910', src='foto/'+dt+'_'+p[0]+(vid?'.mp4':'.jpg');
+  const media=vid?`<video src="${src}" autoplay loop muted playsinline poster="foto/20261026_123910.jpg"></video>`:`<a href="${src}" target="_blank" rel="noopener" title="Відкрити фото повністю"></a><img src="${src}" alt="${esc(p[5])}">`;
+  fv.innerHTML=`<div class="fi">${media}</div><div class="fn"><b style="background:${col}">№ ${fI+1}</b><span>${dt.slice(6,8)}.${dt.slice(4,6)} ${p[0].slice(0,2)}:${p[0].slice(2,4)} · ${esc(FOTO.g[p[4]][0])}${p[3]==null?'':' · погляд '+DIRN[Math.floor(((p[3]+22.5)%360)/45)]}</span></div>
   <div class="fc">${esc(p[5])}</div><div class="fb"><button type="button" data-f="-1" aria-label="Попереднє фото">‹</button><button type="button" data-f="1" aria-label="Наступне фото">›</button><span class="sp"></span><button type="button" data-f="go">Камера сюди</button><button type="button" data-f="x" aria-label="Закрити фото">×</button></div>`;
   const im=fv.querySelector('img,video'); if(im) im.onerror=()=>{ fv.querySelector('.fi').innerHTML='<div class="miss">Фото немає в цій версії двійника — воно є в приватній версії і на Google Диску (папка «Фото антаріс»).</div>'; };
   fv.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ const a=b.dataset.f; if(a==='x') fClose(); else if(a==='go') fFly(fI); else fShow(fI+(+a)); });
   fv.hidden=false; const pos=W(p[1],p[2],hOf(p)); if(p[3]!=null){ const a=p[3]*D2R; cur.geometry.setFromPoints([pos,W(p[1]+Math.sin(a)*12,p[2]+Math.cos(a)*12,hOf(p))]); cur.visible=true; } else cur.visible=false;
   SPR.forEach(o=>o.material.opacity=0.4); controls.maxPolarAngle=Math.PI*0.6; requestAnimationFrame(fOff); if(fly) fFly(fI); else stHide(null); need=true; }
 function fFly(i){ const p=FOTO.p[i], pos=W(p[1],p[2],hOf(p)); stHide(p[3]==null?null:i); if(p[3]==null){ goTo({p:[pos.x+14,pos.y+12,pos.z+14],c:[pos.x,pos.y-2,pos.z]}); return; }
-  const a=p[3]*D2R, pitch=p[4]==='R'?-0.08:isSt(p)?-0.35:0.14, dx=Math.sin(a), dz=-Math.cos(a), L=12; if(isSt(p)) pos.z=3.4;   // камера — за зовнішнім краєм сходів
+  const a=p[3]*D2R, pitch=ONR(p)||p[4]==='A'?-0.08:isSt(p)?-0.35:0.14, dx=Math.sin(a), dz=-Math.cos(a), L=12; if(isSt(p)) pos.z=3.4;   // камера — за зовнішнім краєм сходів
   camera.fov=(p[6]||23)<20?72:58; camera.updateProjectionMatrix();   // ширше, як на фото (EXIF: 13 мм — надширокий, 23 мм — основний)
   goTo({p:[pos.x-dx*0.3,pos.y,pos.z-dz*0.3],c:[pos.x+dx*L*Math.cos(pitch),pos.y+L*Math.sin(pitch),pos.z+dz*L*Math.cos(pitch)]}); }
 function fClose(){ fv.hidden=true; fI=-1; cur.visible=false; stHide(null); SPR.forEach(o=>o.material.opacity=1); if(camera.fov!==38){ camera.fov=38; camera.updateProjectionMatrix(); } fOff(); controls.maxPolarAngle=Math.PI*0.495; need=true; }

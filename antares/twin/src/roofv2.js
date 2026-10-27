@@ -17,13 +17,14 @@ G.site.children.filter(o=>o.material===MAT.lan||o.material===MAT.obs).forEach(o=
   [66,71,-2.7,-0.95,0,2.4],[55.9,58.35,-3.2,-0.75,0,2.6],[42.6,46.6,-3.3,-0.9,0,2.6],[79.5,85.5,-2.3,-0.5,0,3.7],[25.6,31.4,96.59,98.2,0,4.6]);
   if(BS) BS.K.forEach(k=>OBX.push([k.box[0],k.box[1],k.box[2],k.box[3],0,3.2])); }
 // ---------- ліхтарі обох сценаріїв (двосхилі, фото 123334, 123924, 123951)
-const lanM=std(0xc8d0d3,{metalness:0.35,roughness:0.35}), lanE=std(0x9da3a6,{roughness:0.8});
+const lanM=std(0xe6ebe2,{metalness:0.05,roughness:0.25,transparent:true,opacity:0.6,depthWrite:false}), lanE=std(0x9da3a6,{roughness:0.8});   // схили — світлопрозорий полікарбонат (фото 27.10)
+const fnL=(...ids)=>ids.map(id=>FOTO.p.findIndex(p=>p[0]===id)+1).filter(n=>n>0).join(', ');
 const LANO={A:[],B:[]};
 ['A','B'].forEach(k=>SC[k].lan.forEach((l,i)=>{ const [x0,x1,y0,y1,zb,h]=l, xc=(x0+x1)/2, z0=Math.min(roofZ(x0),roofZ(x1))-0.3;
   const shp=new THREE.Shape([new THREE.Vector2(x0,z0),new THREE.Vector2(x1,z0),new THREE.Vector2(x1,zb),new THREE.Vector2(xc,zb+h),new THREE.Vector2(x0,zb)]);
   const o=mesh(new THREE.ExtrudeGeometry(shp,{depth:y1-y0,bevelEnabled:false}),[lanE,lanM],LG); o.position.z=-y1; LANO[k].push(o);
   o.userData.info={t:`Світловий ліхтар ${i+1} — ${k==='B'?'за РП: 3,40 × 1,74 м':'за розрізом 1-1: 2,87 м, гребінь ≈1,5 м (оцінка)'}`,
-    d:`${nf(x1-x0,2)} × ${nf(y1-y0,1)} м, гребінь на ${nf(h,2)} м над основою (+${nf(zb+h,2)}), схили ${nf(Math.atan2(h,(x1-x0)/2)/D2R,0)}°. ${k==='B'?'На розрізі 1-1 у цьому місці — плита 2,87 м: ймовірно, отвір, а ліхтар ширший (центри РП і розрізу розходяться на 0,03–0,46 м). ':''}Ширину, висоту й довжину схилу обміряти — від цього залежить, як класти модулі (книжково по схилу — від 2,41 м).`}; PICK.push({o}); }));
+    d:`${nf(x1-x0,2)} × ${nf(y1-y0,1)} м, гребінь на ${nf(h,2)} м над основою (+${nf(zb+h,2)}), схили ${nf(Math.atan2(h,(x1-x0)/2)/D2R,0)}°. ${k==='B'?'На розрізі 1-1 у цьому місці — плита 2,87 м: ймовірно, отвір, а ліхтар ширший (центри РП і розрізу розходяться на 0,03–0,46 м). ':''}Обміри 27.10 (рулетка, фото № ${fnL('111904','111907','111925')}): гребінь ≈1,89 м над покрівлею, по низу ≈3,66 м — у моделі й розрахунках поки ${k==='B'?'3,40 × 1,74':'2,87 × 1,5'}. Схили — світлопрозорий полікарбонат в алюмінієвих профілях, під ліхтарем сітка (фото № ${fnL('111955','112136','112235','112242')}): модулі на ліхтарях затінять цех. Щипці — сталевий лист.`}; PICK.push({o}); }));
 function setLanGeo(){ const k=V2ON()?sc():'B', S=SC[k], dm=k==='A'&&V2ON()&&state.lay.lanMods;
   LANO.A.forEach(o=>o.visible=k==='A'); LANO.B.forEach(o=>o.visible=k==='B');
   LANG.length=0; S.lan.forEach((l,i)=>{ const L={xc:(l[0]+l[1])/2,hw:(l[1]-l[0])/2,y0:l[2],y1:l[3],zb:l[4],h:l[5]};
@@ -174,7 +175,7 @@ const _ps=panelSun; panelSun=function(){ let h=_ps(); const T=state.sunTab||'day
 const _pz=panelPZ; panelPZ=function(){ const h=_pz.apply(this,arguments); if(!V2ON()) return h; const k=sc(), A=SC.A, B=SC.B, F=R2.fac.tot;
   const row=(t,a,b,cls)=>`<tr class="${cls||''}"><td>${t}</td><td class="${k==='A'?'cur':''}">${a}</td><td class="${k==='B'?'cur':''}">${b}</td></tr>`;
   const tA=A.base.n+A.dom.K.n, tB=B.base.n+B.flush.K.n, mA=A.base.mwh-A.dom.K.roof_loss+A.dom.K.mwh, mB=B.base.mwh-B.flush.K.roof_loss+B.flush.K.mwh;
-  return `<div class="ph"><span class="eyebrow ours">Наш варіант Б · дах за розрізом 1-1 · 27.10</span><h2>${nf(k==='B'?tB:tA)} модулів на даху цеху і ліхтарях</h2><p>Покрівля — грані по ≈3 м за кресленням замовника (ендови +15,90, гребені +17,66 і +18,15), а не гладкі арки. Ліхтар ще не обміряно, тому два сценарії — перемикач над моделлю.</p></div>
+  return `<div class="ph"><span class="eyebrow ours">Наш варіант Б · дах за розрізом 1-1 · 27.10</span><h2>${nf(k==='B'?tB:tA)} модулів на даху цеху і ліхтарях</h2><p>Покрівля — грані по ≈3 м за кресленням замовника (ендови +15,90, гребені +17,66 і +18,15), а не гладкі арки. Ліхтар обміряно рулеткою 27.10: гребінь ≈1,89 м над покрівлею, по низу ≈3,66 м, схили — світлопрозорий полікарбонат (модулі на ліхтарях затінять цех). Розрахунок поки за двома сценаріями (3,40 × 1,74 і 2,87 × 1,5) — перемикач над моделлю; під обміри ще не перераховано.</p></div>
    <table class="cmp"><thead><tr><th></th><th class="ours">Ліхтар 2,87 · «домік»</th><th class="ours">Ліхтар 3,40 · книжково</th></tr></thead><tbody>
    ${row('Ліхтар','2,87 м, гребінь ≈1,5 (оцінка)','3,40 × 1,74 м (РП)')}${row('Дах, модулів',`${nf(A.base.n)} = ${A.base.st} стр.`,`${nf(B.base.n)} = ${B.base.st} стр.`)}
    ${row('Дах, МВт·год',nf(A.base.mwh,1),nf(B.base.mwh,1))}${row('На ліхтарях',`${A.dom.K.n} · ${nf(A.dom.K.mwh,1)} МВт·год`,`${B.flush.K.n} · ${nf(B.flush.K.mwh,1)} МВт·год`)}
