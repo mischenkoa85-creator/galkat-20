@@ -76,6 +76,7 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <button class="btn" id="v-s">З півдня</button>
       <button class="btn" id="v-arch">Арка зблизька</button>
       <button class="btn" id="v-low">Нижній дах</button>
+      <button class="btn" id="v-nad">Надбудова</button>
     </div>
     <div class="pick" id="pick"><h4>Натисніть на модуль, вентшахту чи блок будівлі</h4><p>Модель обертається мишею або пальцем, колесо — масштаб.</p></div>
   </div>
@@ -95,15 +96,15 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <table>
         <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
         <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">99 = 9 стр.</td><td class="r">69,4</td><td class="r">961</td></tr>
-        <tr><td><span class="sw" style="background:var(--low)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
+        <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
       </table>
-      <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span> (синій), на західному <span class="mono" id="nW"></span> (бірюзовий). Нижній дах — «домік» схід–захід 15°: 35 місць, 2 найслабші (у тіні надбудови сходів) — поза стрінгами, показані контуром.</p>
+      <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 35 місць, 2 найслабші (у тіні надбудови) — поза стрінгами, показані контуром. Колір: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід.</p>
     </div>
     <div>
       <h2>Показати</h2>
       <div class="tg">
         <label><input type="checkbox" id="t-arch" checked> <span><span class="sw" style="background:var(--east)"></span>Модулі на арці</span></label>
-        <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--low)"></span>Модулі на нижньому даху</span></label>
+        <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--west)"></span>Модулі на нижньому даху</span></label>
         <label><input type="checkbox" id="t-mount" checked> <span>Лаги, баласт і опори</span></label>
         <label><input type="checkbox" id="t-ctx" checked> <span>Цех і ТП-5913 поруч</span></label>
         <label><input type="checkbox" id="t-shadow" checked> <span>Тіні від сонця</span></label>
@@ -126,7 +127,7 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <p class="note" style="margin:6px 0 0">Сонячний час, Київ 50,4° пн. ш. Узимку видно, як надбудова сходів і стіна основного блоку затіняють нижній дах.</p>
     </div>
     <div class="warn">
-      <b>Що оцінка, а що виміряно.</b> План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова +12,6 м. Вентшахти Ø1,2 м — рулеткою. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.
+      <b>Що оцінка, а що виміряно.</b> План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.
     </div>
     <div class="note">
       <h2>Виміряти на місці</h2>
@@ -191,8 +192,51 @@ box(AL.x1 - AL.x0, pl, pt, mat.par, (AL.x0 + AL.x1) / 2, AL.y0 + pt / 2, AL.h + 
 box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x0 + pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2);
 box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x1 - pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2);
 const [s0, s1, s2, s3] = G.stair;
-box(s1 - s0, G.zst - AL.h, s3 - s2, mat.brick, (s0 + s1) / 2, (s2 + s3) / 2, AL.h + (G.zst - AL.h) / 2, null,
-  ['Надбудова сходів (вихід на дах)', `Цегляна, ${(s1 - s0).toFixed(1).replace('.', ',')} × ${(s3 - s2).toFixed(1).replace('.', ',')} м, верх +12,6 м (оцінка). Навколо — 1 м без модулів (прохід від виходу). Затіняє нижній дах, найбільше взимку.`]);
+// ---------- надбудова сходів: дві цегляні частини (фото 26.10 123523 і 27.10 112733). Довжини — частка від 9,8 м за фото;
+// висоти — за рядами цегли (75 мм на ряд), ±0,15 м; покрівля — бітумна в парапеті з бетонними плитами; знизу — профлист.
+const SPLIT = 13.95, PARH = 0.3, WT = 0.38;
+function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; }
+const BRICK = canvasTex(512, 256, (g, w, h) => {            // 16 рядів по 75 мм = 1,2 м; цегла 250 мм ≈ 52 px → 2,5 м по ширині
+  g.fillStyle = '#b9ab83'; g.fillRect(0, 0, w, h); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let r = 0; r < 16; r++) for (let x = (r % 2) * -26; x < w; x += 52) {
+    const l = 66 + rnd() * 10, hue = 42 + rnd() * 6; g.fillStyle = `hsl(${hue},${38 + rnd() * 12}%,${l}%)`; g.fillRect(x + 1.5, r * 16 + 1.5, 49, 13); }
+});
+const PROF = canvasTex(32, 256, (g, w, h) => {              // профлист: 5 гофрів на ≈1,05 м
+  for (let y = 0; y < h; y++) { const k = Math.cos(y / h * 5 * 2 * Math.PI); const v = 205 + 38 * k; g.fillStyle = `rgb(${v},${v + 4},${v + 8})`; g.fillRect(0, y, w, 1); }
+});
+const bitum = M(0x2e3236, {roughness: 0.95}), coping = M(0xa8a49a, {roughness: 0.9});
+function brickMat(lenM, hM) { const t = BRICK.clone(); t.needsUpdate = true; t.repeat.set(lenM / 2.5, hM / 1.2); return M(0xffffff, {map: t}); }
+function profMat(col, lenM) { const t = PROF.clone(); t.needsUpdate = true; t.repeat.set(lenM, 1); return M(col, {map: t, metalness: 0.45, roughness: 0.45}); }
+function nadb(y0, y1, H, name, col, hc, info) {
+  const x0 = s0, x1 = s1, L = Math.max(x1 - x0, y1 - y0), zr = AL.h + H - PARH;
+  // тіло до рівня покрівлі: верх — бітум
+  const bm = brickMat(L, H), body = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, zr - AL.h, y1 - y0), [bm, bm, bitum, bm, bm, bm]);
+  body.position.copy(P((x0 + x1) / 2, (y0 + y1) / 2, (AL.h + zr) / 2)); body.castShadow = body.receiveShadow = true; groups.bld.add(body);
+  body.userData.info = info; picks.push(body);
+  // парапет по периметру (з боку вищої частини — без парапету) і бетонні плити зверху
+  const pm = brickMat(L, PARH), sides = [[x0, x1, y0, y0 + WT], [x0, x0 + WT, y0, y1], [x1 - WT, x1, y0, y1]];
+  if (y1 !== SPLIT) sides.push([x0, x1, y1 - WT, y1]);
+  sides.forEach(([a, b, c, d]) => {
+    const pp = new THREE.Mesh(new THREE.BoxGeometry(b - a, PARH, d - c), pm); pp.position.copy(P((a + b) / 2, (c + d) / 2, zr + PARH / 2));
+    pp.castShadow = pp.receiveShadow = true; groups.bld.add(pp); pp.userData.info = info; picks.push(pp);
+    const cp = new THREE.Mesh(new THREE.BoxGeometry(b - a + 0.1, 0.06, d - c + 0.1), coping); cp.position.copy(P((a + b) / 2, (c + d) / 2, zr + PARH + 0.03));
+    cp.castShadow = cp.receiveShadow = true; groups.bld.add(cp);
+  });
+  // обшивка профлистом знизу по всьому периметру (на фото — західний і північний боки)
+  const pf = profMat(col, 1), t = 0.025;
+  [[x0 - t, x1 + t, y0 - t, y0], [x0 - t, x1 + t, y1, y1 + t], [x0 - t, x0, y0, y1], [x1, x1 + t, y0, y1]].forEach(([a, b, c, d]) => {
+    if (y0 === SPLIT && c === y0 - t) return;                            // стик з нижчою частиною — без обшивки зверху неї
+    const k = new THREE.Mesh(new THREE.BoxGeometry(b - a, hc, d - c), pf); k.position.copy(P((a + b) / 2, (c + d) / 2, AL.h + hc / 2));
+    k.castShadow = k.receiveShadow = true; groups.bld.add(k);
+  });
+  return zr;
+}
+const EPH = 'Висота — за рядами цегли на фото 26.10 (123523) і 27.10 (112733): 75 мм на ряд, ±0,15 м від даху південного блоку (сам дах +10,0 — оцінка). Довжина частин — за фото, план 5,2 × 9,8 м — супутник.';
+nadb(SPLIT, s3, 3.3, 'північна', 0xd4dade, 1.08, ['Надбудова сходів — північна частина (вища)',
+  `5,2 × 3,85 м, ≈3,3 м над дахом південного блоку (верх ≈+13,3). Плаский дах у парапеті ≈0,3 м: рулонна бітумна покрівля заведена на парапет, зверху бетонні плити. Знизу ≈1,1 м обшито світлим оцинкованим профлистом. На фото від цієї частини до основного блоку йде сталева драбина. ${EPH}`]);
+nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова сходів — південна частина (нижча)',
+  `5,2 × 5,95 м, ≈2,25 м над дахом південного блоку (верх ≈+12,25). Плаский дах у парапеті ≈0,3 м, бітумна покрівля, бетонні плити по парапету. Знизу ≈1,0 м — сірий профлист. ${EPH}`]);
 // ---------- основний блок (АБ): стіни + арка одним видавленням
 (function () {
   const sh = new THREE.Shape(); sh.moveTo(AB.x0, 0); sh.lineTo(AB.x1, 0);
@@ -271,7 +315,7 @@ document.getElementById('nE').textContent = nE; document.getElementById('nW').te
     const sg = m.face === 'W' ? -1 : 1, xm = (m.xa + m.xb) / 2, ym = (m.y0 + m.y1) / 2, zc = AL.h + HL + RISE / 2;
     let mesh;
     if (m.used) {
-      mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv.L); mesh.castShadow = mesh.receiveShadow = true; mesh.userData.base = pv.L; nUsed++;
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true; mesh.userData.base = pv[m.face]; nUsed++;
       mesh.userData.info = [`Модуль на нижньому даху · ${m.face === 'W' ? 'захід' : 'схід'}`, `«Домік» 15°: модуль горизонтально (2 384 мм уздовж Пн–Пд), низ ≈0,15 м над покрівлею. X ${m.xa.toFixed(2).replace('.', ',')}–${m.xb.toFixed(2).replace('.', ',')}, Y ${m.y0.toFixed(2).replace('.', ',')}–${m.y1.toFixed(2).replace('.', ',')} м. Кріплення — схематично.`];
     } else {
       mesh = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(G.dm, T, G.lm)), new THREE.LineDashedMaterial({color: 0x9aa5ad, dashSize: 0.25, gapSize: 0.15}));
@@ -279,7 +323,7 @@ document.getElementById('nE').textContent = nE; document.getElementById('nW').te
       mesh.userData.info = ['Місце поза стрінгами', 'Найслабше місце нижнього даху (тінь надбудови сходів) — у стрінг по 11 не увійшло, модуль не ставиться. На нижньому даху 35 місць, 33 модулі = 3 стрінги.'];
       const hit = new THREE.Mesh(new THREE.BoxGeometry(G.dm, 0.05, G.lm), new THREE.MeshBasicMaterial({visible: false})); mesh.add(hit); hit.userData.info = mesh.userData.info; picks.push(hit);
     }
-    mesh.position.copy(P(xm, ym, zc + T / 2)); mesh.rotation.z = sg * tg; groups.low.add(mesh); if (m.used) picks.push(mesh);
+    mesh.position.copy(P(xm, ym, zc + T / 2)); mesh.rotation.z = -sg * tg; groups.low.add(mesh); if (m.used) picks.push(mesh);
     if (m.used) frames.push(m);
   });
   // схематичні опори: 2 рейки вздовж модуля + 4 стійки (низька і висока) у зоні притисків
@@ -301,7 +345,8 @@ document.getElementById('nE').textContent = nE; document.getElementById('nW').te
 const LB = [
   [P(XC, 46.5, AB.h + AB.f + 1.2), 'Основний блок · арка +13,2…14,5'],
   [P(112.0, 7.5, AL.h + 1.6), 'Південний блок · +10,0'],
-  [P((s0 + s1) / 2, (s2 + s3) / 2, G.zst + 0.9), 'Надбудова сходів +12,6'],
+  [P((s0 + s1) / 2, (SPLIT + s3) / 2, AL.h + 3.3 + 0.9), 'Надбудова, пн. частина +13,3'],
+  [P((s0 + s1) / 2, (s2 + SPLIT) / 2, AL.h + 2.25 + 0.9), 'Надбудова, пд. частина +12,25'],
   [P(90, 50, 17.3), 'Цех'], [P(99.8, 17, 5.6), 'ТП-5913'],
   [P(132, 50, 0.3), 'Пн ↑', 'n'],
 ];
@@ -326,12 +371,12 @@ dayEl.addEventListener('change', setSun); hEl.addEventListener('input', setSun);
 // ---------- шари
 const tie = (id, fn) => document.getElementById(id).addEventListener('change', e => { fn(e.target.checked); need = true; });
 tie('t-arch', v => groups.arch.visible = v); tie('t-low', v => groups.low.visible = v); tie('t-mount', v => groups.mount.visible = v);
-tie('t-ctx', v => { groups.ctx.visible = v; LB[3].d.hidden = LB[4].d.hidden = !v; });
+tie('t-ctx', v => { groups.ctx.visible = v; LB[4].d.hidden = LB[5].d.hidden = !v; });
 tie('t-shadow', v => { R.shadowMap.enabled = v; S.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); } }); });
 // ---------- види
 const VIEWS = {
   'v-iso': [P(146, -12, 34), P(118, 26, 10)], 'v-top': [P(118.2, 25.9, 78), P(118.2, 26, 10)], 'v-s': [P(118, -30, 16), P(118, 22, 10)],
-  'v-arch': [P(134, 16, 22), P(118, 33, 13.5)], 'v-low': [P(126, -2, 19), P(118, 13, 10)],
+  'v-arch': [P(134, 16, 22), P(118, 33, 13.5)], 'v-low': [P(126, -2, 19), P(118, 13, 10)], 'v-nad': [P(104, 6, 17.5), P(118.9, 13.5, 11.8)],
 };
 let anim = null;
 function go(id, inst) {
