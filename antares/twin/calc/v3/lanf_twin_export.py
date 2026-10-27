@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Ліхтарі → каркас ≈13°, 297 модулів вертикально (lan13_mount.json) → дані для 3D-двійника: twin/lan13data.js (ROOFV2.V3.lan13).
+"""Ліхтарі → каркас 13° або 22° (TILT), модулі вертикально (lan{TILT}_mount.json) → дані для 3D-двійника: v3/lanf{TILT}.json;
+збирає обидва в twin/lanfdata.js (ROOFV2.V3.lanf) — запуск: TILT=13 …; TILT=22 … (останній збирає файл).
 Додатково — енергія тих самих модулів без тіней (для «тінь забирає»), горизонт = 0."""
 import os, sys, json, math, numpy as np
-os.environ['TILT'] = '13'
+os.environ['TILT'] = os.environ.get('TILT', '13'); TT = int(float(os.environ['TILT']))
 sys.path.insert(0, '/home/claude/work/sun/v3'); import lan22 as L
 V = L.V; LM, DM, GAP = L.LM, L.DM, L.GAP
-R = json.load(open(V + 'lan13_mount.json')); J = json.load(open(V + 'lan22_t13.json'))['modes']['V1']
+SH = json.load(open(V + 'shade_lan.json')); R = json.load(open(V + f'lan{TT}_mount.json')); J = json.load(open(V + ('lan22_t13.json' if TT == 13 else 'lan22.json')))['modes']['V1']
 F = J['F']; MODS = R['mods']; used = set(R['used'])
 st_, ct = L.st_, L.ct
 # без тіней: ті самі точки, що в lan13_mount.py, горизонт 0
@@ -29,7 +30,19 @@ OUT = dict(tilt=R['tilt'], hw=R['half'], cl=R['clamp'], thk=L.THK, curb=L.CURB,
            mo=R['mo'], roof_mo=J['roof']['mo'],
            mount=dict(rail=R['rail_m'], mid=R['clamps_mid'], end=R['clamps_end'], up=R['rail_up'], lo=R['rail_lo'], edge=R['edge'],
                       runs=[[r['l'], r['side'], r['y0'], r['y1'], r['n']] for r in R['runs']]),
-           cost=dict(tot=1449097, vat=1738917, v245=1593454, kwp=940, old=1411493, lan_mount=2555, area=674))
-s = 'ROOFV2.V3.lan13=' + json.dumps(OUT, ensure_ascii=False, separators=(',', ':')) + ';'
-open('/home/claude/work/twin/lan13data.js', 'w', encoding='utf-8').write(s)
+           cost=dict(tot=1449097, vat=1738917, v245=1593454, kwp=940, old=1411493, lan_mount=2555, area=round(674 * math.cos(math.radians(13)) / math.cos(math.radians(TT)))),
+           shade={k: SH[k]['mwh'] for k in ('base', 't22', 't13', 'none')}, roof_un=SH['base']['un'])
+# річна тінь модулів даху в цьому сценарії — для «Тінь за рік» у двійнику: тінь двійника (v3) + різниця «каркас − як зараз» з shade_lan.py
+_s = open('/home/claude/work/twin/roofv2data.js', encoding='utf-8').read(); R2 = json.loads(_s[_s.find('{'):_s.rfind('}') + 1])
+OK = [m for m in R2['C']['mods'] if m[3] == 'ok']; XY = np.array([[a_, y_] for a_, b_, y_, f_ in SH['xy']])
+sh = lambda E, i: (1 - E[i] / SH['un_per'][i]) * 100
+RS = []
+for m in OK:
+    i = int(np.argmin((XY[:, 0] - m[0]) ** 2 + (XY[:, 1] - m[2]) ** 2))
+    RS.append(round(max(0.0, (m[5] or 0) + sh(SH['t%d' % TT]['per'], i) - sh(SH['base']['per'], i)), 1))
+OUT['roofSh'] = RS
+json.dump(OUT, open(V + f'lanf{TT}.json', 'w'), ensure_ascii=False, separators=(',', ':'))
+ALL = {t: json.load(open(V + f'lanf{t}.json')) for t in (13, 22) if os.path.exists(V + f'lanf{t}.json')}
+s = 'ROOFV2.V3.lanf=' + json.dumps(ALL, ensure_ascii=False, separators=(',', ':')) + ';'
+open('/home/claude/work/twin/lanfdata.js', 'w', encoding='utf-8').write(s)
 print('un', round(un, 2), 'mwh', R['mwh'], 'shade %', round((1 - R['mwh'] / un) * 100, 1), len(s) // 1024, 'KB')

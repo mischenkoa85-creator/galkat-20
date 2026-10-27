@@ -5,15 +5,17 @@
 // Сонце: тіні (західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи) і потужність цих модулів, дуги сонця за сезонами з годинами.
 {
 const R2=ROOFV2, SC=Object.assign({A:R2.A,B:R2.B},R2.C?{C:R2.C,D:R2.D,E:R2.E}:{}), LM=2.384, DM=1.303;
-const L13D=R2.V3&&R2.V3.lan13; let L13=null, L13S=null;   // v3 · ліхтарі розібрати → каркас ≈13°, модулі вертикально (lan13data.js, 27.10 вечір)
+const LFD=(R2.V3&&R2.V3.lanf)||{}; const LF={};   // v3 · ліхтарі розібрати → каркас 13° або 22°, модулі вертикально (lanfdata.js ← calc/v3/lanf_twin_export.py, 27.10 вечір)
 const LK=k=>'CDE'.includes(k)?'C':k;   // C, D, E — один ліхтар (v3, за рулеткою 27.10), різні варіанти розкладки А / Б / В
 const SLAB={A:'«ліхтар 2,87»',B:'«ліхтар 3,40»',C:'v3 · А (усі місця)',D:'v3 · Б (від 1 050 кВт·год/м²)',E:'v3 · В (від 1 100 кВт·год/м²)'};
 const LTXT={A:'ліхтар 2,87 за розрізом',B:'ліхтар 3,40 × 1,74 за РП',C:'ліхтар 3,66 × 1,89 за рулеткою, дефлектори за супутником'};
 if(state.lay.v2===undefined) state.lay.v2=true; if(!state.lay.lanSc||(SC.C&&!state.lay.v3seen)){ state.lay.lanSc=SC.C?'C':'B'; if(SC.C) state.lay.lanMods=false; state.lay.v3seen=true; }   // v3: ліхтарі світлопрозорі — модулі на них лише за рішенням власника if(state.lay.lanMods===undefined) state.lay.lanMods=true;
-if(L13D&&!state.lay.l13seen){ state.lay.lan13=true; state.lay.lanMods=false; state.lay.l13seen=true; }   // розкладка 27.10, 20:26 («по найкращому варіанту з урахуванням зручності монтажу»)
+if(LFD['22']&&!state.lay.lf22seen){ state.lay.lanF=22; state.lay.lanMods=false; state.lay.lf22seen=true; }   // 27.10, 22:29: «перерахувати тіні, якщо кладемо замість ліхтаря на 22°» — показати 22° одразу
+if(state.lay.lanF===undefined) state.lay.lanF=state.lay.lan13?13:0;
 const sc=()=>SC[state.lay.lanSc]?state.lay.lanSc:(SC.C?'C':'B');
 const V2ON=()=>state.proj==='ours'&&!!state.lay.v2&&['pz','sun'].includes(effSec())&&!state.lay.rad;
-const L13ON=()=>!!L13&&V2ON()&&sc()==='C'&&!!state.lay.lan13;
+const LFK=()=>(V2ON()&&sc()==='C'&&LF[state.lay.lanF])?String(state.lay.lanF):'';   // активний каркас: '13', '22' або ''
+const L13ON=()=>!!LFK();
 const RG=grp('roofv2',G.ours), LG=grp('lanv2',G.site);
 const SUNV2=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,metalness:0.1});
 // ---------- старі ліхтарі-коробки і вентиляцію (прибрано 26.10) ховаємо; тіні вентиляції не рахуємо
@@ -35,7 +37,7 @@ function setLanGeo(){ const k=V2ON()?sc():'B', S=SC[k], dm=k==='A'&&V2ON()&&stat
   Object.keys(LANO).forEach(q=>LANO[q].forEach(o=>o.visible=LK(k)===q&&!l13));
   LANG.length=0; S.lan.forEach((l,i)=>{ const L={xc:(l[0]+l[1])/2,hw:(l[1]-l[0])/2,y0:l[2],y1:l[3],zb:l[4],h:l[5]};
     if(dm){ const g=S.dom.geo[i], t=Math.tan(S.dom.th*D2R); L.dm={zr:g.zr+0.033,hw:S.dom.hs+0.01,t}; L.y0=Math.min(L.y0,g.y0); L.y1=Math.max(L.y1,g.y0+g.n*1.325); }
-    if(l13){ const f=L13D.F[i]; L.hw=L13D.hw; L.zb=f[4]+0.14; L.h=L13D.hw*Math.tan(L13D.tilt*D2R); L.y0=f[1]; L.y1=f[2]; }   // каркас 13° + рейка 0,12 + модуль — як DSM у calc/v3/lan22.py
+    if(l13){ const D=LFD[LFK()], f=D.F[i]; L.hw=D.hw; L.zb=f[4]+0.14; L.h=D.hw*Math.tan(D.tilt*D2R); L.y0=f[1]; L.y1=f[2]; }   // каркас 13° + рейка 0,12 + модуль — як DSM у calc/v3/lan22.py
     LANG.push(L); });
   ZTOP=Math.max(...LANG.map(L=>Math.max(L.zb+L.h,L.dm?L.dm.zr:0)))+0.6; }
 // ---------- модулі даху на гранях (книжково вздовж будівлі, по 2 на грань)
@@ -85,11 +87,11 @@ fmods.forEach((m,i)=>{ fIm.setMatrixAt(i,flM(m)); fIm.setColorAt(i,m[5]?white:li
   FL[FK]={FG2,FB,fmods,fIm}; });
 const FLK=k=>FL[LK(k)]||FL.B;
 
-// ---------- v3 · ліхтарі розібрати → нова покрівля на сталевому каркасі ≈13°, модулі вертикально по 1 ряду на схил (calc/v3/lan13_mount.py, lan13_twin_export.py)
-if(L13D&&SC.C){ const G13=grp('v2l13',RG), Gg=grp('v2l13g',G13), th=L13D.tilt*D2R, c=Math.cos(th), s=Math.sin(th), K=L13D.K, MT=L13D.mount, FR=L13D.F, STR=L13D.strings;
+// ---------- v3 · ліхтарі розібрати → нова покрівля на сталевому каркасі 13° або 22°, модулі вертикально по 1 ряду на схил (calc/v3/lan13_mount.py, lanf_twin_export.py)
+if(SC.C) Object.keys(LFD).forEach(TK=>{ const L13D=LFD[TK]; const G13=grp('v2lf'+TK,RG), Gg=grp('v2lfg'+TK,G13), th=L13D.tilt*D2R, c=Math.cos(th), s=Math.sin(th), K=L13D.K, MT=L13D.mount, FR=L13D.F, STR=L13D.strings;
   const roofM=std(0x6f777c,{roughness:0.9}), endM=std(0x9da3a6,{roughness:0.8});
   const T=`Ліхтарі розібрати, на каркасі ≈${nf(L13D.tilt,0)}° — ${nf(K.n)} модулів = ${K.st} стрінги по 11, ${nf(K.kwp,2)} кВтп, ${nf(K.mwh,1)} МВт·год за рік (${nf(K.y)} кВт·год/кВтп, тінь −${nf((1-K.mwh/K.un)*100,1)} %). Стрінг — 11 сусідніх модулів одного схилу одного ліхтаря, без кабелів між ліхтарями; по 1 щиту PV 7/1 біля торця ліхтаря. Дах цеху з нижчими ліхтарями — ${nf(K.roof,1)} МВт·год (+${nf(K.roof-SC.C.sum.mwh,1)}).`;
-  const ANG=`Кут каркаса ≈${nf(L13D.tilt,0)}° — оцінка за фото зсередини (№ ${fnL('112242','112246')}; еталон — схили скління 46°), власник на око — 20–22°: виміряти рівнем, від кута генерація цих модулів змінюється на 1–2 %.`;
+  const ANG=`Кут каркаса: за фото зсередини ≈13° (№ ${fnL('112242','112246')}; еталон — схили скління 46°), власник на око — 20–22°; тут — ${nf(L13D.tilt,0)}°. Виміряти рівнем: при 22° ці модулі дають ${nf(LFD['22']?LFD['22'].K.mwh:0,1)}, при 13° — ${nf(LFD['13']?LFD['13'].K.mwh:0,1)} МВт·год за рік.`;
   FR.forEach((f,i)=>{ const [xc,y0,y1,zb,ze,zr]=f, l=SC.C.lan[i], x0=l[0], x1=l[1], hw=(x1-x0)/2, z0=Math.min(roofZ(x0),roofZ(x1))-0.3, zr2=zr-0.02, ze2=zr2-hw*Math.tan(th);
     const shp=new THREE.Shape([new THREE.Vector2(x0,z0),new THREE.Vector2(x1,z0),new THREE.Vector2(x1,ze2),new THREE.Vector2(xc,zr2),new THREE.Vector2(x0,ze2)]);
     const o=mesh(new THREE.ExtrudeGeometry(shp,{depth:y1-y0,bevelEnabled:false}),[endM,roofM],G13); o.position.z=-y1;
@@ -108,15 +110,14 @@ if(L13D&&SC.C){ const G13=grp('v2l13',RG), Gg=grp('v2l13g',G13), th=L13D.tilt*D2
   gim.userData.info=i=>{ const m=gh[i]; return {t:`Місце без модуля · ліхтар ${m[0]}, ${m[1]==='E'?'схід':'захід'}`,d:`Залишок ліхтаря не набирає стрінг по 11 (схід + захід разом) — щоб не тягнути кабелі між ліхтарями, місце лишаємо порожнім. Тут модуль дав би ≈${nf(m[3])} кВт·год за рік. Усього таких місць ${K.places-K.n}; якби об'єднати залишки між ліхтарями — ${nf(K.max.n)} модулів, ${nf(K.max.mwh,1)} МВт·год. ${T}`}; };
   fr.userData.info={t:`Рейки на каркасі ліхтаря — 2 на схил`,d:`Профіль 41×41 уздовж ліхтаря на ${nf(MT.up,2)} і ${nf(MT.lo,2)} м від осі (по горизонталі) — у зоні притисків ZNSHINE: 540 мм від торців модуля (дозволено 477–596). Рейок ${nf(MT.rail,1)} м (+5 % — 830 м), притисків середніх ${nf(MT.mid)}, кінцевих ${nf(MT.end)}, кронштейни до поперечних балок каркаса — крок 1,5 м до замірів. Якщо проліт каркаса ≈3,1 м — нижня рейка на коротких консолях ≈0,27 м. У кошторисі 27.10 — поз. 1.3.2, ${nf(L13D.cost.lan_mount)} $. ${ANG}`};
   PICK.push({o:im,when:()=>G13.visible},{o:gim,when:()=>Gg.visible},{o:fr,when:()=>G13.visible});
-  L13={G13,Gg,use,gh,im,gim,fr,col,M:L13M};
-  L13S={K:{n:K.n,roof_loss:SC.C.sum.mwh-K.roof},sum:{mo:L13D.mo,un:K.un},l13:true}; }
+  LF[TK]={G13,Gg,use,gh,im,gim,fr,col,M:L13M,S:{K:{n:K.n,roof_loss:SC.C.sum.mwh-K.roof},sum:{mo:L13D.mo,un:K.un},l13:true,tilt:L13D.tilt}}; });
 // ---------- сонце: геометрія модулів для тіней (та сама модель, що в розділі «Сонце»)
 const BLDv=(x,y,z)=>[x,y,z];
 function mkGeom(c,n,ha,hb){ const la=Math.hypot(...ha), lb=Math.hypot(...hb), A=la>=lb?ha:hb, B=la>=lb?hb:ha, s=[];
   [-0.75,-0.25,0.25,0.75].forEach(u=>[-0.5,0.5].forEach(v=>s.push(c.map((x,i)=>x+A[i]*u+B[i]*v+n[i]*0.012)))); return {qc:c,n,a:ha,b:hb,a2:la*la,b2:lb*lb,s}; }
 const GV={roof:[],lan:[],fac:[],can:[]}, VS={roof:null,lan:null,fac:null,can:null}, FMAP=[], LIDX=[];   // LIDX: модуль на ліхтарі → індекс у GV.lan (−1 — поза стрінгами, на освітлення)
 const FP=window.__twin.facpv||null;
-function buildGV(){ const k=sc(); GV.roof=meshGeoms(RM[k].im,RM[k].ok.length); LIDX.length=0; GV.lan=[]; if(L13ON()){ GV.lan=meshGeoms(L13.im,L13.use.length); L13.use.forEach((m,i)=>LIDX.push(i)); } else if(state.lay.lanMods){ const F=FLK(k), all=k==='A'?meshGeoms(dIm,dmods.length):meshGeoms(F.fIm,F.fmods.length), ms=k==='A'?dmods:F.fmods; ms.forEach((m,i)=>{ LIDX.push(m[5]?GV.lan.length:-1); if(m[5]) GV.lan.push(all[i]); }); }
+function buildGV(){ const k=sc(); GV.roof=meshGeoms(RM[k].im,RM[k].ok.length); LIDX.length=0; GV.lan=[]; if(L13ON()){ const O=LF[LFK()]; GV.lan=meshGeoms(O.im,O.use.length); O.use.forEach((m,i)=>LIDX.push(i)); } else if(state.lay.lanMods){ const F=FLK(k), all=k==='A'?meshGeoms(dIm,dmods.length):meshGeoms(F.fIm,F.fmods.length), ms=k==='A'?dmods:F.fmods; ms.forEach((m,i)=>{ LIDX.push(m[5]?GV.lan.length:-1); if(m[5]) GV.lan.push(all[i]); }); }
   GV.fac=[]; GV.can=[]; FMAP.length=0;
   if(FP&&state.lay.fac25){ FACPV.vert.forEach((m,j)=>{ const [f,s,h,Wd,Hd]=m, sc_=s+Wd/2, hc=h+Hd/2;
       const c=f==='S'?[sc_,-0.5-0.10-0.035,hc]:[96.64+0.10+0.035,sc_,hc], n=f==='S'?[0,-1,0]:[1,0,0], ha=f==='S'?[Wd/2,0,0]:[0,Wd/2,0], hb=[0,0,Hd/2];
@@ -140,10 +141,10 @@ stepAll=function(st,wx,store,acc,wt){ if(!V2ON()||acc) return _sa(st,wx,store,ac
 const _gn=genNow; genNow=function(){ const r=_gn(); if(V2ON()&&!wxStep(state.day,state.hour)){ Object.values(VS).forEach(a=>a&&a.fill(0)); const N=GV.roof.length+GV.lan.length+GV.fac.length+GV.can.length+GEN.wh.length; r.ours={Pc:0,Pa:0,n:[0,0,0,N]}; } return r; };
 // фарбування: тінь зараз / тінь за рік (річні дані — розрахунок calc/v2)
 function paintV2(on){ const k=sc(), yr=on&&state.lay.sunYear, R=RM[k];
-  R.im.material=on?SUNV2:MAT.pvPo; R.ok.forEach((m,i)=>R.im.setColorAt(i,!on?white:yr?lcol((m[5]||0)/100):fcol(VS.roof[i]??1))); R.im.instanceColor.needsUpdate=true;
+  R.im.material=on?SUNV2:MAT.pvPo; const RSH=k==='C'&&LFK()&&LFD[LFK()].roofSh; R.ok.forEach((m,i)=>R.im.setColorAt(i,!on?white:yr?lcol((RSH?RSH[i]:(m[5]||0))/100):fcol(VS.roof[i]??1))); R.im.instanceColor.needsUpdate=true;   // «Тінь за рік»: при каркасі 13°/22° — річна тінь даху з calc/v3/shade_lan.py
   const im=k==='A'?dIm:FLK(k).fIm, ms=k==='A'?dmods:FLK(k).fmods; im.material=on?SUNV2:MAT.pvL;
   if(!L13ON()){ ms.forEach((m,i)=>im.setColorAt(i,!m[5]?(on?lin(0xc3c8cc):lin(0xe0a040)):!on?white:yr?lcol(m[4]/100):fcol(VS.lan&&LIDX[i]>=0?VS.lan[LIDX[i]]:1))); im.instanceColor.needsUpdate=true; }
-  if(L13){ const l=on&&L13ON(); L13.im.material=l?SUNV2:L13.M; L13.use.forEach((m,i)=>L13.im.setColorAt(i,!l?L13.col(i):yr?lcol(m[5]>0?1-m[3]/m[5]:0):fcol(VS.lan&&VS.lan[i]!=null?VS.lan[i]:1))); L13.im.instanceColor.needsUpdate=true; }
+  Object.keys(LF).forEach(q=>{ const O=LF[q], l=on&&LFK()===q; O.im.material=l?SUNV2:O.M; O.use.forEach((m,i)=>O.im.setColorAt(i,!l?O.col(i):yr?lcol(m[5]>0?1-m[3]/m[5]:0):fcol(VS.lan&&VS.lan[i]!=null?VS.lan[i]:1))); O.im.instanceColor.needsUpdate=true; });
   if(FP){ const f=FP; [f.pvL,f.pvP,f.pc].forEach(o=>{ if(o) o.material=on&&!yr?SUNV2:(o===f.pvL?MAT.pvL:MAT.pvP); });
     if(f.IDX){ ['L','P'].forEach(t=>{ const o=t==='L'?f.pvL:f.pvP; f.IDX[t].forEach((k_,i)=>o.setColorAt(i,on&&!yr&&VS.fac&&VS.fac.length?fcol(VS.fac[k_]):white)); o.instanceColor.needsUpdate=true; });
       FACPV.can.forEach((m,i)=>f.pc.setColorAt(i,on&&!yr&&VS.can&&VS.can.length?fcol(VS.can[i]):white)); f.pc.instanceColor.needsUpdate=true; } }
@@ -151,7 +152,7 @@ function paintV2(on){ const k=sc(), yr=on&&state.lay.sunYear, R=RM[k];
 const _gp=genPaint; genPaint=function(on){ _gp(on); if(V2ON()||!on) paintV2(on&&V2ON()); };
 // ---------- рік і потужність станції в режимі 27.10
 const YR0=YR?JSON.parse(JSON.stringify({tot:YR.tot,mo:YR.mo})):null, KWP0=KWP.ours;
-function v2Sum(){ const k=sc(), S=SC[k], L=L13ON()?L13S:state.lay.lanMods?(k==='A'?S.dom:S.flush):null, F=R2.fac, FT=F.tot;
+function v2Sum(){ const k=sc(), S=SC[k], L=L13ON()?LF[LFK()].S:state.lay.lanMods?(k==='A'?S.dom:S.flush):null, F=R2.fac, FT=F.tot;
   const roofLoss=L?L.K.roof_loss:0, rf=1-roofLoss/S.sum.mwh, moF=[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>(state.lay.fac25?(F.mo.S[i]+F.mo.Ev[i]+F.mo.Ec[i])/1000:0));
   const whMo=YR0?YR0.mo.ours.map((v,i)=>(v-YR0.mo.oursShop[i])/1000):Array(12).fill(0);
   const mo=S.sum.mo.map((v,i)=>v*rf+(L?L.sum.mo[i]:0)+moF[i]+whMo[i]), shopMo=S.sum.mo.map((v,i)=>v*rf+(L?L.sum.mo[i]:0));
@@ -202,7 +203,7 @@ function sunPathBlock(){ const rows=DAYS.map((dd,i)=>{ const D=DINFO[i]; return 
 const _su=sunUI; sunUI=function(){ _su(); const el=document.getElementById('pSun'); if(!el) return; if(SUNNOW.alt>0){ const r=128*(1-SUNNOW.alt/(Math.PI/2)); el.setAttribute('cx',(150+r*Math.sin(SUNNOW.az)).toFixed(1)); el.setAttribute('cy',(150-r*Math.cos(SUNNOW.az)).toFixed(1)); el.style.display=''; } else el.style.display='none'; };
 const _ps=panelSun; panelSun=function(){ let h=_ps(); const T=state.sunTab||'day';
   if(V2ON()){ const v=v2Sum(), K=v.L&&v.L.K;
-    const blk=`<div class="blk"><h3>Наш Б · дах за розрізом 1-1 (27.10)</h3><p class="src">У «Сонці» — модулі 27.10: дах ${nf(v.n.roof)} (${LTXT[LK(v.k)]}${LK(v.k)==='C'?`, ${SLAB[v.k]}`:''})${v.n.lan?`, ${v.L&&v.L.l13?`на місці ліхтарів ${nf(v.n.lan)} (каркас ≈${nf(L13D.tilt,0)}°, вертикально)`:`на ліхтарях ${nf(v.n.lan)} (${v.k==='A'?'«доміки»':'книжково по схилах'})`}`:''}${v.n.fac?`, фасади ${nf(v.n.fac)}`:''}, склад ${nf(v.n.wh)} — разом ${nf(v.N)} модулів, ${nf(v.N*0.73,1)} кВтп. Тіні рахуються наживо: західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи, козирок над вертикальними модулями сходу. «За рік» — з розрахунку ${LK(v.k)==='C'?'v3 (calc/v3, 27.10, вечір)':`27.10 (calc/v2, ${R2.date})`}${v.roofLoss>0?`, мінус тінь від модулів на ліхтарях (−${nf(v.roofLoss,1)} МВт·год на даху)`:v.roofLoss<0?`, плюс менше тіні від нижчих ліхтарів (+${nf(-v.roofLoss,1)} МВт·год на даху)`:''}. Перемикач ліхтаря — над моделлю.</p></div>`;
+    const blk=`<div class="blk"><h3>Наш Б · дах за розрізом 1-1 (27.10)</h3><p class="src">У «Сонці» — модулі 27.10: дах ${nf(v.n.roof)} (${LTXT[LK(v.k)]}${LK(v.k)==='C'?`, ${SLAB[v.k]}`:''})${v.n.lan?`, ${v.L&&v.L.l13?`на місці ліхтарів ${nf(v.n.lan)} (каркас ${nf(v.L.tilt,0)}°, вертикально)`:`на ліхтарях ${nf(v.n.lan)} (${v.k==='A'?'«доміки»':'книжково по схилах'})`}`:''}${v.n.fac?`, фасади ${nf(v.n.fac)}`:''}, склад ${nf(v.n.wh)} — разом ${nf(v.N)} модулів, ${nf(v.N*0.73,1)} кВтп. Тіні рахуються наживо: західна будівля, ліхтарі, парапети, рама кондиціонерів, сходи, козирок над вертикальними модулями сходу. «За рік» — з розрахунку ${LK(v.k)==='C'?'v3 (calc/v3, 27.10, вечір)':`27.10 (calc/v2, ${R2.date})`}${v.roofLoss>0?`, мінус тінь від модулів на ліхтарях (−${nf(v.roofLoss,1)} МВт·год на даху)`:v.roofLoss<0?`, плюс менше тіні від нижчих ліхтарів (+${nf(-v.roofLoss,1)} МВт·год на даху)`:''}. Перемикач ліхтаря — над моделлю.</p></div>`;
     h=h.replace('<div class="blk">',blk+'<div class="blk">');
     if(T==='year') h=h.replace(/1[\s  ]953/g,nf(v.N)).replace(/1[\s  ]425,69/g,nf(v.N*0.73,1)); }
   if(T==='day'){ const i=h.indexOf('<div class="blk"><h3>Обидва проєкти за добу'); h=i>0?h.slice(0,i)+sunPathBlock()+h.slice(i):h+sunPathBlock(); }
@@ -226,20 +227,20 @@ const _hud=hudCtx; hudCtx=function(){ _hud.apply(this,arguments); const s=state.
   add('v2',`Дах 27.10 · ${nf(SC[sc()].base.n)}`,state.lay.v2,()=>state.lay.v2=!state.lay.v2);
   if(state.lay.v2){ if(SC.C){ add('scC','v3 · А усі місця',sc()==='C',()=>state.lay.lanSc='C'); add('scD','Б · від 1 050',sc()==='D',()=>state.lay.lanSc='D'); add('scE','В · від 1 100',sc()==='E',()=>state.lay.lanSc='E'); }
     add('scB','Ліхтар 3,40',sc()==='B',()=>state.lay.lanSc='B'); add('scA','Ліхтар 2,87 · «домік»',sc()==='A',()=>state.lay.lanSc='A');
-    if(L13&&sc()==='C') add('l13',`Ліхтарі → каркас 13° · +${nf(L13D.K.n)}`,!!state.lay.lan13,()=>{ state.lay.lan13=!state.lay.lan13; if(state.lay.lan13) state.lay.lanMods=false; });
-    add('lanM',`${LK(sc())==='C'?'На склі ліхтарів':'На ліхтарях'} · +${nf(SC[sc()][sc()==='A'?'dom':'flush'].K.n)}`,state.lay.lanMods&&!L13ON(),()=>{ state.lay.lanMods=!state.lay.lanMods; if(state.lay.lanMods) state.lay.lan13=false; }); }
+    if(sc()==='C') Object.keys(LF).sort((a,b)=>b-a).forEach(q=>add('lf'+q,`Ліхтарі → каркас ${q}° · +${nf(LFD[q].K.n)}`,LFK()===q,()=>{ state.lay.lanF=String(state.lay.lanF)===q?0:+q; if(state.lay.lanF) state.lay.lanMods=false; }));
+    add('lanM',`${LK(sc())==='C'?'На склі ліхтарів':'На ліхтарях'} · +${nf(SC[sc()][sc()==='A'?'dom':'flush'].K.n)}`,state.lay.lanMods&&!L13ON(),()=>{ state.lay.lanMods=!state.lay.lanMods; if(state.lay.lanMods) state.lay.lanF=0; }); }
   m.hidden=false;
   if(effSec()==='sun'&&V2ON()&&state.lay.lanMods&&!state.lay.sunPlain){ const l=$('#legend'); if(l&&!l.hidden) l.insertAdjacentHTML('beforeend','<span><i class="sw" style="background:#c3c8cc"></i>на ліхтарях поза стрінгами</span>'); }
-  if(s==='pz'&&V2ON()){ const l=$('#legend'); l.innerHTML=`<span class="t">Наш Б · ${LK(sc())==='C'?SLAB[sc()]:'дах за розрізом 1-1'}</span><span>${nf(SC[sc()].base.n)} модулів на гранях</span>${LK(sc())==='C'?'<span><i class="sw" style="background:#6b4a2e"></i>дефлектори, труби</span><span><i class="sw" style="background:#8f9aa1"></i>нижче порогу варіанта</span>':'<span><i class="sw" style="background:#b4461b"></i>прибрано: тінь</span>'}<span><i class="sw" style="background:#7a3fa0"></i>кондиціонери, портал, двері</span><span><i class="sw" style="background:#c9781c"></i>під стрінги</span><span><i class="sw" style="background:#e0a040"></i>поза стрінгами — на освітлення</span>${L13ON()?`<span>на місці ліхтарів ${nf(L13D.K.n)} модулів, стрінги по 11 — номер стрінга в описі модуля</span>`:''}`; l.hidden=false; } };
+  if(s==='pz'&&V2ON()){ const l=$('#legend'); l.innerHTML=`<span class="t">Наш Б · ${LK(sc())==='C'?SLAB[sc()]:'дах за розрізом 1-1'}</span><span>${nf(SC[sc()].base.n)} модулів на гранях</span>${LK(sc())==='C'?'<span><i class="sw" style="background:#6b4a2e"></i>дефлектори, труби</span><span><i class="sw" style="background:#8f9aa1"></i>нижче порогу варіанта</span>':'<span><i class="sw" style="background:#b4461b"></i>прибрано: тінь</span>'}<span><i class="sw" style="background:#7a3fa0"></i>кондиціонери, портал, двері</span><span><i class="sw" style="background:#c9781c"></i>під стрінги</span><span><i class="sw" style="background:#e0a040"></i>поза стрінгами — на освітлення</span>${L13ON()?`<span>на місці ліхтарів ${nf(LFD[LFK()].K.n)} модулів, каркас ${LFK()}°, стрінги по 11 — номер стрінга в описі модуля</span>`:''}`; l.hidden=false; } };
 function CURVE_RESET(){ Object.keys(CURVE).forEach(q=>delete CURVE[q]); GNOW=null; }
 // ---------- видимість
 let lastKey='';
 const _sv=setVis; setVis=function(){ _sv.apply(this,arguments); const on=V2ON(), k=sc(), sun=effSec()==='sun';
   RG.visible=on; Object.keys(RM).forEach(q=>{ RM[q].g.visible=on&&k===q; RM[q].rg.visible=RM[q].g.visible&&!sun; });
   DG.visible=on&&k==='A'&&!!state.lay.lanMods; Object.keys(FL).forEach(q=>FL[q].FG2.visible=on&&k!=='A'&&LK(k)===q&&!!state.lay.lanMods&&!L13ON());
-  if(L13){ L13.G13.visible=L13ON(); L13.Gg.visible=L13ON()&&!sun; }
+  Object.keys(LF).forEach(q=>{ LF[q].G13.visible=LFK()===q; LF[q].Gg.visible=LFK()===q&&!sun; });
   if(on){ ourMods.visible=false; lagMesh.visible=false; if(oBZ.boxes) oBZ.boxes.visible=false; ['blk','mat','sl','cp','rods','xp','ang','cl','an'].forEach(q=>{ if(OUR[q]) OUR[q].visible=false; }); } setLanGeo();
-  const key=[on,k,state.lay.lanMods,state.lay.fac25,L13ON()].join('|'); if(key!==lastKey){ lastKey=key; buildGV(); CURVE_RESET(); }
+  const key=[on,k,state.lay.lanMods,state.lay.fac25,LFK()].join('|'); if(key!==lastKey){ lastKey=key; buildGV(); CURVE_RESET(); }
   yrApply(); if(!on) paintV2(false); };
-window.__twin.v2={SC,RM,GV,VS,V2ON,v2Sum,DINFO,HORZ,LK,SLAB,FL,sc,L13ON,L13}; if(window.__twin.v3init) window.__twin.v3init(); apply();
+window.__twin.v2={SC,RM,GV,VS,V2ON,v2Sum,DINFO,HORZ,LK,SLAB,FL,sc,L13ON,LF,LFK,LFD}; if(window.__twin.v3init) window.__twin.v3init(); apply();
 }
