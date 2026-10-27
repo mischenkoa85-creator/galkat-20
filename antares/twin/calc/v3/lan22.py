@@ -28,12 +28,12 @@ WX, NA, AZ, tobld = ns['WX'], ns['NA'], ns['AZ'], ns['tobld']
 PW, GAMT, ETA, LOSS, ALB = ns['PW'], ns['GAMT'], ns['ETA'], ns['LOSS'], ns['ALB']
 horizon, svf = ns['horizon'], ns['svf']
 LM, DM, GAP = 2.384, 1.303, 0.022
-TILT = 22.0; tg, ct, st_ = math.tan(math.radians(TILT)), math.cos(math.radians(TILT)), math.sin(math.radians(TILT))
+TILT = float(os.environ.get('TILT', '22')); tg, ct, st_ = math.tan(math.radians(TILT)), math.cos(math.radians(TILT)), math.sin(math.radians(TILT))
 CURB = 0.30; THK = 0.16                                   # низ модуля над покрівлею (оцінка); рейка 0,12 + модуль 0,035
 VAL = 7.00 / 1.2 / 44.89 * 0.975; COST = 250.0
 MODES = {
     'base': dict(name='Як зараз: ліхтарі 3,66 × 1,89 («домік»), без модулів на ліхтарях', half=LW0 / 2),
-    'G1': dict(name='Горизонтально, 1 ряд на схил, каркас 3,66 м', half=LW0 / 2, rows=1, orient='L'),
+    'G1': dict(name='Горизонтально, 1 ряд на схил, каркас 3,66 м', half=float(os.environ.get('G1HALF', LW0 / 2)), rows=1, orient='L'),
     'V1': dict(name='Вертикально, 1 ряд на схил, каркас 4,44 м', half=(LM + 0.01) * ct, rows=1, orient='P'),
     'G2': dict(name='Горизонтально, 2 ряди на схил, каркас 4,89 м (довідково)', half=(2 * DM + GAP + 0.01) * ct, rows=2, orient='L'),
 }
@@ -185,5 +185,5 @@ if __name__ == '__main__':
             R['lan'] = lan_mods(F, mode)
             print(mode, 'lanterns:', {k: R['lan'][k] for k in ('places', 'n', 'st', 'drop', 'kwp', 'mwh', 'mism', 'y', 'irr', 'irrE', 'irrW')}, flush=True)
         OUT['modes'][mode] = R
-        json.dump(OUT, open(V + 'lan22.json', 'w'), ensure_ascii=False)
+        json.dump(OUT, open(V + os.environ.get('OUT', 'lan22.json'), 'w'), ensure_ascii=False)
     print('saved')
