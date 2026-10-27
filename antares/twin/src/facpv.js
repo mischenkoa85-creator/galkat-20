@@ -1,4 +1,4 @@
-// ================= Фасадні модулі (src/facpv.js; дані FACPV — /work/sun/vert.py, combo.py, fac25.py, 26.10.2026)
+// ================= Фасадні модулі (src/facpv.js; дані FACPV — calc/fac_v2.py: s_opt.py, gen_s.py, combo.py; 27.10.2026 — висота будівлі за розрізом 1-1)
 // Рішення власника 21:32: південний фасад — вертикально впритул (низ ≥ 4 м), східний — козирок 25° під парапетом + вертикально нижче.
 {
 const FG=grp('facpv',G.ours), B=25*D2R, DM=1.303, LM=2.384, cb=Math.cos(B), sb=Math.sin(B), tB=Math.tan(B), OFF=0.10;
@@ -37,14 +37,14 @@ C.forEach((m,k)=>{ const [f,r,top,s]=m, F=FR[f], oc=DM*cb/2, hc=top-DM*sb/2;
 [pvL,pvP,pc].forEach(im=>{ for(let i=0;i<im.count;i++) im.setColorAt(i,white); });
 [pvL,pvP,vr,vbr,vcl,pc,arm,strut,plate,anc,clp].forEach(o=>o.instanceMatrix.needsUpdate=true);
 // ---------- підписи при натисканні
-const SN=FACPV.strings||{}; const totTxt=`Фасади: південь вертикально ${T.S.n} модулів (${SN.S||'—'} стрінгів по 11), ${nf(T.S.kwh/1000,1)} МВт·год; схід — козирок ${T.Ec.n} + вертикально ${T.Ev.n} (${(SN.Ec||0)+(SN.Ev||0)} стрінгів), ${nf(T.E.kwh/1000,1)} МВт·год. Разом ${T.all.n} модулів, ${nf(T.all.kwp,1)} кВтп, ${nf(T.all.kwh/1000,1)} МВт·год за рік (26.10, 21:40). У «Сонці» двійника не враховано.`;
+const SN=FACPV.strings||{}; const totTxt=`Фасади: південь вертикально ${T.S.n} модулів (${SN.S||'—'} стрінгів по 11), ${nf(T.S.kwh/1000,1)} МВт·год; схід — козирок ${T.Ec.n} + вертикально ${T.Ev.n} (${(SN.Ec||0)+(SN.Ev||0)} стрінгів), ${nf(T.E.kwh/1000,1)} МВт·год. Разом ${T.all.n} модулів, ${nf(T.all.kwp,1)} кВтп, ${nf(T.all.kwh/1000,1)} МВт·год за рік (перераховано 27.10 на висоту будівлі за розрізом 1-1: козирок сходу на +${nf(C.length?C[0][2]:0,2)} м, верх парапету +${nf(FACPV.ze||0,2)}). У «Сонці» — тіні й потужність наживо.`;
 const vinf=list=>id=>{ const m=V[list[id]], [f,s,h,W,H,kwh,sl]=m;
   return {t:`${RN[f]}: модуль вертикально, ${W>2?'альбомно':'книжково'}, ${nf(h,2)}–${nf(h+H,2)} м${sl?' · стрінг '+sl:''}`, d:`≈${nf0(kwh)} кВт·год за рік (≈${nf0(kwh/0.73)} на 1 кВтп). Кріплення: 2 рейки С 41×41 у точках ¼ довжини, 4 кронштейни з анкерами, 4 затиски; зазор до стіни ≈0,1 м. ${totTxt}`}; };
 pvL.userData.info=vinf(IDX.L); pvP.userData.info=vinf(IDX.P);
 pc.userData.info=id=>{ const m=C[id], R=(FACPV.rows||[])[0]||{}; return {t:`Східний фасад: козирок 25° під парапетом${m[5]?' · стрінг '+m[5]:''}`, d:`Модуль ≈${nf0(m[4])} кВт·год за рік (≈${nf0(m[4]/0.73)} на 1 кВтп). Ряд: ${T.Ec.n} модулів, ${nf(T.Ec.kwh/1000,1)} МВт·год. ${totTxt}`}; };
 const vmi={t:'Кріплення вертикальних модулів — концепція 26.10',d:`Снігу немає — лише вітер: відрив біля кутів ≈${nf(VM.Wk||3.2,1)} кН на модуль (розрахунково ${nf(VM.Wd||4.8,1)}), ≈${nf(VM.anc_t||1.2,1)} кН на анкер; вага модуля ${nf(VM.Gk||0.36,2)} кН. На стіну ≈${nf(VM.wall||0.16,2)} кН на 1 м ряду — у 13 разів менше, ніж від козирка.`};
 [vr,vbr,vcl].forEach(o=>o.userData.info=vmi);
-const cinf={t:'Консоль козирка — концепція 26.10 (не розрахунок КМ)',d:`Через ≈1,2 м, у точках ¼ довжини модуля. Рейка С 41×41 і підкіс; 2 пластини на стіні з плечем ${nf(D_,2)} м у межах однієї панелі. Орієнтовно: вниз ${nf(MN.V1||4.6,1)} кН, вгору ${nf(-(MN.V2||-2.1),1)} кН; верхні анкери — розтяг ${nf(MN.A_ten||3,1)} кН. До вікон — понад 1,7 м (найближче вікно до 11,2 м, нижня пластина від 12,96 м).`};
+const cinf={t:'Консоль козирка — концепція 26.10 (не розрахунок КМ)',d:`Через ≈1,2 м, у точках ¼ довжини модуля. Рейка С 41×41 і підкіс; 2 пластини на стіні з плечем ${nf(D_,2)} м у межах однієї панелі. Орієнтовно: вниз ${nf(MN.V1||4.6,1)} кН, вгору ${nf(-(MN.V2||-2.1),1)} кН; верхні анкери — розтяг ${nf(MN.A_ten||3,1)} кН. Нижня пластина консолі — від ${nf((C.length?C[0][2]:0)-0.06-D_,2)} м; найвищі вікна сходу — до 11,2 м (за фото).`};
 [arm,strut,plate,anc,clp].forEach(o=>o.userData.info=cinf);
 [pvL,pvP,pc,vr,arm,strut,plate].forEach(o=>PICK.push({o,when:()=>FG.visible}));
 // ---------- видимість і перемикач
@@ -53,5 +53,5 @@ const sv1=setVis; setVis=function(){ sv1.apply(this,arguments); const s=effSec()
 const hud1=hudCtx; hudCtx=function(){ hud1.apply(this,arguments); if(state.sec!=='pz'||state.proj!=='ours') return;
   const m=$('#modes'), b=document.createElement('button'); b.type='button'; b.dataset.m='fac25'; b.textContent=`Фасади · +${T.all.n}`; b.setAttribute('aria-pressed',String(!!state.lay.fac25));
   b.onclick=()=>{ state.lay.fac25=!state.lay.fac25; apply(); save(); }; m.appendChild(b); m.hidden=false; };
-window.__twin.facpv={FG,T}; hudCtx(); setVis();
+window.__twin.facpv={FG,T,pvL,pvP,pc,IDX}; hudCtx(); setVis();
 }

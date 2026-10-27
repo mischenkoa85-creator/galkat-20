@@ -8,7 +8,9 @@ if(typeof THREE==='undefined'||!THREE.OrbitControls){ $('#loading').textContent=
 
 // ================= геометрія майданчика (м; X — осі 1→17, Y — осі А→К, на північ)
 const S=DATA.site, HV=S.HV, HE=S.HE, FL=S.FL, SPANS=S.spans, SHOP=S.shop;
-function arch(X){ X=Math.max(0,Math.min(96,X)); for(const s of SPANS){ if(X>=s[0]-1e-9&&X<=s[1]+1e-9){ const c=(s[0]+s[1])/2, h=(s[1]-s[0])/2-FL, d=X-c; if(Math.abs(d)>=h) return [0,0]; return [s[2]*(1-d*d/h/h), -2*s[2]*d/h/h]; } } return [0,0]; }
+const PROF=S.prof||null; // розріз 1-1 (DWG замовника): грані [x0,x1,z0,z1], висоти від ±0,000
+function arch(X){ if(PROF){ X=Math.max(PROF[0][0],Math.min(PROF[PROF.length-1][1],X)); for(const p of PROF){ if(X>=p[0]-1e-9&&X<=p[1]+1e-9){ const k=(p[3]-p[2])/Math.max(1e-6,p[1]-p[0]); return [p[2]+k*(X-p[0])-HV,k]; } } return [0,0]; }
+  X=Math.max(0,Math.min(96,X)); for(const s of SPANS){ if(X>=s[0]-1e-9&&X<=s[1]+1e-9){ const c=(s[0]+s[1])/2, h=(s[1]-s[0])/2-FL, d=X-c; if(Math.abs(d)>=h) return [0,0]; return [s[2]*(1-d*d/h/h), -2*s[2]*d/h/h]; } } return [0,0]; }
 const roofZ=X=>HV+arch(X)[0], roofK=X=>arch(X)[1];
 const T11=Math.tan(11*D2R), T17=Math.tan(17*D2R), T22=Math.tan(22*D2R);
 const POLY={A:[[54.98,-25.08],[66.55,-25.03],[70.82,-24.51],[73.5,-24.51],[73.5,-15.5],[53.75,-18.65]],
@@ -78,7 +80,7 @@ const PICK=[];   // {obj, info(instanceId)}
 
 // ================= будівлі
 { const g=mesh(new THREE.PlaneGeometry(520,420),MAT.ground,G.site,false); g.rotation.x=-Math.PI/2; g.position.set(75,-0.02,-48); }
-const roofXs=[]; for(let x=SHOP[0];x<SHOP[1];x+=0.25) roofXs.push(x); roofXs.push(SHOP[1]);
+const roofXs=[]; for(let x=SHOP[0];x<SHOP[1];x+=0.25) roofXs.push(x); roofXs.push(SHOP[1]); if(PROF){ PROF.forEach(p=>[p[0],p[1]].forEach(x=>{ if(x>SHOP[0]&&x<SHOP[1]) roofXs.push(x); })); roofXs.sort((a,b)=>a-b); }
 { const n=roofXs.length, pos=new Float32Array(n*6), idx=[];
   roofXs.forEach((X,i)=>{ const z=roofZ(X); pos.set([X,z,-SHOP[2], X,z,-SHOP[3]],i*6); });
   for(let i=0;i<n-1;i++){ const a=i*2; idx.push(a,a+2,a+1, a+1,a+2,a+3); }
@@ -87,7 +89,7 @@ const roofXs=[]; for(let x=SHOP[0];x<SHOP[1];x+=0.25) roofXs.push(x); roofXs.pus
   const sh=new THREE.Shape([new THREE.Vector2(SHOP[0],0),new THREE.Vector2(SHOP[1],0)].concat(prof)); const wg=new THREE.ShapeGeometry(sh);
   [SHOP[2],SHOP[3]].forEach(Y=>{ const m=mesh(wg,MAT.wall,G.site); m.position.z=-Y; });
   [SHOP[0],SHOP[1]].forEach(X=>{ const L=SHOP[3]-SHOP[2]; const m=mesh(new THREE.PlaneGeometry(L,HV),MAT.wall,G.site); m.rotation.y=Math.PI/2; m.position.set(X,HV/2,-(SHOP[2]+SHOP[3])/2); }); }
-S.lan.forEach(l=>{ const zb=Math.min(roofZ(l[0]),roofZ(l[1]))-0.05, zt=HV+l[4]; const o=box(l[1]-l[0],zt-zb,l[3]-l[2],MAT.lan,(l[0]+l[1])/2,(zb+zt)/2,-(l[2]+l[3])/2,G.site); o.userData.info={t:'Зенітний ліхтар',d:`${nf(l[1]-l[0],1)} × ${nf(l[3]-l[2],1)} м, на гребені арки`}; PICK.push({o}); });
+S.lan.forEach(l=>{ const zb=Math.min(roofZ(l[0]),roofZ(l[1]))-0.05, zt=Math.max(roofZ(l[0]),roofZ(l[1]))+l[4]; const o=box(l[1]-l[0],zt-zb,l[3]-l[2],MAT.lan,(l[0]+l[1])/2,(zb+zt)/2,-(l[2]+l[3])/2,G.site); o.userData.info={t:'Зенітний ліхтар',d:`${nf(l[1]-l[0],1)} × ${nf(l[3]-l[2],1)} м, на гребені арки`}; PICK.push({o}); });
 S.obs.forEach(o=>{ const m=mesh(new THREE.CylinderGeometry(o[2]/2,o[2]/2,o[3],18),MAT.obs,G.site); m.position.set(o[0],roofZ(o[0])+o[3]/2-0.05,-o[1]); });
 function prism(P,hF,wallMat,roofMat,parent,ridgeY){ const pos=[];
   for(let i=0;i<P.length;i++){ const a=P[i], b=P[(i+1)%P.length], L=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(L/1.0));
@@ -504,9 +506,14 @@ function geomOf(M){ const e=M.elements, ax=BLD(e[0],e[1],e[2]), ay=BLD(e[4],e[5]
 function meshGeoms(im,n){ const out=[], M=new M4(); for(let i=0;i<n;i++){ im.getMatrixAt(i,M); out.push(geomOf(M)); } return out; }
 const GEN={rp:meshGeoms(RPM_.mods,RMOD.length), ours:meshGeoms(ourMods,OM.length), wh:[]};
 WHI.forEach(w=>{ meshGeoms(w.im,w.n).forEach((g,j)=>{ g.mesh=w.im; g.k=j; GEN.wh.push(g); }); });
-const LANB=S.lan.map(l=>[l[0],l[1],l[2],l[3],HV-3,HV+l[4]]);
+const LANB=[]; // ліхтарі — двосхилі, у roofSurf (не коробками)
+const LANG=S.lan.map(l=>({xc:(l[0]+l[1])/2,hw:(l[1]-l[0])/2,y0:l[2],y1:l[3],zb:Math.max(roofZ(l[0]),roofZ(l[1])),h:l[4]})); let ZTOP=Math.max(...LANG.map(L=>L.zb+L.h))+0.6;
+// поверхня даху цеху з ліхтарями й парапетами (для тіней); LANG/ZTOP змінює roofv2.js під вибраний ліхтар і «доміки»
+function roofSurf(X,Y){ let z=roofZ(X); for(const L of LANG){ if(Y>=L.y0&&Y<=L.y1){ const u=Math.abs(X-L.xc); if(u<L.hw) z=Math.max(z,L.zb+L.h*(1-u/L.hw)); if(L.dm&&u<L.dm.hw) z=Math.max(z,L.dm.zr-Math.max(0,u-0.01)*L.dm.t); } }
+  if(Y<-0.25||Y>96.34) z=roofZ(X)+1.2; if(X>96.39) z=Math.max(z,roofZ(96.64)+0.5); return z; }
 const OBSC=S.obs.map(o=>{ const z=roofZ(o[0]); return [o[0],o[1],o[2]/2,z-0.05,z+o[3]-0.05]; });
 const TPB=TPS.map(t=>[t.b[0],t.b[1],t.b[2],t.b[3],0,t.h]);
+const OBX=[]; // будівлі й предмети, що затінюють дах цеху (західна будівля, рама кондиціонерів, сходи…) — заповнює roofv2.js
 const MASTS=RP.masts.map(m=>{ const z=mastBase(m[0],m[1]); return [m[0],m[1],z,z+m[2]]; });
 function rayBox(o,d,b){ let t0=0.02,t1=1e9; for(let k=0;k<3;k++){ const lo=b[k*2], hi=b[k*2+1];
   if(Math.abs(d[k])<1e-9){ if(o[k]<lo||o[k]>hi) return false; continue; } let ta=(lo-o[k])/d[k], tb=(hi-o[k])/d[k]; if(ta>tb){ const t=ta; ta=tb; tb=t; }
@@ -514,11 +521,11 @@ function rayBox(o,d,b){ let t0=0.02,t1=1e9; for(let k=0;k<3;k++){ const lo=b[k*2
 function rayCyl(o,d,c){ const fx=o[0]-c[0], fy=o[1]-c[1], A=d[0]*d[0]+d[1]*d[1]; if(A<1e-12) return false; const B=2*(fx*d[0]+fy*d[1]), C2=fx*fx+fy*fy-c[2]*c[2], D=B*B-4*A*C2;
   if(D<0) return false; const q=Math.sqrt(D); let t0=(-B-q)/(2*A); const t1=(-B+q)/(2*A); if(t1<0.02) return false; t0=Math.max(t0,0.02);
   const z0=o[2]+d[2]*t0, z1=o[2]+d[2]*t1; return Math.min(z0,z1)<=c[4]&&Math.max(z0,z1)>=c[3]; }
-function shopRoofHit(o,d){ const hl=Math.hypot(d[0],d[1]); if(hl<1e-6) return false; const zTop=HV+1.65; if(o[2]>=zTop) return false;
+function shopRoofHit(o,d){ const hl=Math.hypot(d[0],d[1]); if(hl<1e-6) return false; const zTop=ZTOP; if(o[2]>=zTop) return false;
   const tMax=Math.min((zTop-o[2])/d[2],70/hl), st=0.35/hl;
-  for(let t=0.25/hl;t<=tMax;t+=st){ const X=o[0]+d[0]*t, Y=o[1]+d[1]*t; if(X<SHOP[0]||X>SHOP[1]||Y<SHOP[2]||Y>SHOP[3]) return false; if(o[2]+d[2]*t<roofZ(X)) return true; } return false; }
-function whHit(o,d){ const hl=Math.hypot(d[0],d[1]); if(hl<1e-6) return false; const zTop=HV+1.65; const tMax=Math.min((zTop-o[2])/d[2],80/hl), st=0.4/hl;
-  for(let t=0.3/hl;t<=tMax;t+=st){ const X=o[0]+d[0]*t, Y=o[1]+d[1]*t, z=o[2]+d[2]*t, p=partAt(X,Y); if(!p) continue; if(z<(p==='R'?roofZ(X):WHF[p](X,Y))) return true; } return false; }
+  for(let t=0.25/hl;t<=tMax;t+=st){ const X=o[0]+d[0]*t, Y=o[1]+d[1]*t; if(X<SHOP[0]||X>SHOP[1]||Y<SHOP[2]||Y>SHOP[3]) return false; if(o[2]+d[2]*t<roofSurf(X,Y)) return true; } return false; }
+function whHit(o,d){ const hl=Math.hypot(d[0],d[1]); if(hl<1e-6) return false; const zTop=ZTOP; const tMax=Math.min((zTop-o[2])/d[2],80/hl), st=0.4/hl;
+  for(let t=0.3/hl;t<=tMax;t+=st){ const X=o[0]+d[0]*t, Y=o[1]+d[1]*t, z=o[2]+d[2]*t, p=partAt(X,Y); if(!p) continue; if(z<(p==='R'?roofSurf(X,Y):WHF[p](X,Y))) return true; } return false; }
 // сітка трикутникових рядів Вінниці для взаємного затінення
 const QG=new Map(), QMARK=new Int32Array(GEN.rp.length); let qstamp=0; const qkey=(x,y)=>Math.floor(x)*4096+Math.floor(y+100);
 GEN.rp.forEach((g,i)=>{ const xs=[],ys=[]; [-1,1].forEach(u=>[-1,1].forEach(v=>{ xs.push(g.qc[0]+g.a[0]*u+g.b[0]*v); ys.push(g.qc[1]+g.a[1]*u+g.b[1]*v); }));
@@ -539,7 +546,7 @@ function mastHit(g,d,tanAlt){ const dn=dot3(d,g.n); if(dn<=0) return false;
     if(ok&&t0<=t1) return true; } return false; }
 function litFrac(g,i,set,d,tanAlt){ let lit=0; for(const o of g.s){ let hit=false;
     if(set==='wh'){ hit=whHit(o,d)||TPB.some(b=>rayBox(o,d,b)); }
-    else { hit=shopRoofHit(o,d)||LANB.some(b=>rayBox(o,d,b))||OBSC.some(c=>rayCyl(o,d,c))||(set==='rp'&&rowsHit(o,d,i,tanAlt)); }
+    else { hit=shopRoofHit(o,d)||OBX.some(b=>rayBox(o,d,b))||OBSC.some(c=>rayCyl(o,d,c))||(set==='rp'&&rowsHit(o,d,i,tanAlt)); }
     if(!hit) lit++; }
   let f=lit/g.s.length; if(set==='rp'&&f>0&&mastHit(g,d,tanAlt)) f=Math.min(f,0.67); return f; }
 const DOY=[80,172,266,355];
@@ -950,7 +957,7 @@ function apply(){ const P=state.proj; if(XN&&(XN.proj!==P||effSec()!==XN.sec)) c
   pane.querySelectorAll('[data-epx]').forEach(b=>b.onclick=()=>epSelect(null));
   drawSunPath(); setVis(); hudCtx(); placeSun(); sunUI(); save(); hideTip(); rpDetail(); }
 // ================= камера
-const VIEWS={over:{t:'Огляд',p:[-38,95,-150],c:[56,6,-46]},top:{t:'Зверху',p:[56,215,-47],c:[56,0,-46.5]},ridge:{t:'Арка 18 м',p:[14,24,-30],c:[27,14.5,-41]},wh:{t:'Склад',p:[150,30,40],c:[110,4,16]},ess:{t:'Контейнери',p:[121,17,-38],c:[101.5,1.2,-63]},node:{t:'Вузол',dyn:true}};
+const VIEWS={over:{t:'Огляд',p:[-38,95,-150],c:[56,6,-46]},top:{t:'Зверху',p:[56,215,-47],c:[56,0,-46.5]},ridge:{t:'Арка 18 м',p:[14,26.5,-30],c:[27,16.8,-41]},wh:{t:'Склад',p:[150,30,40],c:[110,4,16]},ess:{t:'Контейнери',p:[121,17,-38],c:[101.5,1.2,-63]},node:{t:'Вузол',dyn:true}};
 const cams=$('#cams'); Object.entries(VIEWS).forEach(([k,v])=>{ const b=document.createElement('button'); b.type='button'; b.dataset.c=k; b.textContent=v.t; b.setAttribute('aria-pressed',k==='over'?'true':'false'); b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam(k); }; cams.appendChild(b); });
 let anim=null; const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function nodeView(){ if(state.proj==='rp'){ let best=null,bd=1e9; DATA.rpm.con.forEach(c=>{ const t=RT[c[0]], d=(t.X-21.7)**2+(t.Y-41)**2; if(d<bd){ bd=d; best=t; } }); const c=W(best.X,best.Y+1.09,roofZ(best.X)+0.2); return {c:[c.x,c.y,c.z],p:[c.x+3.4,c.y+1.9,c.z+1.9]}; }

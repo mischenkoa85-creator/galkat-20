@@ -15,7 +15,7 @@ ax.fill_between(xs, zs - 0.35, zs, color='#c4ccd3', lw=0); ax.plot(xs, zs, color
 ax.add_patch(Polygon([(L['x0'], L['zb']), (xc, L['zb'] + LH), (L['x1'], L['zb'])], closed=True, facecolor='#cfe0ea', edgecolor='#8fa9b8', lw=0.7))
 for xe in (L['x0'], L['x1']): ax.plot([xe, xe], [float(np.interp(xe, px, pz)), L['zb']], color='#8fa9b8', lw=0.7)
 ax.plot([L0['x0'], L0['x1']], [L['zb'] - 0.04, L['zb'] - 0.04], color='#b4461b', lw=1.0, ls=(0, (2, 1)))
-ax.text(xc, L['zb'] - 0.2, 'отвір 2,87 м (розріз 1-1)', ha='center', fontsize=5.8, color='#b4461b')
+ax.text(xc, L['zb'] - 0.2, '2,87 м на розрізі 1-1 (можливо, отвір)', ha='center', fontsize=5.8, color='#b4461b')
 for sg, col in ((1, PE), (-1, PW)):
     a, b = 0.02, 0.02 + LM; o = 0.12
     ax.plot([xc + sg * (a * c + o * s), xc + sg * (b * c + o * s)], [L['zb'] + LH - a * s + o * c, L['zb'] + LH - b * s + o * c], color=col, lw=3.2, solid_capstyle='butt')

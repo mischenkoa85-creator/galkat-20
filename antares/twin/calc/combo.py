@@ -9,10 +9,10 @@ SRC = open('/home/claude/work/sun/irr.py', encoding='utf-8').read(); exec(SRC[:S
 st = open('/home/claude/work/sun/stats.py', encoding='utf-8').read(); ns = {'np': np}; exec(st[st.find('up = lambda'):st.find('NAMES =')], ns); OPN = ns['OPN']
 LM, DM, G2, MRG, H0 = 2.384, 1.303, 0.02, 0.10, 4.0; ALB = 0.2
 def arch_top(x): return float(roofZ(min(96.64, max(0.0, x)))) + 1.2
-CAN = {'S': 14.70, 'E': 14.00}; CA, CD = 1.303 * math.cos(math.radians(25)), 1.303 * math.sin(math.radians(25))   # виліт 1,181, перепад 0,551
+CAN = {'S': 14.70, 'E': round(ZE - 0.31, 2)}; CA, CD = 1.303 * math.cos(math.radians(25)), 1.303 * math.sin(math.radians(25))   # виліт 1,181, перепад 0,551
 FAC = {
   'S': dict(nw=(0, -1, 0), P=lambda s, h: (s, -0.5 - 0.15, h), segs=[(0.05, 58.2), (65.9, 96.55)], top=lambda s: min(arch_top(s) - 0.10, CAN['S'] - 1.10), extra=[]),
-  'E': dict(nw=(1, 0, 0), P=lambda s, h: (96.64 + 0.15, s, h), segs=[(-0.4, 53.6), (54.6, 62.9), (64.2, 73.6), (74.4, 96.5)], top=lambda s: min(HV + 0.5 - 0.10, CAN['E'] - 1.10),
+  'E': dict(nw=(1, 0, 0), P=lambda s, h: (96.64 + 0.15, s, h), segs=[(-0.4, 53.6), (54.6, 62.9), (64.2, 73.6), (74.4, 96.5)], top=lambda s: min(ZE - 0.10, CAN['E'] - 1.10),
             extra=[(30.0, 96.6, 5.25, 6.45), (-0.4, 34.6, 0, 4.6)])}
 RECT = {k: [(o[0] - MRG, o[1] + MRG, o[2] - MRG, o[3] + MRG) for o in OPN[k]] + [tuple(e) for e in FAC[k]['extra']] for k in FAC}
 def blocked(k, a, b, h0, h1):
@@ -46,7 +46,7 @@ EL = np.radians(np.arange(2.5, 90, 5)); dEl = math.radians(5); dAz = 2 * math.pi
 LOSS = (1 - .025) * (1 - .015) * (1 - .01) * (1 - .035) * (1 - .03) * (1 - .015) * (1 - .01); GAMT = -0.003; PW, U, ETA = 0.730, 20, 0.235
 modP = lambda poa, ta: np.where(poa > 0, PW * poa / 1000 * (1 + GAMT * (ta + poa * 0.9 * (1 - ETA) / U - 25)) * LOSS, 0)
 RES = {}
-for k, F in FAC.items():
+for k, F in [('E', FAC['E'])]:   # 27.10: лише схід (південь — вертикально, s_opt.py + gen_s.py)
     M = plan(k); nw = np.array(F['nw'], float)
     P = np.array([F['P'](s + W / 2, h + H / 2) for s, h, W, H in M])
     HOR = np.zeros((len(P), NA), np.float32)
@@ -62,7 +62,8 @@ for k, F in FAC.items():
     gap = (CT - CD) - ys; RD = (gap / np.sqrt(gap ** 2 + (CA - 0.03) ** 2)).mean(axis=1)                       # розсіяне: частка неба під козирком
     SVF = SVF * RD
     E = np.zeros(len(P)); POA = np.zeros(len(P)); Eun = np.zeros(len(P))
-    for Wm in WX['mo']:
+    Emo = np.zeros((12, len(P)))
+    for mo_i, Wm in enumerate(WX['mo']):
         wt = Wm['nd'] / 6; p_, c_ = Wm['p'], Wm['c']
         for h, ex, ey, sz, Gh, Dn, Dd, ext, ta in Wm['st']:
             dv = np.array([ex, ey, sz]); cosb = max(float(nw @ dv), 0); Ai = Dn / ext if ext > 0 else 0; cz = max(sz, 0.01)
@@ -71,9 +72,9 @@ for k, F in FAC.items():
             o_ = float(nw @ dv); litc = ((ys + (CA - 0.03) * sz / max(o_, 1e-6)) < (CT - CD)).mean(axis=1) if o_ > 0 else np.ones(len(P))
             vis = vis * litc
             pc = (Dn * cosb + Dd * Ai * cosb / cz) * vis + Dd * (1 - Ai) * SVF + Gh * ALB * 0.5; po = c_ * Gh * SVF + c_ * Gh * ALB * 0.5
-            E += wt * (p_ * modP(pc, ta) + (1 - p_) * modP(po, ta)); POA += wt / 1000 * (p_ * pc + (1 - p_) * po)
+            e_ = wt * (p_ * modP(pc, ta) + (1 - p_) * modP(po, ta)); E += e_; Emo[mo_i] += e_; POA += wt / 1000 * (p_ * pc + (1 - p_) * po)
     n = len(M); nL = sum(1 for m in M if m[2] > 2); RES[k] = dict(n=n, land=nL, port=n - nL, kwp=round(n * PW, 2), kwh=round(float(E.sum())), kwh_kwp=round(float(E.sum()) / (n * PW)) if n else 0,
-                                                                   poa=round(float(POA.mean())), area=round(n * LM * DM), mods=[[round(s, 3), round(h, 3), W, H, round(float(e), 1)] for (s, h, W, H), e in zip(M, E)])
+                                                                   poa=round(float(POA.mean())), area=round(n * LM * DM), mods=[[round(s, 3), round(h, 3), W, H, round(float(e), 1), [round(float(x), 1) for x in Emo[:, i]]] for i, ((s, h, W, H), e) in enumerate(zip(M, E))])
     rows = sorted(set(round(m[1], 2) for m in M))
     print(k, {x: RES[k][x] for x in ('n', 'land', 'port', 'kwp', 'kwh', 'kwh_kwp', 'poa', 'area')}, 'rows at', rows)
-json.dump(RES, open('/home/claude/work/sun/combo.json', 'w'), ensure_ascii=False)
+json.dump(RES, open('/home/claude/work/sun/combo.json', 'w'), ensure_ascii=False); print('CAN E', CAN['E'])

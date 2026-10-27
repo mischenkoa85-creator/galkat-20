@@ -13,11 +13,16 @@ def arch(X):
         if a <= X <= b:
             c = (a + b) / 2; h = (b - a) / 2 - FL; d = X - c; return 0 if abs(d) >= h else r * (1 - d * d / h / h)
     return 0
-R = 0.01; X0, X1, H1 = -0.15, 96.64, 17.5; NX = int(round((X1 - X0) / R)); NH = int(round(H1 / R))
+R = 0.01; X0, X1, H1 = -0.15, 96.64, 19.5; NX = int(round((X1 - X0) / R)); NH = int(round(H1 / R))
 xs = X0 + (np.arange(NX) + 0.5) * R; hs = (np.arange(NH) + 0.5) * R
 LM, DM, G2, MRG, HMIN = 2.384, 1.303, 0.02, 0.10, 4.0
 SEGS = [(0.05, 58.2), (65.9, 96.55)]
-top = np.array([HV + arch(x) + 1.2 - 0.10 for x in xs])
+_d = open('/home/claude/work/twin/data.js', encoding='utf-8').read(); PROF = json.loads(_d[_d.find('{'):_d.rfind('}') + 1])['site'].get('prof')
+def rz(x):   # розріз 1-1 (27.10): грані покрівлі
+    for x0, x1, z0, z1 in PROF:
+        if x0 - 1e-9 <= x <= x1 + 1e-9: return z0 + (z1 - z0) * (x - x0) / max(1e-6, x1 - x0)
+    return PROF[0][2] if x < PROF[0][0] else PROF[-1][3]
+top = np.array([(rz(x) if PROF else HV + arch(x)) + 1.2 - 0.10 for x in xs])
 B = np.ones((NH, NX), bool)                                  # True = зайнято / не можна
 for a, b in SEGS: B[:, int((a - X0) / R):int((b - X0) / R)] = False
 B[hs < HMIN, :] = True; B |= hs[:, None] > top[None, :]

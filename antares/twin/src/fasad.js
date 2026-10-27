@@ -146,7 +146,7 @@ op('S',86.0,86.8,3.6,4.4,'tlouv');
 
 // ================= 3. Сходи (пожежні, на дах) — за фото № 68: майданчики по черзі ліворуч / праворуч через ≈2,2 м
 { const st=std(lin(0x5e676d),{metalness:0.5,roughness:0.5}), rust=std(lin(0x7c5636),{roughness:0.75}), par=[];
-  const XL=[61.0,62.3], XR=[64.3,65.6], YW=-0.55, YF=-2.45, lev=[2.6,4.95,7.3,9.65,12.0,14.35,16.7], top=17.7;
+  const XL=[61.0,62.3], XR=[64.3,65.6], YW=-0.55, YF=-2.45, lev=[2.6,4.95,7.3,9.65,12.0,14.35,16.7]; while(lev[lev.length-1]<RXp(61.65)+0.2) lev.push(+(lev[lev.length-1]+2.35).toFixed(2)); const top=lev[lev.length-1]+1.0;   // до верху парапету (висота будівлі — розріз 1-1)
   [[XL[0],YF],[XR[1],YF],[XL[0],YW-0.15],[XR[1],YW-0.15]].forEach(([x,y])=>par.push(box(0.14,top,0.14,st,x,top/2,-y,FA)));
   const rail=(a,b)=>{ const L=a.distanceTo(b), m=mesh(new THREE.CylinderGeometry(0.022,0.022,L,5),st,FA,false); m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(UP,b.clone().sub(a).normalize()); par.push(m); };
   const land=(x0,x1,h)=>{ par.push(box(x1-x0,0.06,YW-YF,rust,(x0+x1)/2,h,-(YW+YF)/2,FA)); rail(W(x0,YF,h+1.0),W(x1,YF,h+1.0)); [x0,x1].forEach(x=>rail(W(x,YF,h),W(x,YF,h+1.0))); };
@@ -159,7 +159,7 @@ op('S',86.0,86.8,3.6,4.4,'tlouv');
   land(58.4,59.8,1.0); { const s=box(Math.hypot(1.2,1.0),0.16,0.05,st,60.4,0.5,2.85,FA); s.rotation.z=-Math.atan2(1.0,1.2); par.push(s); }
   { const h0=1.0, h1=lev[0], xa=59.8, xb=61.0, len=Math.hypot(xb-xa,h1-h0); [-1.35,-2.25].forEach(y=>{ const s=box(len,0.16,0.05,st,(xa+xb)/2,(h0+h1)/2,-y,FA); s.rotation.z=Math.atan2(h1-h0,xb-xa); par.push(s); });
     const n=7, tr=inst(new THREE.BoxGeometry(0.2,0.035,0.9),rust,n,FA); for(let k=1;k<=n;k++){ const t=k/(n+1); _M.compose(new V3(xa+(xb-xa)*t,h0+(h1-h0)*t,1.8),QI,ONE); tr.setMatrixAt(k-1,_M); } par.push(tr); }
-  par.push(box(1.3,0.06,1.4,rust,61.65,lev[6],0.2,FA));
+  par.push(box(1.3,0.06,1.4,rust,61.65,lev[lev.length-1],0.2,FA));
   par.forEach(o=>pick(o,'Зовнішні сталеві сходи на дах (південний фасад)',`Майданчики по черзі ліворуч і праворуч через ≈2,2 м, марші між ними; внизу — майданчик біля білого контейнера, нагорі — перехід через парапет до порталу. Сходинки й майданчики сильно поіржавілі. Фото № ${fno('144600','124421','124423','144546')}. ${EST}`));
   // козирок над воротами під сходами, бак-навіс з ємностями (IBC), лебідка
   box(3.4,0.05,1.2,std(lin(0x8a6a4a),{roughness:0.7}),63.7,4.15,1.1,FA);

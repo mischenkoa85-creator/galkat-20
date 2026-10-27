@@ -11,7 +11,13 @@ WX = json.load(open(TW + 'wx.json'))
 d = open(TW + 'data.js', encoding='utf-8').read(); D = json.loads(d[d.find('{'):d.rfind('}') + 1]); S = D['site']
 b = open(TW + 'bess.js', encoding='utf-8').read(); B = json.loads(b[b.find('{'):b.rfind('}') + 1])
 HV, HE, FL, SPANS = S['HV'], S['HE'], S['FL'], S['spans']
+PROF = S.get('prof')   # розріз 1-1 (DWG замовника, 27.10): грані [x0, x1, z0, z1]
 def arch(X):
+    if PROF:
+        X = np.clip(np.asarray(X, float), PROF[0][0], PROF[-1][1]); z = np.zeros_like(X); k = np.zeros_like(X)
+        for x0, x1, z0, z1 in PROF[::-1]:
+            m = (X >= x0 - 1e-9) & (X <= x1 + 1e-9); kk = (z1 - z0) / max(1e-6, x1 - x0); z = np.where(m, z0 + kk * (X - x0) - HV, z); k = np.where(m, kk, k)
+        return z, k
     X = np.clip(np.asarray(X, float), 0, 96); z = np.zeros_like(X); k = np.zeros_like(X)
     for s0, s1, r in SPANS:
         m = (X >= s0 - 1e-9) & (X <= s1 + 1e-9); c = (s0 + s1) / 2; h = (s1 - s0) / 2 - FL; dd = X - c; inn = m & (np.abs(dd) < h)
@@ -39,14 +45,17 @@ def boxm(x0, x1, y0, y1): return (XX >= x0) & (XX <= x1) & (YY >= y0) & (YY <= y
 for k, P in POLY.items():
     m = inpoly(P, XX, YY); put(m, WHF[k](XX, YY).astype(np.float32))
 shop = boxm(-0.15, 96.64, -0.5, 96.59); RZ = roofZ(XX).astype(np.float32); put(shop, RZ)
-put(boxm(-0.15, 96.64, -0.5, -0.25), RZ + 1.2); put(boxm(-0.15, 96.64, 96.34, 96.59), RZ + 1.2); put(boxm(96.39, 96.64, -0.5, 96.59), HV + 0.5)
-for l in S['lan']: put(boxm(l[0], l[1], l[2], l[3]), HV + l[4])
-for o in S['obs']:
+put(boxm(-0.15, 96.64, -0.5, -0.25), RZ + 1.2); put(boxm(-0.15, 96.64, 96.34, 96.59), RZ + 1.2); ZE = float(roofZ(96.64)) + 0.5 if PROF else HV + 0.5; put(boxm(96.39, 96.64, -0.5, 96.59), ZE)
+for l in S['lan']:
+    if PROF:   # двосхилий ліхтар (РП 3,40 × 1,74, центри — розріз 1-1)
+        zb = max(float(roofZ(l[0])), float(roofZ(l[1]))); xc = (l[0] + l[1]) / 2; hw = (l[1] - l[0]) / 2; m = boxm(l[0], l[1], l[2], l[3]); put(m, (zb + l[4] * (1 - np.abs(XX - xc) / hw)).astype(np.float32))
+    else: put(boxm(l[0], l[1], l[2], l[3]), HV + l[4])
+for o in ([] if PROF else S['obs']):   # вентиляцію з даху прибрано (26.10)
     m = (XX - o[0]) ** 2 + (YY - o[1]) ** 2 <= (o[2] / 2 + 0.05) ** 2; put(m, float(roofZ(o[0])) + o[3])
 put(boxm(61.45, 62.95, 7, 19), float(roofZ(62.2)) + 2.15)                     # рама кондиціонерів на даху
 OBJ = [  # x0,x1,y0,y1,h — будівлі й предмети за фото/двійником
     (-12.15, -0.15, -0.5, 96.59, HV + 6.8, 'західна будівля'), (-0.5, 19.5, 96.6, 107.1, 4.5, 'ТП-6923'), (19.5, 24.2, 96.6, 99.4, 3.5, 'прибудова'),
-    (96.64, 103.0, -0.4, 34.6, 4.5, 'ТП-5913'), (110, 124, -5, 26, 13.2, 'адмінкорпус'), (58.4, 65.6, -2.45, -0.5, 17.7, 'сходи'),
+    (96.64, 103.0, -0.4, 34.6, 4.5, 'ТП-5913'), (110, 124, -5, 26, 13.2, 'адмінкорпус'), (58.4, 65.6, -2.45, -0.5, 19.8 if PROF else 17.7, 'сходи'),
     (66.0, 71.0, -2.7, -0.95, 2.4, 'ДГУ'), (55.9, 58.35, -3.2, -0.75, 2.6, 'контейнер'), (42.6, 46.6, -3.3, -0.9, 2.6, 'побутівка'),
     (30.7, 38.6, -1.45, -1.05, 0.85, 'кондиціонери'), (25.6, 31.4, 96.59, 98.2, 4.6, 'тамбур Пн'), (79.5, 85.5, -2.3, -0.5, 3.7, 'тамбур Пд'),
     (96.85, 99.15, 35.2, 37.6, 2.5, 'шафа'), (108.0, 110.0, 8.4, 11.6, 3.0, 'вхід адмінкорпусу')]
@@ -68,7 +77,7 @@ for wnm, (sx, sy, nrm, base) in {'S': ('x', -0.5 - 0.3, (0, -1, 0), None), 'N': 
         top = zr(x) + 1.2
         for j, h in enumerate(np.arange(0.5, top, 1.0)): PTS.append((wnm, i, j, x, sy, h, *nrm, x, h))
 for i, y in enumerate(ys):
-    for j, h in enumerate(np.arange(0.5, HV + 0.5, 1.0)): PTS.append(('E', i, j, 96.64 + 0.3, y, h, 1, 0, 0, y, h))
+    for j, h in enumerate(np.arange(0.5, ZE, 1.0)): PTS.append(('E', i, j, 96.64 + 0.3, y, h, 1, 0, 0, y, h))
 for k in ('A', 'B', 'C1'):
     P = np.array(POLY[k]); x0, x1, y0, y1 = P[:, 0].min(), P[:, 0].max(), P[:, 1].min(), P[:, 1].max()
     for y in np.arange(y0 + 0.5, y1, 1.0):
