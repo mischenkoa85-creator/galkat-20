@@ -16,7 +16,8 @@ def measure(n, f=f):
     wm = lambda ids: sum(P[i][0] * P[i][1] for i in ids if i in P) / sum(P[i][1] for i in ids if i in P)
     sd = lambda ids, m: math.sqrt(sum((P[i][0] - m) ** 2 * P[i][1] for i in ids if i in P) / sum(P[i][1] for i in ids if i in P))
     gw, ge, rw, re_ = wm(g['gW']), wm(g['gE']), wm(g['rW']), wm(g['rE']); vb = (gw + ge) / 2
-    return dict(glass=(ge - gw) / 2, vb=vb, rW=rw - (vb - 90), rE=(vb + 90) - re_, sW=sd(g['rW'], rw), sE=sd(g['rE'], re_), nW=len(g['rW']), nE=len(g['rE'])), et, ev, da
+    return dict(glass=90 - (ge - gw) / 2,   # кут скла від горизонталі (бісектриса двох схилів — вертикаль); 28.10: раніше помилково брав кут від вертикалі
+                 vb=vb, rW=rw - (vb - 90), rE=(vb + 90) - re_, sW=sd(g['rW'], rw), sE=sd(g['rE'], re_), nW=len(g['rW']), nE=len(g['rE'])), et, ev, da
 RES = {}
 for n in G:
     r, et, ev, da = measure(n); RES[n] = r
@@ -60,3 +61,5 @@ for n in ('112246', '112242'):
     dr.text((20, 44), f'виміряно: захід {r["rW"]:.1f}°, схід {r["rE"]:.1f}°; скло ліхтаря {r["glass"]:.1f}°', fill=(255, 255, 255), font=FONTs)
     dr.text((20, 76), 'лінії: блакитна — 12°, червона — 17°, рожева — 22° (з тієї самої точки, у перспективі фото)', fill=(255, 255, 255), font=FONTs)
     im.resize((900, 1200), Image.LANCZOS).save(f'/home/claude/work/lanphoto/ovl_{n}.jpg', quality=90)
+    box = (0, 560, 1500, 1330) if n == '112246' else (0, 620, 1500, 1390)
+    im.crop(box).save(f'/home/claude/work/lanphoto/crop_{n}.jpg', quality=90)
