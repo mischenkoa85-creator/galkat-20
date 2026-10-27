@@ -7,7 +7,7 @@
 /* Макет: 3D-сцена на всю висоту ліворуч, вузька технічна панель праворуч; на телефоні — сцена зверху, панель під нею. */
 :root{
   --bg:#eef1f3; --panel:#ffffff; --fg:#1b252d; --muted:#5b6872; --line:#d3dade;
-  --accent:#d98a1c; --east:#2f6fb0; --west:#1d8f8a; --low:#7a5bb5; --off:#9aa5ad;
+  --accent:#d98a1c; --east:#2f6fb0; --west:#1d8f8a; --low:#7a5bb5; --south:#5b4fa3; --off:#9aa5ad;
   --scene:#dfe6ea; --ground:#c9cfc6; --chip:#f3f5f6;
   --f-display:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -15,11 +15,11 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
-  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --off:#5f6b74;
+  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
   --scene:#1a2329; --ground:#2a322f; --chip:#212b32; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
-  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --off:#5f6b74;
+  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
   --scene:#1a2329; --ground:#2a322f; --chip:#212b32; color-scheme:dark }
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
@@ -77,6 +77,7 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <button class="btn" id="v-arch">Арка зблизька</button>
       <button class="btn" id="v-low">Нижній дах</button>
       <button class="btn" id="v-nad">Надбудова</button>
+      <button class="btn" id="v-wall">Південні стіни</button>
     </div>
     <div class="pick" id="pick"><h4>Натисніть на модуль, вентшахту чи блок будівлі</h4><p>Модель обертається мишею або пальцем, колесо — масштаб.</p></div>
   </div>
@@ -85,7 +86,7 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <h1>АБК Антарес — СЕС на даху</h1>
       <p class="sub">Адмінкорпус ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А · варіант К1 з розрахунку 27.10.2026</p>
     </div>
-    <div class="k">
+    <div class="k" aria-label="Варіант К1 без модулів на стінах">
       <div><b>132</b><span>модулі = 12 стрінгів × 11</span></div>
       <div><b>96,4</b><span>кВтп, ZNSHINE 730 Вт</span></div>
       <div><b>88,7</b><span>МВт·год за рік, 921 кВт·год/кВтп</span></div>
@@ -97,7 +98,10 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
         <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
         <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">99 = 9 стр.</td><td class="r">69,4</td><td class="r">961</td></tr>
         <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
+        <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">11 = 1 стр.</td><td class="r">≈6,2</td><td class="r">≈770</td></tr>
       </table>
+      <p class="note" style="margin:6px 0 0"><b>З модулями на стінах:</b> 143 модулі = 13 стрінгів, 104,4 кВтп, ≈94,9 МВт·год за рік. Стіни — оцінка: 770 кВт·год/кВтп, як у вертикальних модулів на південному фасаді цеху (той самий розрахунок тіней); окремо для цих місць не рахували, кошторис стін — ні.</p>
+      <p class="note" style="margin:6px 0 0">Південні стіни: 9 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід і 4 на схід від надбудови; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
       <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 35 місць, 2 найслабші (у тіні надбудови) — поза стрінгами, показані контуром. Колір: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід.</p>
     </div>
     <div>
@@ -105,6 +109,7 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <div class="tg">
         <label><input type="checkbox" id="t-arch" checked> <span><span class="sw" style="background:var(--east)"></span>Модулі на арці</span></label>
         <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--west)"></span>Модулі на нижньому даху</span></label>
+        <label><input type="checkbox" id="t-wall" checked> <span><span class="sw" style="background:var(--south)"></span>Вертикально на південних стінах</span></label>
         <label><input type="checkbox" id="t-mount" checked> <span>Лаги, баласт і опори</span></label>
         <label><input type="checkbox" id="t-ctx" checked> <span>Цех і ТП-5913 поруч</span></label>
         <label><input type="checkbox" id="t-shadow" checked> <span>Тіні від сонця</span></label>
@@ -172,10 +177,10 @@ const mat = {
   tp: M(0xd2b071, {transparent: true, opacity: 0.7}), lag: M(0x9aa3a8, {metalness: 0.55, roughness: 0.4}), blk: M(0x8e8e88),
   ground: M(0xc9cfc6, {roughness: 1}), frame: M(0xc3c8cc, {metalness: 0.5, roughness: 0.4}),
 };
-const pv = {E: M(0x2a568a, {roughness: 0.55, metalness: 0.08}), W: M(0x237071, {roughness: 0.55, metalness: 0.08}), L: M(0x5a4b98, {roughness: 0.55, metalness: 0.08})};
+const pv = {E: M(0x2a568a, {roughness: 0.55, metalness: 0.08}), W: M(0x237071, {roughness: 0.55, metalness: 0.08}), L: M(0x5a4b98, {roughness: 0.55, metalness: 0.08}), S: M(0x4b3f8c, {roughness: 0.5, metalness: 0.08})};
 const hi = M(0xd98a1c, {roughness: 0.4, emissive: 0x6b3d00});
 const picks = [];
-const groups = {arch: new THREE.Group(), low: new THREE.Group(), mount: new THREE.Group(), ctx: new THREE.Group(), bld: new THREE.Group()};
+const groups = {arch: new THREE.Group(), low: new THREE.Group(), wall: new THREE.Group(), mount: new THREE.Group(), ctx: new THREE.Group(), bld: new THREE.Group()};
 Object.values(groups).forEach(g => S.add(g));
 function box(w, h, d, m, x, y, z, grp, info) {         // центр у (x, y-північ, z-висота центру)
   const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.copy(P(x, y, z)); b.castShadow = b.receiveShadow = true;
@@ -341,6 +346,34 @@ document.getElementById('nE').textContent = nE; document.getElementById('nW').te
   [R1, PS].forEach(x => { x.castShadow = x.receiveShadow = true; groups.mount.add(x); });
   R1.userData.info = PS.userData.info = ['Опори «доміку» — схематично', 'Конструкцію кріплення на нижньому даху ще не визначено: тип покрівлі і несуча здатність — немає в даних. Показано лише положення: низ модуля ≈0,15 м над покрівлею, 15° на схід і захід.']; picks.push(R1, PS);
 })();
+// ---------- вертикальні модулі на південних стінах над дахом (запит 28.10, 01:12)
+// 1) південна стіна основного блоку над нижнім дахом (Y 20,3): книжково, низ +10,5, верх +12,88 (карниз +13,2), 0,1 м від стіни;
+//    за північною частиною надбудови (X 116,3–121,5, 2,5 м перед стіною, +13,3) — тінь, там не ставимо (відступ 0,5 м);
+// 2) південна стіна нижчої частини надбудови (Y 8,0): альбомно 2 модулі, низ +10,5, верх +11,8 (верх надбудови +12,25).
+const WALLM = [];
+(function () {
+  const GAPW = 0.022, off = 0.1, zb = AL.h + 0.5;
+  const fill = (a, b, w) => { const n = Math.floor((b - a + GAPW) / (w + GAPW)), st = a + (b - a - (n * (w + GAPW) - GAPW)) / 2; return Array.from({length: n}, (_, i) => st + i * (w + GAPW)); };
+  for (const [a, b] of [[AB.x0 + 0.5, s0 - 0.5], [s1 + 0.5, AB.x1 - 0.5]])
+    fill(a, b, G.dm).forEach(x => WALLM.push({x0: x, x1: x + G.dm, z0: zb, z1: zb + G.lm, y: AB.y0, how: 'P', where: 'Південна стіна основного блоку над нижнім дахом'}));
+  fill(s0 + 0.2, s1 - 0.2, G.lm).forEach(x => WALLM.push({x0: x, x1: x + G.lm, z0: zb, z1: zb + G.dm, y: s2, how: 'L', where: 'Південна стіна надбудови (нижча частина)'}));
+  const railG = new THREE.BoxGeometry(1, 0.041, 0.041), R2 = new THREE.InstancedMesh(railG, mat.frame, WALLM.length * 2), o = new THREE.Object3D(); let k = 0;
+  WALLM.forEach((m, i) => {
+    const w = m.x1 - m.x0, h = m.z1 - m.z0, xm = (m.x0 + m.x1) / 2, zm = (m.z0 + m.z1) / 2;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, T), pv.S); mesh.position.copy(P(xm, m.y - off - T / 2, zm));
+    mesh.castShadow = mesh.receiveShadow = true; mesh.userData.base = pv.S; groups.wall.add(mesh);
+    mesh.userData.info = [`Вертикальний модуль · ${m.how === 'P' ? 'книжково' : 'альбомно'}`, `${m.where}. Дивиться на південь, 90°. Низ +${m.z0.toFixed(2).replace('.', ',')}, верх +${m.z1.toFixed(2).replace('.', ',')} м, 0,1 м від стіни, кріплення — 2 рейки 41×41 на кронштейнах з анкерами (концепція як для фасадів цеху), притиски в зоні ZNSHINE.`];
+    picks.push(mesh);
+    // 2 рейки поперек довгої сторони, у зоні притисків (≈0,54 м від торців)
+    for (const f of [0.54, (m.how === 'P' ? h : w) - 0.54]) {
+      o.rotation.set(0, 0, 0);
+      if (m.how === 'P') { o.scale.set(w + 0.1, 1, 1); o.position.copy(P(xm, m.y - off / 2, m.z0 + f)); }
+      else { o.rotation.z = Math.PI / 2; o.scale.set(h + 0.1, 1, 1); o.position.copy(P(m.x0 + f, m.y - off / 2, zm)); }
+      o.updateMatrix(); R2.setMatrixAt(k++, o.matrix);
+    }
+  });
+  R2.castShadow = true; groups.mount.add(R2);
+})();
 // ---------- підписи
 const LB = [
   [P(XC, 46.5, AB.h + AB.f + 1.2), 'Основний блок · арка +13,2…14,5'],
@@ -370,13 +403,13 @@ function setSun() {
 dayEl.addEventListener('change', setSun); hEl.addEventListener('input', setSun);
 // ---------- шари
 const tie = (id, fn) => document.getElementById(id).addEventListener('change', e => { fn(e.target.checked); need = true; });
-tie('t-arch', v => groups.arch.visible = v); tie('t-low', v => groups.low.visible = v); tie('t-mount', v => groups.mount.visible = v);
+tie('t-arch', v => groups.arch.visible = v); tie('t-low', v => groups.low.visible = v); tie('t-wall', v => groups.wall.visible = v); tie('t-mount', v => groups.mount.visible = v);
 tie('t-ctx', v => { groups.ctx.visible = v; LB[4].d.hidden = LB[5].d.hidden = !v; });
 tie('t-shadow', v => { R.shadowMap.enabled = v; S.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); } }); });
 // ---------- види
 const VIEWS = {
   'v-iso': [P(146, -12, 34), P(118, 26, 10)], 'v-top': [P(118.2, 25.9, 78), P(118.2, 26, 10)], 'v-s': [P(118, -30, 16), P(118, 22, 10)],
-  'v-arch': [P(134, 16, 22), P(118, 33, 13.5)], 'v-low': [P(126, -2, 19), P(118, 13, 10)], 'v-nad': [P(104, 6, 17.5), P(118.9, 13.5, 11.8)],
+  'v-arch': [P(134, 16, 22), P(118, 33, 13.5)], 'v-low': [P(126, -2, 19), P(118, 13, 10)], 'v-nad': [P(104, 6, 17.5), P(118.9, 13.5, 11.8)], 'v-wall': [P(118, -4, 15), P(118, 16, 11.5)],
 };
 let anim = null;
 function go(id, inst) {
