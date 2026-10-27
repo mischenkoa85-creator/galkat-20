@@ -74,7 +74,8 @@ const RX=X=>roofZ(Math.max(0,Math.min(96.64,X)));
 // ================= точки зйомки: станції (підпис — номери фото), стрілки погляду; натискання — фото і камера на місце зйомки
 const FG=new THREE.Group(); scene.add(FG); FG.name='foto';
 const isSt=p=>p[4]==='S'&&p[1]===63&&p[2]>-2;   // з верхнього майданчика сходів
-const ONR=p=>p[4]==='R'||p[4]==='L'||p[4]==='B', hOf=p=>ONR(p)?RX(p[1])+1.6:p[4]==='A'?13.2+1.6:isSt(p)?RX(63)+2.8:p[4]==='T'?5.4:1.6;   // A — дах адмінкорпусу (13,2 м у моделі)
+const ABKZ=(x,y)=>y<20.3?10.0:13.2+1.3*Math.max(0,1-((x-118.25)/9.75)**2);   // дах АБК: південний блок 10,0; основний — арка 13,2 + 1,3 (оцінка)
+const ONR=p=>p[4]==='R'||p[4]==='L'||p[4]==='B', hOf=p=>ONR(p)?RX(p[1])+1.6:p[4]==='A'?ABKZ(p[1],p[2])+1.6:isSt(p)?RX(63)+2.8:p[4]==='T'?5.4:1.6;   // A — дах адмінкорпусу (арка, оцінка)
 const ST=new Map(); FOTO.p.forEach((p,i)=>{ const k=p[1]+','+p[2]; if(!ST.has(k)) ST.set(k,[]); ST.get(k).push(i); });
 const rng=ns=>{ const o=[]; let a=ns[0],b=ns[0]; for(const n of ns.slice(1)){ if(n===b+1) b=n; else { o.push(a===b?a:a+'–'+b); a=b=n; } } o.push(a===b?a:a+'–'+b); return o.join(', '); };
 function pillTex(txt,col){ const c=document.createElement('canvas'), x=c.getContext('2d'); x.font='700 40px system-ui,sans-serif'; const w=Math.ceil(x.measureText(txt).width)+64; c.width=w; c.height=64;
