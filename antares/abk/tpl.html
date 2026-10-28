@@ -4,11 +4,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Макет: 3D-сцена на всю висоту ліворуч, вузька технічна панель праворуч; на телефоні — сцена зверху, панель під нею. */
+/* Макет: 3D-сцена на всю висоту ліворуч, вузька технічна панель праворуч (секції згортаються); у правому куті сцени — меню «На екран»
+   з картками показників поверх моделі. На телефоні — сцена зверху, панель під нею. */
 :root{
   --bg:#eef1f3; --panel:#ffffff; --fg:#1b252d; --muted:#5b6872; --line:#d3dade;
   --accent:#d98a1c; --east:#2f6fb0; --west:#1d8f8a; --low:#7a5bb5; --south:#5b4fa3; --off:#9aa5ad;
-  --scene:#dfe6ea; --ground:#c9cfc6; --chip:#f3f5f6;
+  --sun:#e9a21d; --part:#e0a030; --shade:#5c656d; --ok:#2f8f5b;
+  --scene:#dfe6ea; --ground:#c9cfc6; --chip:#f3f5f6; --shadow:rgba(20,30,40,.14);
   --f-display:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -16,11 +18,13 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
   --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
-  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; color-scheme:dark }}
+  --sun:#f3b440; --part:#f0b048; --shade:#7d8892; --ok:#4fbf83;
+  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; --shadow:rgba(0,0,0,.45); color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
   --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
-  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; color-scheme:dark }
+  --sun:#f3b440; --part:#f0b048; --shade:#7d8892; --ok:#4fbf83;
+  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; --shadow:rgba(0,0,0,.45); color-scheme:dark }
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
 .app{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100%;min-height:520px}
@@ -30,38 +34,88 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14
 .lbl{position:absolute;transform:translate(-50%,-100%);font:500 11px/1.2 var(--f-body);color:var(--fg);background:color-mix(in srgb,var(--panel) 82%,transparent);
   border:1px solid var(--line);padding:2px 6px;border-radius:3px;white-space:nowrap}
 .lbl.n{font:700 12px var(--f-mono);color:var(--accent);background:transparent;border:0}
-.views{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 24px)}
-.btn{font:500 12px var(--f-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:5px 9px;cursor:pointer}
-.btn:hover{border-color:var(--accent)} .btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lbl.hr{font:600 10.5px var(--f-mono);color:var(--accent);background:transparent;border:0;padding:0;transform:translate(-50%,-140%)}
+.views{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 160px)}
+.btn{font:500 12px var(--f-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:5px 9px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)} .btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.ib:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn.on{border-color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+.btn.sm{padding:3px 8px;font-size:11.5px}
 .pick{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;max-width:min(420px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);
   border-left:3px solid var(--accent);padding:10px 12px;border-radius:4px;font-size:13px}
 .pick h4{margin:0 0 4px;font:600 13px var(--f-display)} .pick p{margin:0;color:var(--muted)}
+.pick p.live{margin-top:6px;color:var(--fg);font-family:var(--f-mono);font-size:12px}
+/* меню «На екран» і картки поверх сцени */
+.hudbtn{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:6px;z-index:6}
+.hudbtn svg{width:14px;height:14px}
+.menu{position:absolute;top:46px;right:max(12px,env(safe-area-inset-right,0px));width:min(300px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);
+  border-radius:6px;box-shadow:0 10px 28px var(--shadow);padding:8px;z-index:7;max-height:calc(100% - 58px);overflow-y:auto}
+.menu h5{margin:2px 6px 6px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.menu label{display:grid;grid-template-columns:auto 1fr;gap:1px 8px;padding:6px;border-radius:4px;cursor:pointer;align-items:start}
+.menu label:hover{background:var(--chip)}
+.menu input{margin-top:3px;accent-color:var(--accent)}
+.menu small{grid-column:2;color:var(--muted);font-size:11.5px;line-height:1.35}
+.menu .row{display:flex;gap:6px;justify-content:flex-end;padding:6px 6px 2px;border-top:1px solid var(--line);margin-top:4px}
+.hud{position:absolute;top:46px;right:max(12px,env(safe-area-inset-right,0px));width:244px;display:flex;flex-direction:column;gap:8px;max-height:calc(100% - 58px);overflow-y:auto;pointer-events:none;z-index:4}
+.card{pointer-events:auto;background:color-mix(in srgb,var(--panel) 93%,transparent);border:1px solid var(--line);border-radius:5px;font-size:12px;box-shadow:0 2px 10px var(--shadow);flex-shrink:0}
+.card>header{display:flex;align-items:center;gap:2px;padding:4px 4px 4px 10px;border-bottom:1px solid var(--line)}
+.card.min>header{border-bottom:0} .card.min>.cb{display:none}
+.card h3{margin:0;font:600 10.5px var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);flex:1;min-width:0}
+.card h3 .val{float:right;font:600 11.5px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--fg);margin-right:4px}
+.ib{border:0;background:transparent;color:var(--muted);cursor:pointer;width:22px;height:22px;border-radius:3px;font:600 13px/1 var(--f-mono);display:grid;place-items:center;flex-shrink:0}
+.ib:hover{color:var(--fg);background:var(--chip)}
+.cb{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.big{font:600 24px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.big small{font-size:13px;font-weight:400;color:var(--muted)}
+.meter{height:8px;border-radius:2px;background:var(--chip);border:1px solid var(--line);overflow:hidden;display:flex}
+.meter i{display:block;height:100%}
+.kv{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px}
+.kv span:nth-child(even){font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cmp text{font:600 9px var(--f-mono);fill:var(--muted)}
+.mini{width:100%;border-collapse:collapse;font-size:11.5px}
+.mini td,.mini th{padding:3px 0;border-bottom:1px solid var(--line);text-align:left}
+.mini th{font-weight:500;color:var(--muted)} .mini .r{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;padding-left:6px;white-space:nowrap}
+.spark text{font:500 9px var(--f-mono);fill:var(--muted)}
+/* панель праворуч */
 aside>*{flex-shrink:0}
-aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding-block:16px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding-block:16px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px}
 h1{margin:0;font:700 19px/1.2 var(--f-display);text-wrap:balance}
 .sub{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+.tools{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+details.sec{border-top:1px solid var(--line);padding-top:8px}
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:3px 0;border-radius:3px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::before{content:"";flex:none;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s;margin:0 2px 0 1px}
+details.sec[open]>summary::before{transform:rotate(45deg)}
+details.sec>summary:hover{color:var(--fg)}
+details.sec>summary .val{margin-left:auto;font:600 12px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--fg)}
+details.sec>.body{display:flex;flex-direction:column;gap:8px;padding:8px 0 4px}
 .k{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .k div{background:var(--panel);padding:8px 10px;min-width:0}
 .k b{display:block;font:600 17px var(--f-mono);font-variant-numeric:tabular-nums}
 .k span{font-size:11.5px;color:var(--muted)}
-h2{margin:0 0 6px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 td,th{padding:4px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{font-weight:500;color:var(--muted)} td.r,th.r{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .tg{display:flex;flex-direction:column;gap:6px}
 .tg label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.tg input{accent-color:var(--accent)}
 .sun{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
-select,input[type=range]{width:100%;accent-color:var(--accent)}
-select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+select,input[type=range],input[type=date]{width:100%;accent-color:var(--accent)}
+select,input[type=date]{font:inherit;font-size:13px;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:3px 6px;min-width:0}
+.trow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .note{font-size:12px;color:var(--muted)} .note p{margin:0 0 6px}
 .note ul{margin:0;padding-left:18px}
 .warn{border:1px solid var(--line);background:var(--chip);border-radius:4px;padding:8px 10px;font-size:12px}
 @media (max-width:820px){
-  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:64vh auto;height:auto}
   aside{border-left:0;border-top:1px solid var(--line)}
+  .views{flex-wrap:nowrap;overflow-x:auto;max-width:calc(100% - 140px);scrollbar-width:none}
+  .hud{width:200px;max-height:calc(100% - 150px)}
+  .big{font-size:20px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -74,77 +128,109 @@ select{font:inherit;color:var(--fg);background:var(--chip);border:1px solid var(
       <button class="btn on" id="v-iso">Загальний</button>
       <button class="btn" id="v-top">Зверху</button>
       <button class="btn" id="v-s">З півдня</button>
+      <button class="btn" id="v-sun">Проти сонця</button>
       <button class="btn" id="v-arch">Арка зблизька</button>
       <button class="btn" id="v-low">Нижній дах</button>
       <button class="btn" id="v-nad">Надбудова</button>
       <button class="btn" id="v-wall">Південні стіни</button>
     </div>
+    <button class="btn hudbtn" id="hud-btn" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="1.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="1.5" y="9.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 9.5v5M9.5 12h5" stroke="currentColor" stroke-width="1.4"/></svg>
+      На екран
+    </button>
+    <div class="menu" id="menu" hidden>
+      <h5>Показати на екрані</h5>
+      <div id="menu-list"></div>
+      <div class="row"><button class="btn sm" id="hud-none">Прибрати всі</button><button class="btn sm" id="hud-def">Типовий набір</button></div>
+    </div>
+    <div class="hud" id="hud" aria-live="polite"></div>
     <div class="pick" id="pick"><h4>Натисніть на модуль, вентшахту чи блок будівлі</h4><p>Модель обертається мишею або пальцем, колесо — масштаб.</p></div>
   </div>
   <aside>
     <div>
       <h1>АБК Антарес — СЕС на даху</h1>
       <p class="sub">Адмінкорпус ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А · варіант К1 з розрахунку 27.10.2026, перешкоди на дахах уточнено 28.10</p>
+      <div class="tools"><button class="btn sm" id="all-open">Розгорнути все</button><button class="btn sm" id="all-close">Згорнути все</button></div>
     </div>
-    <div class="k" aria-label="Дахи без модулів на стінах, стрінги по 11, як у К1">
-      <div><b>121</b><span>модуль = 11 стрінгів × 11 (у К1 — 132)</span></div>
-      <div><b>88,3</b><span>кВтп, ZNSHINE 730 Вт (у К1 — 96,4)</span></div>
-      <div><b>≈81,0</b><span>МВт·год за рік — пропорційно К1 (було 88,7)</span></div>
-      <div><b>137</b><span>місць: арка 95, нижній дах 33, стіни 9</span></div>
-    </div>
-    <p class="note" style="margin:0"><b>Що змінилося 28.10.</b> За фото 27.10 і супутником Google на арці 8 круглих тумб, а не 5: додано тумбу біля південно-західного кута, низьку з рудою кришкою біля південно-східного і ще одну поруч з оцинкованим ковпаком на півночі — місць на арці 95 замість 99. З нижнього даху на арку веде сталева драбина (верх біля X ≈122,6): на стіні біля неї модулів не ставимо, на нижньому даху там прибрано 2 місця, які в К1 і так були поза стрінгами. Кошторис К1 (29 536 $, окупність 2,6 р.) — на 132 модулі, треба перерахувати.</p>
-    <div>
-      <h2>По дахах</h2>
-      <table>
-        <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
-        <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">95 місць → 88 = 8 стр.</td><td class="r">≈61,7</td><td class="r">961</td></tr>
-        <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
-        <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">9 — на стрінг бракує 2</td><td class="r">≈5,1</td><td class="r">≈770</td></tr>
-      </table>
-      <p class="note" style="margin:6px 0 0">Якщо лишити стрінги по 11, як у К1: на арці 8 стрінгів (88 модулів), 7 найслабших місць вільні; К1 було 99 = 9 стрінгів, 69,4 МВт·год. Енергія арки й стін — пропорційно К1 на модуль, окремо не рахували. Стіни: 770 кВт·год/кВтп — як у вертикальних модулів на південному фасаді цеху.</p>
-      <p class="note" style="margin:6px 0 0">Південні стіни: 7 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід від надбудови, 2 на схід — між драбиною і кутом; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Було 4 на схід — 2 знято через драбину. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
-      <p class="note" style="margin:6px 0 0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 33 місця = 33 модулі. Два місця К1 поза стрінгами (західний схил правої пари, два північні ряди) прибрано — там стоїть драбина. Колір: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід.</p>
-    </div>
-    <div>
-      <h2>Показати</h2>
-      <div class="tg">
-        <label><input type="checkbox" id="t-arch" checked> <span><span class="sw" style="background:var(--east)"></span>Модулі на арці</span></label>
-        <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--west)"></span>Модулі на нижньому даху</span></label>
-        <label><input type="checkbox" id="t-wall" checked> <span><span class="sw" style="background:var(--south)"></span>Вертикально на південних стінах</span></label>
-        <label><input type="checkbox" id="t-mount" checked> <span>Лаги, баласт і опори</span></label>
-        <label><input type="checkbox" id="t-ctx" checked> <span>Цех і ТП-5913 поруч</span></label>
-        <label><input type="checkbox" id="t-shadow" checked> <span>Тіні від сонця</span></label>
+    <details class="sec" id="sec-sun" open>
+      <summary>Сонце і генерація зараз<span class="val" id="sum-now"></span></summary>
+      <div class="body">
+        <div class="sun">
+          <label for="s-date">Дата</label>
+          <input type="date" id="s-date" value="2026-12-21" min="2026-01-01" max="2026-12-31">
+          <span></span>
+          <div class="chips" role="group" aria-label="Характерні дні">
+            <button class="btn sm" data-date="2026-06-21">21 чер</button><button class="btn sm" data-date="2026-03-21">21 бер</button><button class="btn sm" data-date="2026-09-23">23 вер</button><button class="btn sm" data-date="2026-12-21">21 гру</button><button class="btn sm" data-now="1">Зараз</button>
+          </div>
+          <label for="s-h">Час</label>
+          <div class="trow"><input type="range" id="s-h" min="3.5" max="20.5" step="0.05" value="13"><button class="btn sm" id="s-play" aria-pressed="false">▶ День</button></div>
+          <span></span><span class="note mono" id="s-out"></span>
+        </div>
+        <table class="mini" id="now-tbl" aria-label="Генерація зараз по дахах"></table>
+        <p class="note" style="margin:0" id="day-line"></p>
+        <p class="note" style="margin:0">Потужність — при ясному небі, хмар модель не знає: пряме сонце — модель Мейнела, розсіяне — 10 % від прямого, відбиття від даху 0,2; повітря — середнє для Києва в цю пору; втрати системи 10 %, −0,30 %/°C. Тінь — промені до сонця з 9 точок кожного модуля; частково затінений модуль втрачає пряму складову пропорційно (у стрінгу реальна втрата може бути більшою). Час — сонячний: 12:00 — сонце на півдні; влітку годинник показує на ≈1 год більше. Рахуються лише показані шари модулів.</p>
       </div>
-    </div>
-    <div>
-      <h2>Сонце</h2>
-      <div class="sun">
-        <label for="s-day">День</label>
-        <select id="s-day">
-          <option value="172">21 червня</option>
-          <option value="80">21 березня</option>
-          <option value="266">23 вересня</option>
-          <option value="355" selected>21 грудня</option>
-        </select>
-        <label for="s-h">Час</label>
-        <input type="range" id="s-h" min="4" max="20" step="0.25" value="13">
-        <span></span><span class="note mono" id="s-out"></span>
+    </details>
+    <details class="sec" id="sec-sum" open>
+      <summary>Підсумок К1, за рік<span class="val">137 місць</span></summary>
+      <div class="body">
+        <div class="k" aria-label="Дахи без модулів на стінах, стрінги по 11, як у К1">
+          <div><b>121</b><span>модуль = 11 стрінгів × 11 (у К1 — 132)</span></div>
+          <div><b>88,3</b><span>кВтп, ZNSHINE 730 Вт (у К1 — 96,4)</span></div>
+          <div><b>≈81,0</b><span>МВт·год за рік — пропорційно К1 (було 88,7)</span></div>
+          <div><b>137</b><span>місць: арка 95, нижній дах 33, стіни 9</span></div>
+        </div>
+        <p class="note" style="margin:0"><b>Що змінилося 28.10.</b> За фото 27.10 і супутником Google на арці 8 круглих тумб, а не 5: додано тумбу біля південно-західного кута, низьку з рудою кришкою біля південно-східного і ще одну поруч з оцинкованим ковпаком на півночі — місць на арці 95 замість 99. З нижнього даху на арку веде сталева драбина (верх біля X ≈122,6): на стіні біля неї модулів не ставимо, на нижньому даху там прибрано 2 місця, які в К1 і так були поза стрінгами. Кошторис К1 (29 536 $, окупність 2,6 р.) — на 132 модулі, треба перерахувати.</p>
       </div>
-      <p class="note" style="margin:6px 0 0">Сонячний час, Київ 50,4° пн. ш. Узимку видно, як надбудова сходів і стіна основного блоку затіняють нижній дах.</p>
-    </div>
-    <div class="warn">
-      <b>Що оцінка, а що виміряно.</b> План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Тумб на арці 8: 5 — як у К1, 3 додано 28.10 за фото 27.10 і супутником; положення нових і драбини — ±0,5 м. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.
-    </div>
-    <div class="note">
-      <h2>Виміряти на місці</h2>
-      <ul>
-        <li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li>
-        <li>висоту парапетів і південного блоку;</li>
-        <li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li>
-        <li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li>
-      </ul>
-      <p style="margin-top:8px">Розкладка — <span class="mono">calc/v3/abk.py</span>, звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p>
-    </div>
+    </details>
+    <details class="sec" id="sec-roofs">
+      <summary>По дахах, за рік<span class="val">≈81,0 МВт·год</span></summary>
+      <div class="body">
+        <table>
+          <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
+          <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">95 місць → 88 = 8 стр.</td><td class="r">≈61,7</td><td class="r">961</td></tr>
+          <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
+          <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">9 — на стрінг бракує 2</td><td class="r">≈5,1</td><td class="r">≈770</td></tr>
+        </table>
+        <p class="note" style="margin:0">Якщо лишити стрінги по 11, як у К1: на арці 8 стрінгів (88 модулів), 7 найслабших місць вільні; К1 було 99 = 9 стрінгів, 69,4 МВт·год. Енергія арки й стін — пропорційно К1 на модуль, окремо не рахували. Стіни: 770 кВт·год/кВтп — як у вертикальних модулів на південному фасаді цеху.</p>
+        <p class="note" style="margin:0">Південні стіни: 7 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід від надбудови, 2 на схід — між драбиною і кутом; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Було 4 на схід — 2 знято через драбину. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
+        <p class="note" style="margin:0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 33 місця = 33 модулі. Два місця К1 поза стрінгами (західний схил правої пари, два північні ряди) прибрано — там стоїть драбина.</p>
+      </div>
+    </details>
+    <details class="sec" id="sec-show" open>
+      <summary>Показати в моделі</summary>
+      <div class="body">
+        <div class="tg">
+          <label><input type="checkbox" id="t-arch" checked> <span><span class="sw" style="background:var(--east)"></span>Модулі на арці</span></label>
+          <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--west)"></span>Модулі на нижньому даху</span></label>
+          <label><input type="checkbox" id="t-wall" checked> <span><span class="sw" style="background:var(--south)"></span>Вертикально на південних стінах</span></label>
+          <label><input type="checkbox" id="t-state" checked> <span><span class="sw" style="background:var(--part)"></span>Фарбувати модулі в тіні</span></label>
+          <label><input type="checkbox" id="t-sky" checked> <span><span class="sw" style="background:var(--sun)"></span>Сонце і його шлях за день</span></label>
+          <label><input type="checkbox" id="t-shadow" checked> <span>Тіні від сонця</span></label>
+          <label><input type="checkbox" id="t-mount" checked> <span>Лаги, баласт і опори</span></label>
+          <label><input type="checkbox" id="t-ctx" checked> <span>Цех і ТП-5913 поруч</span></label>
+        </div>
+        <p class="note" style="margin:0">Колір модуля на сонці: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід, <span class="sw" style="background:var(--south)"></span>на південь (стіни); <span class="sw" style="background:var(--part)"></span>частково в тіні; <span class="sw" style="background:var(--shade)"></span>у тіні або сонце позаду модуля.</p>
+      </div>
+    </details>
+    <details class="sec" id="sec-est">
+      <summary>Що оцінка, а що виміряно</summary>
+      <div class="body">
+        <div class="warn">План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Тумб на арці 8: 5 — як у К1, 3 додано 28.10 за фото 27.10 і супутником; положення нових і драбини — ±0,5 м. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.</div>
+      </div>
+    </details>
+    <details class="sec" id="sec-meas">
+      <summary>Виміряти на місці</summary>
+      <div class="body note">
+        <ul>
+          <li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li>
+          <li>висоту парапетів і південного блоку;</li>
+          <li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li>
+          <li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li>
+        </ul>
+        <p style="margin:0">Розкладка — <span class="mono">calc/v3/abk.py</span>, звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p>
+      </div>
+    </details>
   </aside>
 </div>
 
@@ -249,14 +335,14 @@ nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова �
   const N = 40; for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh.lineTo(x, zA(x)); }
   sh.lineTo(AB.x0, 0);
   const g = new THREE.ExtrudeGeometry(sh, {depth: AB.y1 - AB.y0, bevelEnabled: false, curveSegments: 1});
-  const walls = new THREE.Mesh(g, [mat.wall, mat.wall]); walls.position.set(0, 0, -AB.y1); walls.castShadow = walls.receiveShadow = true; groups.bld.add(walls);
+  const walls = new THREE.Mesh(g, [mat.wall, mat.wall]); walls.position.set(0, 0, -AB.y1); walls.castShadow = walls.receiveShadow = true; walls.userData.noOcc = true; groups.bld.add(walls);
   walls.userData.info = ['Основний блок АБК', `${(AB.x1 - AB.x0).toFixed(1).replace('.', ',')} × ${(AB.y1 - AB.y0).toFixed(1).replace('.', ',')} м, 4 поверхи. Дах арковий, гребінь уздовж Пн–Пд: карниз +13,2 м, стріла 1,3 м (оцінка), покрівля бітумна рулонна. ${EST}`]; picks.push(walls);
   // покрівля арки — тонка оболонка темного кольору поверх стін
   const sh2 = new THREE.Shape(); sh2.moveTo(AB.x0, AB.h - 0.02);
   for (let i = 0; i <= N; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh2.lineTo(x, zA(x) + 0.01); }
   for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh2.lineTo(x, zA(x) - 0.05); }
   const rf = new THREE.Mesh(new THREE.ExtrudeGeometry(sh2, {depth: AB.y1 - AB.y0 - 0.02, bevelEnabled: false, curveSegments: 1}), mat.roofA);
-  rf.position.set(0, 0, -AB.y1 + 0.01); rf.receiveShadow = true; rf.castShadow = true; groups.bld.add(rf);
+  rf.position.set(0, 0, -AB.y1 + 0.01); rf.receiveShadow = true; rf.castShadow = true; rf.userData.noOcc = true; groups.bld.add(rf);
   // парапети: захід 0,5, схід 0,7 над карнизом; торці — по арці +0,5
   box(pt, G.par.w, AB.y1 - AB.y0, mat.par, AB.x0 + pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.w / 2, null, ['Західний парапет основного блоку', '≈0,5 м над карнизом (оцінка); біля нього ринва з водою і пруток блискавкозахисту.']);
   box(pt, G.par.e, AB.y1 - AB.y0, mat.par, AB.x1 - pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.e / 2, null, ['Східний парапет основного блоку', '≈0,7 м над карнизом (оцінка).']);
@@ -265,7 +351,7 @@ nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова �
     for (let i = 0; i <= N; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; s3_.lineTo(x, zA(x) + G.par.g); }
     for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; s3_.lineTo(x, zA(x)); }
     const gp = new THREE.Mesh(new THREE.ExtrudeGeometry(s3_, {depth: pt, bevelEnabled: false, curveSegments: 1}), mat.par);
-    gp.position.set(0, 0, -(yy + pt)); gp.castShadow = gp.receiveShadow = true; groups.bld.add(gp);
+    gp.position.set(0, 0, -(yy + pt)); gp.castShadow = gp.receiveShadow = true; gp.userData.noOcc = true; groups.bld.add(gp);
   }
 })();
 // вентшахти і вентвиходи
@@ -429,25 +515,310 @@ const lab = document.getElementById('labels'); LB.forEach(l => { const d = docum
 // північна стрілка на землі
 (function () { const s = new THREE.Shape(); s.moveTo(0, 2.2); s.lineTo(0.8, -0.8); s.lineTo(0, -0.3); s.lineTo(-0.8, -0.8); s.lineTo(0, 2.2);
   const m = new THREE.Mesh(new THREE.ShapeGeometry(s), new THREE.MeshBasicMaterial({color: 0xd98a1c})); m.rotation.x = -Math.PI / 2; m.position.copy(P(132, 46.5, 0.05)); S.add(m); })();
-// ---------- сонце
-const dayEl = document.getElementById('s-day'), hEl = document.getElementById('s-h'), sOut = document.getElementById('s-out');
-function setSun() {
-  const n = +dayEl.value, t = +hEl.value, lat = 50.4 * Math.PI / 180;
-  const dec = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + n) / 365), H = (t - 12) * 15 * Math.PI / 180;
-  const sa = Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(H), alt = Math.asin(sa);
-  let az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(lat) - Math.tan(dec) * Math.cos(lat)) + Math.PI;
-  const hh = Math.floor(t), mm = Math.round((t - hh) * 60);
-  sOut.textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')} · висота ${(alt * 180 / Math.PI).toFixed(1).replace('.', ',')}° · азимут ${(az * 180 / Math.PI).toFixed(0)}°`;
-  const up = Math.max(alt, 0.02), dir = new THREE.Vector3(Math.cos(up) * Math.sin(az), Math.sin(up), Math.cos(up) * Math.cos(az));
-  sun.position.copy(TGT).addScaledVector(dir, 120); sun.intensity = alt > 0 ? 0.25 + 0.75 * Math.min(1, Math.sin(alt) * 2) : 0.0;
-  hemi.intensity = alt > 0 ? 0.55 : 0.35; need = true;
+// ---------- сонце: положення, ясне небо
+const LAT = 50.4 * Math.PI / 180, LON = 30.5, DEG = 180 / Math.PI;
+const nf = (v, d = 1) => v.toFixed(d).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+function sunAt(n, t) {                          // n — день року, t — сонячний час, год; dir — одиничний вектор до сонця (three: x схід, y вгору, −z північ)
+  const dec = 23.44 / DEG * Math.sin(2 * Math.PI * (284 + n) / 365), H = (t - 12) * 15 / DEG;
+  const alt = Math.asin(Math.sin(LAT) * Math.sin(dec) + Math.cos(LAT) * Math.cos(dec) * Math.cos(H));
+  const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(LAT) - Math.tan(dec) * Math.cos(LAT)) + Math.PI;   // від півночі за годинниковою
+  return {alt, az, dec, dir: new THREE.Vector3(Math.cos(alt) * Math.sin(az), Math.sin(alt), -Math.cos(alt) * Math.cos(az))};
 }
-dayEl.addEventListener('change', setSun); hEl.addEventListener('input', setSun);
+function sunTimes(n) { const dec = 23.44 / DEG * Math.sin(2 * Math.PI * (284 + n) / 365), c = -Math.tan(LAT) * Math.tan(dec); const H0 = Math.acos(Math.max(-1, Math.min(1, c))) * DEG / 15; return [12 - H0, 12 + H0]; }
+function sky(n, alt) {                          // ясне небо: пряме — Мейнел, розсіяне — 10 % від прямого
+  if (alt <= 0) return {dni: 0, dhi: 0, ghi: 0};
+  const hd = alt * DEG, am = 1 / (Math.sin(alt) + 0.50572 * Math.pow(hd + 6.07995, -1.6364));
+  const dni = 1361 * (1 + 0.033 * Math.cos(2 * Math.PI * n / 365)) * Math.pow(0.7, Math.pow(am, 0.678)), dhi = 0.1 * dni;
+  return {dni, dhi, ghi: dni * Math.sin(alt) + dhi};
+}
+const tAir = n => 8 + 12 * Math.sin(2 * Math.PI * (n - 110) / 365);   // середня денна для Києва, оцінка: січень ≈ −4, липень ≈ +20
+// ---------- модулі і перешкоди для променів
+const pvPart = M(0xd4962e, {roughness: 0.6, metalness: 0.05}), pvShade = M(0x4f585f, {roughness: 0.7, metalness: 0.05});
+const MODS = [];
+groups.arch.children.forEach(m => m.isMesh && MODS.push({mesh: m, g: 'arch', ax: 'y', w: G.dm, l: G.lm}));
+groups.low.children.forEach(m => m.isMesh && m.userData.base && MODS.push({mesh: m, g: 'low', ax: 'y', w: G.dm, l: G.lm}));
+groups.wall.children.forEach(m => m.isMesh && MODS.push({mesh: m, g: 'wall', ax: 'z', w: m.geometry.parameters.width, l: m.geometry.parameters.height}));
+MODS.forEach(r => {
+  const m = r.mesh; m.updateMatrixWorld(true); r.face = m.userData.base; m.userData.rec = r;
+  r.n = (r.ax === 'y' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1)).applyQuaternion(m.quaternion).normalize();
+  r.pts = [];
+  for (const a of [-1 / 3, 0, 1 / 3]) for (const b of [-1 / 3, 0, 1 / 3]) {
+    const p = r.ax === 'y' ? new THREE.Vector3(a * r.w, T / 2 + 0.02, b * r.l) : new THREE.Vector3(a * r.w, b * r.l, T / 2 + 0.02);
+    r.pts.push(m.localToWorld(p));
+  }
+  r.f = 0; r.cos = 0; r.poa = 0; r.p = 0; r.state = 'shade';
+});
+const OCC = [], rc = new THREE.Raycaster(), hitTmp = [];
+rc.near = 0; rc.far = 300;
+[groups.bld, groups.ctx, groups.arch, groups.low, groups.wall].forEach(g => g.traverse(o => {
+  if (!o.isMesh || o.isInstancedMesh || o.userData.noOcc) return;
+  const ms = Array.isArray(o.material) ? o.material : [o.material]; if (ms.every(m => m.visible === false)) return;
+  o.updateMatrixWorld(true); if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+  const s = o.geometry.boundingSphere.clone().applyMatrix4(o.matrixWorld); OCC.push({o, x: s.center.x, y: s.center.y, z: s.center.z, r2: s.radius * s.radius});
+}));
+const ZTOP = AB.h + AB.f + G.par.g + 0.05;
+function archHit(o, d) {                        // тіло основного блоку з аркою і торцеві парапети — аналітично, без трикутників
+  const on = -o.z, dn = -d.z;
+  for (const yf of [AB.y0, AB.y0 + pt, AB.y1 - pt, AB.y1]) {          // торцеві парапети по арці (+0,5)
+    if (Math.abs(dn) < 1e-9) break; const s = (yf - on) / dn; if (s <= 0) continue;
+    const x = o.x + d.x * s, h = o.y + d.y * s; if (x > AB.x0 && x < AB.x1 && h < zA(x) + G.par.g) return true;
+  }
+  for (let s = 0.05; s < 60; s += 0.2) {
+    const h = o.y + d.y * s; if (h > ZTOP) return false;
+    const x = o.x + d.x * s, y = on + dn * s;
+    if (x > AB.x0 && x < AB.x1 && y > AB.y0 && y < AB.y1 && h < zA(x) - 0.004) return true;
+  }
+  return false;
+}
+function blocked(o, d, self) {
+  if (archHit(o, d)) return true;
+  rc.ray.origin.copy(o); rc.ray.direction.copy(d);
+  for (const c of OCC) {
+    if (c.o === self) continue;
+    const ox = c.x - o.x, oy = c.y - o.y, oz = c.z - o.z, L2 = ox * ox + oy * oy + oz * oz, tca = ox * d.x + oy * d.y + oz * d.z;
+    if (L2 > c.r2 && tca < 0) continue; if (L2 - tca * tca > c.r2) continue;
+    hitTmp.length = 0; c.o.raycast(rc, hitTmp); if (hitTmp.length) return true;
+  }
+  return false;
+}
+const GRP = {arch: 'Арка', low: 'Нижній дах', wall: 'Стіни'}, PM = 0.730;
+function evaluate(n, t, store) {
+  const s = sunAt(n, t), sk = sky(n, s.alt), Ta = tAir(n), vis = {arch: groups.arch.visible, low: groups.low.visible, wall: groups.wall.visible};
+  const tot = {}; for (const g in GRP) tot[g] = {n: 0, sun: 0, part: 0, shade: 0, p: 0, poa: 0};
+  for (const r of MODS) {
+    if (!vis[r.g] && !store) continue;
+    const cos = r.n.dot(s.dir); let f = 1;
+    if (s.alt > 0 && cos > 0) { let k = 0; for (const p of r.pts) if (blocked(p, s.dir, r.mesh)) k++; f = k / r.pts.length; }
+    const cb = r.n.y, beam = s.alt > 0 ? sk.dni * Math.max(0, cos) * (1 - f) : 0;
+    const poa = beam + sk.dhi * (1 + cb) / 2 + 0.2 * sk.ghi * (1 - cb) / 2;
+    const tc = Ta + poa / 800 * 23, p = PM * poa / 1000 * (1 - 0.003 * (tc - 25)) * 0.9;
+    const state = s.alt <= 0 || cos <= 0 || f > 0.999 ? 'shade' : f > 0.001 ? 'part' : 'sun';
+    if (store) Object.assign(r, {f, cos, poa, p, state});
+    if (vis[r.g]) { const q = tot[r.g]; q.n++; q[state]++; q.p += p; q.poa += poa; }
+  }
+  const all = {n: 0, sun: 0, part: 0, shade: 0, p: 0, poa: 0}; for (const g in tot) for (const k in all) all[k] += tot[g][k];
+  return {n, t, s, sk, Ta, tot, all, vis};
+}
+// ---------- сонце в сцені: куля, ореол, шлях за день із годинами
+const skyG = new THREE.Group(); S.add(skyG); const SUNR = 150;
+const sunBall = new THREE.Mesh(new THREE.SphereGeometry(4.5, 24, 16), new THREE.MeshBasicMaterial({color: 0xffc23d}));
+const glowTex = canvasTex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(255,214,120,0.95)'); gr.addColorStop(0.35, 'rgba(255,190,80,0.35)'); gr.addColorStop(1, 'rgba(255,180,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+const glow = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTex, transparent: true, depthWrite: false})); glow.scale.set(34, 34, 1);
+skyG.add(sunBall, glow);
+const pathMat = new THREE.LineBasicMaterial({color: 0xd98a1c, transparent: true, opacity: 0.8});
+let pathLine = null; const hourDots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.9, 10, 8), new THREE.MeshBasicMaterial({color: 0xd98a1c}), 20); skyG.add(hourDots);
+const skyPos = d => TGT.clone().addScaledVector(d, SUNR);
+const HRL = [6, 9, 12, 15, 18].map(h => ({h, d: null, p: new THREE.Vector3()}));
+function buildPath(n) {
+  const [sr, ss] = sunTimes(n), pts = [];
+  for (let t = sr; t <= ss + 1e-6; t += (ss - sr) / 120) { const s = sunAt(n, t); pts.push(skyPos(s.dir.clone().setY(Math.max(s.dir.y, 0)).normalize())); }
+  if (pathLine) { skyG.remove(pathLine); pathLine.geometry.dispose(); }
+  pathLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), pathMat); skyG.add(pathLine);
+  const o = new THREE.Object3D(); let k = 0;
+  for (let h = Math.ceil(sr); h <= Math.floor(ss); h++) { const s = sunAt(n, h); o.position.copy(skyPos(s.dir)); o.updateMatrix(); hourDots.setMatrixAt(k++, o.matrix); }
+  hourDots.count = k; hourDots.instanceMatrix.needsUpdate = true;
+  HRL.forEach(l => { const on = l.h > sr && l.h < ss; l.on = on; if (on) l.p.copy(skyPos(sunAt(n, l.h).dir)); });
+}
+// ---------- стан: дата, час
+const st = {date: '2026-12-21', n: 355, t: 13, res: null, play: false};
+const doy = s => { const [y, m, d] = s.split('-').map(Number); return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 864e5); };
+const fmtT = t => { const m = Math.round(t * 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const fmtD = s => { const [y, m, d] = s.split('-').map(Number); return `${d} ${['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'][m - 1]}`; };
+function nowSolar() {                           // сонячний час Києва зараз: UTC + довгота/15 + рівняння часу
+  const n0 = doy(new Date().toISOString().slice(0, 10)), B = 2 * Math.PI * (n0 - 81) / 364, eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+  const d = new Date(Date.now() + (LON / 15 + eot / 60) * 3600e3);
+  return {date: '2026' + d.toISOString().slice(4, 10), t: d.getUTCHours() + d.getUTCMinutes() / 60};
+}
+let pend = false;
+function schedule() { if (pend) return; pend = true; requestAnimationFrame(() => { pend = false; update(); }); }
+function setDate(iso) { st.date = iso; st.n = doy(iso); buildPath(st.n); startDay(); syncInputs(); schedule(); }
+function setTime(t) { st.t = Math.max(3.5, Math.min(20.5, t)); syncInputs(); schedule(); }
+function update() {
+  const r = evaluate(st.n, st.t, true); st.res = r;
+  const s = r.s, up = Math.max(s.alt, 0.02), dir = new THREE.Vector3(Math.cos(up) * Math.sin(s.az), Math.sin(up), -Math.cos(up) * Math.cos(s.az));
+  sun.position.copy(TGT).addScaledVector(dir, 120); sun.intensity = s.alt > 0 ? 0.25 + 0.75 * Math.min(1, Math.sin(s.alt) * 2) : 0.0;
+  hemi.intensity = s.alt > 0 ? 0.55 : 0.35;
+  sunBall.position.copy(skyPos(s.dir)); glow.position.copy(sunBall.position); sunBall.visible = glow.visible = s.alt > -0.01;
+  paint(); renderAll(); need = true;
+}
+// фарбування модулів за станом
+const colorOn = () => document.getElementById('t-state').checked;
+function paint() {
+  const day = st.res && st.res.s.alt > 0;
+  for (const r of MODS) {
+    const base = !colorOn() || !day || r.state === 'sun' ? r.face : r.state === 'part' ? pvPart : pvShade;
+    r.mesh.userData.base = base; if (r.mesh !== sel) r.mesh.material = base;
+  }
+}
+// ---------- енергія за день (ясне небо), рахується частинами, щоб не гальмувати
+let dayRes = null, dayJob = null;
+function dayKey() { return st.n + '|' + ['arch', 'low', 'wall'].map(g => groups[g].visible ? 1 : 0).join(''); }
+function startDay() {
+  const key = dayKey(); if (dayRes && dayRes.key === key) return; if (dayJob && dayJob.key === key) return;
+  const [sr, ss] = sunTimes(st.n), N = Math.max(8, Math.ceil((ss - sr) / 0.25)), dt = (ss - sr) / N;
+  const job = dayJob = {key, sr, ss, dt, i: 0, N, pts: [], e: {arch: 0, low: 0, wall: 0}, pnom: 0};
+  dayRes = null; renderAll();
+  (function step() {
+    if (dayJob !== job) return;
+    for (let k = 0; k < 3 && job.i < N; k++, job.i++) {
+      const t = sr + (job.i + 0.5) * dt, r = evaluate(st.n, t, false);
+      job.pts.push([t, r.all.p]); for (const g in job.e) job.e[g] += r.tot[g].p * dt; job.pnom = r.all.n * PM;
+    }
+    if (job.i < N) setTimeout(step, 0); else { dayRes = job; dayJob = null; renderAll(); }
+  })();
+}
+// ---------- картки на екрані
+const CARDS = [
+  {id: 'time', t: 'Час і дата', d: 'повзунок часу, «програти день», характерні дні, «зараз»', on: 1},
+  {id: 'sun', t: 'Сонце на небі', d: 'компас: шлях сонця за день, де воно зараз, висота й азимут', on: 1},
+  {id: 'now', t: 'Потужність зараз', d: 'кВт показаних модулів і частка від їхньої номінальної', on: 1},
+  {id: 'state', t: 'Модулі: сонце і тінь', d: 'скільки на сонці, частково в тіні, у тіні', on: 1},
+  {id: 'roofs', t: 'По дахах', d: 'арка, нижній дах, стіни: кВт і стан модулів', on: 0},
+  {id: 'day', t: 'Генерація за день', d: 'крива потужності від сходу до заходу і кВт·год за день', on: 0},
+  {id: 'irr', t: 'Опромінення і погода', d: 'пряме і розсіяне сонце, середнє на модулях, повітря', on: 0},
+  {id: 'legend', t: 'Кольори модулів', d: 'що означає колір модуля', on: 0},
+];
+const store = {get(k, d) { try { const v = localStorage.getItem('abk.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('abk.' + k, JSON.stringify(v)); } catch (e) {} }};
+const narrow = () => stage.clientWidth < 600, defHud = () => narrow() ? ['now', 'state'] : CARDS.filter(c => c.on).map(c => c.id);   // на телефоні — лише дві картки
+let hudOn = store.get('hud', defHud()), hudMin = store.get('hudmin', []);
+const hud = document.getElementById('hud'), menu = document.getElementById('menu'), mlist = document.getElementById('menu-list'), hbtn = document.getElementById('hud-btn');
+CARDS.forEach(c => {
+  const l = document.createElement('label'), i = document.createElement('input'); i.type = 'checkbox'; i.id = 'm-' + c.id; i.checked = hudOn.includes(c.id);
+  const b = document.createElement('span'); b.textContent = c.t; const sm = document.createElement('small'); sm.textContent = c.d;
+  l.append(i, b, sm); mlist.appendChild(l);
+  i.addEventListener('change', () => { hudOn = CARDS.map(x => x.id).filter(id => id === c.id ? i.checked : hudOn.includes(id)); store.set('hud', hudOn); buildHud(); });
+});
+function setMenu(open) { menu.hidden = !open; hbtn.setAttribute('aria-expanded', open); hbtn.classList.toggle('on', open); }
+hbtn.addEventListener('click', e => { e.stopPropagation(); setMenu(menu.hidden); });
+document.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !hbtn.contains(e.target)) setMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { setMenu(false); hbtn.focus(); } });
+function setHud(ids) { hudOn = ids; store.set('hud', ids); CARDS.forEach(c => document.getElementById('m-' + c.id).checked = ids.includes(c.id)); buildHud(); }
+document.getElementById('hud-none').addEventListener('click', () => setHud([]));
+document.getElementById('hud-def').addEventListener('click', () => setHud(defHud()));
+const CB = {};
+function buildHud() {
+  hud.innerHTML = ''; for (const k in CB) delete CB[k];
+  CARDS.filter(c => hudOn.includes(c.id)).forEach(c => {
+    const el = document.createElement('section'); el.className = 'card' + (hudMin.includes(c.id) ? ' min' : ''); el.setAttribute('aria-label', c.t);
+    const h = document.createElement('header'), h3 = document.createElement('h3'), v = document.createElement('span'); v.className = 'val'; h3.textContent = c.t; h3.appendChild(v);
+    const bm = document.createElement('button'), bx = document.createElement('button'); bm.className = bx.className = 'ib';
+    const setMin = () => { const m = el.classList.contains('min'); bm.textContent = m ? '+' : '–'; bm.setAttribute('aria-label', (m ? 'Розгорнути: ' : 'Згорнути: ') + c.t); bm.setAttribute('aria-expanded', !m); };
+    bm.addEventListener('click', () => { el.classList.toggle('min'); hudMin = el.classList.contains('min') ? [...hudMin, c.id] : hudMin.filter(x => x !== c.id); store.set('hudmin', hudMin); setMin(); });
+    bx.textContent = '×'; bx.setAttribute('aria-label', 'Прибрати з екрана: ' + c.t);
+    bx.addEventListener('click', () => setHud(hudOn.filter(x => x !== c.id)));
+    setMin(); h.append(h3, bm, bx);
+    const body = document.createElement('div'); body.className = 'cb'; el.append(h, body); hud.appendChild(el);
+    CB[c.id] = {body, val: v};
+    if (c.id === 'time') buildTimeCard(body);
+  });
+  for (let i = TIMES.length - 1; i >= 0; i--) if (!TIMES[i].dEl.isConnected) TIMES.splice(i, 1);
+  renderAll();
+}
+function buildTimeCard(b) {
+  b.innerHTML = `<div class="trow"><input type="date" id="w-date" min="2026-01-01" max="2026-12-31" aria-label="Дата"><button class="btn sm" id="w-play" aria-pressed="false">▶</button></div>
+    <input type="range" id="w-h" min="3.5" max="20.5" step="0.05" aria-label="Сонячний час">
+    <div class="chips"><button class="btn sm" data-date="2026-06-21">21 чер</button><button class="btn sm" data-date="2026-03-21">21 бер</button><button class="btn sm" data-date="2026-12-21">21 гру</button><button class="btn sm" data-now="1">Зараз</button></div>`;
+  wireTime(b.querySelector('#w-date'), b.querySelector('#w-h'), b.querySelector('#w-play'), b);
+  syncInputs();
+}
+const SVGNS = 'http://www.w3.org/2000/svg';
+function compassSVG(r) {                        // полярна діаграма: центр — зеніт, коло — горизонт; північ угорі
+  const R = 64, pr = (alt, az) => { const q = R * (1 - Math.max(0, alt) / (Math.PI / 2)); return [q * Math.sin(az), -q * Math.cos(az)]; };
+  const [sr, ss] = sunTimes(r.n); let d = '';
+  for (let k = 0; k <= 60; k++) { const s = sunAt(r.n, sr + (ss - sr) * k / 60), [x, y] = pr(s.alt, s.az); d += (k ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }
+  let hrs = ''; for (let h = Math.ceil(sr); h <= Math.floor(ss); h++) { const s = sunAt(r.n, h), [x, y] = pr(s.alt, s.az); hrs += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" style="fill:var(--accent)"/>`; if (h % 3 === 0) hrs += `<text x="${(x * 1.13).toFixed(1)}" y="${(y * 1.13 + 3).toFixed(1)}" text-anchor="middle">${h}</text>`; }
+  const [sx, sy] = pr(r.s.alt, r.s.az), up = r.s.alt > 0;
+  // контур АБК, 1 м = 0,9 од.; центр плану ≈ (118, 26)
+  const k = 0.9, rect = (x0, x1, y0, y1) => `<rect x="${((x0 - 118) * k).toFixed(1)}" y="${((26 - y1) * k).toFixed(1)}" width="${((x1 - x0) * k).toFixed(1)}" height="${((y1 - y0) * k).toFixed(1)}" style="fill:var(--chip);stroke:var(--muted)" stroke-width="0.6"/>`;
+  return `<svg class="cmp" viewBox="-86 -84 172 168" width="100%" style="max-width:170px;align-self:center" role="img" aria-label="Шлях сонця ${fmtD(st.date)}: зараз висота ${nf(r.s.alt * DEG)}°, азимут ${Math.round(r.s.az * DEG)}°">
+    <circle r="${R}" style="fill:none;stroke:var(--line)"/><circle r="${R * 2 / 3}" style="fill:none;stroke:var(--line)" stroke-dasharray="2 3"/><circle r="${R / 3}" style="fill:none;stroke:var(--line)" stroke-dasharray="2 3"/>
+    ${rect(AB.x0, AB.x1, AB.y0, AB.y1)}${rect(AL.x0, AL.x1, AL.y0, AL.y1)}
+    <text y="-68" text-anchor="middle">Пн</text><text y="75" text-anchor="middle">Пд</text><text x="76" y="3" text-anchor="middle">Сх</text><text x="-76" y="3" text-anchor="middle">Зх</text>
+    <path d="${d}" style="fill:none;stroke:var(--accent)" stroke-width="1.4"/>${hrs}
+    ${up ? `<line x1="0" y1="0" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" style="stroke:var(--sun)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6" style="fill:var(--sun);stroke:var(--panel)" stroke-width="1.5"/>` : ''}
+  </svg>`;
+}
+function sparkSVG() {
+  const W = 220, H = 74, x = t => 10 + (t - 3) / 18 * (W - 20), top = 8, bot = H - 16;
+  if (!dayRes) return `<p class="note" style="margin:0">Рахую день…</p>`;
+  const pn = Math.max(dayRes.pnom, 1), y = p => bot - p / pn * (bot - top);
+  let d = `M${x(dayRes.sr).toFixed(1)} ${bot}`; dayRes.pts.forEach(([t, p]) => d += `L${x(t).toFixed(1)} ${y(p).toFixed(1)}`); d += `L${x(dayRes.ss).toFixed(1)} ${bot}Z`;
+  const cur = st.res ? st.res.all.p : 0, cx = x(st.t);
+  let ticks = ''; for (const h of [6, 9, 12, 15, 18]) ticks += `<line x1="${x(h)}" x2="${x(h)}" y1="${bot}" y2="${bot + 3}" style="stroke:var(--muted)"/><text x="${x(h)}" y="${H - 3}" text-anchor="middle">${h}</text>`;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Потужність за день при ясному небі">
+    <line x1="10" x2="${W - 10}" y1="${top}" y2="${top}" style="stroke:var(--line)" stroke-dasharray="2 3"/><text x="${W - 10}" y="${top - 1}" text-anchor="end">100 %</text>
+    <line x1="10" x2="${W - 10}" y1="${bot}" y2="${bot}" style="stroke:var(--line)"/>${ticks}
+    <path d="${d}" style="fill:color-mix(in srgb,var(--sun) 30%,transparent);stroke:var(--sun)" stroke-width="1.2"/>
+    <line x1="${cx}" x2="${cx}" y1="${top}" y2="${bot}" style="stroke:var(--fg)" stroke-width="0.8" stroke-dasharray="2 2"/><circle cx="${cx}" cy="${y(cur)}" r="3" style="fill:var(--fg)"/>
+  </svg>`;
+}
+const STC = {sun: ['на сонці', 'var(--ok)'], part: ['частково в тіні', 'var(--part)'], shade: ['у тіні / сонце позаду', 'var(--shade)']};
+function stateBar(q) {
+  if (!q.n) return '';
+  return `<div class="meter" role="img" aria-label="на сонці ${q.sun}, частково ${q.part}, у тіні ${q.shade}">${['sun', 'part', 'shade'].map(k => `<i style="width:${q[k] / q.n * 100}%;background:${STC[k][1]}"></i>`).join('')}</div>`;
+}
+function roofsTable(r) {
+  let h = `<tr><th></th><th class="r">кВт</th><th class="r">сонце/част./тінь</th></tr>`;
+  for (const g in GRP) { const q = r.tot[g]; if (!r.vis[g]) continue; h += `<tr><td>${GRP[g]} <span class="mono" style="color:var(--muted)">${q.n}</span></td><td class="r">${nf(q.p)}</td><td class="r">${q.sun} / ${q.part} / ${q.shade}</td></tr>`; }
+  h += `<tr><td><b>Разом</b></td><td class="r"><b>${nf(r.all.p)}</b></td><td class="r">${r.all.sun} / ${r.all.part} / ${r.all.shade}</td></tr>`;
+  return h;
+}
+function renderAll() {
+  const r = st.res; if (!r) return;
+  const up = r.s.alt > 0, pn = r.all.n * PM;
+  document.getElementById('s-out').textContent = `${fmtD(st.date)}, ${fmtT(st.t)} · висота ${nf(r.s.alt * DEG)}° · азимут ${Math.round(r.s.az * DEG)}°`;
+  document.getElementById('sum-now').textContent = up ? nf(r.all.p) + ' кВт' : 'ніч';
+  document.getElementById('now-tbl').innerHTML = roofsTable(r);
+  document.getElementById('day-line').innerHTML = dayRes ? `<b>За ${fmtD(st.date)} при ясному небі:</b> ${nf(dayRes.e.arch + dayRes.e.low + dayRes.e.wall, 0)} кВт·год (арка ${nf(dayRes.e.arch, 0)}, нижній дах ${nf(dayRes.e.low, 0)}, стіни ${nf(dayRes.e.wall, 0)}).` : 'Рахую день…';
+  const c = CB;
+  if (c.time) { c.time.val.textContent = fmtT(st.t); }
+  if (c.sun) { c.sun.val.textContent = up ? `${nf(r.s.alt * DEG, 0)}° · ${Math.round(r.s.az * DEG)}°` : 'під горизонтом';
+    c.sun.body.innerHTML = compassSVG(r) + `<div class="kv"><span>Висота сонця</span><span>${nf(r.s.alt * DEG)}°</span><span>Азимут (від півночі)</span><span>${Math.round(r.s.az * DEG)}°</span><span>Схід — захід</span><span>${fmtT(sunTimes(r.n)[0])} — ${fmtT(sunTimes(r.n)[1])}</span></div>`; }
+  if (c.now) { c.now.val.textContent = up ? nf(r.all.p) + ' кВт' : '0';
+    c.now.body.innerHTML = up ? `<div class="big">${nf(r.all.p)} <small>кВт</small></div><div class="meter"><i style="width:${Math.min(100, r.all.p / Math.max(pn, 0.001) * 100)}%;background:var(--sun)"></i></div><span class="note">${nf(r.all.p / Math.max(pn, 0.001) * 100, 0)} % від ${nf(pn)} кВтп показаних модулів (${r.all.n}), ясне небо</span>`
+      : `<div class="big">0 <small>кВт</small></div><span class="note">Сонце під горизонтом.</span>`; }
+  if (c.state) { c.state.val.textContent = up ? `${r.all.sun} з ${r.all.n}` : '';
+    c.state.body.innerHTML = up ? stateBar(r.all) + `<div class="kv">${['sun', 'part', 'shade'].map(k => `<span><span class="dot" style="background:${STC[k][1]}"></span>${STC[k][0]}</span><span>${r.all[k]}</span>`).join('')}</div>`
+      : `<span class="note">Сонце під горизонтом — модулі не працюють.</span>`; }
+  if (c.roofs) { c.roofs.val.textContent = up ? nf(r.all.p) + ' кВт' : '';
+    c.roofs.body.innerHTML = `<table class="mini">${roofsTable(r)}</table>` + ['arch', 'low', 'wall'].filter(g => r.vis[g] && r.tot[g].n).map(g => `<div><span class="note">${GRP[g]}</span>${stateBar(r.tot[g])}</div>`).join(''); }
+  if (c.day) { c.day.val.textContent = dayRes ? nf(dayRes.e.arch + dayRes.e.low + dayRes.e.wall, 0) + ' кВт·год' : '…';
+    c.day.body.innerHTML = sparkSVG() + (dayRes ? `<div class="kv"><span>Арка</span><span>${nf(dayRes.e.arch, 0)} кВт·год</span><span>Нижній дах</span><span>${nf(dayRes.e.low, 0)} кВт·год</span><span>Стіни</span><span>${nf(dayRes.e.wall, 0)} кВт·год</span></div><span class="note">${fmtD(st.date)}, ясне небо, з тінями; 100 % = ${nf(dayRes.pnom)} кВтп.</span>` : ''); }
+  if (c.irr) { const avg = r.all.n ? r.all.poa / r.all.n : 0; c.irr.val.textContent = up ? nf(r.sk.ghi, 0) + ' Вт/м²' : '';
+    c.irr.body.innerHTML = `<div class="kv"><span>Пряме на перпендикуляр</span><span>${nf(r.sk.dni, 0)} Вт/м²</span><span>Розсіяне</span><span>${nf(r.sk.dhi, 0)} Вт/м²</span><span>На горизонталь</span><span>${nf(r.sk.ghi, 0)} Вт/м²</span><span>Середнє на модулях</span><span>${nf(avg, 0)} Вт/м²</span><span>Повітря (оцінка)</span><span>${r.Ta >= 0 ? '+' : '−'}${nf(Math.abs(r.Ta), 0)} °C</span></div><span class="note">Модель ясного неба, без хмар.</span>`; }
+  if (c.legend) { c.legend.body.innerHTML = `<div class="kv" style="grid-template-columns:1fr">${[['var(--east)', 'на сонці, схил на схід'], ['var(--west)', 'на сонці, схил на захід'], ['var(--south)', 'на сонці, стіна на південь'], ['var(--part)', 'частково в тіні'], ['var(--shade)', 'у тіні або сонце позаду'], ['var(--accent)', 'шлях сонця і години']].map(([cl, t]) => `<span style="text-align:left;font-family:var(--f-body)"><span class="dot" style="background:${cl}"></span>${t}</span>`).join('')}</div>`; }
+  renderPick();
+}
+// ---------- елементи керування часом (панель і картка)
+const TIMES = [];
+function wireTime(dEl, hEl, pEl, root) {
+  TIMES.push({dEl, hEl, pEl});
+  dEl.addEventListener('change', () => { if (/^\d{4}-\d\d-\d\d$/.test(dEl.value)) setDate('2026' + dEl.value.slice(4)); });
+  hEl.addEventListener('input', () => { stopPlay(); setTime(+hEl.value); });
+  pEl.addEventListener('click', () => st.play ? stopPlay() : startPlay());
+  root.querySelectorAll('[data-date]').forEach(b => b.addEventListener('click', () => setDate(b.dataset.date)));
+  root.querySelectorAll('[data-now]').forEach(b => b.addEventListener('click', () => { stopPlay(); const q = nowSolar(); st.t = q.t; setDate(q.date); }));
+}
+function syncInputs() {
+  TIMES.forEach(({dEl, hEl, pEl}) => { if (dEl.value !== st.date) dEl.value = st.date; hEl.value = st.t; pEl.textContent = st.play ? '❚❚' + (pEl.id === 's-play' ? ' Пауза' : '') : '▶' + (pEl.id === 's-play' ? ' День' : ''); pEl.setAttribute('aria-pressed', st.play); pEl.setAttribute('aria-label', st.play ? 'Пауза' : 'Програти день'); });
+  document.querySelectorAll('[data-date]').forEach(b => b.classList.toggle('on', b.dataset.date === st.date));
+}
+let playLast = 0;
+function startPlay() { const [sr, ss] = sunTimes(st.n); if (st.t >= ss - 0.05 || st.t < sr) st.t = sr; st.play = true; playLast = performance.now(); syncInputs(); }
+function stopPlay() { if (!st.play) return; st.play = false; syncInputs(); }
+wireTime(document.getElementById('s-date'), document.getElementById('s-h'), document.getElementById('s-play'), document.getElementById('sec-sun'));
 // ---------- шари
 const tie = (id, fn) => document.getElementById(id).addEventListener('change', e => { fn(e.target.checked); need = true; });
-tie('t-arch', v => groups.arch.visible = v); tie('t-low', v => groups.low.visible = v); tie('t-wall', v => groups.wall.visible = v); tie('t-mount', v => groups.mount.visible = v);
+tie('t-arch', v => { groups.arch.visible = v; startDay(); schedule(); }); tie('t-low', v => { groups.low.visible = v; startDay(); schedule(); });
+tie('t-wall', v => { groups.wall.visible = v; startDay(); schedule(); }); tie('t-mount', v => groups.mount.visible = v);
 tie('t-ctx', v => { groups.ctx.visible = v; LB[4].d.hidden = LB[5].d.hidden = !v; });
+tie('t-state', () => paint()); tie('t-sky', v => { skyG.visible = v; HRL.forEach(l => l.d.hidden = !v); });
 tie('t-shadow', v => { R.shadowMap.enabled = v; S.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); } }); });
+// ---------- секції панелі: згорнути / розгорнути, пам'ять
+const SECS = [...document.querySelectorAll('details.sec')], secState = store.get('sec', {});
+SECS.forEach(d => { if (d.id in secState) d.open = secState[d.id]; d.addEventListener('toggle', () => { secState[d.id] = d.open; store.set('sec', secState); }); });
+document.getElementById('all-open').addEventListener('click', () => SECS.forEach(d => d.open = true));
+document.getElementById('all-close').addEventListener('click', () => SECS.forEach(d => d.open = false));
 // ---------- види
 const VIEWS = {
   'v-iso': [P(146, -12, 34), P(118, 26, 10)], 'v-top': [P(118.2, 25.9, 78), P(118.2, 26, 10)], 'v-s': [P(118, -30, 16), P(118, 22, 10)],
@@ -456,26 +827,39 @@ const VIEWS = {
 let anim = null;
 function go(id, inst) {
   document.querySelectorAll('.views .btn').forEach(b => b.classList.toggle('on', b.id === id));
-  const [p, t] = VIEWS[id];
+  let p, t;
+  if (id === 'v-sun') {                          // з протилежного боку, обличчям до сонця: видно тіні до глядача
+    const s = st.res ? st.res.s : sunAt(st.n, st.t), hz = new THREE.Vector3(s.dir.x, 0, s.dir.z); if (hz.lengthSq() < 1e-6) hz.set(0, 0, 1); hz.normalize();
+    const B = P(118, 24, 12); p = B.clone().addScaledVector(hz, -60); p.y = 28;
+    const el = q => Math.atan2(q.y - p.y, Math.hypot(q.x - p.x, q.z - p.z)), eB = el(B), eS = el(skyPos(s.dir));
+    const pitch = s.alt > 0 && eS - eB < 34 / DEG ? (eS + eB) / 2 : eB + 7 / DEG;    // якщо вміщається — і будівля, і сонце в кадрі
+    t = p.clone().add(new THREE.Vector3(hz.x * Math.cos(pitch), Math.sin(pitch), hz.z * Math.cos(pitch)).multiplyScalar(60));
+  } else [p, t] = VIEWS[id];
   if (inst || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { cam.position.copy(p); ctl.target.copy(t); ctl.update(); need = true; return; }
   anim = {p0: cam.position.clone(), t0: ctl.target.clone(), p, t, s: performance.now()};
 }
-Object.keys(VIEWS).forEach(id => document.getElementById(id).addEventListener('click', () => go(id)));
+['v-iso', 'v-top', 'v-s', 'v-sun', 'v-arch', 'v-low', 'v-nad', 'v-wall'].forEach(id => document.getElementById(id).addEventListener('click', () => go(id)));
 // ---------- вибір
-const ray = new THREE.Raycaster(), mp = new THREE.Vector2(), pk = document.getElementById('pick'); let sel = null, down = null;
+const ray = new THREE.Raycaster(), mp = new THREE.Vector2(), pk = document.getElementById('pick'); let sel = null, down = null, liveP = null;
 cv.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
 cv.addEventListener('pointerup', e => {
   if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
   const r = cv.getBoundingClientRect(); mp.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
   ray.setFromCamera(mp, cam);
   const hit = ray.intersectObjects(picks.filter(o => { let v = true, p = o; while (p) { if (!p.visible) v = false; p = p.parent; } return v; }), false)[0];
-  if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null;
+  if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null; liveP = null;
   if (hit && hit.object.userData.info) {
     sel = hit.object; if (sel.userData.base) sel.material = hi;
     const [h, p] = sel.userData.info; pk.innerHTML = ''; const h4 = document.createElement('h4'); h4.textContent = h; const pp = document.createElement('p'); pp.textContent = p; pk.append(h4, pp);
+    if (sel.userData.rec) { liveP = document.createElement('p'); liveP.className = 'live'; pk.appendChild(liveP); renderPick(); }
   }
   need = true;
 });
+function renderPick() {
+  if (!liveP || !sel || !sel.userData.rec || !st.res) return; const r = sel.userData.rec;
+  liveP.textContent = st.res.s.alt <= 0 ? `${fmtT(st.t)}: сонце під горизонтом — 0 Вт.`
+    : `${fmtT(st.t)}: ${r.cos <= 0 ? 'сонце позаду модуля' : r.state === 'sun' ? 'на сонці' : r.state === 'part' ? `у тіні ${nf(r.f * 100, 0)} % модуля` : 'у тіні'} · кут до сонця ${r.cos > 0 ? nf(Math.acos(Math.min(1, r.cos)) * DEG, 0) + '°' : '—'} · ${nf(r.poa, 0)} Вт/м² · ≈${nf(r.p * 1000, 0)} Вт (ясне небо)`;
+}
 // ---------- тема, розмір, кадр
 function theme() { const c = new THREE.Color(css('--scene') || '#dfe6ea'); S.background = c; mat.ground.color.set(css('--ground') || '#c9cfc6'); need = true; }
 new MutationObserver(theme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
@@ -484,16 +868,22 @@ function size() { const w = stage.clientWidth, h = stage.clientHeight; R.setSize
 new ResizeObserver(size).observe(stage);
 let need = true; ctl.addEventListener('change', () => need = true);
 const v = new THREE.Vector3();
+HRL.forEach(l => { const d = document.createElement('div'); d.className = 'lbl hr'; d.textContent = l.h + ':00'; lab.appendChild(d); l.d = d; });
 function frame(now) {
   requestAnimationFrame(frame);
+  if (st.play) { const dt = Math.min(0.1, (now - playLast) / 1000); playLast = now; const [sr, ss] = sunTimes(st.n); let t = st.t + dt * 0.8; if (t > ss) t = sr; st.t = t; syncInputs(); update(); }
   if (anim) { const k = Math.min(1, (now - anim.s) / 900), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     cam.position.lerpVectors(anim.p0, anim.p, e); ctl.target.lerpVectors(anim.t0, anim.t, e); if (k >= 1) anim = null; need = true; }
   ctl.update();
   if (!need) return; need = false;
   R.render(S, cam);
   const w = stage.clientWidth, h = stage.clientHeight;
-  LB.forEach(l => { v.copy(l[0]).project(cam); const d = l.d; if (v.z > 1 || d.hidden) { d.style.display = 'none'; return; } d.style.display = ''; d.style.left = ((v.x + 1) / 2 * w) + 'px'; d.style.top = ((1 - v.y) / 2 * h) + 'px'; });
+  const put = (pos, d) => { v.copy(pos).project(cam); if (v.z > 1 || d.hidden) { d.style.display = 'none'; return; } d.style.display = ''; d.style.left = ((v.x + 1) / 2 * w) + 'px'; d.style.top = ((1 - v.y) / 2 * h) + 'px'; };
+  LB.forEach(l => put(l[0], l.d));
+  HRL.forEach(l => { if (!l.on || !skyG.visible) { l.d.style.display = 'none'; return; } put(l.p, l.d); });
 }
-theme(); setSun(); size(); go('v-iso', true); requestAnimationFrame(frame);
+// старт: зараз, якщо сонце над горизонтом, інакше сьогодні о 13:00 сонячного часу
+(function () { const q = nowSolar(), s = sunAt(doy(q.date), q.t); st.t = s.alt > 0.05 ? q.t : 13; st.date = q.date; st.n = doy(q.date); })();
+buildHud(); theme(); buildPath(st.n); size(); go('v-iso', true); syncInputs(); update(); startDay(); requestAnimationFrame(frame);
 })();
 </script>
