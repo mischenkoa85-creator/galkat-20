@@ -132,6 +132,7 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
 .spec tr.it{cursor:pointer} .spec tr.it:hover td{background:var(--surface-2)} .spec tr.cur td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .spec td.n{text-align:right;font:500 12.5px var(--mono);white-space:nowrap} .spec td.r{text-align:center;color:var(--ink-3);font:500 11.5px var(--mono)}
 .spec small{display:block;color:var(--ink-3);font-size:11px;margin-top:1px}
+.kosh small.bs{font:500 10.5px var(--mono);color:var(--ink-3)} .kosh tr.nf{cursor:default} .kosh tr.t td{font-weight:600;border-bottom:1px solid var(--line)} .kosh tr.t.big td{font-weight:750;background:color-mix(in srgb,var(--accent) 8%,transparent)} .kosh td.b{font-weight:650}
 .note{border-radius:8px;padding:9px 11px;font-size:12.5px}
 .note.warn{background:var(--warn-soft);border-left:3px solid var(--warn)}
 .note.ok{background:var(--surface-2);border-left:3px solid var(--ok)}
@@ -169,7 +170,7 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
   .tabs button{padding:8px 8px 9px;font-size:13px}
   .pane{grid-template-columns:minmax(0,1fr)}
   .tip{max-width:calc(100% - 16px)}
-  .spec .hide-s{display:none}
+  .spec .hide-s{display:none} .kosh small.bs{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -225,5 +226,4 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
-const D = __DATA__;
-(function(){
+window.ABK_DATA = __DATA__;

@@ -136,7 +136,15 @@ async def run():
         b = await p.chromium.launch(); pg = await b.new_page(); await pg.goto('file://' + D + 'abk_kosh_dbn.html'); await pg.wait_for_timeout(400)
         await pg.pdf(path=D + XN + '.pdf', print_background=True, prefer_css_page_size=True); await b.close()
 asyncio.run(run())
-json.dump(dict(tot=tot, totv=h('totv'), tot245=h('tot245'), pkwp=h('pkwp'), e_ac=h('e_ac'), e_y=h('e_y'), e_rev=h('e_rev'), e_pb=h('e_pb'), cost=h('cost'),
+ROWS = []                                                             # кошторис по рядках — для 3D-моделі і зведення всього об'єкта
+for r in range(6, KR['e_mwh'] + 1):
+    v = [K.cell(r, c).value for c in range(1, 10)]
+    if all(x is None for x in v): continue
+    no, uk, en, u, q, pr, mt, s, src = v
+    if no and uk is None: ROWS.append(dict(t='sec', uk=no, en=en)); continue
+    if no is None: ROWS.append(dict(t='tot', uk=uk, en=en, s=s, u=u)); continue
+    ROWS.append(dict(t='line', no=no, uk=uk, en=en, u=u, q=q, pr=pr, duty=mt, s=s, src=src))
+json.dump(dict(tot=tot, totv=h('totv'), tot245=h('tot245'), pkwp=h('pkwp'), e_ac=h('e_ac'), e_y=h('e_y'), e_rev=h('e_rev'), e_pb=h('e_pb'), cost=h('cost'), vat=h('vat'), vat245=h('vat245'), rows=ROWS, file=XN,
                sec={k: h(k) for _, _, k in SEC}, lines={k: K[f'H{KR[k]}'].value for k in KR if K[f'A{KR[k]}'].value}),
           open('/home/claude/galkat-20/antares/abk/abk_est.json', 'w'), ensure_ascii=False, indent=0)
 print('ok', D + XN + '.pdf')

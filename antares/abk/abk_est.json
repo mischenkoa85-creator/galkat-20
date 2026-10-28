@@ -8,6 +8,565 @@
 "e_rev": 11114.6766169154,
 "e_pb": 3.83405038529845,
 "cost": 34929.6968570101,
+"vat": 8522.84603311046,
+"vat245": 6551.84603311046,
+"rows": [
+{
+"t": "sec",
+"uk": "1. Закупівля в Китаї, FOB — разом із замовленням СЕС цеху",
+"en": "1. Purchase in China, FOB — together with the shop roof PV order"
+},
+{
+"t": "line",
+"no": "1.1",
+"uk": "Фотомодулі ZNSHINE ZXN8-BD132-730 (730 Вт, виводи 1,2–1,4 м), з запасом 2 %",
+"en": "PV modules ZNSHINE ZXN8-BD132-730 (730 W, leads 1.2–1.4 m), 2 % spare",
+"u": "шт / pcs",
+"q": 135,
+"pr": 73,
+"duty": 0,
+"s": 9855,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 1.2"
+},
+{
+"t": "line",
+"no": "1.2",
+"uk": "Кріплення на арці по даху: лаги, гільзи, шпильки, профілі, кутники, притиски, метизи",
+"en": "Arch roof mounting: rails, sleeves, rods, profiles, angles, clamps, fasteners",
+"u": "модуль / module",
+"q": 86,
+"pr": 11.1688311688312,
+"duty": 0.008,
+"s": 960.519480519481,
+"src": "КП 26.10, на модуль / per module"
+},
+{
+"t": "line",
+"no": "1.3",
+"uk": "Кріплення «домік» 15° на нижньому даху і надбудові: трикутники, кронштейни, притиски, метизи",
+"en": "Dual-tilt 15° mounting on lower roof and stair house: triangles, brackets, clamps, fasteners",
+"u": "модуль / module",
+"q": 37,
+"pr": 10.897619047619,
+"duty": 0.008,
+"s": 403.211904761905,
+"src": "ГалКат 15° 22.10, на модуль / per module"
+},
+{
+"t": "line",
+"no": "1.4",
+"uk": "Кріплення на південних стінах: рейки, кронштейни з анкерами, притиски",
+"en": "South wall mounting: rails, brackets with anchors, clamps",
+"u": "модуль / module",
+"q": 9,
+"pr": 8.6026936026936,
+"duty": 0.008,
+"s": 77.4242424242424,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 1.3.2"
+},
+{
+"t": "line",
+"no": "1.5",
+"uk": "Кабелі DC H1Z2Z2-K 1×6 мм², роз'єми MC4, металорукав, стяжки, бирки",
+"en": "DC cables H1Z2Z2-K 1×6 mm², MC4 connectors, conduit, ties, labels",
+"u": "стрінг / string",
+"q": 11,
+"pr": 60,
+"duty": 0.067,
+"s": 660,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 1.4"
+},
+{
+"t": "line",
+"no": "1.6",
+"uk": "Лотки 100×50 з кришками, фасонні, опори, кронштейни, з'єднувачі",
+"en": "Trays 100×50 with lids, fittings, supports, brackets, couplers",
+"u": "стрінг / string",
+"q": 11,
+"pr": 64.5729166666667,
+"duty": 0.001,
+"s": 710.302083333333,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 1.7"
+},
+{
+"t": "line",
+"no": "1.7",
+"uk": "Блискавкозахист і вирівнювання потенціалів: ПЗІП RS485, провідники 1×6 і 1×16, затискачі, контактні шайби",
+"en": "Lightning protection and bonding: RS485 SPD, 1×6 and 1×16 conductors, clamps, contact washers",
+"u": "модуль / module",
+"q": 132,
+"pr": 1.13636363636364,
+"duty": 0.05,
+"s": 150,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 1.8"
+},
+{
+"t": "line",
+"no": "1.8",
+"uk": "Кабель RS485 2×2×0,75 в екрані — лічильник → інвертор",
+"en": "RS485 cable 2×2×0.75 screened — meter to inverter",
+"u": "м / m",
+"q": 55,
+"pr": 0.262857142857143,
+"duty": 0.1,
+"s": 14.4571428571429,
+"src": "специфікація Китай 26.10 / China spec"
+},
+{
+"t": "tot",
+"uk": "Разом закупівля в Китаї",
+"en": "Total purchase in China",
+"s": 12830.9148538961,
+"u": null
+},
+{
+"t": "sec",
+"uk": "2. Наша комісія — супровід замовлення за договором комісії",
+"en": "2. Our commission — order support under commission agreement"
+},
+{
+"t": "line",
+"no": "2.1",
+"uk": "Комісія від закупівлі в Китаї",
+"en": "Commission on China purchase",
+"u": null,
+"q": null,
+"pr": 0.05,
+"duty": null,
+"s": 641.545742694805,
+"src": "договір комісії / agreement"
+},
+{
+"t": "tot",
+"uk": "Разом комісія",
+"en": "Total commission",
+"s": 641.545742694805,
+"u": null
+},
+{
+"t": "sec",
+"uk": "3. Доставка до об'єкта, страхування, мито",
+"en": "3. Delivery to site, insurance, customs duty"
+},
+{
+"t": "line",
+"no": "3.1",
+"uk": "Доставка модулів у контейнерах 40'HQ",
+"en": "Module freight in 40'HQ containers",
+"u": "шт / pcs",
+"q": 135,
+"pr": 11.7845117845118,
+"duty": null,
+"s": 1590.90909090909,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 3.2"
+},
+{
+"t": "line",
+"no": "3.2",
+"uk": "Доставка кріплення, кабелів і лотків",
+"en": "Freight of mounting, cables and trays",
+"u": "модуль / module",
+"q": 132,
+"pr": 6.62878787878788,
+"duty": null,
+"s": 875,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 3.3"
+},
+{
+"t": "line",
+"no": "3.3",
+"uk": "Страхування вантажу, крім модулів",
+"en": "Cargo insurance, except modules",
+"u": null,
+"q": null,
+"pr": 0.003,
+"duty": null,
+"s": 8.92774456168832,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10"
+},
+{
+"t": "line",
+"no": "3.4",
+"uk": "Мито на товари, крім модулів (модулі — пільга «245»)",
+"en": "Customs duty except modules (modules — \"245\" exemption)",
+"u": null,
+"q": null,
+"pr": 1.14313318257672,
+"duty": null,
+"s": 74.7669246108049,
+"src": "ставки за кодами УКТ ЗЕД / tariff rates"
+},
+{
+"t": "tot",
+"uk": "Разом доставка і мито",
+"en": "Total delivery and duty",
+"s": 2549.60376008158,
+"u": null
+},
+{
+"t": "sec",
+"uk": "4. Купуємо в Україні: інвертор, підключення, баласт, безпека покрівлі",
+"en": "4. Purchased in Ukraine: inverter, connection, ballast, roof safety"
+},
+{
+"t": "line",
+"no": "4.1",
+"uk": "Інвертор мережевий Deye SUN-100K-G03: 100 кВт, 3 фази 400 В, 6 MPPT, DC до 1 000 В, IP65; DC-роз'єднувач, ПЗІП тип II на DC і AC",
+"en": "Grid inverter Deye SUN-100K-G03: 100 kW, 3-phase 400 V, 6 MPPT, DC up to 1000 V, IP65; DC switch, type II SPD on DC and AC",
+"u": "шт / pcs",
+"q": 1,
+"pr": 2595.77114427861,
+"duty": null,
+"s": 2595.77114427861,
+"src": "220volt.com.ua, 28.10.2026, у наявності"
+},
+{
+"t": "line",
+"no": "4.2",
+"uk": "Баластний блок 300×300×60 з муфтою і матом — арка, «домік», опори лотків (+1 %)",
+"en": "Ballast block 300×300×60 with coupling and mat — arch, dual-tilt, tray supports (+1 %)",
+"u": "шт / pcs",
+"q": 494,
+"pr": 3,
+"duty": null,
+"s": 1482,
+"src": "рішення власника 26.10 / owner decision"
+},
+{
+"t": "line",
+"no": "4.3",
+"uk": "Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК",
+"en": "Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board",
+"u": "м / m",
+"q": 45,
+"pr": 59.8544590480434,
+"duty": null,
+"s": 2693.45065716195,
+"src": "amperia.com.ua, 28.10.2026, у наявності"
+},
+{
+"t": "line",
+"no": "4.4",
+"uk": "Щит СЕС: автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А) у корпусі IP54",
+"en": "PV board: MCCB ABB A2B 250 TMF 200 (3P, 200 A) in IP54 enclosure",
+"u": "компл / set",
+"q": 1,
+"pr": 296.629167594862,
+"duty": null,
+"s": 296.629167594862,
+"src": "electroelan.dp.ua, 28.10.2026; 220volt.com.ua, 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.5",
+"uk": "ПЗІП AC тип 2, 4P (Eaton SPCT2-280/4) у щиті СЕС",
+"en": "AC surge protector type 2, 4P (Eaton SPCT2-280/4) in PV board",
+"u": "шт / pcs",
+"q": 1,
+"pr": 123.870201232643,
+"duty": null,
+"s": 123.870201232643,
+"src": "001.com.ua, 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.6",
+"uk": "Лічильник CHINT DTSU666 з трансформаторами струму 250 А — обмеження видачі в мережу (Zero Export)",
+"en": "Meter CHINT DTSU666 with 250 A CTs — export limiting (Zero Export)",
+"u": "компл / set",
+"q": 1,
+"pr": 131.729412638301,
+"duty": null,
+"s": 131.729412638301,
+"src": "hotline.ua (Технопоставка), 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.7",
+"uk": "Доставка матеріалів України на об'єкт",
+"en": "Delivery of Ukrainian materials to site",
+"u": "блок / block",
+"q": 494,
+"pr": 0.338365183876666,
+"duty": null,
+"s": 167.152400835073,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 4.9"
+},
+{
+"t": "line",
+"no": "4.8",
+"uk": "Драбина П1 на арку з поручнями над парапетом",
+"en": "Fixed ladder P1 to the arch with handrails above parapet",
+"u": "м / m",
+"q": 5.8,
+"pr": 167.075072399198,
+"duty": null,
+"s": 969.035419915349,
+"src": "flagma.ua (ПП «Ліга», Київ), 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.9",
+"uk": "Площадка з огорожею 0,6 м на арці перед виходом на покрівлю",
+"en": "Landing with 0.6 m guard on the arch at the roof exit",
+"u": "шт / pcs",
+"q": 1,
+"pr": 0,
+"duty": null,
+"s": 0,
+"src": "ціна — за КП виробника драбини / price per ladder maker quote"
+},
+{
+"t": "line",
+"no": "4.10",
+"uk": "Драбини П1 на надбудову сходів (2 шт.)",
+"en": "Fixed ladders P1 to the stair house (2 pcs)",
+"u": "м / m",
+"q": 5.6,
+"pr": 167.075072399198,
+"duty": null,
+"s": 935.620405435509,
+"src": "flagma.ua (ПП «Ліга», Київ), 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.11",
+"uk": "Огородження покрівлі 0,6 м, металеве",
+"en": "Roof guardrail 0.6 m, steel",
+"u": "м / m",
+"q": 99,
+"pr": 13.324237023836,
+"duty": null,
+"s": 1319.09946535977,
+"src": "prom.ua (Профі Фасад), 28.10.2026"
+},
+{
+"t": "line",
+"no": "4.12",
+"uk": "Ходові доріжки 0,8 м — гумові плити 500×500×20 мм",
+"en": "Walkways 0.8 m — rubber tiles 500×500×20 mm",
+"u": "м² / m²",
+"q": 63,
+"pr": 20.2346476572362,
+"duty": null,
+"s": 1274.78280240588,
+"src": "reziplit.in.ua, 28.10.2026"
+},
+{
+"t": "tot",
+"uk": "Разом купуємо в Україні",
+"en": "Total purchased in Ukraine",
+"s": 11989.1410768579,
+"u": null
+},
+{
+"t": "sec",
+"uk": "5. Роботи",
+"en": "5. Works"
+},
+{
+"t": "line",
+"no": "5.1",
+"uk": "Встановлення і наладка СЕС, електромонтажні роботи DC і AC, налаштування Zero Export, вимірювання",
+"en": "PV installation and commissioning, DC and AC electrical works, Zero Export set-up, measurements",
+"u": "кВтп / kWp",
+"q": 96.36,
+"pr": 50,
+"duty": null,
+"s": 4818,
+"src": "рішення власника 26.10 / owner decision"
+},
+{
+"t": "line",
+"no": "5.2",
+"uk": "Механізація: автокран і автовишка",
+"en": "Crane and aerial lift",
+"u": "модуль / module",
+"q": 132,
+"pr": 1.45833333333333,
+"duty": null,
+"s": 192.5,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 5.2"
+},
+{
+"t": "line",
+"no": "5.3",
+"uk": "Витратні матеріали: наконечники, маркування, прохід крізь стіну, ЗІЗ, вивезення упаковки",
+"en": "Consumables: lugs, marking, wall pass-through, PPE, packaging removal",
+"u": "модуль / module",
+"q": 132,
+"pr": 1.22348484848485,
+"duty": null,
+"s": 161.5,
+"src": "кошторис під ключ 27.10 / turnkey estimate 27.10, поз. 5.8"
+},
+{
+"t": "line",
+"no": "5.4",
+"uk": "Монтаж драбин П1, площадки, огородження з анкеруванням стійок, укладання доріжок",
+"en": "Installation of P1 ladders, landing, guardrail with anchored posts, walkways",
+"u": "люд.·год / man-h",
+"q": 112,
+"pr": 15.5936734239252,
+"duty": null,
+"s": 1746.49142347962,
+"src": "700 грн/люд.·год / UAH per man-hour"
+},
+{
+"t": "tot",
+"uk": "Разом роботи",
+"en": "Total works",
+"s": 6918.49142347962,
+"u": null
+},
+{
+"t": "tot",
+"uk": "СОБІВАРТІСТЬ (розділи 1–5)",
+"en": "COST (sections 1–5)",
+"s": 34929.6968570101,
+"u": null
+},
+{
+"t": "sec",
+"uk": "6. Запас і винагорода генпідрядника",
+"en": "6. Contingency and general contractor fee"
+},
+{
+"t": "line",
+"no": "6.1",
+"uk": "Запас",
+"en": "Contingency",
+"u": null,
+"q": null,
+"pr": 0.04,
+"duty": null,
+"s": 1397.1878742804,
+"src": "рішення власника 26.10"
+},
+{
+"t": "line",
+"no": "6.2",
+"uk": "Винагорода генпідрядника",
+"en": "General contractor fee",
+"u": null,
+"q": null,
+"pr": 0.18,
+"duty": null,
+"s": 6287.34543426181,
+"src": "рішення власника 26.10"
+},
+{
+"t": "tot",
+"uk": "Разом запас і винагорода",
+"en": "Total contingency and fee",
+"s": 7684.53330854221,
+"u": null
+},
+{
+"t": "tot",
+"uk": "РАЗОМ ПІД КЛЮЧ, $ без ПДВ",
+"en": "TOTAL TURNKEY, USD excl. VAT",
+"s": 42614.2301655523,
+"u": null
+},
+{
+"t": "tot",
+"uk": "ПДВ 20 % на всю суму",
+"en": "VAT 20 % on the full amount",
+"s": 8522.84603311046,
+"u": null
+},
+{
+"t": "tot",
+"uk": "РАЗОМ ПІД КЛЮЧ, $ з ПДВ",
+"en": "TOTAL TURNKEY, USD incl. VAT",
+"s": 51137.0761986627,
+"u": null
+},
+{
+"t": "tot",
+"uk": "ПДВ 20 %, якщо модулі ввозяться на замовника за пільгою «245»",
+"en": "VAT 20 % if modules are imported by the customer under the \"245\" exemption",
+"s": 6551.84603311046,
+"u": null
+},
+{
+"t": "tot",
+"uk": "РАЗОМ ПІД КЛЮЧ, $ з ПДВ (з пільгою «245»)",
+"en": "TOTAL TURNKEY, USD incl. VAT (\"245\" exemption)",
+"s": 49166.0761986627,
+"u": null
+},
+{
+"t": "tot",
+"uk": "На 1 кВтп СЕС, $ без ПДВ",
+"en": "Per 1 kWp, USD excl. VAT",
+"s": 442.239831522958,
+"u": null
+},
+{
+"t": "sec",
+"uk": "7. Ефект СЕС для АБК",
+"en": "7. Effect of the PV plant for the building"
+},
+{
+"t": "tot",
+"uk": "Потужність СЕС DC / AC інвертора 100 кВт",
+"en": "PV capacity DC / inverter AC 100 kW",
+"s": 96.36,
+"u": "кВтп / kWp"
+},
+{
+"t": "tot",
+"uk": "Генерація модулів за рік (DC, повна модель K1)",
+"en": "Annual module yield (DC, full K1 model)",
+"s": 87.1,
+"u": "МВт·год / MWh"
+},
+{
+"t": "tot",
+"uk": "Генерація на виході інвертора за рік",
+"en": "Annual inverter AC output",
+"s": 85.5322,
+"u": "МВт·год / MWh"
+},
+{
+"t": "tot",
+"uk": "Питома генерація",
+"en": "Specific yield",
+"s": 887.631797426318,
+"u": "кВт·год/кВтп"
+},
+{
+"t": "tot",
+"uk": "Ціна 1 кВт·год без ПДВ",
+"en": "Electricity price excl. VAT",
+"s": 0.12994727853271,
+"u": "$/кВт·год"
+},
+{
+"t": "tot",
+"uk": "Економія за перший рік, $ без ПДВ",
+"en": "First-year savings, USD excl. VAT",
+"s": 11114.6766169154,
+"u": "$"
+},
+{
+"t": "tot",
+"uk": "Проста окупність, без ПДВ",
+"en": "Simple payback, excl. VAT",
+"s": 3.83405038529845,
+"u": "років / years"
+},
+{
+"t": "tot",
+"uk": "Вартість під ключ на 1 МВт·год річної генерації",
+"en": "Turnkey cost per 1 MWh of annual yield",
+"s": 498.224413326821,
+"u": "$"
+}
+],
+"file": "Кошторис_будівництва_під_ключ_СЕС_АБК_Антарес_ДБН_інвертор_Deye_100_кВт_28.10.2026",
 "sec": {
 "t1": 12830.9148538961,
 "t2": 641.545742694805,
