@@ -13,7 +13,9 @@
 | `build.py` | `index.html` = p1 + model + app + дані; плюс `abk_data.js` |
 | `old/` | p2_geo / p3_el / p4_ui до розділення, у збірку не входять |
 
-Дані: `abk_k1.json` (layout.py), `abk_dbn.json` (calc/v3/abk_dbn.py), `abk_bom.json` (calc/abk_kosh/bom.py), `abk_est.json` (calc/abk_kosh/pdf.py; рядки кошторису в `rows`).
+Дані: `abk_k1.json` (layout.py), `abk_dbn.json` (calc/v3/abk_dbn.py), `abk_mount.json` (mount.py — кріплення за «Елементами SES»: пози модулів і кожна деталь), `abk_bom.json` (calc/abk_kosh/bom.py), `abk_est.json` (calc/abk_kosh/pdf.py; рядки кошторису в `rows`).
+
+Порядок перерахунку: `mount.py` → `calc/abk_kosh/bom.py` → `build.py` → перерахунок формул (LibreOffice) → `pdf.py` → `dbn/build.py`.
 
 ## Виклик у двійнику
 
@@ -33,7 +35,10 @@ A.paintStatus(r);                                   // колір: сонце / 
 ## Що повертає `ABKModel`
 
 - `root`: група АБК. `groups`: шари `arch, low, wall, nad, mount, ctx, bld, safety, str, elec, lps, xm`.
-- `TAGS`: позиція специфікації → об'єкти сцени. Позиції: `mod, lag, arch, frame, wrail, blk, dc, tray, inv, ac, shch, meter, bz, p1, plat, rail, walk, safety`.
+- `TAGS`: позиція специфікації → об'єкти сцени.
+  - Групи: `mod, arch, frame, wrail, blk, dc, tray, inv, ac, shch, meter, bz, p1, plat, rail, walk, safety`.
+  - Деталі кріплення — тип@група (тег рядка специфікації): `lag@arch, slv@arch, rod@arch, prof@arch, ang@arch, cm@arch, cz@arch, anc@arch, blkn@arch, dfr@dom, brk@dom, diag@dom, ce@dom, sfr@one, brk@one, diag@one, ce@one, wr@wall, wbrk@wall, ce@wall, cm@wall`.
+- Пози модулів — з `D.mount.mods` (арка — на верхах лаг, «домік» 15,36° за стандартом, трикутники 15°, стіни 160 мм від стіни). Кріплення — `InstancedMesh` на кожен тип@група в шарі `groups.mount`; у тінь (`OCC`) не входить.
 - `MODS`: 132 модулі. Кожен має стрінг `k`, MPPT, місце в стрінгу, генерацію за рік, години без роботи, графік 12×24 і стан зараз. Також `STR` / `STRO` (модулі й кабелі стрінга) і `BYKEY`.
 - `evaluate`, `paintStatus`, `sunAt`, `sunTimes`, `sky`, `tAir`: тінь і стан модулів (модель K1, bypass при ≥ 6 робочих у стрінгу).
 - `picks`: об'єкти з підказкою `userData.info = {uk: [назва, опис], en: [...]}`. У двійнику підказка має вигляд `{t, d}`, тому: `A.picks.forEach(o => pick(o, ...o.userData.info.uk))`.

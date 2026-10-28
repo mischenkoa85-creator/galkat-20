@@ -42,7 +42,7 @@ Q = [  # key, name uk / en, value, unit, src, fmt, kind
  ('LS', 'Модулів у стрінгу / Modules per string', DB['L'], 'шт', 'Voc при −30 °C ≤ 1 000 В / Voc at −30 °C ≤ 1000 V', QTY, 'in'),
  ('MWH', 'Генерація модулів за рік (DC) / Annual module yield (DC)', DB['mwh'], 'МВт·год / MWh', 'повна модель K1: Meteonorm 8.1, тіні DSM, байпас-діоди / full K1 model', '#,##0.0', 'in'),
  ('TRB', 'Блоків під опори лотків / Blocks under tray supports', BOM['blk']['tray'], 'шт', f"лотки на даху {DB['tray_stats']['roof']} м, опора через 1,5 м / roof trays, support every 1.5 m", QTY, 'in'),
- ('BLKN', 'Баластних блоків до замовлення (+1 %) / Ballast blocks to order (+1 %)', '=ROUNDUP((B5*{BLKA}+(B6+B7)*{BLKD}+B15)*1.01,0)', 'шт', 'арка — як дах цеху; «домік» — 4 на модуль; опори лотків / arch as shop roof; dual-tilt 4 per module; tray supports', QTY, 'f'),
+ ('BLKN', 'Баластних блоків до замовлення (+1 %) / Ballast blocks to order (+1 %)', '=ROUNDUP(({BLKA}+B15)*1.01,0)', 'шт', 'кріплення модулів — 3D-модель (кожен блок), опори лотків / module mounting — 3D model (every block), tray supports', QTY, 'f'),
  ('ACM', 'Кабель AC інвертор → щит СЕС / AC cable inverter → PV board', 45, 'м', 'по стіні і стояку сходів, + 10 % / along wall and stair riser, + 10 %', QTY, 'in'),
  ('RSM', 'Кабель RS485 лічильник → інвертор / RS485 cable meter → inverter', 55, 'м', 'уздовж кабелю AC / along AC cable', QTY, 'in'),
  ('LP1', 'Драбина П1 на арку: 4,8 + 1,0 м / Fixed ladder P1 to arch: 4.8 + 1.0 m', 5.8, 'м', 'ДБН В.1.1-7:2016 п. 8.8–8.10', QTY, 'in'),
@@ -51,6 +51,7 @@ Q = [  # key, name uk / en, value, unit, src, fmt, kind
  ('RAIL', 'Огородження покрівлі 0,6 м / Roof guardrail 0.6 m', 99, 'м', 'ДБН В.1.1-7:2016 п. 8.12; ДБН В.2.6-220:2017 п. 6.1.2', QTY, 'in'),
  ('WALK', 'Ходові доріжки 0,8 м / Walkways 0.8 m', 63, 'м²', 'ДБН В.2.6-220:2017 п. 7.1.3', QTY, 'in'),
  ('HRS', 'Монтаж драбин, площадки, огородження і доріжок / Installation of ladders, landing, guardrail, walkways', 112, 'люд.·год / man-h', 'драбини 2 × 16, огородження 64, доріжки 16 / ladders 2 × 16, guardrail 64, walkways 16', QTY, 'in'),
+ ('NANC', 'Анкерів від сповзання на арці / Anti-slide anchors on the arch', BOM['anc'], 'шт', 'ланцюжок тяг лінії не переходить гребінь — анкер на верхній лазі (правило КМ даху цеху) / tie chain not crossing the ridge', QTY, 'in'),
 ]
 R0 = 5 + len(Q) + 1
 SKEYS = ['PW', 'FX', 'SPARE', 'PMOD', 'MFL', 'MDOM', 'MWAL', 'DCS', 'TRS', 'BZM', 'RS', 'COM', 'DMOD', 'DOTH', 'INS', 'DUTK', 'BLK', 'BLKA', 'BLKD']
@@ -81,8 +82,8 @@ S = [
  ('INS', 'Страхування вантажу, крім модулів / Cargo insurance except modules', 0.003, '', K27, PCT, 'in'),
  ('DUTK', 'Коефіцієнт митної вартості / Customs value factor', '=4840.7596950824/4234.64192', '', f'{K27}: мито / ставки × FOB', '0.0000', 'f'),
  ('BLK', 'Баластний блок з муфтою і матом / Ballast block with coupling and mat', 3, '$/шт', 'рішення власника 26.10 / owner decision 26.10', USD2, 'in'),
- ('BLKA', 'Блоків на модуль арки / Blocks per arch module', '=(4457+795)/1639', 'шт', f'{K27}, поз. 4.1–4.2', '0.000', 'f'),
- ('BLKD', 'Блоків на модуль «доміку» / Blocks per dual-tilt module', 4, 'шт', '4 опори на модуль / 4 supports per module', '0.000', 'in'),
+ ('BLKA', 'Блоків під кріплення модулів — 3D-модель / Blocks under module mounting — 3D model', BOM['blk']['mount'], 'шт', f"арка {BOM['blk']['arch']} з матом і {BOM['blk']['edge']} без мата під крайні профілі, «домік» {BOM['blk']['dom']}, трикутники 15° {BOM['blk']['one']} / arch, edge profiles, dual-tilt, 15° triangles", '0', 'in'),
+ ('BLKD', 'у т. ч. без мата під крайні профілі арки / incl. without mat under arch edge profiles', BOM['blk']['edge'], 'шт', 'antares/abk/mount.py', '0', 'in'),
  ('BLKDEL', "Доставка матеріалів України, на блок / Ukrainian materials delivery, per block", '=2107/6227', '$/шт', f'{K27}, поз. 4.9', '0.0000', 'f'),
  ('WRK', 'Встановлення і наладка СЕС / PV installation and commissioning', 50, '$/кВтп', 'рішення власника 26.10 / owner decision 26.10', USD2, 'in'),
  ('MECH', 'Механізація, на модуль / Cranes and lifts, per module', '=3080/2112', '$/модуль', f'{K27}, поз. 5.2', USD2, 'f'),
@@ -93,6 +94,7 @@ S = [
  ('VAT', 'ПДВ / VAT', 0.2, '', 'ПКУ, ст. 193 / Tax Code art. 193', PCT, 'in'),
  ('TAR', 'Ціна 1 кВт·год, з ПДВ / Electricity price incl. VAT', 7.00, 'грн/кВт·год', 'оцінка власника / owner estimate', '#,##0.00', 'in'),
  ('ETA', 'ККД інвертора (європейський) / Inverter Euro efficiency', PU['eta'][0], '', PU['eta'][1], PCT, 'in'),
+ ('ANC', 'Анкер від сповзання з герметизацією, Україна / Anti-slide anchor with sealing, Ukraine', 44.99, '$/шт', 'кошторис СЕС і УЗЕ 26.10, позиція «Анкер від сповзання» / estimate 26.10', USD2, 'in'),
 ]
 for k, (uah, src) in PU.items():
     if k == 'eta': continue
@@ -149,9 +151,9 @@ q = lambda k: f'=Параметри!B{ROW[k]}'
 sec('1. Закупівля в Китаї, FOB — разом із замовленням СЕС цеху', '1. Purchase in China, FOB — together with the shop roof PV order')
 s1 = r
 line('1.1', 'Фотомодулі ZNSHINE ZXN8-BD132-730 (730 Вт, виводи 1,2–1,4 м), з запасом 2 %', 'PV modules ZNSHINE ZXN8-BD132-730 (730 W, leads 1.2–1.4 m), 2 % spare', 'шт / pcs', q('NS'), f'={pa("PMOD")}', 0, f'{K27}, поз. 1.2', 'mod')
-line('1.2', 'Кріплення на арці по даху: лаги, гільзи, шпильки, профілі, кутники, притиски, метизи', 'Arch roof mounting: rails, sleeves, rods, profiles, angles, clamps, fasteners', 'модуль / module', q('NA'), f'={pa("MFL")}', 0.008, 'КП 26.10, на модуль / per module', 'mfl')
-line('1.3', 'Кріплення «домік» 15° на нижньому даху і надбудові: трикутники, кронштейни, притиски, метизи', 'Dual-tilt 15° mounting on lower roof and stair house: triangles, brackets, clamps, fasteners', 'модуль / module', f'={q("NL")[1:]}+{q("NN")[1:]}', f'={pa("MDOM")}', 0.008, 'ГалКат 15° 22.10, на модуль / per module', 'mdom')
-line('1.4', 'Кріплення на південних стінах: рейки, кронштейни з анкерами, притиски', 'South wall mounting: rails, brackets with anchors, clamps', 'модуль / module', q('NW'), f'={pa("MWAL")}', 0.008, f'{K27}, поз. 1.3.2', 'mwal')
+line('1.2', 'Кріплення на арці «Лага 0°»: лаги 41×41, гільзи з муфтами, шпильки M10, крайні профілі, кутники, притиски, метизи', 'Arch mounting "Rail 0°": 41×41 rails, sleeves with couplings, M10 rods, edge profiles, angles, clamps, fasteners', 'модуль / module', q('NA'), f'={pa("MFL")}', 0.008, 'КП 26.10, на модуль / per module', 'mfl')
+line('1.3', 'Кріплення 15° на нижньому даху і надбудові: опори «доміку» і трикутники під одиночні модулі, П-кронштейни, діагоналі, притиски, метизи', '15° mounting on lower roof and stair house: dual-tilt supports and triangles for single modules, U-brackets, diagonals, clamps, fasteners', 'модуль / module', f'={q("NL")[1:]}+{q("NN")[1:]}', f'={pa("MDOM")}', 0.008, 'ГалКат 15° 22.10, на модуль / per module', 'mdom')
+line('1.4', 'Кріплення на південних стінах: рейки 41×41×2,5, кронштейни з анкерами, притиски, трос безпеки', 'South wall mounting: 41×41×2.5 rails, brackets with anchors, clamps, safety rope', 'модуль / module', q('NW'), f'={pa("MWAL")}', 0.008, f'{K27}, поз. 1.3.2', 'mwal')
 line('1.5', "Кабелі DC H1Z2Z2-K 1×6 мм², роз'єми MC4, металорукав, стяжки, бирки", 'DC cables H1Z2Z2-K 1×6 mm², MC4 connectors, conduit, ties, labels', 'стрінг / string', q('ST'), f'={pa("DCS")}', 0.067, f'{K27}, поз. 1.4', 'dc')
 line('1.6', 'Лотки 100×50 з кришками, фасонні, опори, кронштейни, з\'єднувачі', 'Trays 100×50 with lids, fittings, supports, brackets, couplers', 'стрінг / string', q('ST'), f'={pa("TRS")}', 0.001, f'{K27}, поз. 1.7', 'tray')
 line('1.7', 'Блискавкозахист і вирівнювання потенціалів: ПЗІП RS485, провідники 1×6 і 1×16, затискачі, контактні шайби', 'Lightning protection and bonding: RS485 SPD, 1×6 and 1×16 conductors, clamps, contact washers', 'модуль / module', q('N'), f'={pa("BZM")}', 0.05, f'{K27}, поз. 1.8', 'bz')
@@ -172,7 +174,7 @@ total('Разом доставка і мито', 'Total delivery and duty', f'=S
 sec('4. Купуємо в Україні: інвертор, підключення, баласт, безпека покрівлі', '4. Purchased in Ukraine: inverter, connection, ballast, roof safety')
 s4 = r
 line('4.1', "Інвертор мережевий Deye SUN-100K-G03: 100 кВт, 3 фази 400 В, 6 MPPT, DC до 1 000 В, IP65; DC-роз'єднувач, ПЗІП тип II на DC і AC", 'Grid inverter Deye SUN-100K-G03: 100 kW, 3-phase 400 V, 6 MPPT, DC up to 1000 V, IP65; DC switch, type II SPD on DC and AC', 'шт / pcs', 1, f'={usd("deye")}', None, src_of('deye'), 'inv')
-line('4.2', 'Баластний блок 300×300×60 з муфтою і матом — арка, «домік», опори лотків (+1 %)', 'Ballast block 300×300×60 with coupling and mat — arch, dual-tilt, tray supports (+1 %)', 'шт / pcs', q('BLKN'), f'={pa("BLK")}', None, 'рішення власника 26.10 / owner decision', 'blk')
+line('4.2', 'Баластний блок 300×300×60 з муфтою: під лаги, опори «доміку» і трикутники — з матом, під крайні профілі арки — без мата; опори лотків (+1 %)', 'Ballast block 300×300×60 with coupling: under rails, dual-tilt supports and triangles — with mat, under arch edge profiles — without mat; tray supports (+1 %)', 'шт / pcs', q('BLKN'), f'={pa("BLK")}', None, 'рішення власника 26.10 / owner decision', 'blk')
 line('4.3', 'Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК', 'Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board', 'м / m', q('ACM'), f'={usd("ac")}', None, src_of('ac'), 'ac')
 line('4.4', 'Щит СЕС: автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А) у корпусі IP54', 'PV board: MCCB ABB A2B 250 TMF 200 (3P, 200 A) in IP54 enclosure', 'компл / set', 1, f'={usd("mccb")}+{usd("box")}', None, src_of('mccb') + '; ' + src_of('box'), 'mccb')
 line('4.5', 'ПЗІП AC тип 2, 4P (Eaton SPCT2-280/4) у щиті СЕС', 'AC surge protector type 2, 4P (Eaton SPCT2-280/4) in PV board', 'шт / pcs', 1, f'={usd("spd")}', None, src_of('spd'), 'spd')
@@ -184,6 +186,7 @@ K[f'F{KR["plat"]}'].fill = YEL
 line('4.10', 'Драбини П1 на надбудову сходів (2 шт.)', 'Fixed ladders P1 to the stair house (2 pcs)', 'м / m', q('LPN'), f'={usd("lp1")}', None, src_of('lp1'), 'lpn')
 line('4.11', 'Огородження покрівлі 0,6 м, металеве', 'Roof guardrail 0.6 m, steel', 'м / m', q('RAIL'), f'={usd("rail")}', None, src_of('rail'), 'rail')
 line('4.12', 'Ходові доріжки 0,8 м — гумові плити 500×500×20 мм', 'Walkways 0.8 m — rubber tiles 500×500×20 mm', 'м² / m²', q('WALK'), f'={usd("walk")}', None, src_of('walk'), 'walk')
+line('4.13', 'Анкер від сповзання на арці, до основи покрівлі, з герметизацією', 'Anti-slide anchor on the arch, to the roof deck, with sealing', 'шт / pcs', q('NANC'), f'={pa("ANC")}', None, 'кошторис СЕС і УЗЕ 26.10 / estimate 26.10', 'anc')
 e4 = r - 1
 total('Разом купуємо в Україні', 'Total purchased in Ukraine', f'=SUM(H{s4}:H{e4})', 't4')
 sec('5. Роботи', '5. Works')

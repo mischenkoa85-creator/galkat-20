@@ -312,126 +312,135 @@ box(103 - 96.64, 4.5, 35, mat.tp, (96.64 + 103) / 2, (-0.4 + 34.6) / 2, 2.25, gr
   });
 })();
 // ================= модулі (лише «ДБН»): арка з доріжками, нижній дах «домік», надбудова «домік», південні стіни
-const T = 0.033, LIFT = 0.12;
+const T = 0.033;
 const DROP = new Set(DB.drop.map(i => DB.mods[i].src + ':' + DB.mods[i].i));
 const MODREC = {}; DB.mods.forEach((m, j) => { m.j = j; MODREC[m.src + ':' + m.i] = m; });
 function modInfo(where, whereEn, extra, extraEn) { return I(where, extra, whereEn, extraEn); }
+// пози модулів і кожна деталь кріплення — з abk_mount.json (antares/abk/mount.py, «Елементи SES»)
+const MT = D.mount, MP = MT.mods;
+const v3 = v => new THREE.Vector3(v[0], v[2], -v[1]);                   // вектор двійника → three
+function poseMat(c, xv, nv, sx, sy, sz) {                             // центр, вісь X і нормаль Y (координати двійника), масштаб
+  const X = v3(xv).normalize(), Y0 = v3(nv), Y = Y0.sub(X.clone().multiplyScalar(Y0.dot(X))).normalize(), Z = new THREE.Vector3().crossVectors(X, Y);
+  return new THREE.Matrix4().makeBasis(X, Y, Z).scale(new THREE.Vector3(sx || 1, sy || 1, sz || 1)).setPosition(P(c[0], c[1], c[2]));
+}
+function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.matrixAutoUpdate = true; poseMat(q.c, q.x, q.n).decompose(mesh.position, mesh.quaternion, mesh.scale); return true; }
 (function buildArch() {
   D.archD.forEach((m, idx) => {
-    const xm = (m.xa + m.xb) / 2, zm = (m.za + m.zb) / 2, k = (m.zb - m.za) / (m.xb - m.xa), ym = (m.y0 + m.y1) / 2;
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.position.copy(P(xm, ym, zm + LIFT + T / 2)); mesh.rotation.z = Math.atan(k);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); placeMod(mesh, 'archD:' + idx);
     mesh.castShadow = mesh.receiveShadow = true; groups.arch.add(mesh);
     Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'archD', idx, key: 'archD:' + idx});
     mesh.userData.info = modInfo(`Модуль на арці · ${m.face === 'E' ? 'схід' : 'захід'} ${fx(m.tilt)}°`, `Arch module · ${m.face === 'E' ? 'east' : 'west'} ${m.tilt}°`,
-      `Колонка ${m.col + 1} з 13, вертикально: 2 384 мм уздовж арки, 1 303 мм по дузі. X ${fx(m.xa.toFixed(2))}–${fx(m.xb.toFixed(2))}, Y ${fx(m.y0.toFixed(2))}–${fx(m.y1.toFixed(2))} м. Лаги 41×41 на блоках 300×300×60, як на даху цеху.`,
-      `Column ${m.col + 1} of 13, portrait: 2384 mm along the arch, 1303 mm across. X ${m.xa.toFixed(2)}–${m.xb.toFixed(2)}, Y ${m.y0.toFixed(2)}–${m.y1.toFixed(2)} m. Rails 41×41 on 300×300×60 blocks, as on the shop roof.`);
+      `Колонка ${m.col + 1} з 13, вертикально: 2 384 мм уздовж арки, 1 303 мм по дузі; рама на кромках двох лаг 41×41, 3 притиски на кожен довгий бік. X ${fx(m.xa.toFixed(2))}–${fx(m.xb.toFixed(2))}, Y ${fx(m.y0.toFixed(2))}–${fx(m.y1.toFixed(2))} м.`,
+      `Column ${m.col + 1} of 13, portrait: 2384 mm along the arch, 1303 mm across; frame on the lips of two 41×41 rails, 3 clamps on each long side. X ${m.xa.toFixed(2)}–${m.xb.toFixed(2)}, Y ${m.y0.toFixed(2)}–${m.y1.toFixed(2)} m.`);
     picks.push(mesh); tag(mesh, 'mod');
   });
 })();
-(function buildLags() {
-  const list = D.archD, grp = groups.mount;
-  const cols = {}; list.forEach(m => { (cols[m.col] = cols[m.col] || {xa: m.xa, xb: m.xb, rows: new Set()}).rows.add(m.y0); });
-  const ids = Object.keys(cols).map(Number).sort((a, b) => a - b); const lines = [];
-  ids.forEach((c, i) => {
-    const cur = cols[c], prev = cols[ids[i - 1]], adj = prev && c - ids[i - 1] === 1;
-    if (prev && !adj) lines.push({x: prev.xb - 0.012, rows: prev.rows});
-    lines.push({x: adj ? (prev.xb + cur.xa) / 2 : cur.xa + 0.012, rows: new Set([...cur.rows, ...(adj ? prev.rows : [])])});
-    if (i === ids.length - 1) lines.push({x: cur.xb - 0.012, rows: cur.rows});
-  });
-  const lagG = new THREE.BoxGeometry(0.041, 0.041, G.lm + 0.022), blkG = new THREE.BoxGeometry(0.3, 0.06, 0.3);
-  let nl = 0, nb = 0; lines.forEach(l => { nl += l.rows.size; nb += l.rows.size * 2; });
-  const Lm = new THREE.InstancedMesh(lagG, mat.lag, Math.max(nl, 1)), Bm = new THREE.InstancedMesh(blkG, mat.blk, Math.max(nb, 1));
-  const o = new THREE.Object3D(); let a = 0, b = 0;
-  lines.forEach(l => l.rows.forEach(y0 => {
-    const z = zA(l.x); o.rotation.set(0, 0, 0);
-    o.position.copy(P(l.x, y0 + G.lm / 2, z + 0.065 + 0.0205)); o.updateMatrix(); Lm.setMatrixAt(a++, o.matrix);
-    for (const dy of [0.575, 1.775]) { o.position.copy(P(l.x, y0 + dy, z + 0.03)); o.updateMatrix(); Bm.setMatrixAt(b++, o.matrix); }
-  }));
-  Lm.count = a; Bm.count = b;
-  [Lm, Bm].forEach(x => { x.castShadow = x.receiveShadow = true; grp.add(x); });
-  Lm.userData.info = I('Лага 41×41×1,5', 'Спільна для двох сусідніх колонок модулів, як на даху цеху (варіант Б): лаги 4 800 / 2 400 мм, гільзи з муфтою і шпильки M10 між лагами на кожному модулі, крайні профілі з кутниками. Специфікація — розділ B.',
-    'Rail 41×41×1.5', 'Shared by two adjacent module columns, as on the shop roof (variant B): 4800 / 2400 mm rails, sleeves with couplings and M10 rods between rails at every module, edge profiles with angles. Bill of materials — section B.');
-  Bm.userData.info = I('Баластний блок 300×300×60', '13 кг, з муфтою і матом: 2 на модуль на кожній лазі, під крайні профілі — без мата. Разом з «доміком» і опорами лотків — 494 шт.', 'Ballast block 300×300×60', '13 kg with coupling and mat: 2 per module on each rail, edge profiles without mat. 494 in total with dual-tilt and tray supports.');
-  picks.push(Lm, Bm); tag(Lm, 'lag'); tag(Lm, 'arch'); tag(Bm, 'blk'); tag(Bm, 'arch');
-})();
-const frames = [];
-const iFrame = I('Опори «доміку» 15°', 'Трикутники ГалКат 15° схід–захід, П-кронштейни, 4 притиски на модуль; низ модуля ≈0,15 м над покрівлею, 4 баластні блоки на модуль. Специфікація — розділ C.', 'Dual-tilt 15° supports', 'GalKat 15° triangles east–west, U-brackets, 4 clamps per module; module bottom ≈0.15 m above the roof, 4 ballast blocks per module. Bill of materials — section C.');
 (function buildLow() {
-  const tg = 15 * Math.PI / 180;
   D.low.forEach((m, idx) => {
-    const sg = m.face === 'W' ? -1 : 1, xm = (m.xa + m.xb) / 2, ym = (m.y0 + m.y1) / 2, zc = AL.h + G.hlow + G.rise / 2, key = 'low:' + idx, out = DROP.has(key) || !m.used;
+    const key = 'low:' + idx, out = DROP.has(key) || !m.used;
     let mesh;
     if (!out) {
-      mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true;
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true; placeMod(mesh, key);
       Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'low', idx, key});
+      const one = Math.abs(Math.abs(MP[key].tilt) - 15) < 0.01;
       mesh.userData.info = modInfo(`Модуль на нижньому даху · ${m.face === 'W' ? 'захід' : 'схід'} 15°`, `Lower roof module · ${m.face === 'W' ? 'west' : 'east'} 15°`,
-        `«Домік» 15°: модуль горизонтально (2 384 мм уздовж Пн–Пд), низ ≈0,15 м над покрівлею. X ${fx(m.xa.toFixed(2))}–${fx(m.xb.toFixed(2))}, Y ${fx(m.y0.toFixed(2))}–${fx(m.y1.toFixed(2))} м.`,
-        `Dual-tilt 15°: landscape (2384 mm along N–S), bottom ≈0.15 m above the roof. X ${m.xa.toFixed(2)}–${m.xb.toFixed(2)}, Y ${m.y0.toFixed(2)}–${m.y1.toFixed(2)} m.`);
-      frames.push(m); picks.push(mesh); tag(mesh, 'mod');
+        one ? `Одиночний трикутник 15° (модифікація Антарес): 2 трикутники на модуль через 1 400 мм, лага 1 550 на 2 блоках, 4 притиски. Модуль горизонтально, 2 384 мм уздовж Пн–Пд.`
+            : `«Домік» 15,36°: пара схід + захід на двох опорах (лага 2 750, 2 балки 1 450, стійка), 4 притиски на панель. Модуль горизонтально, 2 384 мм уздовж Пн–Пд.`,
+        one ? `Single 15° triangle (Antares modification): 2 triangles per module 1400 mm apart, 1550 rail on 2 blocks, 4 clamps. Landscape, 2384 mm along N–S.`
+            : `Dual-tilt 15.36°: east + west pair on two supports (2750 rail, two 1450 beams, strut), 4 clamps per panel. Landscape, 2384 mm along N–S.`);
+      picks.push(mesh); tag(mesh, 'mod');
     } else {
       mesh = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(G.dm, T, G.lm)), new THREE.LineDashedMaterial({color: 0x9aa5ad, dashSize: 0.25, gapSize: 0.15}));
       mesh.computeLineDistances();
       const inf = I('Місце без модуля', 'У «ДБН» 134 місця, у стрінги по 12 входить 132: це місце лишається вільним (біля драбини, у тіні надбудови).', 'Place without a module', 'The DBN layout has 134 places, 132 fit into strings of 12: this place stays empty (next to the ladder, shaded by the stair house).');
       const hit = new THREE.Mesh(new THREE.BoxGeometry(G.dm, 0.05, G.lm), new THREE.MeshBasicMaterial({visible: false})); mesh.add(hit); hit.userData.info = inf; picks.push(hit);
+      const sg = m.face === 'W' ? -1 : 1; mesh.position.copy(P((m.xa + m.xb) / 2 - sg * 0.057, (m.y0 + m.y1) / 2, AL.h + 0.3076 + T / 2)); mesh.rotation.z = -sg * 15.36 * Math.PI / 180;
     }
-    mesh.position.copy(P(xm, ym, zc + T / 2)); mesh.rotation.z = -sg * tg; groups.low.add(mesh);
+    groups.low.add(mesh);
   });
 })();
-function buildLowFrames(fr, grp) {
-  const tg = 15 * Math.PI / 180, DEP = G.dep, RISE = G.rise, HL = G.hlow;
-  const rail = new THREE.BoxGeometry(0.041, 0.041, G.lm), postG = new THREE.BoxGeometry(0.041, 1, 0.041), blkG = new THREE.BoxGeometry(0.3, 0.06, 0.3);
-  const R1 = new THREE.InstancedMesh(rail, mat.frame, fr.length * 2), PS = new THREE.InstancedMesh(postG, mat.frame, fr.length * 4), BK = new THREE.InstancedMesh(blkG, mat.blk, fr.length * 4);
-  const o = new THREE.Object3D(); let a = 0, b = 0, c = 0;
-  fr.forEach(m => {
-    const lo = m.lo, sg = m.face === 'W' ? -1 : 1, ym = (m.y0 + m.y1) / 2, zr = m.zr || AL.h;
-    for (const f of [0.15, 0.85]) {
-      const x = lo - sg * f * DEP, h = zr + HL + f * RISE - 0.025;
-      o.scale.set(1, 1, 1); o.rotation.set(0, 0, 0); o.position.copy(P(x, ym, h)); o.updateMatrix(); R1.setMatrixAt(a++, o.matrix);
-      for (const dy of [0.54, G.lm - 0.54]) { const ph = h - zr; o.scale.set(1, ph, 1); o.position.copy(P(x, m.y0 + dy, zr + ph / 2)); o.updateMatrix(); PS.setMatrixAt(b++, o.matrix);
-        o.scale.set(1, 1, 1); o.position.copy(P(x, m.y0 + dy, zr + 0.03)); o.updateMatrix(); BK.setMatrixAt(c++, o.matrix); }
-    }
-  });
-  [R1, PS, BK].forEach(x => { x.castShadow = x.receiveShadow = true; grp.add(x); });
-  R1.userData.info = PS.userData.info = iFrame; BK.userData.info = I('Баластні блоки «доміку»', '4 блоки 300×300×60 з муфтою і матом на модуль.', 'Dual-tilt ballast blocks', '4 blocks 300×300×60 with coupling and mat per module.');
-  picks.push(R1, PS, BK); tag(R1, 'frame'); tag(PS, 'frame'); tag(BK, 'blk');
-}
-buildLowFrames(frames, groups.mount);
 (function buildNad() {
-  const tg = 15 * Math.PI / 180, fr = [];
   D.nad.d6.forEach((m, idx) => {
-    const sg = m.face === 'W' ? -1 : 1, xm = (m.xa + m.xb) / 2, ym = (m.y0 + m.y1) / 2, zc = m.zr + G.hlow + G.rise / 2;
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true;
-    mesh.position.copy(P(xm, ym, zc + T / 2)); mesh.rotation.z = -sg * tg; groups.nad.add(mesh); picks.push(mesh); tag(mesh, 'mod');
+    placeMod(mesh, 'nad:' + idx); groups.nad.add(mesh); picks.push(mesh); tag(mesh, 'mod');
     Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'nad', idx, key: 'nad:' + idx});
     mesh.userData.info = modInfo(`Модуль на надбудові · ${m.part === 'N' ? 'пн. частина +13,0' : 'пд. частина +11,95'} · ${m.face === 'W' ? 'захід' : 'схід'}`, `Stair house module · ${m.part === 'N' ? 'north part +13.0' : 'south part +11.95'} · ${m.face === 'W' ? 'west' : 'east'}`,
-      `«Домік» 15°: пара по центру, до парапетів ≈0,96 м. X ${fx(m.xa.toFixed(2))}–${fx(m.xb.toFixed(2))}, Y ${fx(m.y0.toFixed(2))}–${fx(m.y1.toFixed(2))} м.`, `Dual-tilt 15°: centred pair, ≈0.96 m to parapets. X ${m.xa.toFixed(2)}–${m.xb.toFixed(2)}, Y ${m.y0.toFixed(2)}–${m.y1.toFixed(2)} m.`);
-    fr.push(m);
+      `«Домік» 15,36°: пара по центру на двох опорах (лага 2 750, 2 балки 1 450, стійка), до парапетів ≈0,9 м.`, `Dual-tilt 15.36°: centred pair on two supports (2750 rail, two 1450 beams, strut), ≈0.9 m to parapets.`);
   });
-  buildLowFrames(fr, groups.mount);
 })();
-const WALLM = [];
 (function buildWalls() {
-  const GAPW = 0.022, off = 0.1, zb = AL.h + 0.5;
-  const fill = (a, b, w) => { const n = Math.floor((b - a + GAPW) / (w + GAPW)), st = a + (b - a - (n * (w + GAPW) - GAPW)) / 2; return Array.from({length: n}, (_, i) => st + i * (w + GAPW)); };
-  for (const [a, b] of [[AB.x0 + 0.5, s0 - 0.5], [Math.max(s1 + 0.5, G.ladder.x1 + G.ladder.clr), AB.x1 - 0.5]])
-    fill(a, b, G.dm).forEach(x => WALLM.push({x0: x, x1: x + G.dm, z0: zb, z1: zb + G.lm, y: AB.y0, how: 'P', where: ['Південна стіна основного блоку над нижнім дахом', 'Main block south wall above the lower roof']}));
-  fill(s0 + 0.2, s1 - 0.2, G.lm).forEach(x => WALLM.push({x0: x, x1: x + G.lm, z0: zb, z1: zb + G.dm, y: s2, how: 'L', where: ['Південна стіна надбудови (нижча частина)', 'Stair house south wall (lower part)']}));
-  const railG = new THREE.BoxGeometry(1, 0.041, 0.041), R2 = new THREE.InstancedMesh(railG, mat.frame, WALLM.length * 2), o = new THREE.Object3D(); let k = 0;
-  WALLM.forEach((m, i) => {
-    const w = m.x1 - m.x0, h = m.z1 - m.z0, xm = (m.x0 + m.x1) / 2, zm = (m.z0 + m.z1) / 2;
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, T), pv.S); mesh.position.copy(P(xm, m.y - off - T / 2, zm));
-    mesh.castShadow = mesh.receiveShadow = true; Object.assign(mesh.userData, {base: pv.S, face0: pv.S, src: 'wall', idx: i, key: 'wall:' + i, dat: m}); groups.wall.add(mesh);
-    mesh.userData.info = modInfo(`Вертикальний модуль · ${m.how === 'P' ? 'книжково' : 'альбомно'}`, `Vertical module · ${m.how === 'P' ? 'portrait' : 'landscape'}`,
-      `${m.where[0]}. На південь, 90°. Низ +${fx(m.z0.toFixed(2))}, верх +${fx(m.z1.toFixed(2))} м, 0,1 м від стіни; 2 рейки 41×41 на кронштейнах з анкерами, притиски.`, `${m.where[1]}. Facing south, 90°. Bottom +${m.z0.toFixed(2)}, top +${m.z1.toFixed(2)} m, 0.1 m off the wall; 2 rails 41×41 on anchored brackets, clamps.`);
+  Object.keys(MP).filter(k => k.startsWith('wall:')).forEach(key => {
+    const q = MP[key], i = +key.slice(5), P_ = q.how === 'P';
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv.S); placeMod(mesh, key);
+    mesh.castShadow = mesh.receiveShadow = true; Object.assign(mesh.userData, {base: pv.S, face0: pv.S, src: 'wall', idx: i, key, dat: q}); groups.wall.add(mesh);
+    const z0 = q.c[2] - q.h / 2, z1 = q.c[2] + q.h / 2;
+    mesh.userData.info = modInfo(`Вертикальний модуль · ${P_ ? 'книжково' : 'альбомно'}`, `Vertical module · ${P_ ? 'portrait' : 'landscape'}`,
+      `${P_ ? 'Південна стіна основного блоку над нижнім дахом' : 'Південна стіна надбудови'}. На південь, 90°. Низ +${fx(z0.toFixed(2))}, верх +${fx(z1.toFixed(2))} м; тил рами 160 мм від стіни. ${P_ ? 'Спільні горизонтальні рейки 41×41×2,5 на групу, кронштейни через ≈1,2 м, середні й крайні притиски' : '2 вертикальні рейки 41×41×2,5 по 1 400 на 540 мм від торців, 4 кронштейни, 4 притиски'}, трос безпеки.`,
+      `${P_ ? 'Main block south wall above the lower roof' : 'Stair house south wall'}. Facing south, 90°. Bottom +${z0.toFixed(2)}, top +${z1.toFixed(2)} m; frame back 160 mm off the wall. ${P_ ? 'Shared horizontal 41×41×2.5 rails per group, brackets every ≈1.2 m, mid and end clamps' : 'two vertical 41×41×2.5 rails of 1400 at 540 mm from the ends, 4 brackets, 4 clamps'}, safety rope.`);
     picks.push(mesh); tag(mesh, 'mod');
-    for (const f of [0.54, (m.how === 'P' ? h : w) - 0.54]) {
-      o.rotation.set(0, 0, 0);
-      if (m.how === 'P') { o.scale.set(w + 0.1, 1, 1); o.position.copy(P(xm, m.y - off / 2, m.z0 + f)); }
-      else { o.rotation.z = Math.PI / 2; o.scale.set(h + 0.1, 1, 1); o.position.copy(P(m.x0 + f, m.y - off / 2, zm)); }
-      o.updateMatrix(); R2.setMatrixAt(k++, o.matrix);
-    }
   });
-  R2.castShadow = true; groups.mount.add(R2); R2.userData.info = I('Рейки на стіні', 'Рейки 41×41 на кронштейнах з анкерами через ≤ 1,0 м, притиски середні й кінцеві. Специфікація — розділ D.', 'Wall rails', 'Rails 41×41 on anchored brackets every ≤ 1.0 m, mid and end clamps. Bill of materials — section D.'); picks.push(R2); tag(R2, 'wrail');
+})();
+// ---------- кріплення: кожна деталь — екземпляр; тип@група → тег для специфікації
+const MATS = {
+  zn: mat.lag, fr: mat.frame, blk: mat.blk, rub: M(0x1f2124, {roughness: 1}), al: M(0xdfe4e8, {metalness: 0.35, roughness: 0.35}),
+  dk: M(0x6f7a82, {metalness: 0.45, roughness: 0.45}), cu: M(0xb98b2f, {metalness: 0.5, roughness: 0.35}), rod: M(0x9aa3aa, {metalness: 0.6, roughness: 0.32}),
+  anc: M(0xc2410c, {roughness: 0.6}), ss: M(0xc9ced2, {metalness: 0.7, roughness: 0.25}),
+};
+const PT = {   // тип: [геометрія (одиниця по X, якщо масштабується), матеріал, масштабувати по L, тег]
+  lag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'zn', 1, 'lag'], prof: [new THREE.BoxGeometry(1, 0.041, 0.041), 'zn', 1, 'prof'],
+  dlag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'], dbeam: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'], dstrut: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'],
+  slag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'], sbeam: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'], sstrut: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'],
+  ddiag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'dk', 1, 'diag'], wrail: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'wr'],
+  blk: [new THREE.BoxGeometry(0.3, 0.06, 0.3), 'blk', 0, 'blk'], blkn: [new THREE.BoxGeometry(0.3, 0.06, 0.3), 'blk', 0, 'blkn'], mat: [new THREE.BoxGeometry(0.32, 0.003, 0.32), 'rub', 0, 'mat'],
+  cm: [new THREE.BoxGeometry(0.05, 0.012, 0.044), 'al', 0, 'cm'], cz: [new THREE.BoxGeometry(0.05, 0.03, 0.026), 'al', 0, 'cz'], ce: [new THREE.BoxGeometry(0.05, 0.016, 0.04), 'al', 0, 'ce'],
+  slv: [new THREE.BoxGeometry(0.2, 0.037, 0.0455), 'dk', 0, 'slv'], cpl: [new THREE.CylinderGeometry(0.0098, 0.0098, 0.05, 6).rotateZ(Math.PI / 2), 'cu', 0, 'slv'],
+  rod: [new THREE.CylinderGeometry(0.005, 0.005, 1, 6).rotateZ(Math.PI / 2), 'rod', 1, 'rod'],
+  angP: [new THREE.BoxGeometry(1, 0.04, 0.008), 'dk', 1, 'ang'], angL: [new THREE.BoxGeometry(1, 0.04, 0.008), 'dk', 1, 'ang'],
+  anc: [new THREE.CylinderGeometry(0.06, 0.06, 0.05, 16), 'anc', 0, 'anc'], dbrk: [new THREE.BoxGeometry(0.05, 0.053, 0.05), 'ss', 0, 'brk'],
+  wbrk: [new THREE.BoxGeometry(0.06, 0.06, 0.06), 'dk', 0, 'wbrk'],
+};
+const GRP = {arch: 'arch', dom: 'frame', one: 'frame', wall: 'wrail'};
+const MINFO = {
+  'lag@arch': ['Лага 41×41×1,5 перфорована', 'Пазом догори, під стиком двох колонок модулів (крайня — 12 мм за рамою); на блоках 300×300×60 з муфтою і матом — 2 на панель через 1 200 мм і під кожним кінцем. Шматки 4 800 і 2 400, стик — у гільзі 200. Лага до блока — M8×20 + DIN 9021 у муфту.', 'Rail 41×41×1.5 perforated', 'Slot up, under the joint of two module columns (edge rail 12 mm outside the frame); on 300×300×60 blocks with coupling and mat — 2 per panel 1200 mm apart and one under each end. 4800 and 2400 pieces, splice inside a 200 sleeve. Rail to block — M8×20 + DIN 9021 into the coupling.'],
+  'blk@arch': ['Баластний блок 300×300×60 з муфтою і матом', '13 кг; під лагою — 2 на панель через 1 200 мм (перший за 575 від торця) і під кожним кінцем лаги.', 'Ballast block 300×300×60 with coupling and mat', '13 kg; under rails — 2 per panel 1200 mm apart (first at 575 from the end) and under each rail end.'],
+  'blkn@arch': ['Блок під крайнім профілем — без мата', '2 на профіль; верх знято, щоб профіль став урівень з лагами.', 'Block under the edge profile — no mat', '2 per profile; top trimmed so the profile is level with the rails.'],
+  'mat@arch': ['Мат гумовий 320×320×3', 'Під кожен блок лаги.', 'Rubber mat 320×320×3', 'Under every rail block.'],
+  'cm@arch': ['Притиск середній під раму 33', 'Алюміній, M8×60 DIN 912 A2 у гайку з пружиною в пазу лаги; 3 на довгий бік (0,17 · 0,5 · 0,83 L), один на два модулі.', 'Mid clamp for 33 mm frame', 'Aluminium, M8×60 DIN 912 A2 into a spring nut in the rail slot; 3 per long side (0.17 · 0.5 · 0.83 L), one for two modules.'],
+  'cz@arch': ['Притиск Z33', 'На крайній лазі — 3 на довгий бік (M8×25); на крайньому профілі — 2 на короткий бік.', 'Z33 end clamp', 'On the edge rail — 3 per long side (M8×25); on the edge profile — 2 per short side.'],
+  'slv@arch': ['Гільза П 45 з привареною муфтою M10×50', 'Знизу на лагу, 2 болти M10×60 з трубкою в бічні отвори; муфта — половина з лівою, половина з правою різьбою. На стику лаг гільза бере обидва шматки.', 'U-sleeve 45 with welded M10×50 coupling', 'From below on the rail, 2 × M10×60 with spacer tube in side holes; coupling half left-hand, half right-hand thread. At a rail splice the sleeve takes both pieces.'],
+  'rod@arch': ['Шпилька M10 права / ліва різьба', 'Між муфтами сусідніх лаг на кожному стику модулів у колонці; крутиш — обидва кінці закручуються, лаги стягуються. Через прохід ≤ 1,6 м — така сама шпилька.', 'M10 rod, right / left thread', 'Between couplings of adjacent rails at every module joint in a column; turning it pulls both rails together. Across a passage ≤ 1.6 m — the same rod.'],
+  'prof@arch': ['Крайній профіль 41×41×1,5', 'На кінці колонки, поперек лаг, за 12 мм від краю рам: тримає коротку сторону 2 притисками Z33 і бере тягу між лагами на краю ряду; 2 блоки без мата. Через прохід — профіль без притисків.', 'Edge profile 41×41×1.5', 'At the end of a column, across the rails 12 mm beyond the frames: holds the short side with 2 Z33 clamps and ties the rails at the row edge; 2 blocks without mat. Across a passage — a profile without clamps.'],
+  'ang@arch': ['Кутник 160/150, t = 8 (правий і лівий)', 'Крайній профіль до лаги: M10×70 крізь кутник(и) і лагу, 2 × M10×60 крізь кутник і профіль.', 'Angle 160/150, t = 8 (right and left)', 'Edge profile to rail: M10×70 through the angle(s) and rail, 2 × M10×60 through angle and profile.'],
+  'anc@arch': ['Анкер від сповзання', 'Ланцюжок тяг цієї лінії не переходить гребінь (вентшахти, доріжки) — за правилом КМ даху цеху анкер на верхній лазі відрізка.', 'Anti-slide anchor', 'The tie chain on this line does not cross the ridge (vents, walkways) — per the shop roof rule an anchor on the upper rail of the segment.'],
+  'dfr@dom': ['Опора «доміку» 41×41×1,5', 'Лага 2 750 на 4 блоках, дві балки 1 450 з двох боків лаги (шарніри в заводських отворах), стійка посередині, один болт на вершині крізь балка–стійка–балка; П-кронштейн під стійкою. Дві опори на пару панелей, ±0,70 м від центру панелі; кут 15,36°.', 'Dual-tilt support 41×41×1.5', '2750 rail on 4 blocks, two 1450 beams on both sides of the rail (hinges in factory holes), a strut in the middle, one bolt at the apex through beam–strut–beam; U-bracket under the strut. Two supports per panel pair, ±0.70 m from the panel centre; 15.36°.'],
+  'brk@dom': ['П-кронштейн, нерж. 304', 'Під стійкою, спинкою на лазі: M10 крізь спинку і проріз лаги, M10 крізь вуха і стійку.', 'U-bracket, stainless 304', 'Under the strut, back on the rail: M10 through the back and rail slot, M10 through the ears and strut.'],
+  'blk@dom': ['Баластний блок з муфтою і матом', '4 на опору «доміку»: крайні — 200 мм від торців лаги, середні — по 165 мм від середини.', 'Ballast block with coupling and mat', '4 per dual-tilt support: outer at 200 mm from the rail ends, inner 165 mm from the middle.'],
+  'mat@dom': ['Мат гумовий 320×320×3', 'Під кожен блок.', 'Rubber mat 320×320×3', 'Under every block.'],
+  'ce@dom': ['Притиск крайній з болтом M8', '4 на панель: на балках двох опор, нижній і верхній край.', 'End clamp with M8 bolt', '4 per panel: on the beams of two supports, lower and upper edge.'],
+  'diag@dom': ['Діагональ 41×41×1,5', 'Між сусідніми опорами ряду: від верху стійки до низу стійки сусідньої, 2 болти M10×20.', 'Diagonal 41×41×1.5', 'Between adjacent supports of a row: from the top of a strut to the foot of the next, 2 × M10×20.'],
+  'sfr@one': ['Трикутник 15° (модифікація Антарес)', 'Під модулем без пари: лага 1 550 (блоки під кінцями поза трикутником), балка 1 419, стійка 448 у 13-му отворі, П-кронштейн під 15°. 2 трикутники на модуль через 1 400 мм.', '15° triangle (Antares modification)', 'Under an unpaired module: 1550 rail (blocks under the ends outside the triangle), 1419 beam, 448 strut in the 13th hole, 15° U-bracket. 2 triangles per module 1400 mm apart.'],
+  'brk@one': ['П-кронштейн під 15°', 'Отвір під болт балки зміщено, щоб не свердлити балку.', 'U-bracket for 15°', 'Bolt hole shifted so the beam is not drilled.'],
+  'blk@one': ['Баластний блок з муфтою і матом', '2 на трикутник — під кінцями лаги.', 'Ballast block with coupling and mat', '2 per triangle — under the rail ends.'],
+  'mat@one': ['Мат гумовий 320×320×3', 'Під кожен блок.', 'Rubber mat 320×320×3', 'Under every block.'],
+  'ce@one': ['Притиск крайній з болтом M8', '4 на модуль: на кінцях балок.', 'End clamp with M8 bolt', '4 per module: at the beam ends.'],
+  'diag@one': ['Діагональ 41×41×1,5', 'Між трикутниками сусідніх модулів, 2 болти M10×20.', 'Diagonal 41×41×1.5', 'Between triangles of adjacent modules, 2 × M10×20.'],
+  'wr@wall': ['Рейка 41×41×2,5 на стіні', 'На 540 мм від торців модуля, поперек довгої сторони (як вимагає ZNSHINE): у групі книжкових — спільні горизонтальні, в альбомних — по 2 вертикальні 1 400.', 'Wall rail 41×41×2.5', 'At 540 mm from the module ends, across the long side (as ZNSHINE requires): shared horizontal rails for a portrait group, two vertical 1400 rails per landscape module.'],
+  'wbrk@wall': ['Кронштейн L 60×60×5 з пазом і анкер M10', 'Паз регулює відстань до стіни ±20 мм; болт M10×35 у рейку. Тип анкера — за випробуванням на вирив.', 'L 60×60×5 slotted bracket and M10 anchor', 'Slot adjusts the wall distance ±20 mm; M10×35 into the rail. Anchor type per pull-out test.'],
+  'ce@wall': ['Притиск крайній 80 мм, Al 6005-T6', 'M8 у гайку з пружиною в пазу рейки, 16–20 Н·м.', 'End clamp 80 mm, Al 6005-T6', 'M8 into a spring nut in the rail slot, 16–20 N·m.'],
+  'cm@wall': ['Притиск середній 80 мм', 'Між сусідніми модулями групи, на кожній рейці.', 'Mid clamp 80 mm', 'Between adjacent modules of a group, on each rail.'],
+};
+(function buildMount() {
+  const by = {};
+  for (const [t, list] of Object.entries(MT.parts)) list.forEach(p => { const k = t + '|' + p.k; (by[k] = by[k] || []).push(p); });
+  for (const [key, list] of Object.entries(by)) {
+    const [t, g] = key.split('|'), def = PT[t]; if (!def) continue;
+    const [geo, mk, scl, tg] = def, im = new THREE.InstancedMesh(geo, MATS[mk], list.length);
+    list.forEach((p, i) => im.setMatrixAt(i, poseMat(p.c, p.u, p.n, scl ? p.L : 1, 1, 1)));
+    im.instanceMatrix.needsUpdate = true; im.castShadow = t !== 'mat' && t !== 'rod'; im.receiveShadow = true; im.userData.noOcc = true;
+    const inf = MINFO[tg + '@' + g];
+    if (inf) im.userData.info = I(inf[0], inf[1], inf[2], inf[3]);
+    groups.mount.add(im); picks.push(im); tag(im, tg + '@' + g); tag(im, tg); if (!['blk', 'blkn', 'mat'].includes(tg)) tag(im, GRP[g]); if (tg === 'mat' || tg === 'blkn') tag(im, 'blk');
+  }
 })();
 
 // ================= кольори стрінгів
@@ -578,7 +587,7 @@ const pvPart = M(0xd4962e, {roughness: 0.6, metalness: 0.05}), pvShade = M(0x4f5
 const MODS = [], BYKEY = {}, STR = {};
 [groups.arch, groups.low, groups.nad, groups.wall].forEach(g => g.children.forEach(m => {
   if (!m.isMesh || !m.userData.key) return; const d = MODREC[m.userData.key]; if (!d || !d.k) return;
-  const isW = m.userData.src === 'wall', gp = m.geometry.parameters;
+  const isW = false, gp = m.geometry.parameters;
   const r = {mesh: m, g: {archD: 'arch', low: 'low', nad: 'nad', wall: 'wall'}[m.userData.src], key: m.userData.key, d, k: d.k, ax: isW ? 'z' : 'y', w: gp.width, l: isW ? gp.height : gp.depth};
   m.updateMatrixWorld(true); m.userData.rec = r;
   r.n = (r.ax === 'y' ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1)).applyQuaternion(m.quaternion).normalize();
@@ -665,25 +674,25 @@ function paintStatus(res) {
 }
 // ================= етапи монтажу і зведення по позиціях — для збирання всього об'єкта
 TAGS.safety = [...(TAGS.p1 || []), ...(TAGS.plat || []), ...(TAGS.rail || []), ...(TAGS.walk || [])];
-const qty = t => D.bom.items.filter(x => x.tag === t);
+const qty = (tags, gl) => D.bom.items.filter(x => (gl || []).includes(x.g) || tags.includes(x.tag));
 // рядок кошторису → позиція в моделі (рядки без позиції — комісія, страхування, мито, доставка кріплення, механізація, витратні, запас, винагорода)
 const EKF = {'1.1': 'mod', '1.2': 'arch', '1.3': 'frame', '1.4': 'wrail', '1.5': 'dc', '1.6': 'tray', '1.7': 'bz', '1.8': 'meter', '3.1': 'mod',
-  '4.1': 'inv', '4.2': 'blk', '4.3': 'ac', '4.4': 'shch', '4.5': 'shch', '4.6': 'meter', '4.7': 'blk', '4.8': 'p1', '4.9': 'plat', '4.10': 'p1', '4.11': 'rail', '4.12': 'walk', '5.1': 'mod', '5.4': 'safety'};
+  '4.1': 'inv', '4.2': 'blk', '4.3': 'ac', '4.4': 'shch', '4.5': 'shch', '4.6': 'meter', '4.7': 'blk', '4.8': 'p1', '4.9': 'plat', '4.10': 'p1', '4.11': 'rail', '4.12': 'walk', '4.13': 'anc', '5.1': 'mod', '5.4': 'safety'};
 const ELINES = (D.est && D.est.rows || []).filter(r => r.t === 'line');
 const estOf = tags => ELINES.filter(r => tags.includes(EKF[r.no]) || (EKF[r.no] === 'safety' && tags.some(t => ['p1', 'plat', 'rail', 'walk'].includes(t))));
 const STAGES = [
-  ['blk', 'Баласт під лаги, «домік» і опори лотків', 'Ballast under rails, dual-tilt and tray supports', ['blk']],
-  ['arch', 'Лаги, гільзи, шпильки, крайні профілі на арці', 'Rails, sleeves, rods, edge profiles on the arch', ['lag', 'arch']],
-  ['frame', 'Опори «доміку» 15° на нижньому даху і надбудові', 'Dual-tilt 15° supports on the lower roof and stair house', ['frame']],
-  ['wrail', 'Рейки на південних стінах', 'Rails on the south walls', ['wrail']],
-  ['tray', 'Лотки з опорами і кронштейнами', 'Trays with supports and brackets', ['tray']],
-  ['mod', 'Фотомодулі з притисками', 'PV modules with clamps', ['mod']],
-  ['dc', 'Кабелі стрінгів, перемички, MC4', 'String cables, jumpers, MC4', ['dc']],
-  ['inv', 'Інвертор Deye SUN-100K-G03', 'Inverter Deye SUN-100K-G03', ['inv']],
-  ['ac', 'Кабель AC, щит СЕС, облік, RS485', 'AC cable, PV board, metering, RS485', ['ac', 'shch', 'meter']],
-  ['bz', 'Вирівнювання потенціалів, ПЗІП', 'Bonding, surge protection', ['bz']],
-  ['safety', 'Драбини П1, площадка, огородження, доріжки', 'P1 ladders, landing, guardrail, walkways', ['p1', 'plat', 'rail', 'walk']]
-].map(([k, uk, en, tags]) => { const est = estOf(tags); return {k, uk, en, tags, objs: tags.flatMap(t => TAGS[t] || []), items: tags.flatMap(qty), est, sum: est.reduce((x, r) => x + (r.s || 0), 0)}; });
+  ['blk', 'Баласт: блоки з муфтою і матом під лаги, опори і трикутники, без мата — під крайні профілі', 'Ballast: blocks with coupling and mat under rails, supports and triangles, without mat under edge profiles', ['blk'], ['J']],
+  ['arch', 'Арка: лаги, гільзи з муфтами, шпильки, крайні профілі з кутниками, анкери', 'Arch: rails, sleeves with couplings, rods, edge profiles with angles, anchors', ['lag', 'arch', 'anc'], ['B']],
+  ['frame', 'Опори «доміку» і трикутники 15° на нижньому даху і надбудові', 'Dual-tilt supports and 15° triangles on the lower roof and stair house', ['frame'], ['C']],
+  ['wrail', 'Стіни: кронштейни з анкерами і рейки', 'Walls: anchored brackets and rails', ['wrail'], ['D']],
+  ['tray', 'Лотки з опорами і кронштейнами', 'Trays with supports and brackets', ['tray'], ['F']],
+  ['mod', 'Фотомодулі з притисками', 'PV modules with clamps', ['mod'], ['A']],
+  ['dc', 'Кабелі стрінгів, перемички, MC4', 'String cables, jumpers, MC4', ['dc'], ['E']],
+  ['inv', 'Інвертор Deye SUN-100K-G03', 'Inverter Deye SUN-100K-G03', ['inv'], []],
+  ['ac', 'Кабель AC, щит СЕС, облік, RS485', 'AC cable, PV board, metering, RS485', ['ac', 'shch', 'meter'], []],
+  ['bz', 'Вирівнювання потенціалів, ПЗІП', 'Bonding, surge protection', ['bz'], ['H']],
+  ['safety', 'Драбини П1, площадка, огородження, доріжки', 'P1 ladders, landing, guardrail, walkways', ['p1', 'plat', 'rail', 'walk'], ['I']]
+].map(([k, uk, en, tags, gl]) => { const est = estOf(tags); return {k, uk, en, tags, objs: [...new Set(tags.flatMap(t => TAGS[t] || []))], items: qty(tags, gl), est, sum: est.reduce((x, r) => x + (r.s || 0), 0)}; });
 return {root: S, I, G, AL, AB, DB, XC, HW, zA, P, fx, fx1, M, mat, pv, hi, hiF, picks, TAGS, tag, groups, LB, MODS, STR, STRO, BYKEY, MODREC, T, s0, s1, s2, s3, SPLIT, pt, canvasTex,
   scol, strMat, pvPart, pvShade, pvBack, pvOff, evaluate, sunAt, sunTimes, sky, tAir, PM, NMIN, GN, LAT, LON, DEG, OCC, wireMeshes, STAGES, EKF, paintStatus, est: D.est, bom: D.bom};
 };

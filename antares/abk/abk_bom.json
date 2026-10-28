@@ -5,16 +5,16 @@
 "PV modules"
 ],
 "B": [
-"Кріплення на арці — лаги на баласті",
-"Arch roof mounting — rails on ballast"
+"Кріплення на арці — «Лага 0°»: лаги на баласті, шпилькова тяга, крайні профілі",
+"Arch roof mounting — \"Rail 0°\": rails on ballast, rod ties, edge profiles"
 ],
 "C": [
-"Кріплення «домік» 15° — нижній дах і надбудова",
-"Dual-tilt 15° mounting — lower roof and stair house"
+"Кріплення 15° — «домік» і трикутники під одиночні модулі (нижній дах і надбудова)",
+"15° mounting — dual-tilt and triangles for single modules (lower roof and stair house)"
 ],
 "D": [
-"Кріплення на південних стінах",
-"South wall mounting"
+"Кріплення на південних стінах — фасадні вузли",
+"South wall mounting — facade nodes"
 ],
 "E": [
 "Кабелі DC і з'єднання стрінгів",
@@ -56,58 +56,69 @@
 },
 {
 "g": "B",
-"key": "lag",
-"uk": "Лага 41×41×1,5 перфорована оцинкована (4 800 і 2 400 мм)",
-"en": "Rail 41×41×1.5 perforated galvanised (4800 and 2400 mm)",
-"u": "м / m",
-"q": 260,
+"key": "lag48",
+"uk": "Лага 41×41×1,5 перфорована оцинкована, 4 800 мм (бічні отвори Ø10,5 через 100, від торців 50)",
+"en": "Rail 41×41×1.5 perforated galvanised, 4800 mm (side holes Ø10.5 at 100, 50 from ends)",
+"u": "шт / pcs",
+"q": 37,
 "ref": "1.2",
-"tag": "lag",
-"src": "як дах цеху, варіант Б: 5 282,7 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "lag@arch",
+"src": "35 — 2 комірки на шматок; лаги 251,6 м / 2 cells per piece"
+},
+{
+"g": "B",
+"key": "lag24",
+"uk": "Лага 41×41×1,5 перфорована оцинкована, 2 400 мм",
+"en": "Rail 41×41×1.5 perforated galvanised, 2400 mm",
+"u": "шт / pcs",
+"q": 37,
+"ref": "1.2",
+"tag": "lag@arch",
+"src": "35 — непарна комірка / odd cell"
 },
 {
 "g": "B",
 "key": "slv",
-"uk": "Гільза 200 з привареною муфтою M10×50 (ліва / права)",
-"en": "Sleeve 200 with welded coupling M10×50 (LH / RH)",
+"uk": "Гільза П 45,5×35×2, 200 мм, з привареною муфтою M10×50 (ліва / права різьба)",
+"en": "U-sleeve 45.5×35×2, 200 mm, with welded M10×50 coupling (LH / RH thread)",
 "u": "шт / pcs",
-"q": 98,
+"q": 62,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 1 989,8 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "slv@arch",
+"src": "60: на кожній лазі в лінії тяги, на стиках лаг / on every rail of a tie line, at rail splices"
 },
 {
 "g": "B",
 "key": "b60",
-"uk": "Болт M10×60 + 2 шайби + гайка + трубка",
-"en": "Bolt M10×60 + 2 washers + nut + tube",
+"uk": "Болт M10×60 + 2 шайби DIN 125 + гайка + трубка 14×1,75×38 (гільза до лаги)",
+"en": "Bolt M10×60 + 2 washers DIN 125 + nut + tube 14×1.75×38 (sleeve to rail)",
 "u": "компл / set",
-"q": 196,
+"q": 126,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 3 979,5 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "slv@arch",
+"src": "2 на гільзу: 120 / 2 per sleeve"
 },
 {
 "g": "B",
 "key": "rod",
-"uk": "Шпилька M10 права / ліва різьба",
-"en": "Threaded rod M10 RH / LH",
-"u": "м / m",
-"q": 109,
+"uk": "Шпилька M10 права / ліва різьба, 1 299 мм",
+"en": "Threaded rod M10 RH / LH, 1299 mm",
+"u": "шт / pcs",
+"q": 54,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 2 202,1 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "rod@arch",
+"src": "48 між модулями в колонці + 3 через прохід / between modules + across passage"
 },
 {
 "g": "B",
 "key": "nr",
-"uk": "Гайка M10 права",
-"en": "Nut M10 RH",
+"uk": "Гайка M10 права (контргайки шпильок)",
+"en": "Nut M10 RH (rod lock nuts)",
 "u": "шт / pcs",
-"q": 169,
+"q": 108,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 3 425,1 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "rod@arch",
+"src": "2 на шпильку / 2 per rod"
 },
 {
 "g": "B",
@@ -115,109 +126,340 @@
 "uk": "Гайка M10 ліва",
 "en": "Nut M10 LH",
 "u": "шт / pcs",
-"q": 85,
+"q": 54,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 1 712,6 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "rod@arch",
+"src": "1 на шпильку / 1 per rod"
 },
 {
 "g": "B",
 "key": "edge",
-"uk": "Профіль 41×41×1,5 крайній",
-"en": "Edge profile 41×41×1.5",
-"u": "м / m",
-"q": 29,
+"uk": "Профіль 41×41×1,5 крайній, 1 263 мм",
+"en": "Edge profile 41×41×1.5, 1263 mm",
+"u": "шт / pcs",
+"q": 85,
 "ref": "1.2",
-"tag": "lag",
-"src": "як дах цеху, варіант Б: 579,3 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "prof@arch",
+"src": "76 на кінцях колонок + 6 через прохід / column ends + across passage"
 },
 {
 "g": "B",
 "key": "ang",
-"uk": "Кутник 160/150, t = 8 (правий і лівий)",
-"en": "Angle bracket 160/150, t = 8 (RH and LH)",
+"uk": "Кутник 160/150, t = 8, оцинкований (правий і лівий порівну)",
+"en": "Angle bracket 160/150, t = 8, galvanised (equal RH and LH)",
 "u": "шт / pcs",
-"q": 46,
+"q": 169,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 935,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "ang@arch",
+"src": "2 на профіль / 2 per profile"
 },
 {
 "g": "B",
 "key": "b70",
-"uk": "Болт M10×70 / M10×60 + гайка (кутники)",
-"en": "Bolt M10×70 / M10×60 + nut (angle brackets)",
+"uk": "Болт M10×70 + гайка + шайби (кутник до лаги)",
+"en": "Bolt M10×70 + nut + washers (angle to rail)",
 "u": "компл / set",
-"q": 152,
+"q": 104,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 3 091,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "ang@arch",
+"src": "99: один на точку лаги / one per rail point"
 },
 {
 "g": "B",
-"key": "clp",
-"uk": "Притиск середній / Z33 під раму 33 мм з болтом і гайкою з пружиною",
-"en": "Mid clamp / Z33 for 33 mm frame with bolt and spring nut",
-"u": "шт / pcs",
-"q": 375,
+"key": "b60a",
+"uk": "Болт M10×60 + гайка + шайби (кутник до профілю)",
+"en": "Bolt M10×60 + nut + washers (angle to profile)",
+"u": "компл / set",
+"q": 345,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 7 622,0 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "ang@arch",
+"src": "2 на кутник / 2 per angle"
+},
+{
+"g": "B",
+"key": "cm",
+"uk": "Притиск середній під раму 33 мм, Al, з болтом M8×60 DIN 912 A2 і гайкою з пружиною",
+"en": "Mid clamp for 33 mm frame, Al, with M8×60 DIN 912 A2 bolt and spring nut",
+"u": "шт / pcs",
+"q": 212,
+"ref": "1.2",
+"tag": "cm@arch",
+"src": "201: 3 на довгий бік на спільній лазі / 3 per long side on a shared rail"
+},
+{
+"g": "B",
+"key": "cz",
+"uk": "Притиск Z33, Al, з болтом M8×25 DIN 912 A2 і гайкою з пружиною",
+"en": "Z33 clamp, Al, with M8×25 DIN 912 A2 bolt and spring nut",
+"u": "шт / pcs",
+"q": 280,
+"ref": "1.2",
+"tag": "cz@arch",
+"src": "114 на крайніх лагах + 152 на крайніх профілях / on edge rails + on edge profiles"
 },
 {
 "g": "B",
 "key": "b8",
-"uk": "Болт M8×20 + шайба DIN 9021 (лага / профіль до блока)",
-"en": "Bolt M8×20 + washer DIN 9021 (rail / profile to block)",
+"uk": "Болт M8×20 + шайба DIN 9021 (лага / профіль до муфти блока)",
+"en": "Bolt M8×20 + washer DIN 9021 (rail / profile to block coupling)",
 "u": "компл / set",
-"q": 290,
+"q": 488,
 "ref": "1.2",
-"tag": "arch",
-"src": "як дах цеху, варіант Б: 5 884,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+"tag": "lag@arch",
+"src": "1 на блок: 464 / 1 per block"
+},
+{
+"g": "B",
+"key": "anc",
+"uk": "Анкер від сповзання до основи покрівлі, з герметизацією",
+"en": "Anti-slide anchor to the roof deck, with sealing",
+"u": "шт / pcs",
+"q": 10,
+"ref": "4.13",
+"tag": "anc@arch",
+"src": "10: ланцюжок тяг лінії не переходить гребінь — анкер на верхній лазі (правило КМ даху цеху) / tie chain does not cross the ridge"
 },
 {
 "g": "C",
-"key": "dom",
-"uk": "Комплект кріплення «домік» 15° на модуль: трикутники ГалКат, П-кронштейни, 4 притиски, метизи",
-"en": "Dual-tilt 15° mounting kit per module: GalKat triangles, U-brackets, 4 clamps, fasteners",
-"u": "компл / set",
-"q": 37,
+"key": "dlag",
+"uk": "Лага «доміку» 41×41×1,5, 2 750 мм",
+"en": "Dual-tilt rail 41×41×1.5, 2750 mm",
+"u": "шт / pcs",
+"q": 29,
 "ref": "1.3",
-"tag": "frame",
-"src": "нижній дах 31 + надбудова 6 / lower roof 31 + stair house 6"
+"tag": "dfr@dom",
+"src": "28 опор: 14 доміків × 2 / supports: domes × 2"
+},
+{
+"g": "C",
+"key": "dbeam",
+"uk": "Балка 41×41×1,5, 1 450 мм (отвори шарніра і вершини — заводські)",
+"en": "Beam 41×41×1.5, 1450 mm (hinge and apex holes factory)",
+"u": "шт / pcs",
+"q": 58,
+"ref": "1.3",
+"tag": "dfr@dom",
+"src": "2 на опору / 2 per support"
+},
+{
+"g": "C",
+"key": "dstr",
+"uk": "Стійка 41×41×1,5, 365 мм",
+"en": "Strut 41×41×1.5, 365 mm",
+"u": "шт / pcs",
+"q": 29,
+"ref": "1.3",
+"tag": "dfr@dom",
+"src": "1 на опору / 1 per support"
+},
+{
+"g": "C",
+"key": "dbrk",
+"uk": "П-кронштейн, нерж. 304, t = 3",
+"en": "U-bracket, stainless 304, t = 3",
+"u": "шт / pcs",
+"q": 29,
+"ref": "1.3",
+"tag": "brk@dom",
+"src": "1 на опору / 1 per support"
+},
+{
+"g": "C",
+"key": "db",
+"uk": "Болти M10 опори (2 × M10×100 шарніри, M10×140 вершина, M10×65 стійка, M10×60 кронштейн) + шайби + фланцеві гайки",
+"en": "Support bolts M10 (2 × M10×100 hinges, M10×140 apex, M10×65 strut, M10×60 bracket) + washers + flange nuts",
+"u": "компл / set",
+"q": 147,
+"ref": "1.3",
+"tag": "dfr@dom",
+"src": "5 на опору / 5 per support"
+},
+{
+"g": "C",
+"key": "ddg",
+"uk": "Діагональ 41×41×1,5, 1 100 мм + 2 болти M10×20 з фланцевими гайками",
+"en": "Diagonal 41×41×1.5, 1100 mm + 2 bolts M10×20 with flange nuts",
+"u": "шт / pcs",
+"q": 10,
+"ref": "1.3",
+"tag": "diag@dom",
+"src": "між сусідніми доміками ряду / between adjacent domes in a row"
+},
+{
+"g": "C",
+"key": "dce",
+"uk": "Притиск крайній під раму 33 мм з болтом M8 і гайкою з пружиною",
+"en": "End clamp for 33 mm frame with M8 bolt and spring nut",
+"u": "шт / pcs",
+"q": 118,
+"ref": "1.3",
+"tag": "ce@dom",
+"src": "4 на панель: 112 / 4 per panel"
+},
+{
+"g": "C",
+"key": "db8",
+"uk": "Болт M8×20 + шайба DIN 9021 (лага до муфти блока)",
+"en": "Bolt M8×20 + washer DIN 9021 (rail to block coupling)",
+"u": "компл / set",
+"q": 118,
+"ref": "1.3",
+"tag": "dfr@dom",
+"src": "4 на опору / 4 per support"
+},
+{
+"g": "C",
+"key": "slag",
+"uk": "Лага трикутника 15° 41×41×1,5, 1 550 мм",
+"en": "15° triangle rail 41×41×1.5, 1550 mm",
+"u": "шт / pcs",
+"q": 19,
+"ref": "1.3",
+"tag": "sfr@one",
+"src": "18 трикутників: 9 модулів × 2 / triangles: modules × 2"
+},
+{
+"g": "C",
+"key": "sbeam",
+"uk": "Балка 41×41×1,5, 1 419 мм",
+"en": "Beam 41×41×1.5, 1419 mm",
+"u": "шт / pcs",
+"q": 19,
+"ref": "1.3",
+"tag": "sfr@one",
+"src": "1 на трикутник / 1 per triangle"
+},
+{
+"g": "C",
+"key": "sstr",
+"uk": "Стійка 41×41×1,5, 448 мм (13-й отвір від шарніра)",
+"en": "Strut 41×41×1.5, 448 mm (13th hole from hinge)",
+"u": "шт / pcs",
+"q": 19,
+"ref": "1.3",
+"tag": "sfr@one",
+"src": "1 на трикутник / 1 per triangle"
+},
+{
+"g": "C",
+"key": "sbrk",
+"uk": "П-кронштейн під 15°, нерж. 304 (зміщений отвір під болт балки)",
+"en": "U-bracket for 15°, stainless 304 (shifted beam bolt hole)",
+"u": "шт / pcs",
+"q": 19,
+"ref": "1.3",
+"tag": "brk@one",
+"src": "1 на трикутник / 1 per triangle"
+},
+{
+"g": "C",
+"key": "sb",
+"uk": "Болти M10×60 (3) і M10×20 (3) трикутника + шайби + фланцеві гайки",
+"en": "Triangle bolts M10×60 (3) and M10×20 (3) + washers + flange nuts",
+"u": "компл / set",
+"q": 114,
+"ref": "1.3",
+"tag": "sfr@one",
+"src": "6 на трикутник / 6 per triangle"
+},
+{
+"g": "C",
+"key": "sdg",
+"uk": "Діагональ 41×41×1,5, 1 100 мм + 2 болти M10×20 з фланцевими гайками",
+"en": "Diagonal 41×41×1.5, 1100 mm + 2 bolts M10×20 with flange nuts",
+"u": "шт / pcs",
+"q": 8,
+"ref": "1.3",
+"tag": "diag@one",
+"src": "між трикутниками сусідніх модулів / between triangles of adjacent modules"
+},
+{
+"g": "C",
+"key": "sce",
+"uk": "Притиск крайній під раму 33 мм з болтом M8 і гайкою з пружиною",
+"en": "End clamp for 33 mm frame with M8 bolt and spring nut",
+"u": "шт / pcs",
+"q": 38,
+"ref": "1.3",
+"tag": "ce@one",
+"src": "4 на модуль: 36 / 4 per module"
+},
+{
+"g": "C",
+"key": "sb8",
+"uk": "Болт M8×20 + шайба DIN 9021 (лага до муфти блока)",
+"en": "Bolt M8×20 + washer DIN 9021 (rail to block coupling)",
+"u": "компл / set",
+"q": 38,
+"ref": "1.3",
+"tag": "sfr@one",
+"src": "2 на трикутник / 2 per triangle"
 },
 {
 "g": "D",
 "key": "wrail",
-"uk": "Рейка 41×41 на стіні (суцільна на групу модулів)",
-"en": "Wall rail 41×41 (continuous per module group)",
+"uk": "Рейка 41×41×2,5 оцинкована на стіні, у розмір",
+"en": "Wall rail 41×41×2.5 galvanised, cut to size",
 "u": "м / m",
-"q": 26,
+"q": 25.2,
 "ref": "1.4",
-"tag": "wrail",
-"src": "24,5 м + 5 % / m + 5 %"
+"tag": "wr@wall",
+"src": "8 рейок, 24,5 м: на 540 мм від торців модуля / 8 rails at 540 mm from module ends"
 },
 {
 "g": "D",
 "key": "wbrk",
-"uk": "Кронштейн рейки до стіни з анкером, через ≤ 1,0 м",
-"en": "Rail-to-wall bracket with anchor, every ≤ 1.0 m",
-"u": "шт / pcs",
-"q": 33,
+"uk": "Кронштейн L 60×60×5 з пазом, цинк + анкер M10 + болт M10×35 з гайкою і 2 шайбами",
+"en": "Bracket L 60×60×5 slotted, galvanised + M10 anchor + M10×35 bolt with nut and 2 washers",
+"u": "компл / set",
+"q": 30,
 "ref": "1.4",
-"tag": "wrail",
-"src": "32 + 3 %"
+"tag": "wbrk@wall",
+"src": "28: через ≈1,2 м на спільній рейці, 2 на рейку альбомного / every ≈1.2 m"
 },
 {
 "g": "D",
-"key": "wclp",
-"uk": "Притиск середній / кінцевий Al 6005-T6",
-"en": "Mid / end clamp Al 6005-T6",
+"key": "wce",
+"uk": "Притиск крайній 80 мм, Al 6005-T6, під раму 33 + болт M8 і гайка з пружиною",
+"en": "End clamp 80 mm, Al 6005-T6, for 33 mm frame + M8 bolt and spring nut",
 "u": "шт / pcs",
-"q": 27,
+"q": 17,
 "ref": "1.4",
-"tag": "wrail",
-"src": "26 + 3 %"
+"tag": "ce@wall",
+"src": "16"
+},
+{
+"g": "D",
+"key": "wcm",
+"uk": "Притиск середній 80 мм, Al 6005-T6 + болт M8 і гайка з пружиною",
+"en": "Mid clamp 80 mm, Al 6005-T6 + M8 bolt and spring nut",
+"u": "шт / pcs",
+"q": 11,
+"ref": "1.4",
+"tag": "cm@wall",
+"src": "10: між модулями групи, на кожній рейці / between modules, on each rail"
+},
+{
+"g": "D",
+"key": "wgnd",
+"uk": "Пластина заземлювальна під притиск",
+"en": "Earthing plate under clamp",
+"u": "шт / pcs",
+"q": 9,
+"ref": "1.4",
+"tag": "ce@wall",
+"src": "1 на модуль / 1 per module"
+},
+{
+"g": "D",
+"key": "wrope",
+"uk": "Трос безпеки Ø3 AISI 316 у ПВХ ≈0,6 м з коушем, 2 втулками, гайкою-вушком M8 і болтом",
+"en": "Safety rope Ø3 AISI 316 in PVC ≈0.6 m with thimble, 2 ferrules, M8 eye nut and bolt",
+"u": "компл / set",
+"q": 9,
+"ref": "1.4",
+"tag": "wr@wall",
+"src": "1 на модуль, крізь заводський отвір рами / 1 per module through factory frame hole"
 },
 {
 "g": "E",
@@ -555,10 +797,10 @@
 "uk": "Шайба контактна зубчаста під болти гільз",
 "en": "Serrated contact washer under sleeve bolts",
 "u": "шт / pcs",
-"q": 196,
+"q": 126,
 "ref": "1.7",
 "tag": "bz",
-"src": "як болти M10×60 / as bolts M10×60"
+"src": "як болти M10×60 гільз / as sleeve bolts M10×60"
 },
 {
 "g": "H",
@@ -640,13 +882,24 @@
 {
 "g": "J",
 "key": "blk",
-"uk": "Баластний блок 300×300×60, 13 кг, з муфтою і матом",
-"en": "Ballast block 300×300×60, 13 kg, with coupling and mat",
+"uk": "Баластний блок 300×300×60, 13 кг, з муфтою M8×30 і матом 320×320×3",
+"en": "Ballast block 300×300×60, 13 kg, with M8×30 coupling and 320×320×3 mat",
 "u": "шт / pcs",
-"q": 494,
+"q": 518,
 "ref": "4.2",
 "tag": "blk",
-"src": "арка 234 + крайні профілі 42 + «домік» 148 + опори лотків 65, + 1 % / arch + edge + dual-tilt + tray supports, + 1 %"
+"src": "арка 300, «домік» 112, трикутники 15° 36, опори лотків 65, + 1 % / arch, dual-tilt, 15° triangles, tray supports, + 1 %"
+},
+{
+"g": "J",
+"key": "blkn",
+"uk": "Баластний блок 300×300×60 з муфтою, без мата, верх знято — під крайні профілі арки",
+"en": "Ballast block 300×300×60 with coupling, no mat, top trimmed — under arch edge profiles",
+"u": "шт / pcs",
+"q": 166,
+"ref": "4.2",
+"tag": "blkn@arch",
+"src": "2 на крайній профіль: 164 + 1 % / 2 per edge profile + 1 %"
 }
 ],
 "n": {
@@ -658,10 +911,13 @@
 "ST": 11
 },
 "blk": {
-"arch": 233.86,
-"edge": 41.71,
-"dom": 148,
+"arch": 300,
+"edge": 164,
+"dom": 112,
+"one": 36,
 "tray": 65,
-"tot": 494
-}
+"mount": 612,
+"tot": 684
+},
+"anc": 10
 }

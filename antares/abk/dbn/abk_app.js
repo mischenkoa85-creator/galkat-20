@@ -174,11 +174,11 @@ function flyTo(b, k = 1) {
   const dist = Math.max(9, sz * 1.15 * k + 4); anim = {p0: cam.position.clone(), t0: ctl.target.clone(), p: c.clone().addScaledVector(dir, dist), t: c, s: performance.now()};
 }
 function focus(key, label) {
-  clearFocus(true); focusKey = key; GHOST = ['lag', 'arch', 'blk', 'frame', 'wrail', 'bz', 'dc', 'tray'].includes(key);
+  clearFocus(true); focusKey = key; GHOST = !['mod', 'inv', 'ac', 'shch', 'meter', 'p1', 'plat', 'rail', 'walk', 'safety'].includes(key) && !/^S\d/.test(key) && !key.startsWith('m:');
   let objs = [], layers = [];
   if (key.startsWith('S')) { const k = +key.slice(1); objs = [...(STR[k] || []).map(r => r.mesh), ...(STRO[k] || [])]; layers = ['str', ...new Set((STR[k] || []).map(r => r.g))]; }
   else if (key.startsWith('m:')) { const r = BYKEY[key.slice(2)]; if (r) { objs = [r.mesh]; layers = [r.g]; } }
-  else { objs = TAGS[key] || []; layers = LAYER_OF[key] || []; }
+  else { objs = TAGS[key] || []; layers = LAYER_OF[key] || (key.includes('@') || objs.some(o => o.parent === groups.mount) ? ['mount'] : []); }
   layers.forEach(l => { if (!state.lay[l]) { state.lay[l] = true; } }); setVis(true);
   objs.forEach(o => { if (o.isLine || o.isLineSegments) return; if (o.userData.rec) { FOC.add(o); return; } FOCMAT.set(o, o.material); o.material = hiF; });
   $('#focustxt').textContent = label || (TAGNAME[key] ? TAGNAME[key][LANG === 'en' ? 1 : 0] : key); $('#focusbar').hidden = false;
@@ -211,7 +211,7 @@ function panelPZ() {
   <div class="blk"><h3>${L2('Що є в моделі', 'What the model shows')}</h3><ul class="blist">
     <li>${L2('усі модулі натискаються: стрінг, MPPT, місце в стрінгу, генерація за рік, коли не працює (графік за місяцями й годинами), стан зараз;', 'every module is clickable: string, MPPT, position in string, annual yield, when it is bypassed (month × hour chart), state now;')}</li>
     <li>${L2('стрінги кольорами, кабелі «+» і «−» до інвертора, перемички; лотки, інвертор, кабель AC, щит СЕС, облік;', 'strings in colours, + and − cables to the inverter, jumpers; trays, inverter, AC cable, PV board, metering;')}</li>
-    <li>${L2('блискавкозахист і вирівнювання потенціалів, кріплення (лаги, баласт, «домік», рейки на стінах), драбини, огородження, доріжки;', 'lightning protection and bonding, mounting (rails, ballast, dual-tilt, wall rails), ladders, guardrail, walkways;')}</li>
+    <li>${L2('кріплення за «Елементами SES» — кожна деталь: лаги, гільзи з муфтами, шпильки, крайні профілі, кутники, притиски, блоки, опори «доміку», трикутники 15°, рейки на стінах; блискавкозахист, драбини, огородження, доріжки;', 'mounting per "SES elements" — every part: rails, sleeves with couplings, rods, edge profiles, angles, clamps, blocks, dual-tilt supports, 15° triangles, wall rails; lightning protection, ladders, guardrail, walkways;')}</li>
     <li>${L2('тінь зараз і за день, модулі, що не працюють, — червоні з хрестом; специфікація — кожна позиція показує себе в моделі.', 'shade now and over the day, bypassed modules in red with a cross; specification — every item shows itself in the model.')}</li></ul>
     <div class="chips2">${go('spec', L2('Специфікація', 'Specification'))}${go('str', L2('Стрінги', 'Strings'))}${go('el', L2('Електрика', 'Electrical'))}${go('bz', L2('Блискавкозахист', 'Lightning'))}${go('sun', L2('Сонце і тінь', 'Sun & shade'))}</div></div>
   <div class="blk"><h3>${L2('Кошторис, $ без ПДВ', 'Estimate, USD excl. VAT')}</h3>${kvHTML([[L2('Закупівля в Китаї', 'Purchase in China'), nf(E.sec.t1, 0)], [L2('Комісія', 'Commission'), nf(E.sec.t2, 0)], [L2('Доставка і мито', 'Delivery and duty'), nf(E.sec.t3, 0)], [L2('Купуємо в Україні', 'Purchased in Ukraine'), nf(E.sec.t4, 0)], [L2('Роботи', 'Works'), nf(E.sec.t5, 0)], [L2('Запас і винагорода', 'Contingency and fee'), nf(E.sec.t6, 0)], [L2('Разом під ключ', 'Total turnkey'), `<b>${nf(E.tot, 0)}</b>`, `${nf(E.pkwp, 0)} $/${L2('кВтп', 'kWp')}`]])}
@@ -308,12 +308,19 @@ function panelBZ() {
 }
 // ---------- Кріплення
 function panelMnt() {
-  const sect = g => kvHTML(D.bom.items.filter(x => x.g === g).map(x => [x[LANG === 'en' ? 'en' : 'uk'], `${qtyF(x.q)} ${x.u.split(' / ')[LANG === 'en' ? 1 : 0] || x.u}`]));
-  return `<div class="ph"><span class="eyebrow">${L2('Кріплення і баласт', 'Mounting and ballast')}</span><h2>${L2('Арка — лаги на баласті, як на даху цеху; дахи — «домік» 15°; стіни — рейки', 'Arch — rails on ballast as on the shop roof; roofs — dual-tilt 15°; walls — rails')}</h2></div>
-  <div class="blk"><h3>${L2(`Арка — ${BOMN.NA} модулів`, `Arch — ${BOMN.NA} modules`)}</h3>${sect('B')}<div class="chips2">${go('f:arch', L2('Показати', 'Show'))}</div></div>
-  <div class="blk"><h3>${L2(`«Домік» 15° — ${BOMN.NL + BOMN.NN} модулів`, `Dual-tilt 15° — ${BOMN.NL + BOMN.NN} modules`)}</h3>${sect('C')}<div class="chips2">${go('f:frame', L2('Показати', 'Show'))}</div>
-    <h3 style="margin-top:8px">${L2(`Стіни — ${BOMN.NW} модулів`, `Walls — ${BOMN.NW} modules`)}</h3>${sect('D')}<div class="chips2">${go('f:wrail', L2('Показати', 'Show'))}</div></div>
-  <div class="blk"><h3>${L2('Баласт', 'Ballast')}</h3>${kvHTML([[L2('Під лаги арки', 'Under arch rails'), nf(D.bom.blk.arch, 0)], [L2('Під крайні профілі', 'Under edge profiles'), nf(D.bom.blk.edge, 0)], [L2('«Домік», 4 на модуль', 'Dual-tilt, 4 per module'), nf(D.bom.blk.dom, 0)], [L2('Опори лотків', 'Tray supports'), nf(D.bom.blk.tray, 0)], [L2('Разом до замовлення (+1 %)', 'Total to order (+1 %)'), `<b>${nf(D.bom.blk.tot, 0)}</b>`, L2('300×300×60, 13 кг, з муфтою і матом', '300×300×60, 13 kg, with coupling and mat')]])}<div class="chips2">${go('f:blk', L2('Показати', 'Show'))}</div></div>`;
+  const en = LANG === 'en', Q = D.mount.q, U = x => x.u.split(' / ')[en ? 1 : 0] || x.u;
+  const rows = g => `<table class="spec"><tbody>${D.bom.items.filter(x => x.g === g).map(x => `<tr class="it${focusKey === x.tag ? ' cur' : ''}" data-f="${x.tag}" data-l="${esc(x[en ? 'en' : 'uk'])}"><td>${esc(x[en ? 'en' : 'uk'])}<small>${esc(x.src)}</small></td><td class="n">${qtyF(x.q)} ${esc(U(x))}</td></tr>`).join('')}</tbody></table>`;
+  const B = D.bom.blk;
+  return `<div class="ph"><span class="eyebrow">${L2('Кріплення і баласт · типові рішення «Елементи SES»', 'Mounting and ballast · standard "SES elements"')}</span><h2>${L2('Кожна деталь — у моделі; натисніть рядок, щоб її побачити', 'Every part is in the model; click a row to see it')}</h2>
+    <p>${L2('Кількості рахуються з цієї моделі за правилами типових рішень; до замовлення — запас: сталь +3 %, метизи і притиски +5 %, блоки +1 %.', 'Quantities are counted from this model by the rules of the standard solutions; to order — spare: steel +3 %, fasteners and clamps +5 %, blocks +1 %.')}</p></div>
+  <div class="blk wide"><h3>${L2(`Арка — «Лага 0°», ${BOMN.NA} модулів`, `Arch — "Rail 0°", ${BOMN.NA} modules`)}</h3>
+    <p class="src">${L2('Лага під кожним стиком колонок, 2 блоки на панель на кожній лазі і блок під кожним кінцем; 3 притиски на довгий бік; між модулями в колонці — шпилька M10 права/ліва між муфтами гільз; на кінцях колонок — крайній профіль на 2 кутниках, 2 блоки без мата, 2 Z33; прохід ≤ 1,6 м — шпилька або профіль через прохід; ланцюжок тяг, що не переходить гребінь, — анкер на верхній лазі.', 'A rail under every column joint, 2 blocks per panel on each rail and one under each end; 3 clamps per long side; between modules in a column — an M10 RH/LH rod between sleeve couplings; at column ends — an edge profile on 2 angles, 2 blocks without mat, 2 Z33; a passage ≤ 1.6 m — rod or profile across; a tie chain not crossing the ridge — an anchor on its upper rail.')}</p>${rows('B')}</div>
+  <div class="blk wide"><h3>${L2(`Нижній дах і надбудова — ${Q.dom} пар «доміком» і ${Q.one} одиночних модулів на трикутниках 15°`, `Lower roof and stair house — ${Q.dom} dual-tilt pairs and ${Q.one} single modules on 15° triangles`)}</h3>
+    <p class="src">${L2('«Домік»: лага 2 750, дві балки 1 450 з двох боків лаги, стійка, П-кронштейн, 4 блоки; дві опори на пару панелей (±0,70 м від центру), 4 притиски на панель, діагональ між сусідніми доміками. Кут 15,36°, на гребені зазор ≈11 см. Одиночні модулі — трикутник з шарніром 15° (модифікація Антарес): лага 1 550, балка 1 419, стійка 448, 2 трикутники на модуль.', 'Dual-tilt: 2750 rail, two 1450 beams on both sides of the rail, strut, U-bracket, 4 blocks; two supports per panel pair (±0.70 m from the centre), 4 clamps per panel, a diagonal between adjacent domes. 15.36°, ≈11 cm gap at the ridge. Single modules — hinged 15° triangle (Antares modification): 1550 rail, 1419 beam, 448 strut, 2 triangles per module.')}</p>${rows('C')}</div>
+  <div class="blk wide"><h3>${L2(`Південні стіни — ${BOMN.NW} модулів`, `South walls — ${BOMN.NW} modules`)}</h3>
+    <p class="src">${L2('Фасадні вузли: книжкові модулі групою на спільних горизонтальних рейках (540 мм від торців), кронштейни через ≈1,2 м, середні й крайні притиски; альбомні — по 2 вертикальні рейки 1 400 і 4 кронштейни; трос безпеки на кожен модуль.', 'Facade nodes: portrait modules as a group on shared horizontal rails (540 mm from the ends), brackets every ≈1.2 m, mid and end clamps; landscape — two vertical 1400 rails and 4 brackets each; a safety rope per module.')}</p>${rows('D')}</div>
+  <div class="blk"><h3>${L2('Баласт', 'Ballast')}</h3>${kvHTML([[L2('Під лаги арки, з матом', 'Under arch rails, with mat'), nf(B.arch, 0)], [L2('Під крайні профілі арки, без мата', 'Under arch edge profiles, no mat'), nf(B.edge, 0)], [L2('«Домік», 4 на опору', 'Dual-tilt, 4 per support'), nf(B.dom, 0)], [L2('Трикутники 15°, 2 на трикутник', '15° triangles, 2 per triangle'), nf(B.one, 0)], [L2('Опори лотків', 'Tray supports'), nf(B.tray, 0)], [L2('Разом до замовлення (+1 %)', 'Total to order (+1 %)'), `<b>${nf(B.tot, 0)}</b>`, L2('300×300×60, 13 кг, з муфтою', '300×300×60, 13 kg, with coupling')]])}${rows('J')}</div>
+  <div class="note warn">${L2(`Що видно з моделі: ${Q.arch_anchor} ланцюжків тяг на арці не переходять гребінь (через вентшахти й доріжки) — за правилом КМ даху цеху їм потрібні анкери; ${Q.arch_rod_pass + Q.arch_prof_pass} шпильок і профілів «через прохід» лежать поперек доріжки вздовж драбини; крайні профілі з блоками заходять на ≈0,16 м у доріжки 0,8 м з обох боків.`, `What the model shows: ${Q.arch_anchor} tie chains on the arch do not cross the ridge (because of vents and walkways) — per the shop roof rule they need anchors; ${Q.arch_rod_pass + Q.arch_prof_pass} rods and profiles "across a passage" lie across the walkway by the ladder; edge profiles with blocks reach ≈0.16 m into the 0.8 m walkways on both sides.`)}</div>`;
 }
 // ---------- Сонце і тінь
 function heatSVG(get, maxV, title, hours = [4, 21]) {
@@ -538,7 +545,7 @@ function frame(now) {
 }
 theme(); buildPath(N()); size(); goCam('over', true);
 langUI(); staticUI(); setVis(true); startDay(); update(); apply(); $('#loading').hidden = true; requestAnimationFrame(frame);
-window.__abk = {state, evaluate, update, apply, goCam, sheetSet, setPlay, MODS, OCC, focus, clearFocus, setLang, dayR: () => DAYR, res: () => RES, cam, ctl, TAGS, STR, setDate: d => { state.date = d; dayChanged(); }, setTime: t => { state.t = t; update(); }};
+window.__abk = {state, setVis, evaluate, update, apply, goCam, sheetSet, setPlay, MODS, OCC, focus, clearFocus, setLang, dayR: () => DAYR, res: () => RES, cam, ctl, TAGS, STR, setDate: d => { state.date = d; dayChanged(); }, setTime: t => { state.t = t; update(); }};
 })();
 </script>
 
