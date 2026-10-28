@@ -1,0 +1,667 @@
+{
+"groups": {
+"A": [
+"Фотомодулі",
+"PV modules"
+],
+"B": [
+"Кріплення на арці — лаги на баласті",
+"Arch roof mounting — rails on ballast"
+],
+"C": [
+"Кріплення «домік» 15° — нижній дах і надбудова",
+"Dual-tilt 15° mounting — lower roof and stair house"
+],
+"D": [
+"Кріплення на південних стінах",
+"South wall mounting"
+],
+"E": [
+"Кабелі DC і з'єднання стрінгів",
+"DC cabling and string connections"
+],
+"F": [
+"Лотки і траси",
+"Cable trays and routes"
+],
+"G": [
+"Інвертор, AC, облік, обмеження видачі",
+"Inverter, AC, metering, export limit"
+],
+"H": [
+"Блискавкозахист і вирівнювання потенціалів",
+"Lightning protection and equipotential bonding"
+],
+"I": [
+"Безпека покрівлі (ДБН)",
+"Roof safety (DBN)"
+],
+"J": [
+"Баласт",
+"Ballast"
+]
+},
+"items": [
+{
+"g": "A",
+"key": "mod",
+"uk": "Фотомодуль ZNSHINE ZXN8-BD132-730, 730 Вт, 2 384 × 1 303 × 33 мм, виводи 1,2–1,4 м",
+"en": "PV module ZNSHINE ZXN8-BD132-730, 730 W, 2384 × 1303 × 33 mm, leads 1.2–1.4 m",
+"u": "шт / pcs",
+"q": 135,
+"ref": "1.1",
+"tag": "mod",
+"src": "132 у стрінгах (арка 86, нижній дах 31, надбудова 6, стіни 9) + 2 % / 132 in strings + 2 %",
+"qin": 132
+},
+{
+"g": "B",
+"key": "lag",
+"uk": "Лага 41×41×1,5 перфорована оцинкована (4 800 і 2 400 мм)",
+"en": "Rail 41×41×1.5 perforated galvanised (4800 and 2400 mm)",
+"u": "м / m",
+"q": 260,
+"ref": "1.2",
+"tag": "lag",
+"src": "як дах цеху, варіант Б: 5 282,7 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "slv",
+"uk": "Гільза 200 з привареною муфтою M10×50 (ліва / права)",
+"en": "Sleeve 200 with welded coupling M10×50 (LH / RH)",
+"u": "шт / pcs",
+"q": 98,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 1 989,8 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "b60",
+"uk": "Болт M10×60 + 2 шайби + гайка + трубка",
+"en": "Bolt M10×60 + 2 washers + nut + tube",
+"u": "компл / set",
+"q": 196,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 3 979,5 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "rod",
+"uk": "Шпилька M10 права / ліва різьба",
+"en": "Threaded rod M10 RH / LH",
+"u": "м / m",
+"q": 109,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 2 202,1 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "nr",
+"uk": "Гайка M10 права",
+"en": "Nut M10 RH",
+"u": "шт / pcs",
+"q": 169,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 3 425,1 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "nl",
+"uk": "Гайка M10 ліва",
+"en": "Nut M10 LH",
+"u": "шт / pcs",
+"q": 85,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 1 712,6 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "edge",
+"uk": "Профіль 41×41×1,5 крайній",
+"en": "Edge profile 41×41×1.5",
+"u": "м / m",
+"q": 29,
+"ref": "1.2",
+"tag": "lag",
+"src": "як дах цеху, варіант Б: 579,3 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "ang",
+"uk": "Кутник 160/150, t = 8 (правий і лівий)",
+"en": "Angle bracket 160/150, t = 8 (RH and LH)",
+"u": "шт / pcs",
+"q": 46,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 935,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "b70",
+"uk": "Болт M10×70 / M10×60 + гайка (кутники)",
+"en": "Bolt M10×70 / M10×60 + nut (angle brackets)",
+"u": "компл / set",
+"q": 152,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 3 091,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "clp",
+"uk": "Притиск середній / Z33 під раму 33 мм з болтом і гайкою з пружиною",
+"en": "Mid clamp / Z33 for 33 mm frame with bolt and spring nut",
+"u": "шт / pcs",
+"q": 375,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 7 622,0 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "B",
+"key": "b8",
+"uk": "Болт M8×20 + шайба DIN 9021 (лага / профіль до блока)",
+"en": "Bolt M8×20 + washer DIN 9021 (rail / profile to block)",
+"u": "компл / set",
+"q": 290,
+"ref": "1.2",
+"tag": "arch",
+"src": "як дах цеху, варіант Б: 5 884,2 на 1 749 модулів × 86 / as shop roof, variant B: per module × 86"
+},
+{
+"g": "C",
+"key": "dom",
+"uk": "Комплект кріплення «домік» 15° на модуль: трикутники ГалКат, П-кронштейни, 4 притиски, метизи",
+"en": "Dual-tilt 15° mounting kit per module: GalKat triangles, U-brackets, 4 clamps, fasteners",
+"u": "компл / set",
+"q": 37,
+"ref": "1.3",
+"tag": "frame",
+"src": "нижній дах 31 + надбудова 6 / lower roof 31 + stair house 6"
+},
+{
+"g": "D",
+"key": "wrail",
+"uk": "Рейка 41×41 на стіні (суцільна на групу модулів)",
+"en": "Wall rail 41×41 (continuous per module group)",
+"u": "м / m",
+"q": 26,
+"ref": "1.4",
+"tag": "wrail",
+"src": "24,5 м + 5 % / m + 5 %"
+},
+{
+"g": "D",
+"key": "wbrk",
+"uk": "Кронштейн рейки до стіни з анкером, через ≤ 1,0 м",
+"en": "Rail-to-wall bracket with anchor, every ≤ 1.0 m",
+"u": "шт / pcs",
+"q": 33,
+"ref": "1.4",
+"tag": "wrail",
+"src": "32 + 3 %"
+},
+{
+"g": "D",
+"key": "wclp",
+"uk": "Притиск середній / кінцевий Al 6005-T6",
+"en": "Mid / end clamp Al 6005-T6",
+"u": "шт / pcs",
+"q": 27,
+"ref": "1.4",
+"tag": "wrail",
+"src": "26 + 3 %"
+},
+{
+"g": "E",
+"key": "pvr",
+"uk": "Кабель сонячний H1Z2Z2-K 1×6 мм², 1,5 кВ DC, червоний («+»)",
+"en": "Solar cable H1Z2Z2-K 1×6 mm², 1.5 kV DC, red (+)",
+"u": "м / m",
+"q": 430,
+"ref": "1.5",
+"tag": "dc",
+"src": "траси «+» 387,7 м + 10 % / routes + 10 %"
+},
+{
+"g": "E",
+"key": "pvb",
+"uk": "Кабель сонячний H1Z2Z2-K 1×6 мм², 1,5 кВ DC, чорний («−», перемички)",
+"en": "Solar cable H1Z2Z2-K 1×6 mm², 1.5 kV DC, black (−, jumpers)",
+"u": "м / m",
+"q": 650,
+"ref": "1.5",
+"tag": "dc",
+"src": "«−» 285,3 м + перемички 300,2 м (38 шт.) + 10 % / minus + jumpers + 10 %"
+},
+{
+"g": "E",
+"key": "mc4",
+"uk": "Роз'єм MC4 (пара штекер + гніздо) під 6 мм²",
+"en": "MC4 connector pair (male + female) for 6 mm²",
+"u": "пар / pairs",
+"q": 103,
+"ref": "1.5",
+"tag": "dc",
+"src": "2 на стрінг + 2 на перемичку, + 5 %; на інверторі — у комплекті / 2 per string + 2 per jumper; inverter side included"
+},
+{
+"g": "E",
+"key": "hose",
+"uk": "Металорукав сталевий у ПВХ-оболонці Ø25, стійкий до УФ — виходи з поля і перемички поза лотками",
+"en": "PVC-coated steel conduit Ø25, UV resistant — field exits and jumpers outside trays",
+"u": "м / m",
+"q": 40,
+"ref": "1.5",
+"tag": "dc",
+"src": "36,0 м + 10 %"
+},
+{
+"g": "E",
+"key": "bush",
+"uk": "Втулка ізолююча на кінець металорукава Ø25",
+"en": "Insulating end bush for conduit Ø25",
+"u": "шт / pcs",
+"q": 42,
+"ref": "1.5",
+"tag": "dc",
+"src": "2 на вихід стрінга і на модуль стіни / 2 per string exit and wall module"
+},
+{
+"g": "E",
+"key": "tie",
+"uk": "Стяжка кабельна 300×4,8 PA66, стійка до УФ, уп. 100",
+"en": "Cable tie 300×4.8 PA66 UV resistant, pack of 100",
+"u": "уп / pack",
+"q": 9,
+"ref": "1.5",
+"tag": "dc",
+"src": "кабель під модулями і перемички через 0,5 м: 811 шт / every 0.5 m"
+},
+{
+"g": "E",
+"key": "lab",
+"uk": "Бирка маркувальна УФ-стійка з друком",
+"en": "UV-resistant printed cable label",
+"u": "шт / pcs",
+"q": 50,
+"ref": "1.5",
+"tag": "dc",
+"src": "4 на стрінг, 4 на AC, 2 на RS485 / 4 per string, 4 AC, 2 RS485"
+},
+{
+"g": "F",
+"key": "tray",
+"uk": "Лоток перфорований 100×50 з кришкою, оцинкований, секція 3 м",
+"en": "Perforated cable tray 100×50 with lid, galvanised, 3 m section",
+"u": "м / m",
+"q": 117,
+"ref": "1.6",
+"tag": "tray",
+"src": "траси 106,3 м + 10 %, цілими секціями / routes + 10 %, full sections"
+},
+{
+"g": "F",
+"key": "trh",
+"uk": "Кут горизонтальний 90° 100×50 з кришкою",
+"en": "Horizontal 90° bend 100×50 with lid",
+"u": "шт / pcs",
+"q": 8,
+"ref": "1.6",
+"tag": "tray",
+"src": "3D-траси / 3D routes"
+},
+{
+"g": "F",
+"key": "trv",
+"uk": "Кут вертикальний 90° 100×50 з кришкою (зовнішній / внутрішній)",
+"en": "Vertical 90° bend 100×50 with lid (outside / inside)",
+"u": "шт / pcs",
+"q": 10,
+"ref": "1.6",
+"tag": "tray",
+"src": "3D-траси / 3D routes"
+},
+{
+"g": "F",
+"key": "trt",
+"uk": "Трійник 100×50 з кришкою",
+"en": "Tee 100×50 with lid",
+"u": "шт / pcs",
+"q": 7,
+"ref": "1.6",
+"tag": "tray",
+"src": "стики трас / route junctions"
+},
+{
+"g": "F",
+"key": "tre",
+"uk": "Заглушка торцева 100×50",
+"en": "End cap 100×50",
+"u": "шт / pcs",
+"q": 6,
+"ref": "1.6",
+"tag": "tray",
+"src": "кінці трас / route ends"
+},
+{
+"g": "F",
+"key": "trc",
+"uk": "З'єднувач лотків з перемичкою заземлення",
+"en": "Tray coupler with earth bridge",
+"u": "шт / pcs",
+"q": 39,
+"ref": "1.6",
+"tag": "tray",
+"src": "на стик секцій / per section joint"
+},
+{
+"g": "F",
+"key": "trk",
+"uk": "Фіксатор кришки від вітру",
+"en": "Lid wind clip",
+"u": "шт / pcs",
+"q": 103,
+"ref": "1.6",
+"tag": "tray",
+"src": "2 на секцію, 1 на фасонний / 2 per section, 1 per fitting"
+},
+{
+"g": "F",
+"key": "trs",
+"uk": "Траверса опори лотка — профіль 41×41×2,5, L = 0,2 м",
+"en": "Tray support cross-bar 41×41×2.5, L = 0.2 m",
+"u": "шт / pcs",
+"q": 65,
+"ref": "1.6",
+"tag": "tray",
+"src": "опори на даху через 1,5 м: 96,6 м / roof supports every 1.5 m"
+},
+{
+"g": "F",
+"key": "trb",
+"uk": "Болт M8×20 + шайба DIN 9021 (траверса → муфта блока)",
+"en": "Bolt M8×20 + washer DIN 9021 (cross-bar to block coupling)",
+"u": "компл / set",
+"q": 65,
+"ref": "1.6",
+"tag": "tray",
+"src": "1 на опору / 1 per support"
+},
+{
+"g": "F",
+"key": "trn",
+"uk": "Болт M8×20 + гайка з пружиною + шайба (лоток → траверса)",
+"en": "Bolt M8×20 + spring nut + washer (tray to cross-bar)",
+"u": "компл / set",
+"q": 130,
+"ref": "1.6",
+"tag": "tray",
+"src": "2 на опору / 2 per support"
+},
+{
+"g": "F",
+"key": "trw",
+"uk": "Кронштейн лотка на стіну з анкером, через 1,0 м",
+"en": "Wall bracket for tray with anchor, every 1.0 m",
+"u": "шт / pcs",
+"q": 12,
+"ref": "1.6",
+"tag": "tray",
+"src": "спуски по стінах 9,8 м / wall runs"
+},
+{
+"g": "G",
+"key": "inv",
+"uk": "Інвертор мережевий Deye SUN-100K-G03: 100 кВт, 3 фази 400 В, 6 MPPT, DC до 1 000 В, IP65; DC-роз'єднувач, ПЗІП тип II на DC і AC; кронштейн і роз'єми DC у комплекті",
+"en": "Grid inverter Deye SUN-100K-G03: 100 kW, 3-phase 400 V, 6 MPPT, DC up to 1000 V, IP65; DC switch, type II SPD on DC and AC; bracket and DC connectors included",
+"u": "шт / pcs",
+"q": 1,
+"ref": "4.1",
+"tag": "inv",
+"src": "паспорт Deye / Deye datasheet"
+},
+{
+"g": "G",
+"key": "ac",
+"uk": "Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК",
+"en": "Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board",
+"u": "м / m",
+"q": 45,
+"ref": "4.3",
+"tag": "ac",
+"src": "по стіні і стояку сходів, + 10 % / along wall and stair riser, + 10 %"
+},
+{
+"g": "G",
+"key": "lug70",
+"uk": "Наконечник мідний луджений ТМЛ 70",
+"en": "Tinned copper lug 70 mm²",
+"u": "шт / pcs",
+"q": 10,
+"ref": "5.3",
+"tag": "ac",
+"src": "5 жил × 2 кінці / 5 cores × 2 ends"
+},
+{
+"g": "G",
+"key": "mccb",
+"uk": "Автоматичний вимикач ABB FormulA A2B 250 TMF 200, 3P, 200 А",
+"en": "Moulded-case breaker ABB FormulA A2B 250 TMF 200, 3P, 200 A",
+"u": "шт / pcs",
+"q": 1,
+"ref": "4.4",
+"tag": "shch",
+"src": "струм інвертора до 159,4 А / inverter current up to 159.4 A"
+},
+{
+"g": "G",
+"key": "box",
+"uk": "Корпус щита IEK ЩМП-4.6.2-0 74 У2, 400 × 600 × 250, IP54 — щит СЕС",
+"en": "Enclosure IEK ShchMP-4.6.2-0, 400 × 600 × 250, IP54 — PV board",
+"u": "шт / pcs",
+"q": 1,
+"ref": "4.4",
+"tag": "shch",
+"src": ""
+},
+{
+"g": "G",
+"key": "spdac",
+"uk": "ПЗІП AC тип 2, 4P, 280 В (Eaton SPCT2-280/4) — у щиті СЕС",
+"en": "AC surge protector type 2, 4P, 280 V (Eaton SPCT2-280/4) — in PV board",
+"u": "шт / pcs",
+"q": 1,
+"ref": "4.5",
+"tag": "shch",
+"src": "вхід AC у будівлю / AC entry into the building"
+},
+{
+"g": "G",
+"key": "meter",
+"uk": "Лічильник CHINT DTSU666 з трансформаторами струму 250 А — на вводі АБК, обмеження видачі в мережу (Zero Export)",
+"en": "Meter CHINT DTSU666 with 250 A current transformers — at the building input, export limiting (Zero Export)",
+"u": "компл / set",
+"q": 1,
+"ref": "4.6",
+"tag": "meter",
+"src": ""
+},
+{
+"g": "G",
+"key": "rs485",
+"uk": "Кабель RS485 2×2×0,75 мм² в екрані — лічильник → інвертор",
+"en": "RS485 cable 2×2×0.75 mm² screened — meter to inverter",
+"u": "м / m",
+"q": 55,
+"ref": "1.8",
+"tag": "ac",
+"src": "уздовж кабелю AC / along AC cable"
+},
+{
+"g": "G",
+"key": "gland",
+"uk": "Прохід кабелів крізь стіну надбудови з ущільненням",
+"en": "Cable wall pass-through into the stair house with sealing",
+"u": "компл / set",
+"q": 1,
+"ref": "5.3",
+"tag": "ac",
+"src": ""
+},
+{
+"g": "H",
+"key": "b6",
+"uk": "Провід Cu 1×6 мм² жовто-зелений — вирівнювання потенціалів у лотках і відгалуження до кріплення",
+"en": "Cu wire 1×6 mm² green-yellow — equipotential bonding in trays and branches to mounting",
+"u": "м / m",
+"q": 245,
+"ref": "1.7",
+"tag": "bz",
+"src": "лотки 106,3 м + 10 % і 28 відгалужень / trays + 10 % and 28 branches"
+},
+{
+"g": "H",
+"key": "b16",
+"uk": "Провід Cu 1×16 мм² жовто-зелений — до PE інвертора і до наявного прутка на парапеті",
+"en": "Cu wire 1×16 mm² green-yellow — to inverter PE and to the existing parapet rod",
+"u": "м / m",
+"q": 6.0,
+"ref": "1.7",
+"tag": "bz",
+"src": ""
+},
+{
+"g": "H",
+"key": "bcl",
+"uk": "Затискач до профілю і відгалужувальний EN 62561-1",
+"en": "Profile and branch clamp EN 62561-1",
+"u": "шт / pcs",
+"q": 32,
+"ref": "1.7",
+"tag": "bz",
+"src": "по 2 на 14 блоків кріплення + 4 / 2 per mounting block + 4"
+},
+{
+"g": "H",
+"key": "bws",
+"uk": "Шайба контактна зубчаста під болти гільз",
+"en": "Serrated contact washer under sleeve bolts",
+"u": "шт / pcs",
+"q": 196,
+"ref": "1.7",
+"tag": "bz",
+"src": "як болти M10×60 / as bolts M10×60"
+},
+{
+"g": "H",
+"key": "b16l",
+"uk": "Наконечник 16 мм² і контрольне з'єднання",
+"en": "Lug 16 mm² and test joint",
+"u": "шт / pcs",
+"q": 4,
+"ref": "1.7",
+"tag": "bz",
+"src": ""
+},
+{
+"g": "H",
+"key": "spd485",
+"uk": "ПЗІП лінії RS485",
+"en": "RS485 data line surge protector",
+"u": "шт / pcs",
+"q": 1,
+"ref": "1.7",
+"tag": "bz",
+"src": ""
+},
+{
+"g": "I",
+"key": "p1",
+"uk": "Драбина П1 на арку з поручнями над парапетом (перепад 4,8 м + 1,0 м)",
+"en": "Fixed fire ladder P1 to the arch roof with handrails above parapet (4.8 m + 1.0 m)",
+"u": "м / m",
+"q": 5.8,
+"ref": "4.8",
+"tag": "p1",
+"src": "ДБН В.1.1-7:2016 п. 8.8–8.10"
+},
+{
+"g": "I",
+"key": "plat",
+"uk": "Площадка з огорожею 0,6 м на арці перед виходом на покрівлю",
+"en": "Landing with 0.6 m guard on the arch at the roof exit",
+"u": "шт / pcs",
+"q": 1,
+"ref": "4.9",
+"tag": "plat",
+"src": "ДБН В.1.1-7:2016 табл. 5"
+},
+{
+"g": "I",
+"key": "p1n",
+"uk": "Драбини П1 на надбудову сходів (2 шт.: 2,25 + 1,0 м і 1,35 + 1,0 м)",
+"en": "Fixed ladders P1 to the stair house (2 pcs: 2.25 + 1.0 m and 1.35 + 1.0 m)",
+"u": "м / m",
+"q": 5.6,
+"ref": "4.10",
+"tag": "p1",
+"src": "ДБН В.1.1-7:2016 п. 8.8"
+},
+{
+"g": "I",
+"key": "rail",
+"uk": "Огородження покрівлі 0,6 м, металеве: захід і торці арки, парапети надбудови",
+"en": "Roof guardrail 0.6 m, steel: arch west side and ends, stair house parapets",
+"u": "м / m",
+"q": 99,
+"ref": "4.11",
+"tag": "rail",
+"src": "ДБН В.1.1-7:2016 п. 8.12; ДБН В.2.6-220:2017 п. 6.1.2"
+},
+{
+"g": "I",
+"key": "walk",
+"uk": "Ходові доріжки 0,8 м — гумові плити 500×500×20 мм",
+"en": "Walkways 0.8 m — rubber tiles 500×500×20 mm",
+"u": "м² / m²",
+"q": 63,
+"ref": "4.12",
+"tag": "walk",
+"src": "ДБН В.2.6-220:2017 п. 7.1.3"
+},
+{
+"g": "J",
+"key": "blk",
+"uk": "Баластний блок 300×300×60, 13 кг, з муфтою і матом",
+"en": "Ballast block 300×300×60, 13 kg, with coupling and mat",
+"u": "шт / pcs",
+"q": 494,
+"ref": "4.2",
+"tag": "blk",
+"src": "арка 234 + крайні профілі 42 + «домік» 148 + опори лотків 65, + 1 % / arch + edge + dual-tilt + tray supports, + 1 %"
+}
+],
+"n": {
+"N": 132,
+"NA": 86,
+"NL": 31,
+"NN": 6,
+"NW": 9,
+"ST": 11
+},
+"blk": {
+"arch": 233.86,
+"edge": 41.71,
+"dom": 148,
+"tray": 65,
+"tot": 494
+}
+}
