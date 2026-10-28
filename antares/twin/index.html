@@ -3872,11 +3872,12 @@ function onRoof(xa,xb,y,lift,th,ly){ const za=roofZ(xa)+lift, zb=roofZ(xb)+lift,
 function segs(x0,x1){ const c=[x0,...D.xs.filter(x=>x>x0+1e-3&&x<x1-1e-3),x1], out=[]; for(let i=0;i+1<c.length;i++) out.push([c[i],c[i+1]]); return out; }
 // ---------- каркаси 13° на місці ліхтарів: бортик, нова покрівля
 const curbM=std(lin(0x8a8f93),{roughness:0.85}), froofM=std(lin(0x5d6468),{roughness:0.8}), railM=MAT.zn||std(lin(0xb9c0c5),{metalness:0.6,roughness:0.4});
-D.frames.forEach(F=>{ const h=F.half, zr0=Math.min(roofZ(F.xc-h),roofZ(F.xc+h))-0.05;
-  const cb=box(2*h,F.ze-zr0,F.y1-F.y0,curbM,F.xc,(zr0+F.ze)/2,-(F.y0+F.y1)/2,GC);
+const CB=1.83;   // бортик 3,66 м по низу (рулетка 27.10, фото 111925); каркас 3,0 м — на ньому
+D.frames.forEach(F=>{ const h=F.half, zr0=Math.min(roofZ(F.xc-CB),roofZ(F.xc+CB))-0.05;
+  const cb=box(2*CB,F.ze-zr0,F.y1-F.y0,curbM,F.xc,(zr0+F.ze)/2,-(F.y0+F.y1)/2,GC);
   const shp=new THREE.Shape([new THREE.Vector2(F.xc-h-0.05,F.ze-0.02),new THREE.Vector2(F.xc+h+0.05,F.ze-0.02),new THREE.Vector2(F.xc,F.zr+0.01)]);
   const rf=mesh(new THREE.ExtrudeGeometry(shp,{depth:F.y1-F.y0,bevelEnabled:false}),froofM,GC); rf.position.z=-F.y1;
-  const inf={t:`Каркас ліхтаря ${F.id} — 13°, нова покрівля`,d:`Скління ліхтаря знято; на сталевому каркасі ${nf(2*h,1)} м по низу — двосхила покрівля ${nf(F.tilt,0)}° на бортику ${nf(F.ze-F.zb,2)} м (власник 28.10, 10:20), гребінь +${nf(F.zr,2)}. Довжина ${nf(F.y1-F.y0,1)} м (Y ${nf(F.y0,2)}–${nf(F.y1,2)}). Модулі — вертикально по 1 ряду на схил, на 2 рейках 41×41 (540 мм від торців модуля), нижня рейка — на консолях за краєм каркаса (звис модулів ≈0,8 м).`};
+  const inf={t:`Каркас ліхтаря ${F.id} — 13°, нова покрівля`,d:`Скління ліхтаря знято; на сталевому каркасі ${nf(2*h,1)} м по низу — двосхила покрівля ${nf(F.tilt,0)}° на бортику 3,66 м по низу, ${nf(F.ze-F.zb,2)} м заввишки (власник 28.10, 10:20), гребінь +${nf(F.zr,2)}. Довжина ${nf(F.y1-F.y0,1)} м (Y ${nf(F.y0,2)}–${nf(F.y1,2)}). Вісь — за розрізом 1-1, РП і Google Maps: на ≈1,5 м східніше центру арки (перевірено 28.10 по знімку і фото 123924). Модулі — вертикально по 1 ряду на схил, на 2 рейках 41×41 (540 мм від торців модуля), нижня рейка — на консолях за краєм каркаса (звис модулів ≈0,8 м).`};
   cb.userData.info=inf; rf.userData.info=inf; PICK.push({o:cb,when:()=>GC.visible},{o:rf,when:()=>GC.visible}); });
 // ---------- 11 труб вентиляції (фото 26–27.10) і лівневки
 const pM=std(lin(0x4a4f53),{roughness:0.8}), capM=std(lin(0xd9dcde),{roughness:0.5,metalness:0.3});
