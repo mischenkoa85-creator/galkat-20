@@ -1,250 +1,199 @@
 <title>АБК Антарес · СЕС на даху</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Макет: 3D-сцена на всю висоту ліворуч, вузька технічна панель праворуч (секції згортаються); у правому куті сцени — меню «На екран»
-   з картками показників поверх моделі. На телефоні — сцена зверху, панель під нею. */
+/* Стандарт Антарес (як 3D-двійник даху цеху): модель на весь екран, угорі — види, режими й легенда, праворуч компас;
+   унизу — панель (мала / половина / повна) з рядком сонця і вкладками розділів. */
 :root{
-  --bg:#eef1f3; --panel:#ffffff; --fg:#1b252d; --muted:#5b6872; --line:#d3dade;
-  --accent:#d98a1c; --east:#2f6fb0; --west:#1d8f8a; --low:#7a5bb5; --south:#5b4fa3; --off:#9aa5ad;
-  --sun:#e9a21d; --part:#e0a030; --shade:#5c656d; --ok:#2f8f5b;
-  --scene:#dfe6ea; --ground:#c9cfc6; --chip:#f3f5f6; --shadow:rgba(20,30,40,.14);
-  --f-display:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+  --bg:#f4f3ef; --surface:#fcfcfb; --surface-2:#efeee9; --surface-3:#e6e5df;
+  --ink:#141413; --ink-2:#52514e; --ink-3:#7d7c76; --line:#e0dfd8; --line-2:#cfcec7;
+  --ours:#0f6b80; --ours-soft:#dcedf1; --east:#2f6fb0; --west:#1d8f8a; --south:#5b4fa3; --part:#d4962e; --shade:#5c656d;
+  --sun:#b86e00; --crit:#d03b3b; --ok:#2c7a4b; --warn:#b4461b; --warn-soft:#f8e7df;
+  --sky:#dfe6ec; --ground:#c9cfc6; --accent:#2a78d6; --on-accent:#fff;
+  --gl:max(12px, env(safe-area-inset-left, 0px)); --gr:max(12px, env(safe-area-inset-right, 0px));
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
-  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
-  --sun:#f3b440; --part:#f0b048; --shade:#7d8892; --ok:#4fbf83;
-  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; --shadow:rgba(0,0,0,.45); color-scheme:dark }}
-:root[data-theme="dark"]{
-  --bg:#12181d; --panel:#192127; --fg:#e4eaee; --muted:#93a2ad; --line:#2c3842;
-  --accent:#f0a33a; --east:#5d9be0; --west:#3cc0b8; --low:#a58ae0; --south:#9a8ce6; --off:#5f6b74;
-  --sun:#f3b440; --part:#f0b048; --shade:#7d8892; --ok:#4fbf83;
-  --scene:#1a2329; --ground:#2a322f; --chip:#212b32; --shadow:rgba(0,0,0,.45); color-scheme:dark }
-html,body{height:100%}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --surface-3:#2c2c29; --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e87; --line:#2f2f2c; --line-2:#3e3e3a;
+  --ours:#4cb6cc; --ours-soft:#123039; --east:#5d9be0; --west:#3cc0b8; --south:#9a8ce6; --part:#f0b048; --shade:#7d8892;
+  --sun:#f0b44a; --crit:#e66767; --ok:#5fbf86; --warn:#ec8a63; --warn-soft:#3a221a; --sky:#1c2227; --ground:#2a322f; --accent:#3987e5; } }
+:root[data-theme="dark"]{ color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --surface-3:#2c2c29; --ink:#f0efec; --ink-2:#c3c2b7; --ink-3:#8f8e87; --line:#2f2f2c; --line-2:#3e3e3a;
+  --ours:#4cb6cc; --ours-soft:#123039; --east:#5d9be0; --west:#3cc0b8; --south:#9a8ce6; --part:#f0b048; --shade:#7d8892;
+  --sun:#f0b44a; --crit:#e66767; --ok:#5fbf86; --warn:#ec8a63; --warn-soft:#3a221a; --sky:#1c2227; --ground:#2a322f; --accent:#3987e5; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-text-size-adjust:100%}
+body{overflow:hidden}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;height:100%;min-height:520px}
-.app.nopanel{grid-template-columns:minmax(0,1fr)}
-.ahead{display:flex;gap:8px;align-items:flex-start}
-.ahead>div{flex:1;min-width:0}
-.stage{position:relative;min-width:0;overflow:hidden;background:var(--scene)}
-#cv{display:block;width:100%;height:100%;touch-action:none}
-.labels{position:absolute;inset:0;pointer-events:none}
-.lbl{position:absolute;transform:translate(-50%,-100%);font:500 11px/1.2 var(--f-body);color:var(--fg);background:color-mix(in srgb,var(--panel) 82%,transparent);
-  border:1px solid var(--line);padding:2px 6px;border-radius:3px;white-space:nowrap}
-.lbl.n{font:700 12px var(--f-mono);color:var(--accent);background:transparent;border:0}
-.lbl.hr{font:600 10.5px var(--f-mono);color:var(--accent);background:transparent;border:0;padding:0;transform:translate(-50%,-140%)}
-.views{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:12px;z-index:6}
-.views #view-btn b{font-weight:600}
-.pop{position:absolute;top:34px;left:0;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 28px var(--shadow);padding:4px;display:flex;flex-direction:column;gap:1px}
-.pop button{font:500 13px var(--f-body);color:var(--fg);background:transparent;border:0;border-radius:4px;padding:7px 10px;text-align:left;cursor:pointer}
-.pop button:hover{background:var(--chip)} .pop button.on{box-shadow:inset 3px 0 0 var(--accent);background:var(--chip)}
-.tbar{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:6px;z-index:6}
-.tbar svg{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
-.tbar.ghost .btn{opacity:.6} .tbar.ghost .btn:hover,.tbar.ghost .btn:focus-visible{opacity:1}
-.btn{font:500 12px var(--f-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:5px 9px;cursor:pointer;white-space:nowrap}
-.btn:hover{border-color:var(--accent)} .btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.ib:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.btn.on{border-color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
-.btn.sm{padding:3px 8px;font-size:11.5px}
-.pick{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:12px;max-width:min(420px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);
-  border-left:3px solid var(--accent);padding:10px 12px;border-radius:4px;font-size:13px}
-.pick{padding-right:34px} .pick-x{position:absolute;top:5px;right:5px}
-.pick h4{margin:0 0 4px;font:600 13px var(--f-display)} .pick p{margin:0;color:var(--muted)}
-.pick p.live{margin-top:6px;color:var(--fg);font-family:var(--f-mono);font-size:12px}
-/* меню «На екран» і картки поверх сцени */
-.menu{position:absolute;top:46px;right:max(12px,env(safe-area-inset-right,0px));width:min(300px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);
-  border-radius:6px;box-shadow:0 10px 28px var(--shadow);padding:8px;z-index:7;max-height:calc(100% - 58px);overflow-y:auto}
-.menu h5{margin:8px 6px 4px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.menu label{display:grid;grid-template-columns:auto 1fr;gap:1px 8px;padding:6px;border-radius:4px;cursor:pointer;align-items:start}
-.menu label:hover{background:var(--chip)}
-.menu input{margin-top:3px;accent-color:var(--accent)}
-.menu small{grid-column:2;color:var(--muted);font-size:11.5px;line-height:1.35}
-.menu .row{display:flex;gap:6px;justify-content:flex-end;padding:6px 6px 2px;border-top:1px solid var(--line);margin-top:4px}
-.hud{position:absolute;top:46px;right:max(12px,env(safe-area-inset-right,0px));width:244px;display:flex;flex-direction:column;gap:8px;max-height:calc(100% - 58px);overflow-y:auto;pointer-events:none;z-index:4}
-.card{pointer-events:auto;background:color-mix(in srgb,var(--panel) 93%,transparent);border:1px solid var(--line);border-radius:5px;font-size:12px;box-shadow:0 2px 10px var(--shadow);flex-shrink:0}
-.card>header{display:flex;align-items:center;gap:2px;padding:4px 4px 4px 10px;border-bottom:1px solid var(--line)}
-.card.min>header{border-bottom:0} .card.min>.cb{display:none}
-.card h3{margin:0;font:600 10.5px var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);flex:1;min-width:0}
-.card h3 .val{float:right;font:600 11.5px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--fg);margin-right:4px}
-.ib{border:0;background:transparent;color:var(--muted);cursor:pointer;width:22px;height:22px;border-radius:3px;font:600 13px/1 var(--f-mono);display:grid;place-items:center;flex-shrink:0}
-.ib:hover{color:var(--fg);background:var(--chip)}
-.cb{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.big{font:600 24px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
-.big small{font-size:13px;font-weight:400;color:var(--muted)}
-.meter{height:8px;border-radius:2px;background:var(--chip);border:1px solid var(--line);overflow:hidden;display:flex}
-.meter i{display:block;height:100%}
-.kv{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px}
-.kv span:nth-child(even){font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
-.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.cmp text{font:600 9px var(--f-mono);fill:var(--muted)}
-.mini{width:100%;border-collapse:collapse;font-size:11.5px}
-.mini td,.mini th{padding:3px 0;border-bottom:1px solid var(--line);text-align:left}
-.mini th{font-weight:500;color:var(--muted)} .mini .r{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;padding-left:6px;white-space:nowrap}
-.spark text{font:500 9px var(--f-mono);fill:var(--muted)}
-/* панель праворуч */
-aside>*{flex-shrink:0}
-aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding-block:16px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px}
-h1{margin:0;font:700 19px/1.2 var(--f-display);text-wrap:balance}
-.sub{margin:4px 0 0;color:var(--muted);font-size:12.5px}
-.tools{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-details.sec{border-top:1px solid var(--line);padding-top:8px}
-details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:3px 0;border-radius:3px}
-details.sec>summary::-webkit-details-marker{display:none}
-details.sec>summary::before{content:"";flex:none;width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s;margin:0 2px 0 1px}
-details.sec[open]>summary::before{transform:rotate(45deg)}
-details.sec>summary:hover{color:var(--fg)}
-details.sec>summary .val{margin-left:auto;font:600 12px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--fg)}
-details.sec>.body{display:flex;flex-direction:column;gap:8px;padding:8px 0 4px}
-.k{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.k div{background:var(--panel);padding:8px 10px;min-width:0}
-.k b{display:block;font:600 17px var(--f-mono);font-variant-numeric:tabular-nums}
-.k span{font-size:11.5px;color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-td,th{padding:4px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{font-weight:500;color:var(--muted)} td.r,th.r{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
-.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.tg{display:flex;flex-direction:column;gap:6px}
-.tg label{display:flex;align-items:center;gap:8px;cursor:pointer}
-.tg input{accent-color:var(--accent)}
-.sun{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
-.chips{display:flex;gap:4px;flex-wrap:wrap}
-select,input[type=range],input[type=date]{width:100%;accent-color:var(--accent)}
-select,input[type=date]{font:inherit;font-size:13px;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:3px 6px;min-width:0}
-.trow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.note{font-size:12px;color:var(--muted)} .note p{margin:0 0 6px}
-.note ul{margin:0;padding-left:18px}
-.warn{border:1px solid var(--line);background:var(--chip);border-radius:4px;padding:8px 10px;font-size:12px}
-@media (max-width:820px){
-  .app{grid-template-columns:1fr;grid-template-rows:64vh auto;height:auto}
-  aside{border-left:0;border-top:1px solid var(--line)}
-  .app.nopanel{grid-template-rows:100%;height:100%}
-  .tbar .lbt{display:none}
-  .hud{width:200px;max-height:calc(100% - 150px)}
-  .big{font-size:20px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.app{display:flex;flex-direction:column;height:100%;min-height:0}
+/* верхній рядок */
+.bar{flex:none;display:flex;align-items:center;gap:8px 12px;padding:6px var(--gr) 6px var(--gl);border-bottom:1px solid var(--line);background:var(--surface)}
+.bar h1{margin:0;font-size:16px;line-height:1.2;font-weight:650;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0}
+.bar h1 small{font-weight:400;color:var(--ink-2);font-size:13px;margin-left:8px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;flex:none}
+.seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;color:var(--ink-2);font-size:13px;white-space:nowrap}
+.seg button[aria-pressed="true"]{color:var(--bg);background:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.14)}
+/* 3D */
+.view{position:relative;flex:1 1 0;min-height:120px;background:var(--sky);overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none;z-index:1}
+.lbl{position:absolute;transform:translate(-50%,-100%);font:500 11px/1.2 var(--font);color:var(--ink);background:color-mix(in srgb,var(--surface) 85%,transparent);border:1px solid var(--line);padding:2px 6px;border-radius:5px;white-space:nowrap}
+.lbl.n{font:700 12px var(--mono);color:var(--crit);background:transparent;border:0}
+.lbl.hr{font:600 10.5px var(--mono);color:var(--sun);background:transparent;border:0;padding:0;transform:translate(-50%,-140%)}
+.hudwrap{position:absolute;left:var(--gl);top:10px;max-width:calc(100% - 66px);display:flex;flex-direction:column;align-items:flex-start;gap:6px;z-index:3}
+.hudrow{display:flex;gap:6px;align-items:center;max-width:100%}
+.pill{display:flex;gap:2px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:9px;padding:2px;backdrop-filter:blur(6px);overflow-x:auto;scrollbar-width:none;max-width:100%}
+.pill::-webkit-scrollbar{display:none}
+.pill button{flex:none;border:0;background:transparent;border-radius:7px;padding:5px 9px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.pill button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}
+.hbtn{flex:none;min-width:32px;height:30px;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 90%,transparent);color:var(--ink-2);backdrop-filter:blur(6px);display:grid;place-items:center;font-size:13px;padding:0 6px}
+.ctx{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:100%}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:9px;padding:5px 9px;font-size:12px;color:var(--ink-2);backdrop-filter:blur(6px);max-width:min(560px,100%)}
+.legend .t{color:var(--ink);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.sw{width:11px;height:11px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.15);display:inline-block}
+.compass{position:absolute;right:var(--gr);top:10px;width:46px;height:46px;border-radius:50%;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);display:grid;place-items:center;z-index:3;backdrop-filter:blur(6px)}
+.compass svg{width:38px;height:38px}
+.tip{position:absolute;left:0;top:0;z-index:6;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:6px 26px 7px 8px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.14);max-width:300px}
+.tip b{display:block;font-weight:650}
+.tip .live{display:block;margin-top:4px;padding-top:4px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+.tip .x{position:absolute;right:2px;top:2px;width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--ink-3);font-size:14px;line-height:1}
+.tip .x:hover{background:var(--surface-2);color:var(--ink)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-2);font-size:14px;background:var(--sky);z-index:7}
+/* нижня панель */
+.sheet{flex:none;display:flex;flex-direction:column;min-height:0;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -3px 12px rgba(0,0,0,.12);position:relative;z-index:8}
+.sheet[data-s="peek"]{height:auto}
+.sheet[data-s="half"]{height:max(280px,44svh)}
+.sheet[data-s="full"]{height:max(320px,82svh)}
+.sheet[data-s="peek"] .panes{display:none}
+.grab{display:block;width:100%;border:0;background:none;padding:6px 0 2px;cursor:grab;touch-action:none}
+.grab i{display:block;width:44px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto}
+.grab:hover i{background:var(--accent)}
+.sunrow{display:flex;align-items:center;gap:8px;padding:2px var(--gr) 0 var(--gl)}
+.pbtn{flex:none;min-width:34px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:13px;padding:0 7px;display:grid;place-items:center}
+#play{background:var(--accent);border-color:var(--accent);color:var(--on-accent);min-width:38px}
+#time{flex:1;min-width:70px;accent-color:var(--accent)}
+#clock{flex:none;font-size:16px;font-weight:650;min-width:46px;text-align:right}
+#season{min-width:64px;font-weight:600}
+.more{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:6px var(--gr) 0 var(--gl);font-size:12.5px;color:var(--ink-2)}
+.more .chips{display:flex;gap:4px;flex-wrap:wrap}
+.more .chips button{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:4px 9px;font-size:12.5px;color:var(--ink-2)}
+.more .chips button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface);font-weight:600}
+.more input[type=date]{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:3px 8px;font-size:12.5px}
+.more b{color:var(--ink)}
+.read{display:flex;flex-wrap:wrap;gap:2px 16px;padding:5px var(--gr) 6px var(--gl);font-size:12.5px;color:var(--ink-2)}
+.read b{color:var(--ink);font-weight:650}
+.read .sun b{color:var(--sun)}
+.read .who{font-weight:600;color:var(--ours)}
+.tabbar{flex:none;display:flex;align-items:stretch;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tabnav{flex:none;width:28px;border:0;background:transparent;color:var(--ink-2);font-size:18px;line-height:1}
+.tabs{flex:1;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:transparent;padding:8px 10px 9px;font-size:13.5px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+.panes{flex:1 1 0;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:12px var(--gr) 24px var(--gl)}
+.pane{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 28px;align-items:start}
+.pane > .ph{grid-column:1/-1}
+/* вміст розділів */
+.ph{display:flex;flex-direction:column;gap:3px}
+.ph .eyebrow{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--ours)}
+.ph h2{margin:0;font-size:16px;font-weight:650;line-height:1.25}
+.ph p{margin:0;color:var(--ink-2)}
+.ph .seg{align-self:flex-start;margin-top:6px}
+.kv{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:6px 12px;margin:0}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;text-align:right;font:500 13px var(--mono);font-variant-numeric:tabular-nums}
+.kv dd small{display:block;font:400 11.5px var(--font);color:var(--ink-3)}
+h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.blk{display:flex;flex-direction:column;gap:6px;min-width:0}
+.blk p{margin:0;font-size:13px}
+.cmp{width:100%;border-collapse:collapse;font-size:12.5px}
+.cmp th,.cmp td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.cmp th:first-child,.cmp td:first-child{text-align:left;color:var(--ink-2);font-weight:400}
+.cmp thead th{font-size:11.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ours)}
+.cmp td{font-family:var(--mono)}
+.cmp tr.tot td{font-weight:650;color:var(--ink)}
+.note{border-radius:8px;padding:9px 11px;font-size:12.5px}
+.note.warn{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.note.ok{background:var(--surface-2);border-left:3px solid var(--ok)}
+.lay{display:flex;flex-direction:column}
+.lay label{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer}
+.lay input{width:16px;height:16px;accent-color:var(--accent)}
+.lay .sw{width:14px;height:4px;border-radius:2px;border:0}
+.lay .cnt{margin-left:auto;color:var(--ink-3);font:500 12px var(--mono)}
+.src{font-size:12px;color:var(--ink-3);margin:0}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.stat .v{font-size:18px;font-weight:650;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat .k{font-size:11.5px;color:var(--ink-2);line-height:1.3;margin-top:2px}
+.bars{display:flex;height:10px;border-radius:3px;overflow:hidden;background:var(--surface-2)}
+.bars i{display:block;height:100%}
+.gchart{width:100%;max-width:460px;height:auto;display:block}
+.blist{margin:0;padding-left:18px;font-size:13px} .blist li{margin:2px 0}
+@media (max-width:700px){
+  .bar h1{font-size:14.5px} .bar h1 small{display:none}
+  .hudwrap{left:8px;top:8px;max-width:calc(100% - 60px)}
+  .pill button{padding:4px 7px;font-size:12px}
+  .legend{font-size:11.5px;padding:4px 8px}
+  .compass{right:8px;top:8px;width:42px;height:42px} .compass svg{width:34px;height:34px}
+  .sheet[data-s="half"]{height:max(260px,46svh)} .sheet[data-s="full"]{height:max(300px,86svh)}
+  .tabs button{padding:8px 8px 9px;font-size:13px}
+  .pane{grid-template-columns:minmax(0,1fr)}
+  .tip{max-width:calc(100% - 16px)}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
-
 <div class="app">
-  <div class="stage">
+  <header class="bar">
+    <h1>АБК Антарес · СЕС на даху<small>адмінкорпус, варіант К1, перешкоди уточнено 28.10</small></h1>
+  </header>
+  <section class="view" id="view" aria-label="3D-модель">
     <canvas id="cv" aria-label="3D-модель адмінкорпусу з сонячними модулями"></canvas>
     <div class="labels" id="labels"></div>
-    <div class="views" id="views">
-      <button class="btn" id="view-btn" aria-expanded="false" aria-controls="view-list">Вид: <b id="view-name">Загальний</b> ▾</button>
-      <div class="pop" id="view-list" hidden>
-        <button data-v="v-iso">Загальний</button><button data-v="v-top">Зверху</button><button data-v="v-s">З півдня</button><button data-v="v-sun">Проти сонця</button>
-        <button data-v="v-arch">Арка зблизька</button><button data-v="v-low">Нижній дах</button><button data-v="v-nad">Надбудова</button><button data-v="v-wall">Південні стіни</button>
+    <div class="hudwrap" id="hudwrap">
+      <div class="hudrow">
+        <div class="pill" id="cams" role="group" aria-label="Вид"></div>
+        <button type="button" class="hbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати режими і легенду" aria-label="Сховати режими і легенду">▴</button>
+      </div>
+      <div class="ctx" id="ctx">
+        <div class="pill" id="modes" role="group" aria-label="Режим"></div>
+        <div class="legend" id="legend"></div>
       </div>
     </div>
-    <div class="tbar" id="tbar">
-      <button class="btn" id="tb-panel" aria-pressed="true" aria-label="Панель праворуч" title="Показати або сховати панель праворуч"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10 2.5v11" stroke="currentColor" stroke-width="1.4"/></svg><span class="lbt">Панель</span></button>
-      <button class="btn" id="hud-btn" aria-expanded="false" aria-controls="menu" title="Які вікна і картки показувати"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="9.5" y="1.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="1.5" y="9.5" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 9.5v5M9.5 12h5" stroke="currentColor" stroke-width="1.4"/></svg>Вікна</button>
-      <button class="btn" id="tb-clean" aria-pressed="false">Сховати все</button>
+    <div class="compass" title="Північ"><svg viewBox="-24 -24 48 48" id="needle" aria-hidden="true">
+      <polygon points="0,-20 6,0 0,-4 -6,0" fill="var(--crit)"/><polygon points="0,20 6,0 0,4 -6,0" fill="var(--ink-3)"/>
+      <text x="0" y="-8" text-anchor="middle" font-size="8" fill="var(--surface)" font-weight="700">Пн</text></svg></div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="loading" id="loading">Будую модель…</div>
+  </section>
+  <aside class="sheet" id="sheet" data-s="half" aria-label="Сонце і розділи">
+    <button type="button" class="grab" id="grab" aria-label="Згорнути або розгорнути панель" title="Тягніть або натисніть: згорнути / розгорнути"><i></i></button>
+    <div class="sunrow">
+      <button type="button" id="play" class="pbtn" aria-label="Запустити сонце" title="Запустити сонце">▶</button>
+      <button type="button" id="speed" class="pbtn" title="Швидкість" aria-label="Швидкість">×1</button>
+      <input type="range" id="time" min="21" max="123" step="1" value="78" aria-label="Час доби (сонячний)">
+      <output id="clock" class="num" for="time">13:00</output>
+      <button type="button" id="season" class="pbtn" title="Сезон: Весна → Літо → Осінь → Зима" aria-label="Сезон">Зима</button>
+      <button type="button" id="sunmore" class="pbtn" aria-expanded="false" aria-controls="more" title="Дата і деталі" aria-label="Дата і деталі">⋯</button>
     </div>
-    <div class="menu" id="menu" hidden>
-      <h5>Вікна</h5>
-      <div id="menu-win"></div>
-      <h5>Картки з цифрами на екрані</h5>
-      <div id="menu-list"></div>
-      <div class="row"><button class="btn sm" id="hud-none">Прибрати все</button><button class="btn sm" id="hud-def">Типовий набір</button></div>
+    <div class="more" id="more" hidden>
+      <div class="chips" id="dates" role="group" aria-label="День"></div>
+      <input type="date" id="date" min="2026-01-01" max="2026-12-31" aria-label="Будь-яка дата">
+      <span id="sunx"></span>
     </div>
-    <div class="hud" id="hud" aria-live="polite"></div>
-    <div class="pick" id="pick"><button class="ib pick-x" id="pick-x" aria-label="Закрити підказку">×</button><div id="pick-body"><h4>Натисніть на модуль, вентшахту чи блок будівлі</h4><p>Модель обертається мишею або пальцем, колесо — масштаб. Будь-яке вікно можна закрити: «×» на ньому, кнопка «Вікна» або «Сховати все» вгорі праворуч.</p></div></div>
-  </div>
-  <aside id="aside">
-    <div class="ahead"><div>
-      <h1>АБК Антарес — СЕС на даху</h1>
-      <p class="sub">Адмінкорпус ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А · варіант К1 з розрахунку 27.10.2026, перешкоди на дахах уточнено 28.10</p>
-      <div class="tools"><button class="btn sm" id="all-open">Розгорнути все</button><button class="btn sm" id="all-close">Згорнути все</button></div>
-    </div><button class="ib" id="panel-x" aria-label="Сховати панель" title="Сховати панель">×</button></div>
-    <details class="sec" id="sec-sun" open>
-      <summary>Сонце і генерація зараз<span class="val" id="sum-now"></span></summary>
-      <div class="body">
-        <div class="sun">
-          <label for="s-date">Дата</label>
-          <input type="date" id="s-date" value="2026-12-21" min="2026-01-01" max="2026-12-31">
-          <span></span>
-          <div class="chips" role="group" aria-label="Характерні дні">
-            <button class="btn sm" data-date="2026-06-21">21 чер</button><button class="btn sm" data-date="2026-03-21">21 бер</button><button class="btn sm" data-date="2026-09-23">23 вер</button><button class="btn sm" data-date="2026-12-21">21 гру</button><button class="btn sm" data-now="1">Зараз</button>
-          </div>
-          <label for="s-h">Час</label>
-          <div class="trow"><input type="range" id="s-h" min="3.5" max="20.5" step="0.05" value="13"><button class="btn sm" id="s-play" aria-pressed="false">▶ День</button></div>
-          <span></span><span class="note mono" id="s-out"></span>
-        </div>
-        <table class="mini" id="now-tbl" aria-label="Генерація зараз по дахах"></table>
-        <p class="note" style="margin:0" id="day-line"></p>
-        <p class="note" style="margin:0">Потужність — при ясному небі, хмар модель не знає: пряме сонце — модель Мейнела, розсіяне — 10 % від прямого, відбиття від даху 0,2; повітря — середнє для Києва в цю пору; втрати системи 10 %, −0,30 %/°C. Тінь — промені до сонця з 9 точок кожного модуля; частково затінений модуль втрачає пряму складову пропорційно (у стрінгу реальна втрата може бути більшою). Час — сонячний: 12:00 — сонце на півдні; влітку годинник показує на ≈1 год більше. Рахуються лише показані шари модулів.</p>
-      </div>
-    </details>
-    <details class="sec" id="sec-sum" open>
-      <summary>Підсумок К1, за рік<span class="val">137 місць</span></summary>
-      <div class="body">
-        <div class="k" aria-label="Дахи без модулів на стінах, стрінги по 11, як у К1">
-          <div><b>121</b><span>модуль = 11 стрінгів × 11 (у К1 — 132)</span></div>
-          <div><b>88,3</b><span>кВтп, ZNSHINE 730 Вт (у К1 — 96,4)</span></div>
-          <div><b>≈81,0</b><span>МВт·год за рік — пропорційно К1 (було 88,7)</span></div>
-          <div><b>137</b><span>місць: арка 95, нижній дах 33, стіни 9</span></div>
-        </div>
-        <p class="note" style="margin:0"><b>Що змінилося 28.10.</b> За фото 27.10 і супутником Google на арці 8 круглих тумб, а не 5: додано тумбу біля південно-західного кута, низьку з рудою кришкою біля південно-східного і ще одну поруч з оцинкованим ковпаком на півночі — місць на арці 95 замість 99. З нижнього даху на арку веде сталева драбина (верх біля X ≈122,6): на стіні біля неї модулів не ставимо, на нижньому даху там прибрано 2 місця, які в К1 і так були поза стрінгами. Кошторис К1 (29 536 $, окупність 2,6 р.) — на 132 модулі, треба перерахувати.</p>
-      </div>
-    </details>
-    <details class="sec" id="sec-roofs">
-      <summary>По дахах, за рік<span class="val">≈81,0 МВт·год</span></summary>
-      <div class="body">
-        <table>
-          <tr><th>Дах</th><th class="r">Модулів</th><th class="r">МВт·год</th><th class="r">кВт·год/кВтп</th></tr>
-          <tr><td><span class="sw" style="background:var(--east)"></span>Арка, «по даху»</td><td class="r">95 місць → 88 = 8 стр.</td><td class="r">≈61,7</td><td class="r">961</td></tr>
-          <tr><td><span class="sw" style="background:var(--east)"></span>Нижній дах, «домік» 15°</td><td class="r">33 = 3 стр.</td><td class="r">19,3</td><td class="r">800</td></tr>
-          <tr><td><span class="sw" style="background:var(--south)"></span>Південні стіни, вертикально</td><td class="r">9 — на стрінг бракує 2</td><td class="r">≈5,1</td><td class="r">≈770</td></tr>
-        </table>
-        <p class="note" style="margin:0">Якщо лишити стрінги по 11, як у К1: на арці 8 стрінгів (88 модулів), 7 найслабших місць вільні; К1 було 99 = 9 стрінгів, 69,4 МВт·год. Енергія арки й стін — пропорційно К1 на модуль, окремо не рахували. Стіни: 770 кВт·год/кВтп — як у вертикальних модулів на південному фасаді цеху.</p>
-        <p class="note" style="margin:0">Південні стіни: 7 модулів книжково на стіні основного блоку над нижнім дахом (5 на захід від надбудови, 2 на схід — між драбиною і кутом; за самою надбудовою — тінь) і 2 альбомно на південній стіні надбудови. Було 4 на схід — 2 знято через драбину. Перевірити: чи немає на стіні 4-го поверху вікон і чи не на південному боці надбудови двері виходу на дах.</p>
-        <p class="note" style="margin:0">Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на східному схилі <span class="mono" id="nE"></span>, на західному <span class="mono" id="nW"></span>. Нижній дах — «домік» схід–захід 15°: пари модулів спина до спини, гребінь уздовж Пн–Пд, між парами прохід 0,4 м; 33 місця = 33 модулі. Два місця К1 поза стрінгами (західний схил правої пари, два північні ряди) прибрано — там стоїть драбина.</p>
-      </div>
-    </details>
-    <details class="sec" id="sec-show" open>
-      <summary>Показати в моделі</summary>
-      <div class="body">
-        <div class="tg">
-          <label><input type="checkbox" id="t-arch" checked> <span><span class="sw" style="background:var(--east)"></span>Модулі на арці</span></label>
-          <label><input type="checkbox" id="t-low" checked> <span><span class="sw" style="background:var(--west)"></span>Модулі на нижньому даху</span></label>
-          <label><input type="checkbox" id="t-wall" checked> <span><span class="sw" style="background:var(--south)"></span>Вертикально на південних стінах</span></label>
-          <label><input type="checkbox" id="t-state" checked> <span><span class="sw" style="background:var(--part)"></span>Фарбувати модулі в тіні</span></label>
-          <label><input type="checkbox" id="t-sky" checked> <span><span class="sw" style="background:var(--sun)"></span>Сонце і його шлях за день</span></label>
-          <label><input type="checkbox" id="t-shadow" checked> <span>Тіні від сонця</span></label>
-          <label><input type="checkbox" id="t-mount" checked> <span>Лаги, баласт і опори</span></label>
-          <label><input type="checkbox" id="t-ctx" checked> <span>Цех і ТП-5913 поруч</span></label>
-        </div>
-        <p class="note" style="margin:0">Колір модуля на сонці: <span class="sw" style="background:var(--east)"></span>на схід, <span class="sw" style="background:var(--west)"></span>на захід, <span class="sw" style="background:var(--south)"></span>на південь (стіни); <span class="sw" style="background:var(--part)"></span>частково в тіні; <span class="sw" style="background:var(--shade)"></span>у тіні або сонце позаду модуля.</p>
-      </div>
-    </details>
-    <details class="sec" id="sec-est">
-      <summary>Що оцінка, а що виміряно</summary>
-      <div class="body">
-        <div class="warn">План — за супутником Google (±0,5 м). Висоти — оцінка за поверхами, рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Тумб на арці 8: 5 — як у К1, 3 додано 28.10 за фото 27.10 і супутником; положення нових і драбини — ±0,5 м. Розрахунок К1 рахував надбудову однією коробкою +12,6 м — тінь на нижній дах з новими висотами треба перерахувати. Кріплення «доміку» на нижньому даху показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.</div>
-      </div>
-    </details>
-    <details class="sec" id="sec-meas">
-      <summary>Виміряти на місці</summary>
-      <div class="body note">
-        <ul>
-          <li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li>
-          <li>висоту парапетів і південного блоку;</li>
-          <li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li>
-          <li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li>
-        </ul>
-        <p style="margin:0">Розкладка — <span class="mono">calc/v3/abk.py</span>, звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p>
-      </div>
-    </details>
+    <div class="read" id="now"></div>
+    <div class="tabbar">
+      <button type="button" class="tabnav" id="tabPrev" aria-label="Попередній розділ">‹</button>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Розділи"></nav>
+      <button type="button" class="tabnav" id="tabNext" aria-label="Наступний розділ">›</button>
+    </div>
+    <div class="panes" id="panes"><div class="pane" id="pane"></div></div>
   </aside>
 </div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
@@ -426,7 +375,7 @@ D.arch.forEach((m, i) => {
   mesh.userData.info = [`Модуль на арці · ${m.face === 'E' ? 'схід' : 'захід'}`, `Нахил ${String(m.tilt).replace('.', ',')}° на ${m.face === 'E' ? 'схід' : 'захід'}, колонка ${m.col + 1} з 13. Вертикально: 2 384 мм уздовж арки (Пн–Пд), 1 303 мм по дузі. X ${m.xa.toFixed(2).replace('.', ',')}–${m.xb.toFixed(2).replace('.', ',')}, Y ${m.y0.toFixed(2).replace('.', ',')}–${m.y1.toFixed(2).replace('.', ',')} м. Кріплення — як на цеху: лаги 41×41 на блоках 300×300×60.`];
   picks.push(mesh);
 });
-document.getElementById('nE').textContent = nE; document.getElementById('nW').textContent = nW;
+
 // лаги і блоки: лінія лаги на кожному стику колонок (спільна), сегмент на кожен ряд, де є модуль праворуч чи ліворуч
 (function () {
   const cols = {}; D.arch.forEach(m => { (cols[m.col] = cols[m.col] || {xa: m.xa, xb: m.xb, rows: new Set()}).rows.add(m.y0); });
@@ -630,316 +579,271 @@ function buildPath(n) {
   hourDots.count = k; hourDots.instanceMatrix.needsUpdate = true;
   HRL.forEach(l => { const on = l.h > sr && l.h < ss; l.on = on; if (on) l.p.copy(skyPos(sunAt(n, l.h).dir)); });
 }
-// ---------- стан: дата, час
-const st = {date: '2026-12-21', n: 355, t: 13, res: null, play: false};
+// ================= стан, як у двійнику цеху: розділ, день, година, панель, режими
+const $ = s => document.querySelector(s), esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const DAYS = [['21.03', '2026-03-21', 'Весна'], ['21.06', '2026-06-21', 'Літо'], ['23.09', '2026-09-23', 'Осінь'], ['21.12', '2026-12-21', 'Зима']];
+const MONG = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
 const doy = s => { const [y, m, d] = s.split('-').map(Number); return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 864e5); };
-const fmtT = t => { const m = Math.round(t * 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
-const fmtD = s => { const [y, m, d] = s.split('-').map(Number); return `${d} ${['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'][m - 1]}`; };
+const fmtD = s => { const [, m, d] = s.split('-').map(Number); return `${d} ${MONG[m - 1]}`; };
+const seasonOf = s => { const m = +s.slice(5, 7); return m === 12 || m <= 2 ? 'Зима' : m <= 5 ? 'Весна' : m <= 8 ? 'Літо' : 'Осінь'; };
+function hhmm(h) { let hh = Math.floor(h), mm = Math.round((h - hh) * 60); if (mm === 60) { hh++; mm = 0; } return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`; }
+const DIRS = ['Пн', 'Пн-Сх', 'Сх', 'Пд-Сх', 'Пд', 'Пд-Зх', 'Зх', 'Пн-Зх'];
 function nowSolar() {                           // сонячний час Києва зараз: UTC + довгота/15 + рівняння часу
   const n0 = doy(new Date().toISOString().slice(0, 10)), B = 2 * Math.PI * (n0 - 81) / 364, eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
   const d = new Date(Date.now() + (LON / 15 + eot / 60) * 3600e3);
   return {date: '2026' + d.toISOString().slice(4, 10), t: d.getUTCHours() + d.getUTCMinutes() / 60};
 }
-let pend = false;
-function schedule() { if (pend) return; pend = true; requestAnimationFrame(() => { pend = false; update(); }); }
-function setDate(iso) { st.date = iso; st.n = doy(iso); buildPath(st.n); startDay(); syncInputs(); schedule(); }
-function setTime(t) { st.t = Math.max(3.5, Math.min(20.5, t)); syncInputs(); schedule(); }
+const SECS = [['pz', 'Загальне'], ['sun', 'Сонце і генерація'], ['lay', 'Шари і перешкоди'], ['est', 'Що оцінка']];
+const state = {sec: 'pz', date: null, t: 13, sheet: null, ctx: true, spd: 1, sunTab: 'day', plain: false,
+  lay: {arch: true, low: true, wall: true, mount: true, ctx: true, shadow: true, sky: true, labels: true}};
+try { const s = JSON.parse(localStorage.getItem('antares-abk-v1') || 'null'); if (s) { Object.assign(state, {sec: s.sec || state.sec, sheet: s.sheet || null, ctx: s.ctx !== false, spd: s.spd || 1, sunTab: s.sunTab || 'day', plain: !!s.plain}); if (s.lay) Object.assign(state.lay, s.lay); } } catch (e) {}
+const hs = (location.hash || '').slice(1); if (SECS.some(x => x[0] === hs)) state.sec = hs;
+if (!SECS.some(x => x[0] === state.sec)) state.sec = 'pz';
+function save() { try { localStorage.setItem('antares-abk-v1', JSON.stringify({sec: state.sec, sheet: state.sheet, ctx: state.ctx, spd: state.spd, sunTab: state.sunTab, plain: state.plain, lay: state.lay})); } catch (e) {} }
+// старт: зараз, якщо сонце над обрієм, інакше сьогодні о 13:00 сонячного часу
+{ const q = nowSolar(), s = sunAt(doy(q.date), q.t); state.date = q.date; state.t = s.alt > 0.05 ? Math.round(q.t * 6) / 6 : 13; }
+const N = () => doy(state.date);
+// ================= розрахунок «зараз» і за день
+let RES = null, DAYR = null, dayJob = null;
 function update() {
-  const r = evaluate(st.n, st.t, true); st.res = r;
+  const r = evaluate(N(), state.t, true); RES = r;
   const s = r.s, up = Math.max(s.alt, 0.02), dir = new THREE.Vector3(Math.cos(up) * Math.sin(s.az), Math.sin(up), -Math.cos(up) * Math.cos(s.az));
   sun.position.copy(TGT).addScaledVector(dir, 120); sun.intensity = s.alt > 0 ? 0.25 + 0.75 * Math.min(1, Math.sin(s.alt) * 2) : 0.0;
   hemi.intensity = s.alt > 0 ? 0.55 : 0.35;
   sunBall.position.copy(skyPos(s.dir)); glow.position.copy(sunBall.position); sunBall.visible = glow.visible = s.alt > -0.01;
-  paint(); renderAll(); need = true;
+  paint(); sunUI(); if (state.sec === 'sun') renderPane(); tipLive(); need = true;
 }
-// фарбування модулів за станом
-const colorOn = () => document.getElementById('t-state').checked;
 function paint() {
-  const day = st.res && st.res.s.alt > 0;
+  const day = RES && RES.s.alt > 0;
   for (const r of MODS) {
-    const base = !colorOn() || !day || r.state === 'sun' ? r.face : r.state === 'part' ? pvPart : pvShade;
+    const base = state.plain || !day || r.state === 'sun' ? r.face : r.state === 'part' ? pvPart : pvShade;
     r.mesh.userData.base = base; if (r.mesh !== sel) r.mesh.material = base;
   }
 }
-// ---------- енергія за день (ясне небо), рахується частинами, щоб не гальмувати
-let dayRes = null, dayJob = null;
-function dayKey() { return st.n + '|' + ['arch', 'low', 'wall'].map(g => groups[g].visible ? 1 : 0).join(''); }
+function dayKey() { return state.date + '|' + ['arch', 'low', 'wall'].map(g => state.lay[g] ? 1 : 0).join(''); }
 function startDay() {
-  const key = dayKey(); if (dayRes && dayRes.key === key) return; if (dayJob && dayJob.key === key) return;
-  const [sr, ss] = sunTimes(st.n), N = Math.max(8, Math.ceil((ss - sr) / 0.25)), dt = (ss - sr) / N;
-  const job = dayJob = {key, sr, ss, dt, i: 0, N, pts: [], e: {arch: 0, low: 0, wall: 0}, pnom: 0};
-  dayRes = null; renderAll();
+  const key = dayKey(); if ((DAYR && DAYR.key === key) || (dayJob && dayJob.key === key)) return;
+  const n = N(), [sr, ss] = sunTimes(n), K = Math.max(8, Math.ceil((ss - sr) / 0.25)), dt = (ss - sr) / K;
+  const job = dayJob = {key, sr, ss, i: 0, K, pts: [], e: {arch: 0, low: 0, wall: 0}, pnom: 0};
+  DAYR = null;
   (function step() {
     if (dayJob !== job) return;
-    for (let k = 0; k < 3 && job.i < N; k++, job.i++) {
-      const t = sr + (job.i + 0.5) * dt, r = evaluate(st.n, t, false);
-      job.pts.push([t, r.all.p]); for (const g in job.e) job.e[g] += r.tot[g].p * dt; job.pnom = r.all.n * PM;
+    for (let k = 0; k < 3 && job.i < K; k++, job.i++) {
+      const t = sr + (job.i + 0.5) * dt, r = evaluate(n, t, false);
+      job.pts.push([t, r.all.p, r.tot.arch.p, r.tot.low.p, r.tot.wall.p]); for (const g in job.e) job.e[g] += r.tot[g].p * dt; job.pnom = r.all.n * PM;
     }
-    if (job.i < N) setTimeout(step, 0); else { dayRes = job; dayJob = null; renderAll(); }
+    if (job.i < K) setTimeout(step, 0); else { DAYR = job; dayJob = null; sunUI(); if (state.sec === 'sun') renderPane(); }
   })();
 }
-// ---------- картки на екрані
-const CARDS = [
-  {id: 'time', t: 'Час і дата', d: 'повзунок часу, «програти день», характерні дні, «зараз»', on: 1},
-  {id: 'sun', t: 'Сонце на небі', d: 'компас: шлях сонця за день, де воно зараз, висота й азимут', on: 1},
-  {id: 'now', t: 'Потужність зараз', d: 'кВт показаних модулів і частка від їхньої номінальної', on: 1},
-  {id: 'state', t: 'Модулі: сонце і тінь', d: 'скільки на сонці, частково в тіні, у тіні', on: 1},
-  {id: 'roofs', t: 'По дахах', d: 'арка, нижній дах, стіни: кВт і стан модулів', on: 0},
-  {id: 'day', t: 'Генерація за день', d: 'крива потужності від сходу до заходу і кВт·год за день', on: 0},
-  {id: 'irr', t: 'Опромінення і погода', d: 'пряме і розсіяне сонце, середнє на модулях, повітря', on: 0},
-  {id: 'legend', t: 'Кольори модулів', d: 'що означає колір модуля', on: 0},
-];
-const store = {get(k, d) { try { const v = localStorage.getItem('abk.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('abk.' + k, JSON.stringify(v)); } catch (e) {} }};
-const narrow = () => stage.clientWidth < 600, defHud = () => narrow() ? ['now', 'state'] : CARDS.filter(c => c.on).map(c => c.id);   // на телефоні — лише дві картки
-let hudOn = store.get('hud', defHud()), hudMin = store.get('hudmin', []);
-const hud = document.getElementById('hud'), menu = document.getElementById('menu'), mlist = document.getElementById('menu-list'), hbtn = document.getElementById('hud-btn');
-// вікна: панель праворуч, вибір виду, інфо про вибране, підписи
-const WINS = [
-  {id: 'panel', t: 'Панель праворуч', d: 'дата і час, генерація зараз, цифри К1, шари моделі'},
-  {id: 'views', t: 'Вибір виду', d: 'кнопка «Вид» угорі ліворуч'},
-  {id: 'pick', t: 'Інфо про вибране', d: 'з’являється знизу, коли натиснете на модуль чи блок'},
-  {id: 'labels', t: 'Підписи в моделі', d: 'назви блоків і години на шляху сонця'},
-];
-const WDEF = {panel: true, views: true, pick: true, labels: true};
-let win = Object.assign({}, WDEF, store.get('win', {})), clean = store.get('clean', null);
-const app = document.querySelector('.app'), asideEl = document.getElementById('aside'), viewsEl = document.getElementById('views'), tbPanel = document.getElementById('tb-panel'), tbClean = document.getElementById('tb-clean');
-WINS.forEach(w => {
-  const l = document.createElement('label'), i = document.createElement('input'); i.type = 'checkbox'; i.id = 'win-' + w.id;
-  const b = document.createElement('span'); b.textContent = w.t; const sm = document.createElement('small'); sm.textContent = w.d;
-  l.append(i, b, sm); document.getElementById('menu-win').appendChild(l);
-  i.addEventListener('change', () => { win[w.id] = i.checked; endClean(); applyWin(); });
-});
-function applyWin() {
-  app.classList.toggle('nopanel', !win.panel); asideEl.hidden = !win.panel; viewsEl.hidden = !win.views; lab.hidden = !win.labels;
-  if (!win.pick) pk.hidden = true;
-  tbPanel.setAttribute('aria-pressed', win.panel); tbPanel.classList.toggle('on', win.panel);
-  WINS.forEach(w => document.getElementById('win-' + w.id).checked = win[w.id]);
-  tbClean.textContent = clean ? 'Показати все' : 'Сховати все'; tbClean.setAttribute('aria-pressed', !!clean);
-  document.getElementById('tbar').classList.toggle('ghost', !!clean);
-  store.set('win', win); store.set('clean', clean); need = true;
+const dayE = () => DAYR ? DAYR.e.arch + DAYR.e.low + DAYR.e.wall : null;
+// ================= рядок сонця
+const timeEl = $('#time'), dates = $('#dates'), dateEl = $('#date');
+[...DAYS.map(d => [d[0], d[1]]), ['Сьогодні', 'today'], ['Зараз', 'now']].forEach(([t, v]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.dataset.d = v; dates.appendChild(b);
+  b.onclick = () => { if (v === 'now') { const q = nowSolar(); setPlay(false); state.date = q.date; state.t = Math.round(q.t * 6) / 6; } else state.date = v === 'today' ? nowSolar().date : v; dayChanged(); }; });
+dateEl.onchange = () => { if (/^\d{4}-\d\d-\d\d$/.test(dateEl.value)) { state.date = '2026' + dateEl.value.slice(4); dayChanged(); } };
+timeEl.oninput = () => { setPlay(false); state.t = +timeEl.value / 6; update(); };
+$('#season').onclick = () => { const i = DAYS.findIndex(d => d[2] === seasonOf(state.date)); state.date = DAYS[(i + 1) % 4][1]; dayChanged(); };
+$('#sunmore').onclick = () => { const m = $('#more'), o = m.hidden; m.hidden = !o; $('#sunmore').setAttribute('aria-expanded', String(o)); };
+function dayChanged() { buildPath(N()); startDay(); update(); }
+function sunUI() {
+  const r = RES; if (!r) return;
+  timeEl.value = Math.round(state.t * 6); $('#clock').textContent = hhmm(state.t); $('#season').textContent = seasonOf(state.date);
+  const today = nowSolar().date; dates.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === state.date || (b.dataset.d === 'today' && state.date === today && !DAYS.some(d => d[1] === today)))));
+  if (dateEl.value !== state.date) dateEl.value = state.date;
+  const [sr, ss] = sunTimes(r.n), alt = r.s.alt * DEG, dn = DIRS[Math.round((r.s.az * DEG + 360) % 360 / 45) % 8];
+  $('#sunx').innerHTML = `${esc(fmtD(state.date))} · висота <b>${nf(Math.max(0, alt), 1)}°</b> · азимут <b>${nf(r.s.az * DEG, 0)}°</b> · схід ${hhmm(sr)} · захід ${hhmm(ss)} · ясне небо · повітря ≈${r.Ta >= 0 ? '+' : '−'}${nf(Math.abs(r.Ta), 0)} °C`;
+  let h = `<span class="who">К1 · ${r.all.n} модулів</span>`;
+  if (alt <= 0) h += `<span class="sun">☾ сонце за обрієм</span>`;
+  else { const sh = r.all.part + r.all.shade; h += `<span class="sun">☀ <b>${nf(alt, 0)}°</b> ${dn}</span><span>у тіні <b class="num">${sh}</b> з ${r.all.n}${sh ? ` (${r.all.part} частково)` : ''}</span><span>зараз <b class="num">${nf(r.all.p, 1)} кВт</b> ясно · ${nf(r.all.p / Math.max(r.all.n * PM, 0.001) * 100, 0)} %</span>`; }
+  h += `<span>за ${esc(fmtD(state.date))} <b class="num">${dayE() == null ? '…' : nf(dayE(), 0) + ' кВт·год'}</b></span>`;
+  $('#now').innerHTML = h;
 }
-function endClean() { if (clean) { clean = null; store.set('clean', null); } }
-function setClean(on) {
-  if (on) { clean = {win: Object.assign({}, win), hud: hudOn.slice(), pick: !pk.hidden}; win = {panel: false, views: false, pick: false, labels: false}; pk.hidden = true; hudOn = []; }
-  else { const c = clean; clean = null; win = c ? c.win : Object.assign({}, WDEF); hudOn = c ? c.hud : defHud(); if (win.pick && c && c.pick) pk.hidden = false; }
-  store.set('hud', hudOn); CARDS.forEach(c => document.getElementById('m-' + c.id).checked = hudOn.includes(c.id)); applyWin(); buildHud();
+let playT = null; const playBtn = $('#play'), SPDS = [1, 2, 4, 8];
+function setPlay(on) { clearInterval(playT); playT = null; playBtn.textContent = on ? '❚❚' : '▶'; playBtn.setAttribute('aria-label', on ? 'Зупинити сонце' : 'Запустити сонце'); playBtn.title = playBtn.getAttribute('aria-label');
+  if (on) { const [sr, ss] = sunTimes(N()); if (state.t >= ss - 0.1 || state.t < sr) state.t = Math.ceil(sr * 6) / 6; playT = setInterval(tickSun, Math.max(30, 170 / state.spd)); } }
+function tickSun() { const [sr, ss] = sunTimes(N()); let h = Math.round(state.t * 6) / 6 + 1 / 6; if (h > ss) h = Math.ceil(sr * 6) / 6; state.t = h; update(); }
+playBtn.onclick = () => setPlay(!playT);
+$('#speed').textContent = '×' + state.spd; $('#speed').onclick = () => { state.spd = SPDS[(SPDS.indexOf(state.spd) + 1) % SPDS.length]; $('#speed').textContent = '×' + state.spd; if (playT) setPlay(true); save(); };
+// ================= вкладки і розділи
+const tabs = $('#tabs');
+SECS.forEach(([k, t]) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.s = k; b.textContent = t; b.onclick = () => { state.sec = k; if (state.sheet === 'peek') sheetSet('half'); apply(); }; tabs.appendChild(b); });
+function stepSec(dir) { const i = SECS.findIndex(x => x[0] === state.sec); state.sec = SECS[(i + dir + SECS.length) % SECS.length][0]; apply(); }
+$('#tabPrev').onclick = () => stepSec(-1); $('#tabNext').onclick = () => stepSec(1);
+const pane = $('#pane');
+function stat(v, k) { return `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`; }
+function kvHTML(rows) { return `<dl class="kv">${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${r[1]}${r[2] ? `<small>${esc(r[2])}</small>` : ''}</dd>`).join('')}</dl>`; }
+function panelPZ() {
+  return `<div class="ph"><span class="eyebrow">Адмінкорпус · варіант К1 з розрахунку 27.10.2026</span><h2>137 місць: арка 95, нижній дах 33, південні стіни 9</h2><p>ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А. Перешкоди на дахах уточнено 28.10 за фото обстеження 27.10 і супутником Google.</p></div>
+  <div class="blk"><h3>Якщо стрінги по 11, як у К1</h3><div class="stats">${stat('121', 'модуль = 11 стрінгів (у К1 — 132)')}${stat('88,3 кВтп', 'ZNSHINE 730 Вт (у К1 — 96,4)')}${stat('≈81,0', 'МВт·год за рік, пропорційно К1 (було 88,7)')}${stat('29 536 $', 'кошторис К1 на 132 модулі — перерахувати')}</div></div>
+  <div class="blk"><h3>По дахах, за рік</h3><table class="cmp"><thead><tr><th></th><th>Модулів</th><th>МВт·год</th><th>кВт·год/кВтп</th></tr></thead><tbody>
+    <tr><td>Арка «по даху»</td><td>95 → 88 = 8 стр.</td><td>≈61,7</td><td>961</td></tr><tr><td>Нижній дах, «домік» 15°</td><td>33 = 3 стр.</td><td>19,3</td><td>800</td></tr>
+    <tr><td>Південні стіни</td><td>9, бракує 2 до стрінга</td><td>≈5,1</td><td>≈770</td></tr></tbody></table>
+    <p class="src">Арка і стіни — пропорційно К1 на модуль, окремо не рахували; 7 найслабших місць арки поза стрінгами. Стіни — як вертикальні модулі на південному фасаді цеху.</p></div>
+  <div class="note warn"><b>Що змінилося 28.10.</b> На арці 8 круглих тумб, а не 5: додано біля південно-західного кута, низьку з рудою кришкою біля південно-східного і ще одну поруч з оцинкованим ковпаком на півночі — місць на арці 95 замість 99. З нижнього даху на арку веде сталева драбина (верх біля X ≈122,6): на стіні біля неї модулів не ставимо (на схід лишилось 2 з 4), на нижньому даху прибрано 2 місця, які в К1 і так були поза стрінгами.</div>
+  <div class="blk"><h3>Розкладка</h3><p>Арка — як на даху цеху: модуль вертикально (2 384 мм уздовж арки), нахил по дузі 0–12°; на схід ${nE}, на захід ${nW}. Нижній дах — «домік» схід–захід 15°: пари спина до спини, між парами прохід 0,4 м. Південні стіни — 7 книжково на стіні основного блоку (5 на захід від надбудови, 2 на схід — між драбиною і кутом) і 2 альбомно на надбудові.</p></div>`;
 }
-tbClean.addEventListener('click', () => setClean(!clean));
-tbPanel.addEventListener('click', () => { win.panel = !win.panel; endClean(); applyWin(); });
-document.getElementById('panel-x').addEventListener('click', () => { win.panel = false; applyWin(); tbPanel.focus(); });
-CARDS.forEach(c => {
-  const l = document.createElement('label'), i = document.createElement('input'); i.type = 'checkbox'; i.id = 'm-' + c.id; i.checked = hudOn.includes(c.id);
-  const b = document.createElement('span'); b.textContent = c.t; const sm = document.createElement('small'); sm.textContent = c.d;
-  l.append(i, b, sm); mlist.appendChild(l);
-  i.addEventListener('change', () => { hudOn = CARDS.map(x => x.id).filter(id => id === c.id ? i.checked : hudOn.includes(id)); store.set('hud', hudOn); endClean(); applyWin(); buildHud(); });
-});
-function setMenu(open) { menu.hidden = !open; hbtn.setAttribute('aria-expanded', open); hbtn.classList.toggle('on', open); }
-hbtn.addEventListener('click', e => { e.stopPropagation(); setMenu(menu.hidden); });
-const vbtn = document.getElementById('view-btn'), vlist = document.getElementById('view-list');
-function setViews(open) { vlist.hidden = !open; vbtn.setAttribute('aria-expanded', open); vbtn.classList.toggle('on', open); }
-vbtn.addEventListener('click', e => { e.stopPropagation(); setViews(vlist.hidden); });
-document.addEventListener('pointerdown', e => {
-  if (!menu.hidden && !menu.contains(e.target) && !hbtn.contains(e.target)) setMenu(false);
-  if (!vlist.hidden && !vlist.contains(e.target) && !vbtn.contains(e.target)) setViews(false);
-});
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  if (!menu.hidden) { setMenu(false); hbtn.focus(); } else if (!vlist.hidden) { setViews(false); vbtn.focus(); }
-});
-function setHud(ids) { hudOn = ids; store.set('hud', ids); CARDS.forEach(c => document.getElementById('m-' + c.id).checked = ids.includes(c.id)); endClean(); applyWin(); buildHud(); }
-document.getElementById('hud-none').addEventListener('click', () => { if (!clean) setClean(true); });
-document.getElementById('hud-def').addEventListener('click', () => { clean = null; win = Object.assign({}, WDEF); setHud(defHud()); });
-const CB = {};
-function buildHud() {
-  hud.innerHTML = ''; for (const k in CB) delete CB[k];
-  CARDS.filter(c => hudOn.includes(c.id)).forEach(c => {
-    const el = document.createElement('section'); el.className = 'card' + (hudMin.includes(c.id) ? ' min' : ''); el.setAttribute('aria-label', c.t);
-    const h = document.createElement('header'), h3 = document.createElement('h3'), v = document.createElement('span'); v.className = 'val'; h3.textContent = c.t; h3.appendChild(v);
-    const bm = document.createElement('button'), bx = document.createElement('button'); bm.className = bx.className = 'ib';
-    const setMin = () => { const m = el.classList.contains('min'); bm.textContent = m ? '+' : '–'; bm.setAttribute('aria-label', (m ? 'Розгорнути: ' : 'Згорнути: ') + c.t); bm.setAttribute('aria-expanded', !m); };
-    bm.addEventListener('click', () => { el.classList.toggle('min'); hudMin = el.classList.contains('min') ? [...hudMin, c.id] : hudMin.filter(x => x !== c.id); store.set('hudmin', hudMin); setMin(); });
-    bx.textContent = '×'; bx.setAttribute('aria-label', 'Прибрати з екрана: ' + c.t);
-    bx.addEventListener('click', () => setHud(hudOn.filter(x => x !== c.id)));
-    setMin(); h.append(h3, bm, bx);
-    const body = document.createElement('div'); body.className = 'cb'; el.append(h, body); hud.appendChild(el);
-    CB[c.id] = {body, val: v};
-    if (c.id === 'time') buildTimeCard(body);
-  });
-  for (let i = TIMES.length - 1; i >= 0; i--) if (!TIMES[i].dEl.isConnected) TIMES.splice(i, 1);
-  renderAll();
+function chartSVG() {
+  if (!DAYR) return '<p class="src">Рахую день…</p>';
+  const W = 360, H = 160, l = 36, r = 8, t = 10, b = 22, x0 = Math.floor(DAYR.sr), x1 = Math.ceil(DAYR.ss), xs = h => l + (h - x0) / (x1 - x0) * (W - l - r);
+  const mx = Math.max(...DAYR.pts.map(p => p[1]), 1), top = Math.max(10, Math.ceil(mx / 20) * 20), ys = v => t + (1 - v / top) * (H - t - b);
+  const path = k => DAYR.pts.map((p, i) => (i ? 'L' : 'M') + xs(p[0]).toFixed(1) + ',' + ys(p[k]).toFixed(1)).join('');
+  const grid = [0, top / 2, top].map(v => `<line x1="${l}" x2="${W - r}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--line)"/><text x="${l - 4}" y="${ys(v) + 4}" text-anchor="end" font-size="10" fill="var(--ink-3)">${nf(v, 0)}</text>`).join('');
+  const hx = [6, 9, 12, 15, 18].filter(h => h > x0 && h < x1).map(h => `<text x="${xs(h)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--ink-3)">${h}:00</text>`).join('');
+  const cx = xs(Math.max(x0, Math.min(x1, state.t)));
+  return `<svg class="gchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Потужність за добу при ясному небі, кВт: разом і по дахах">${grid}${hx}
+    <path d="${path(2)}" fill="none" stroke="var(--east)" stroke-width="1.3" stroke-dasharray="4 3"/><path d="${path(3)}" fill="none" stroke="var(--west)" stroke-width="1.3" stroke-dasharray="4 3"/><path d="${path(4)}" fill="none" stroke="var(--south)" stroke-width="1.3" stroke-dasharray="4 3"/>
+    <path d="${path(1)}" fill="none" stroke="var(--sun)" stroke-width="2.4"/>
+    <line x1="${cx}" x2="${cx}" y1="${t}" y2="${H - b}" stroke="var(--ink)" stroke-dasharray="3 3"/><text x="${l + 4}" y="${t + 10}" font-size="10" fill="var(--ink-3)">кВт</text></svg>
+    <div class="legend" style="background:transparent;border:0;padding:0"><span><i class="sw" style="background:var(--sun)"></i>разом</span><span><i class="sw" style="background:var(--east)"></i>арка</span><span><i class="sw" style="background:var(--west)"></i>нижній дах</span><span><i class="sw" style="background:var(--south)"></i>стіни</span></div>`;
 }
-function buildTimeCard(b) {
-  b.innerHTML = `<div class="trow"><input type="date" id="w-date" min="2026-01-01" max="2026-12-31" aria-label="Дата"><button class="btn sm" id="w-play" aria-pressed="false">▶</button></div>
-    <input type="range" id="w-h" min="3.5" max="20.5" step="0.05" aria-label="Сонячний час">
-    <div class="chips"><button class="btn sm" data-date="2026-06-21">21 чер</button><button class="btn sm" data-date="2026-03-21">21 бер</button><button class="btn sm" data-date="2026-12-21">21 гру</button><button class="btn sm" data-now="1">Зараз</button></div>`;
-  wireTime(b.querySelector('#w-date'), b.querySelector('#w-h'), b.querySelector('#w-play'), b);
-  syncInputs();
+const GN = {arch: 'Арка', low: 'Нижній дах', wall: 'Південні стіни'};
+function stateBars(q) { return q.n ? `<div class="bars" role="img" aria-label="на сонці ${q.sun}, частково ${q.part}, у тіні ${q.shade}"><i style="width:${q.sun / q.n * 100}%;background:var(--ok)"></i><i style="width:${q.part / q.n * 100}%;background:var(--part)"></i><i style="width:${q.shade / q.n * 100}%;background:var(--shade)"></i></div>` : ''; }
+function panelSun() {
+  const r = RES, T = state.sunTab, up = r.s.alt > 0, pn = r.all.n * PM;
+  const seg = `<div class="seg" role="group" aria-label="Що показати">${[['day', 'Доба'], ['roofs', 'По дахах'], ['year', 'Рік (К1)']].map(([v, t]) => `<button type="button" data-st="${v}" aria-pressed="${T === v}">${t}</button>`).join('')}</div>`;
+  const head = `<div class="ph"><span class="eyebrow">Сонце і генерація · ясне небо</span><h2>${T === 'year' ? 'Генерація за рік — розрахунок К1' : esc(fmtD(state.date)) + ', ' + hhmm(state.t) + ' · ' + seasonOf(state.date).toLowerCase()}</h2>${seg}</div>`;
+  const method = `<p class="src">Модель ясного неба: пряме сонце — Мейнел, розсіяне — 10 % від прямого, відбиття від даху 0,2; повітря — середнє для Києва в цю пору; втрати системи 10 %, −0,30 %/°C. Тінь — промені до сонця з 9 точок кожного модуля (будівля, надбудова, парапети, тумби, драбина, цех, сусідні модулі); частково затінений модуль втрачає пряму складову пропорційно — у стрінгу реальна втрата може бути більшою. Хмар модель не знає: це не прогноз. Час — сонячний: 12:00 — сонце на півдні; влітку годинник показує на ≈1 год більше. Рахуються лише ввімкнені шари модулів.</p>`;
+  if (T === 'year') return head + `<div class="blk"><table class="cmp"><thead><tr><th></th><th>Модулів</th><th>МВт·год</th><th>кВт·год/кВтп</th></tr></thead><tbody>
+    <tr><td>Арка «по даху»</td><td>88 з 95</td><td>≈61,7</td><td>961</td></tr><tr><td>Нижній дах</td><td>33</td><td>19,3</td><td>800</td></tr><tr class="tot"><td>Дахи разом</td><td>121</td><td>≈81,0</td><td>917</td></tr><tr><td>Південні стіни</td><td>9</td><td>≈5,1</td><td>≈770</td></tr></tbody></table>
+    <p class="src">Звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026 (клімат Києва, тіні за рік); арка і стіни — пропорційно К1 на модуль. Тінь на нижній дах від надбудови з новими висотами (3,3 і 2,25 м) у К1 ще не перераховано.</p></div>`;
+  if (T === 'roofs') {
+    const rows = ['arch', 'low', 'wall'].filter(g => r.vis[g]).map(g => { const q = r.tot[g]; return `<tr><td>${GN[g]}</td><td>${q.n}</td><td>${q.sun} / ${q.part} / ${q.shade}</td><td>${nf(q.n ? q.poa / q.n : 0, 0)}</td><td>${nf(q.p, 1)}</td><td>${DAYR ? nf(DAYR.e[g], 0) : '…'}</td></tr>`; }).join('');
+    return head + `<div class="blk"><table class="cmp"><thead><tr><th></th><th>Модулів</th><th>Сонце / част. / тінь</th><th>Вт/м²</th><th>кВт</th><th>кВт·год за день</th></tr></thead><tbody>${rows}
+      <tr class="tot"><td>Разом</td><td>${r.all.n}</td><td>${r.all.sun} / ${r.all.part} / ${r.all.shade}</td><td>${nf(r.all.n ? r.all.poa / r.all.n : 0, 0)}</td><td>${nf(r.all.p, 1)}</td><td>${dayE() == null ? '…' : nf(dayE(), 0)}</td></tr></tbody></table></div>
+      <div class="blk">${['arch', 'low', 'wall'].filter(g => r.vis[g] && r.tot[g].n).map(g => `<p>${GN[g]}</p>${stateBars(r.tot[g])}`).join('')}</div>` + method;
+  }
+  return head + `<div class="blk">${chartSVG()}</div>
+    <div class="blk"><div class="stats">${stat(up ? nf(r.all.p, 1) + ' кВт' : '0 кВт', up ? `зараз, ${nf(r.all.p / Math.max(pn, 0.001) * 100, 0)} % від ${nf(pn, 1)} кВтп` : 'сонце за обрієм')}${stat(dayE() == null ? '…' : nf(dayE(), 0) + ' кВт·год', 'за день, ясне небо, з тінями')}</div>
+    ${up ? stateBars(r.all) : ''}
+    ${kvHTML([['На сонці', `${r.all.sun}`], ['Частково в тіні', `${r.all.part}`], ['У тіні або сонце позаду', `${r.all.shade}`], ['Висота і азимут сонця', `${nf(Math.max(0, r.s.alt * DEG), 1)}° · ${nf(r.s.az * DEG, 0)}°`],
+      ['Пряме на перпендикуляр', `${nf(r.sk.dni, 0)} Вт/м²`], ['Розсіяне', `${nf(r.sk.dhi, 0)} Вт/м²`], ['Середнє на модулях', `${nf(r.all.n ? r.all.poa / r.all.n : 0, 0)} Вт/м²`]])}</div>` + method;
 }
-const SVGNS = 'http://www.w3.org/2000/svg';
-function compassSVG(r) {                        // полярна діаграма: центр — зеніт, коло — горизонт; північ угорі
-  const R = 64, pr = (alt, az) => { const q = R * (1 - Math.max(0, alt) / (Math.PI / 2)); return [q * Math.sin(az), -q * Math.cos(az)]; };
-  const [sr, ss] = sunTimes(r.n); let d = '';
-  for (let k = 0; k <= 60; k++) { const s = sunAt(r.n, sr + (ss - sr) * k / 60), [x, y] = pr(s.alt, s.az); d += (k ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }
-  let hrs = ''; for (let h = Math.ceil(sr); h <= Math.floor(ss); h++) { const s = sunAt(r.n, h), [x, y] = pr(s.alt, s.az); hrs += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" style="fill:var(--accent)"/>`; if (h % 3 === 0) hrs += `<text x="${(x * 1.13).toFixed(1)}" y="${(y * 1.13 + 3).toFixed(1)}" text-anchor="middle">${h}</text>`; }
-  const [sx, sy] = pr(r.s.alt, r.s.az), up = r.s.alt > 0;
-  // контур АБК, 1 м = 0,9 од.; центр плану ≈ (118, 26)
-  const k = 0.9, rect = (x0, x1, y0, y1) => `<rect x="${((x0 - 118) * k).toFixed(1)}" y="${((26 - y1) * k).toFixed(1)}" width="${((x1 - x0) * k).toFixed(1)}" height="${((y1 - y0) * k).toFixed(1)}" style="fill:var(--chip);stroke:var(--muted)" stroke-width="0.6"/>`;
-  return `<svg class="cmp" viewBox="-86 -84 172 168" width="100%" style="max-width:170px;align-self:center" role="img" aria-label="Шлях сонця ${fmtD(st.date)}: зараз висота ${nf(r.s.alt * DEG)}°, азимут ${Math.round(r.s.az * DEG)}°">
-    <circle r="${R}" style="fill:none;stroke:var(--line)"/><circle r="${R * 2 / 3}" style="fill:none;stroke:var(--line)" stroke-dasharray="2 3"/><circle r="${R / 3}" style="fill:none;stroke:var(--line)" stroke-dasharray="2 3"/>
-    ${rect(AB.x0, AB.x1, AB.y0, AB.y1)}${rect(AL.x0, AL.x1, AL.y0, AL.y1)}
-    <text y="-68" text-anchor="middle">Пн</text><text y="75" text-anchor="middle">Пд</text><text x="76" y="3" text-anchor="middle">Сх</text><text x="-76" y="3" text-anchor="middle">Зх</text>
-    <path d="${d}" style="fill:none;stroke:var(--accent)" stroke-width="1.4"/>${hrs}
-    ${up ? `<line x1="0" y1="0" x2="${sx.toFixed(1)}" y2="${sy.toFixed(1)}" style="stroke:var(--sun)" stroke-width="1" stroke-dasharray="2 2"/><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="6" style="fill:var(--sun);stroke:var(--panel)" stroke-width="1.5"/>` : ''}
-  </svg>`;
+function layHTML(list) { return `<div class="lay">${list.map(([k, t, col, cnt]) => `<label for="lay-${k}"><input type="checkbox" id="lay-${k}" data-k="${k}" ${state.lay[k] ? 'checked' : ''}><span class="sw" style="background:${col}"></span>${esc(t)}<span class="cnt">${cnt || ''}</span></label>`).join('')}</div>`; }
+function panelLay() {
+  const V = G.vents.map(([x, y, rr, h, kind, src], i) => [`${i + 1}. ${kind === 'o' ? 'Тумба з рудою кришкою' : kind === 'h' ? 'Оцинкований ковпак на тумбі' : 'Кругла тумба Ø1,2 м'}${src === 'new' ? ' · нова' : ''}`, `${nf(x, 1)}; ${nf(y, 1)}`, `висота ≈${nf(h, 2)} м`]);
+  return `<div class="ph"><span class="eyebrow">Шари і перешкоди</span><h2>Що показувати в моделі</h2><p>Вимкнений шар модулів не входить у «зараз» і «за день».</p></div>
+  <div class="blk"><h3>Шари</h3>${layHTML([['arch', 'Модулі на арці', 'var(--east)', '95'], ['low', 'Модулі на нижньому даху', 'var(--west)', '33'], ['wall', 'Вертикально на південних стінах', 'var(--south)', '9'],
+    ['mount', 'Лаги, баласт і опори', 'var(--line-2)', ''], ['ctx', 'Цех і ТП-5913 поруч', 'var(--line-2)', ''], ['shadow', 'Тіні від сонця', 'var(--ink-3)', ''], ['sky', 'Сонце і його шлях за день', 'var(--sun)', ''], ['labels', 'Підписи в моделі', 'var(--ink-3)', '']])}</div>
+  <div class="blk"><h3>Перешкоди на арці · X; Y, м</h3>${kvHTML(V)}
+    <p class="src">Також: високий оцинкований вентвихід 0,6 × 0,7 × 1,5 м (116,8; 42,3) і низький 0,9 × 0,6 × 0,45 м (118,0; 43,0). Навколо перешкод — 0,3 м без модулів. Нові тумби — за фото 27.10 (110750–110806, 110837, 110909–110912) і темними плямами на супутнику, ±0,5 м.</p></div>
+  <div class="blk"><h3>Драбина і надбудова</h3>${kvHTML([['Сталева драбина з дугами', 'основа 123,2; 16,5', 'верх на парапеті 122,6; 20,3 (+14,75), ±0,5 м'], ['Надбудова, північна частина', '5,2 × 3,85 м', 'верх ≈+13,3, профлист світлий'], ['Надбудова, південна частина', '5,2 × 5,95 м', 'верх ≈+12,25, профлист сірий']])}
+    <p class="src">Біля драбини на стіні ±1,0 м без модулів; на нижньому даху там прибрано 2 місця, які в К1 були поза стрінгами.</p></div>`;
 }
-function sparkSVG() {
-  const W = 220, H = 74, x = t => 10 + (t - 3) / 18 * (W - 20), top = 8, bot = H - 16;
-  if (!dayRes) return `<p class="note" style="margin:0">Рахую день…</p>`;
-  const pn = Math.max(dayRes.pnom, 1), y = p => bot - p / pn * (bot - top);
-  let d = `M${x(dayRes.sr).toFixed(1)} ${bot}`; dayRes.pts.forEach(([t, p]) => d += `L${x(t).toFixed(1)} ${y(p).toFixed(1)}`); d += `L${x(dayRes.ss).toFixed(1)} ${bot}Z`;
-  const cur = st.res ? st.res.all.p : 0, cx = x(st.t);
-  let ticks = ''; for (const h of [6, 9, 12, 15, 18]) ticks += `<line x1="${x(h)}" x2="${x(h)}" y1="${bot}" y2="${bot + 3}" style="stroke:var(--muted)"/><text x="${x(h)}" y="${H - 3}" text-anchor="middle">${h}</text>`;
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Потужність за день при ясному небі">
-    <line x1="10" x2="${W - 10}" y1="${top}" y2="${top}" style="stroke:var(--line)" stroke-dasharray="2 3"/><text x="${W - 10}" y="${top - 1}" text-anchor="end">100 %</text>
-    <line x1="10" x2="${W - 10}" y1="${bot}" y2="${bot}" style="stroke:var(--line)"/>${ticks}
-    <path d="${d}" style="fill:color-mix(in srgb,var(--sun) 30%,transparent);stroke:var(--sun)" stroke-width="1.2"/>
-    <line x1="${cx}" x2="${cx}" y1="${top}" y2="${bot}" style="stroke:var(--fg)" stroke-width="0.8" stroke-dasharray="2 2"/><circle cx="${cx}" cy="${y(cur)}" r="3" style="fill:var(--fg)"/>
-  </svg>`;
+function panelEst() {
+  return `<div class="ph"><span class="eyebrow">Що оцінка, а що виміряно</span><h2>Висоти — оцінка, план — супутник ±0,5 м</h2></div>
+  <div class="note warn">Висоти рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Розрахунок К1 рахував надбудову однією коробкою +12,6 м. Кріплення «доміку» показано схематично. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.</div>
+  <div class="blk"><h3>Виміряти на місці</h3><ul class="blist"><li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li><li>висоту парапетів і південного блоку;</li><li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li><li>чи немає вікон на стіні 4-го поверху за модулями на південній стіні;</li><li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li></ul>
+    <p class="src">Розкладка — calc/v3/abk.py і antares/abk/layout.py; звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p></div>`;
 }
-const STC = {sun: ['на сонці', 'var(--ok)'], part: ['частково в тіні', 'var(--part)'], shade: ['у тіні / сонце позаду', 'var(--shade)']};
-function stateBar(q) {
-  if (!q.n) return '';
-  return `<div class="meter" role="img" aria-label="на сонці ${q.sun}, частково ${q.part}, у тіні ${q.shade}">${['sun', 'part', 'shade'].map(k => `<i style="width:${q[k] / q.n * 100}%;background:${STC[k][1]}"></i>`).join('')}</div>`;
+function renderPane() {
+  const st = $('#panes').scrollTop;
+  pane.innerHTML = state.sec === 'sun' ? panelSun() : state.sec === 'lay' ? panelLay() : state.sec === 'est' ? panelEst() : panelPZ();
+  pane.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { state.sunTab = b.dataset.st; renderPane(); save(); });
+  pane.querySelectorAll('.lay input').forEach(inp => inp.onchange = () => { state.lay[inp.dataset.k] = inp.checked; setVis(); save(); });
+  $('#panes').scrollTop = st;
 }
-function roofsTable(r) {
-  let h = `<tr><th></th><th class="r">кВт</th><th class="r">сонце/част./тінь</th></tr>`;
-  for (const g in GRP) { const q = r.tot[g]; if (!r.vis[g]) continue; h += `<tr><td>${GRP[g]} <span class="mono" style="color:var(--muted)">${q.n}</span></td><td class="r">${nf(q.p)}</td><td class="r">${q.sun} / ${q.part} / ${q.shade}</td></tr>`; }
-  h += `<tr><td><b>Разом</b></td><td class="r"><b>${nf(r.all.p)}</b></td><td class="r">${r.all.sun} / ${r.all.part} / ${r.all.shade}</td></tr>`;
-  return h;
+// ================= шари в сцені
+function setVis() {
+  const L = state.lay; groups.arch.visible = L.arch; groups.low.visible = L.low; groups.wall.visible = L.wall; groups.mount.visible = L.mount; groups.ctx.visible = L.ctx;
+  skyG.visible = L.sky; lab.hidden = !L.labels; LB[4].d.hidden = LB[5].d.hidden = !L.ctx;
+  if (R.shadowMap.enabled !== L.shadow) { R.shadowMap.enabled = L.shadow; S.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }); }
+  startDay(); update();
 }
-function renderAll() {
-  const r = st.res; if (!r) return;
-  const up = r.s.alt > 0, pn = r.all.n * PM;
-  document.getElementById('s-out').textContent = `${fmtD(st.date)}, ${fmtT(st.t)} · висота ${nf(r.s.alt * DEG)}° · азимут ${Math.round(r.s.az * DEG)}°`;
-  document.getElementById('sum-now').textContent = up ? nf(r.all.p) + ' кВт' : 'ніч';
-  document.getElementById('now-tbl').innerHTML = roofsTable(r);
-  document.getElementById('day-line').innerHTML = dayRes ? `<b>За ${fmtD(st.date)} при ясному небі:</b> ${nf(dayRes.e.arch + dayRes.e.low + dayRes.e.wall, 0)} кВт·год (арка ${nf(dayRes.e.arch, 0)}, нижній дах ${nf(dayRes.e.low, 0)}, стіни ${nf(dayRes.e.wall, 0)}).` : 'Рахую день…';
-  const c = CB;
-  if (c.time) { c.time.val.textContent = fmtT(st.t); }
-  if (c.sun) { c.sun.val.textContent = up ? `${nf(r.s.alt * DEG, 0)}° · ${Math.round(r.s.az * DEG)}°` : 'під горизонтом';
-    c.sun.body.innerHTML = compassSVG(r) + `<div class="kv"><span>Висота сонця</span><span>${nf(r.s.alt * DEG)}°</span><span>Азимут (від півночі)</span><span>${Math.round(r.s.az * DEG)}°</span><span>Схід — захід</span><span>${fmtT(sunTimes(r.n)[0])} — ${fmtT(sunTimes(r.n)[1])}</span></div>`; }
-  if (c.now) { c.now.val.textContent = up ? nf(r.all.p) + ' кВт' : '0';
-    c.now.body.innerHTML = up ? `<div class="big">${nf(r.all.p)} <small>кВт</small></div><div class="meter"><i style="width:${Math.min(100, r.all.p / Math.max(pn, 0.001) * 100)}%;background:var(--sun)"></i></div><span class="note">${nf(r.all.p / Math.max(pn, 0.001) * 100, 0)} % від ${nf(pn)} кВтп показаних модулів (${r.all.n}), ясне небо</span>`
-      : `<div class="big">0 <small>кВт</small></div><span class="note">Сонце під горизонтом.</span>`; }
-  if (c.state) { c.state.val.textContent = up ? `${r.all.sun} з ${r.all.n}` : '';
-    c.state.body.innerHTML = up ? stateBar(r.all) + `<div class="kv">${['sun', 'part', 'shade'].map(k => `<span><span class="dot" style="background:${STC[k][1]}"></span>${STC[k][0]}</span><span>${r.all[k]}</span>`).join('')}</div>`
-      : `<span class="note">Сонце під горизонтом — модулі не працюють.</span>`; }
-  if (c.roofs) { c.roofs.val.textContent = up ? nf(r.all.p) + ' кВт' : '';
-    c.roofs.body.innerHTML = `<table class="mini">${roofsTable(r)}</table>` + ['arch', 'low', 'wall'].filter(g => r.vis[g] && r.tot[g].n).map(g => `<div><span class="note">${GRP[g]}</span>${stateBar(r.tot[g])}</div>`).join(''); }
-  if (c.day) { c.day.val.textContent = dayRes ? nf(dayRes.e.arch + dayRes.e.low + dayRes.e.wall, 0) + ' кВт·год' : '…';
-    c.day.body.innerHTML = sparkSVG() + (dayRes ? `<div class="kv"><span>Арка</span><span>${nf(dayRes.e.arch, 0)} кВт·год</span><span>Нижній дах</span><span>${nf(dayRes.e.low, 0)} кВт·год</span><span>Стіни</span><span>${nf(dayRes.e.wall, 0)} кВт·год</span></div><span class="note">${fmtD(st.date)}, ясне небо, з тінями; 100 % = ${nf(dayRes.pnom)} кВтп.</span>` : ''); }
-  if (c.irr) { const avg = r.all.n ? r.all.poa / r.all.n : 0; c.irr.val.textContent = up ? nf(r.sk.ghi, 0) + ' Вт/м²' : '';
-    c.irr.body.innerHTML = `<div class="kv"><span>Пряме на перпендикуляр</span><span>${nf(r.sk.dni, 0)} Вт/м²</span><span>Розсіяне</span><span>${nf(r.sk.dhi, 0)} Вт/м²</span><span>На горизонталь</span><span>${nf(r.sk.ghi, 0)} Вт/м²</span><span>Середнє на модулях</span><span>${nf(avg, 0)} Вт/м²</span><span>Повітря (оцінка)</span><span>${r.Ta >= 0 ? '+' : '−'}${nf(Math.abs(r.Ta), 0)} °C</span></div><span class="note">Модель ясного неба, без хмар.</span>`; }
-  if (c.legend) { c.legend.body.innerHTML = `<div class="kv" style="grid-template-columns:1fr">${[['var(--east)', 'на сонці, схил на схід'], ['var(--west)', 'на сонці, схил на захід'], ['var(--south)', 'на сонці, стіна на південь'], ['var(--part)', 'частково в тіні'], ['var(--shade)', 'у тіні або сонце позаду'], ['var(--accent)', 'шлях сонця і години']].map(([cl, t]) => `<span style="text-align:left;font-family:var(--f-body)"><span class="dot" style="background:${cl}"></span>${t}</span>`).join('')}</div>`; }
-  renderPick();
+// режими і легенда над моделлю
+function hudCtx() {
+  const modes = [['shade', 'Тінь зараз', !state.plain], ['plain', 'Звичайний вигляд', state.plain]];
+  const mEl = $('#modes'); mEl.innerHTML = modes.map(([k, t, on]) => `<button type="button" data-m="${k}" aria-pressed="${on}">${esc(t)}</button>`).join('');
+  mEl.querySelectorAll('button').forEach(b => b.onclick = () => { state.plain = b.dataset.m === 'plain'; hudCtx(); paint(); need = true; save(); });
+  $('#legend').innerHTML = state.plain
+    ? `<span class="t">Модулі</span><span><i class="sw" style="background:var(--east)"></i>схил на схід</span><span><i class="sw" style="background:var(--west)"></i>схил на захід</span><span><i class="sw" style="background:var(--south)"></i>стіни на південь</span>`
+    : `<span class="t">Тінь зараз</span><span><i class="sw" style="background:var(--east)"></i><i class="sw" style="background:var(--west)"></i><i class="sw" style="background:var(--south)"></i>на сонці</span><span><i class="sw" style="background:var(--part)"></i>частково</span><span><i class="sw" style="background:var(--shade)"></i>у тіні або сонце позаду</span>`;
 }
-// ---------- елементи керування часом (панель і картка)
-const TIMES = [];
-function wireTime(dEl, hEl, pEl, root) {
-  TIMES.push({dEl, hEl, pEl});
-  dEl.addEventListener('change', () => { if (/^\d{4}-\d\d-\d\d$/.test(dEl.value)) setDate('2026' + dEl.value.slice(4)); });
-  hEl.addEventListener('input', () => { stopPlay(); setTime(+hEl.value); });
-  pEl.addEventListener('click', () => st.play ? stopPlay() : startPlay());
-  root.querySelectorAll('[data-date]').forEach(b => b.addEventListener('click', () => setDate(b.dataset.date)));
-  root.querySelectorAll('[data-now]').forEach(b => b.addEventListener('click', () => { stopPlay(); const q = nowSolar(); st.t = q.t; setDate(q.date); }));
+function apply() {
+  document.querySelectorAll('#tabs button').forEach(b => { const on = b.dataset.s === state.sec; b.setAttribute('aria-selected', on ? 'true' : 'false'); if (on) { const tb = $('#tabs'), x = b.offsetLeft - tb.clientWidth / 2 + b.offsetWidth / 2; tb.scrollTo({left: Math.max(0, x), behavior: RM ? 'auto' : 'smooth'}); } });
+  renderPane(); hudCtx(); sunUI(); save();
 }
-function syncInputs() {
-  TIMES.forEach(({dEl, hEl, pEl}) => { if (dEl.value !== st.date) dEl.value = st.date; hEl.value = st.t; pEl.textContent = st.play ? '❚❚' + (pEl.id === 's-play' ? ' Пауза' : '') : '▶' + (pEl.id === 's-play' ? ' День' : ''); pEl.setAttribute('aria-pressed', st.play); pEl.setAttribute('aria-label', st.play ? 'Пауза' : 'Програти день'); });
-  document.querySelectorAll('[data-date]').forEach(b => b.classList.toggle('on', b.dataset.date === st.date));
-}
-let playLast = 0;
-function startPlay() { const [sr, ss] = sunTimes(st.n); if (st.t >= ss - 0.05 || st.t < sr) st.t = sr; st.play = true; playLast = performance.now(); syncInputs(); }
-function stopPlay() { if (!st.play) return; st.play = false; syncInputs(); }
-wireTime(document.getElementById('s-date'), document.getElementById('s-h'), document.getElementById('s-play'), document.getElementById('sec-sun'));
-// ---------- шари
-const tie = (id, fn) => document.getElementById(id).addEventListener('change', e => { fn(e.target.checked); need = true; });
-tie('t-arch', v => { groups.arch.visible = v; startDay(); schedule(); }); tie('t-low', v => { groups.low.visible = v; startDay(); schedule(); });
-tie('t-wall', v => { groups.wall.visible = v; startDay(); schedule(); }); tie('t-mount', v => groups.mount.visible = v);
-tie('t-ctx', v => { groups.ctx.visible = v; LB[4].d.hidden = LB[5].d.hidden = !v; });
-tie('t-state', () => paint()); tie('t-sky', v => { skyG.visible = v; HRL.forEach(l => l.d.hidden = !v); });
-tie('t-shadow', v => { R.shadowMap.enabled = v; S.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); } }); });
-// ---------- секції панелі: згорнути / розгорнути, пам'ять
-const SECS = [...document.querySelectorAll('details.sec')], secState = store.get('sec', {});
-SECS.forEach(d => { if (d.id in secState) d.open = secState[d.id]; d.addEventListener('toggle', () => { secState[d.id] = d.open; store.set('sec', secState); }); });
-document.getElementById('all-open').addEventListener('click', () => SECS.forEach(d => d.open = true));
-document.getElementById('all-close').addEventListener('click', () => SECS.forEach(d => d.open = false));
-// ---------- види
-const VIEWS = {
-  'v-iso': [P(146, -12, 34), P(118, 26, 10)], 'v-top': [P(118.2, 25.9, 78), P(118.2, 26, 10)], 'v-s': [P(118, -30, 16), P(118, 22, 10)],
-  'v-arch': [P(134, 16, 22), P(118, 33, 13.5)], 'v-low': [P(126, -2, 19), P(118, 13, 10)], 'v-nad': [P(104, 6, 17.5), P(118.9, 13.5, 11.8)], 'v-wall': [P(118, -4, 15), P(118, 16, 11.5)],
-};
+// ================= камера: види
+const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const VIEWS = {over: {t: 'Огляд', p: P(146, -12, 34), c: P(118, 26, 10)}, top: {t: 'Зверху', p: P(118.2, 25.9, 78), c: P(118.2, 26, 10)}, south: {t: 'З півдня', p: P(118, -30, 16), c: P(118, 22, 10)},
+  sun: {t: 'Проти сонця', dyn: true}, arch: {t: 'Арка', p: P(134, 16, 22), c: P(118, 33, 13.5)}, low: {t: 'Нижній дах', p: P(126, -2, 19), c: P(118, 13, 10)},
+  nad: {t: 'Надбудова', p: P(104, 6, 17.5), c: P(118.9, 13.5, 11.8)}, wall: {t: 'Південні стіни', p: P(118, -4, 15), c: P(118, 16, 11.5)}};
 let anim = null;
-function go(id, inst) {
-  document.querySelectorAll('#view-list [data-v]').forEach(b => { const on = b.dataset.v === id; b.classList.toggle('on', on); if (on) document.getElementById('view-name').textContent = b.textContent; });
-  let p, t;
-  if (id === 'v-sun') {                          // з протилежного боку, обличчям до сонця: видно тіні до глядача
-    const s = st.res ? st.res.s : sunAt(st.n, st.t), hz = new THREE.Vector3(s.dir.x, 0, s.dir.z); if (hz.lengthSq() < 1e-6) hz.set(0, 0, 1); hz.normalize();
+function goCam(k, inst) {
+  let p, t; const v = VIEWS[k];
+  if (v.dyn) {                                   // з протилежного боку, обличчям до сонця: тіні йдуть до глядача
+    const s = RES ? RES.s : sunAt(N(), state.t), hz = new THREE.Vector3(s.dir.x, 0, s.dir.z); if (hz.lengthSq() < 1e-6) hz.set(0, 0, 1); hz.normalize();
     const B = P(118, 24, 12); p = B.clone().addScaledVector(hz, -60); p.y = 28;
     const el = q => Math.atan2(q.y - p.y, Math.hypot(q.x - p.x, q.z - p.z)), eB = el(B), eS = el(skyPos(s.dir));
-    const pitch = s.alt > 0 && eS - eB < 34 / DEG ? (eS + eB) / 2 : eB + 7 / DEG;    // якщо вміщається — і будівля, і сонце в кадрі
+    const pitch = s.alt > 0 && eS - eB < 34 / DEG ? (eS + eB) / 2 : eB + 7 / DEG;
     t = p.clone().add(new THREE.Vector3(hz.x * Math.cos(pitch), Math.sin(pitch), hz.z * Math.cos(pitch)).multiplyScalar(60));
-  } else [p, t] = VIEWS[id];
-  if (inst || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { cam.position.copy(p); ctl.target.copy(t); ctl.update(); need = true; return; }
+  } else { p = v.p; t = v.c; }
+  if (inst || RM) { cam.position.copy(p); ctl.target.copy(t); ctl.update(); need = true; return; }
   anim = {p0: cam.position.clone(), t0: ctl.target.clone(), p, t, s: performance.now()};
 }
-document.querySelectorAll('#view-list [data-v]').forEach(b => b.addEventListener('click', () => { go(b.dataset.v); setViews(false); }));
-// ---------- вибір
-const ray = new THREE.Raycaster(), mp = new THREE.Vector2(), pk = document.getElementById('pick'), pkb = document.getElementById('pick-body'); let sel = null, down = null, liveP = null;
-document.getElementById('pick-x').addEventListener('click', () => { pk.hidden = true; if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null; liveP = null; need = true; });
+const cams = $('#cams'); Object.entries(VIEWS).forEach(([k, v]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.c = k; b.textContent = v.t; b.setAttribute('aria-pressed', k === 'over' ? 'true' : 'false');
+  b.onclick = () => { cams.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); goCam(k); }; cams.appendChild(b); });
+// ================= натискання: підказка біля курсора, як у двійнику
+const ray = new THREE.Raycaster(), mp = new THREE.Vector2(), tip = $('#tip'); let sel = null, down = null, tipT = 0;
+function hideTip() { tip.hidden = true; if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null; need = true; }
+function tipLive() { const el = tip.querySelector('.live'); if (!el || !sel || !sel.userData.rec || !RES) return; const r = sel.userData.rec;
+  el.textContent = RES.s.alt <= 0 ? `${hhmm(state.t)}: сонце за обрієм — 0 Вт`
+    : `${hhmm(state.t)}: ${r.cos <= 0 ? 'сонце позаду модуля' : r.state === 'sun' ? 'на сонці' : r.state === 'part' ? `у тіні ${nf(r.f * 100, 0)} % модуля` : 'у тіні'} · кут до сонця ${r.cos > 0 ? nf(Math.acos(Math.min(1, r.cos)) * DEG, 0) + '°' : '—'} · ${nf(r.poa, 0)} Вт/м² · ≈${nf(r.p * 1000, 0)} Вт ясно`; }
+function showTip(o, e) {
+  const [h, d] = o.userData.info; tip.innerHTML = `<button type="button" class="x" aria-label="Закрити">×</button><b>${esc(h)}</b>${esc(d)}${o.userData.rec ? '<span class="live"></span>' : ''}`;
+  tip.querySelector('.x').onclick = hideTip; tip.hidden = false; tipT = performance.now(); tipLive();
+  const r = cv.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight; let x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+  if (x + tw > r.width - 8) x = r.width - tw - 8; if (y + th > r.height - 8) y = e.clientY - r.top - th - 14;
+  tip.style.transform = `translate(${Math.max(8, x)}px,${Math.max(8, y)}px)`;
+}
 cv.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
 cv.addEventListener('pointerup', e => {
   if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
   const r = cv.getBoundingClientRect(); mp.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
   ray.setFromCamera(mp, cam);
   const hit = ray.intersectObjects(picks.filter(o => { let v = true, p = o; while (p) { if (!p.visible) v = false; p = p.parent; } return v; }), false)[0];
-  if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null; liveP = null;
-  if (hit && hit.object.userData.info) {
-    sel = hit.object; if (sel.userData.base) sel.material = hi;
-    const [h, p] = sel.userData.info; pkb.innerHTML = ''; const h4 = document.createElement('h4'); h4.textContent = h; const pp = document.createElement('p'); pp.textContent = p; pkb.append(h4, pp);
-    if (sel.userData.rec) { liveP = document.createElement('p'); liveP.className = 'live'; pkb.appendChild(liveP); renderPick(); }
-    if (win.pick) pk.hidden = false;
-  }
+  if (sel && sel.userData.base) sel.material = sel.userData.base; sel = null;
+  if (hit && hit.object.userData.info) { sel = hit.object; if (sel.userData.base) sel.material = hi; showTip(sel, e); } else hideTip();
   need = true;
 });
-function renderPick() {
-  if (!liveP || !sel || !sel.userData.rec || !st.res) return; const r = sel.userData.rec;
-  liveP.textContent = st.res.s.alt <= 0 ? `${fmtT(st.t)}: сонце під горизонтом — 0 Вт.`
-    : `${fmtT(st.t)}: ${r.cos <= 0 ? 'сонце позаду модуля' : r.state === 'sun' ? 'на сонці' : r.state === 'part' ? `у тіні ${nf(r.f * 100, 0)} % модуля` : 'у тіні'} · кут до сонця ${r.cos > 0 ? nf(Math.acos(Math.min(1, r.cos)) * DEG, 0) + '°' : '—'} · ${nf(r.poa, 0)} Вт/м² · ≈${nf(r.p * 1000, 0)} Вт (ясне небо)`;
-}
-// ---------- тема, розмір, кадр
-function theme() { const c = new THREE.Color(css('--scene') || '#dfe6ea'); S.background = c; mat.ground.color.set(css('--ground') || '#c9cfc6'); need = true; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !tip.hidden) hideTip(); });
+// ================= нижня панель: мала / половина / повна; режими над моделлю — згорнути
+const SHEETS = ['peek', 'half', 'full'];
+function sheetSet(s) { state.sheet = s; $('#sheet').dataset.s = s; save(); }
+{ const g = $('#grab'); let y0 = null, moved = false;
+  g.addEventListener('pointerdown', e => { y0 = e.clientY; moved = false; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
+  g.addEventListener('pointermove', e => { if (y0 !== null && Math.abs(e.clientY - y0) > 14) moved = true; });
+  g.addEventListener('pointerup', e => { if (y0 === null) return; const dy = e.clientY - y0, i = SHEETS.indexOf(state.sheet); y0 = null;
+    if (moved) sheetSet(SHEETS[Math.max(0, Math.min(2, i + (dy < 0 ? 1 : -1)))]); else sheetSet(SHEETS[(i + 1) % 3]); });
+  g.addEventListener('pointercancel', () => { y0 = null; }); }
+if (!SHEETS.includes(state.sheet)) state.sheet = matchMedia('(max-width: 700px)').matches ? 'peek' : 'half';
+$('#sheet').dataset.s = state.sheet;
+function ctxSet(o) { state.ctx = o; $('#ctx').hidden = !o; const b = $('#ctxtoggle'); b.textContent = o ? '▴' : '▾'; b.setAttribute('aria-expanded', String(o)); b.title = o ? 'Сховати режими і легенду' : 'Показати режими і легенду'; b.setAttribute('aria-label', b.title); save(); }
+$('#ctxtoggle').onclick = () => ctxSet(!state.ctx); ctxSet(state.ctx);
+// ================= тема, розмір, кадр
+function theme() { const c = new THREE.Color(css('--sky') || '#dfe6ec'); S.background = c; mat.ground.color.set(css('--ground') || '#c9cfc6'); need = true; }
 new MutationObserver(theme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
 try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', theme); } catch (e) {}
 function size() { const w = stage.clientWidth, h = stage.clientHeight; R.setSize(w, h, false); cam.aspect = w / Math.max(h, 1); cam.updateProjectionMatrix(); need = true; }
 new ResizeObserver(size).observe(stage);
-let need = true; ctl.addEventListener('change', () => need = true);
-const v = new THREE.Vector3();
+let need = true; ctl.addEventListener('change', () => { need = true; if (!tip.hidden && performance.now() - tipT > 600) hideTip(); });
+const v = new THREE.Vector3(), needle = $('#needle');
 HRL.forEach(l => { const d = document.createElement('div'); d.className = 'lbl hr'; d.textContent = l.h + ':00'; lab.appendChild(d); l.d = d; });
 function frame(now) {
   requestAnimationFrame(frame);
-  if (st.play) { const dt = Math.min(0.1, (now - playLast) / 1000); playLast = now; const [sr, ss] = sunTimes(st.n); let t = st.t + dt * 0.8; if (t > ss) t = sr; st.t = t; syncInputs(); update(); }
   if (anim) { const k = Math.min(1, (now - anim.s) / 900), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     cam.position.lerpVectors(anim.p0, anim.p, e); ctl.target.lerpVectors(anim.t0, anim.t, e); if (k >= 1) anim = null; need = true; }
   ctl.update();
   if (!need) return; need = false;
+  needle.style.transform = `rotate(${(ctl.getAzimuthalAngle() * DEG).toFixed(1)}deg)`;
   R.render(S, cam);
   const w = stage.clientWidth, h = stage.clientHeight;
   const put = (pos, d) => { v.copy(pos).project(cam); if (v.z > 1 || d.hidden) { d.style.display = 'none'; return; } d.style.display = ''; d.style.left = ((v.x + 1) / 2 * w) + 'px'; d.style.top = ((1 - v.y) / 2 * h) + 'px'; };
   LB.forEach(l => put(l[0], l.d));
   HRL.forEach(l => { if (!l.on || !skyG.visible) { l.d.style.display = 'none'; return; } put(l.p, l.d); });
 }
-// старт: зараз, якщо сонце над горизонтом, інакше сьогодні о 13:00 сонячного часу
-(function () { const q = nowSolar(), s = sunAt(doy(q.date), q.t); st.t = s.alt > 0.05 ? q.t : 13; st.date = q.date; st.n = doy(q.date); })();
-applyWin(); buildHud(); theme(); buildPath(st.n); size(); go('v-iso', true); syncInputs(); update(); startDay(); requestAnimationFrame(frame);
+theme(); buildPath(N()); size(); goCam('over', true);
+groups.arch.visible = state.lay.arch; groups.low.visible = state.lay.low; groups.wall.visible = state.lay.wall;
+setVis(); apply(); $('#loading').hidden = true; requestAnimationFrame(frame);
+window.__abk = {state, evaluate, update, apply, goCam, sheetSet, setPlay, MODS, OCC, dayR: () => DAYR, res: () => RES, cam, ctl, setDate: d => { state.date = d; dayChanged(); }, setTime: t => { state.t = t; update(); }};
 })();
 </script>
