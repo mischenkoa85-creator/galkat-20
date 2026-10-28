@@ -50,8 +50,72 @@ def rows_y():
         n = int((b1 - b0 + GAP) // PY); used = n * PY - GAP; s = b0 + (b1 - b0 - used) / 2
         out += [round(s + LM / 2 + k * PY, 3) for k in range(n)]
     return out, bands
+# ---------- модулі через злами граней (RULES.cross_folds): арка від ендови до ендови — одна смуга (грані + проріз ліхтаря),
+# модулі кладуться по розгортці підряд, зламом не обмежені (власник 28.10, 22:39); під ліхтарями — каркас ± зазор, як і раніше
+def arch_runs():
+    runs = []; cur = []
+    for p in R.PR:
+        ok = p['what'].startswith('грань') or p['what'] == 'ліхтар'
+        if ok and cur and abs(cur[-1]['x1'] - p['x0']) < 1e-3: cur.append(p); continue
+        if cur: runs.append(cur); cur = []
+        if ok: cur = [p]
+    if cur: runs.append(cur)
+    return runs
+def _seglen(p): return math.hypot(p['x1'] - p['x0'], p['z1'] - p['z0'])
+def s2xz(run, s):
+    for p in run:
+        L = _seglen(p)
+        if s <= L + 1e-9: t = max(0.0, s) / L; return p['x0'] + t * (p['x1'] - p['x0']), p['z0'] + t * (p['z1'] - p['z0'])
+        s -= L
+    return run[-1]['x1'], run[-1]['z1']
+def x2s(run, x):
+    acc = 0.0
+    for p in run:
+        L = _seglen(p)
+        if x <= p['x1'] + 1e-9: return acc + L * max(0.0, x - p['x0']) / (p['x1'] - p['x0'])
+        acc += L
+    return acc
+def roof_cands_cross():
+    Z = keepout(); ROWS, bands = rows_y(); c = RULES['clear']; P_ = DM + GAP
+    cand = []
+    for fi, run in enumerate(arch_runs()):
+        S = sum(_seglen(p) for p in run); x0r, x1r = run[0]['x0'], run[-1]['x1']
+        for y in ROWS:
+            ya, yb = y - LM / 2, y + LM / 2; blk = []
+            for F in R.FRAMES:
+                if ov(ya, yb, F['y0'] - c['frame_end'], F['y1'] + c['frame_end']):
+                    a_, b_ = F['xc'] - FR_EDGE - c['frame'], F['xc'] + FR_EDGE + c['frame']
+                    if b_ > x0r and a_ < x1r: blk.append((x2s(run, max(a_, x0r)), x2s(run, min(b_, x1r))))
+            free = []; lo = 0.0
+            for a_, b_ in sorted(blk):
+                if a_ > lo: free.append((lo, a_))
+                lo = max(lo, b_)
+            if lo < S: free.append((lo, S))
+            for a_, b_ in free:
+                ma = MRG if a_ < 1e-6 else 0.0; mb = MRG if b_ > S - 1e-6 else 0.0
+                n = int((b_ - a_ - ma - mb + GAP) // P_)
+                if n <= 0: continue
+                used = n * P_ - GAP
+                if ma and mb: st = a_ + (b_ - a_ - used) / 2          # уся арка вільна — по центру
+                elif ma: st = a_ + ma                                   # від ендови до каркаса — від ендови
+                elif mb: st = b_ - mb - used                            # від каркаса до ендови — від ендови
+                else: st = a_ + (b_ - a_ - used) / 2
+                for j in range(n):
+                    u0 = st + j * P_; u1 = u0 + DM
+                    xa, za = s2xz(run, u0); xb, zb = s2xz(run, u1)
+                    xm, zm = (xa + xb) / 2, (za + zb) / 2; k = (zb - za) / (xb - xa); why = None
+                    for o in R.DEFL:
+                        if o['cls'] == 'є' and hitc(xa, xb, ya, yb, o['x'], o['y'], o['d'] / 2 + c['pipe']): why = 'pipe'; break
+                    if not why:
+                        for d in R.DRAINS:
+                            if hitc(xa, xb, ya, yb, d['x'], d['y'], c['drain']): why = 'drain'; break
+                    if not why: why = next((z['k'] for z in Z if ov(xa, xb, *z['x']) and ov(ya, yb, *z['y'])), None)
+                    cand.append(dict(f=fi, sp=run[0]['sp'], j=int(round(xm * 10)), xa=round(xa, 3), xb=round(xb, 3), xm=round(xm, 3), zm=round(zm, 3), y=y, k=k,
+                                     tilt=round(math.degrees(math.atan(abs(k))), 1), face='W' if k > 0 else 'E', why=why))
+    return cand, Z, ROWS, bands
 def roof_cands():
     Z = keepout(); ROWS, bands = rows_y(); c = RULES['clear']
+    if RULES.get('cross_folds'): return roof_cands_cross()
     FAC = [p for p in R.PR if p['what'].startswith('грань')]
     cand = []
     for fi, p in enumerate(FAC):
