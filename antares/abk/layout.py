@@ -57,5 +57,42 @@ assert all(not m['used'] for m in removed_low), 'драбина зачепила
 low = [m for m in low if not lad_hit(m)]
 print('arch', len(arch), 'ncol', ncol, 'rows', len(ys), 'faces', {f: sum(1 for m in arch if m['face'] == f) for f in 'EW'}, 'tilt max', max(m['tilt'] for m in arch))
 print('low', len(low), 'used', sum(m['used'] for m in low), 'removed for ladder', len(removed_low), sorted({(m['xa'], m['face']) for m in low}))
+# ================= варіант «ДБН» (28.10): ходові доріжки на арці, стаціонарна драбина П1, огородження ≥ 0,6 м
+# ДБН В.2.6-220:2017 п. 7.1.3 — ходові доріжки до обладнання, що потребує обслуговування (ширини в прочитаному тексті немає;
+# беремо 0,8 м — наше рішення). Дві доріжки схід–захід (після 3-го і 6-го ряду): кожен модуль — не далі 2 рядів від доріжки;
+# зв'язка північ–південь від драбини — колонка 10 (X 121,6–122,9) у рядах 1–6.
+WW = 0.8
+def rows_with_walks(walk_after):
+    lo, hi = AB['y0'] + 0.25 + MRG, AB['y1'] - 0.25 - MRG; n = 9
+    tot = n * LM + (n - 1) * GAP + len(walk_after) * (WW - GAP); y = lo + (hi - lo - tot) / 2; out = []
+    for i in range(n):
+        out.append(y); y += LM + (WW if i in walk_after else GAP)
+    return out
+archD, walksD = [], []
+ysD = rows_with_walks({2, 5}); COR = 9
+for j in range(ncol):
+    a_, b_ = s0 + j * (DM + GAP), s0 + j * (DM + GAP) + DM; xa, xb = float(np.interp(a_, sl, xs)), float(np.interp(b_, sl, xs)); za, zb = float(zA(xa)), float(zA(xb))
+    k = (zb - za) / (xb - xa)
+    for i, y in enumerate(ysD):
+        if j == COR and i <= 5: continue
+        if hits_obst(xa, xb, y, y + LM): continue
+        archD.append(dict(xa=round(xa, 3), xb=round(xb, 3), za=round(za, 3), zb=round(zb, 3), y0=round(y, 3), y1=round(y + LM, 3), face='E' if k < 0 else 'W', tilt=round(math.degrees(math.atan(abs(k))), 1), col=j, row=i))
+cx_a = float(np.interp(s0 + COR * (DM + GAP), sl, xs)); cx_b = float(np.interp(s0 + COR * (DM + GAP) + DM, sl, xs))
+for i in (2, 5):
+    walksD.append(dict(kind='arch', x0=AB['x0'] + 0.25 + MRG, x1=AB['x1'] - 0.25 - MRG, y0=round(ysD[i] + LM, 3), y1=round(ysD[i + 1], 3)))
+walksD.append(dict(kind='archN', x0=round(cx_a, 3), x1=round(cx_b, 3), y0=AB['y0'] + 0.25, y1=round(ysD[6], 3)))
+# нижній дах: прохід від надбудови до драбини — смуга між східною стіною надбудови і першим «доміком» сходу, до стіни основного блоку
+xr = min(m['xa'] for m in low if m['xa'] > STAIR[1])
+walksD.append(dict(kind='low', x0=STAIR[1], x1=round(xr, 3), y0=AL['y0'] + 0.25 + MRG, y1=AB['y0']))
+walksD.append(dict(kind='low', x0=STAIR[0], x1=STAIR[1], y0=STAIR[3], y1=AB['y0']))
+# П1 — по осі зв'язки (колонка 10), щоб площадка і вихід не затуляли модулі; від стіни надбудови (X 121,5) ≥ 0,4 м
+XP1 = round((cx_a + cx_b) / 2, 3)
+LADP1 = dict(x=XP1, w=0.6, off=0.2, ztop=round(float(zA(XP1)) + PAR_G, 3), cx0=round(cx_a, 3), cx1=round(cx_b, 3))
+# п. 5.1.3: обладнання на покритті — не більше 30 % поверхні (якщо модулі вважати обладнанням)
+eq_arch = sum(math.pi * v[2] ** 2 for v in VENTS) + sum(b[2] * b[3] for b in BOXES) + 0.8 * 0.8
+A_arch = (AB['x1'] - AB['x0']) * (AB['y1'] - AB['y0']); A_low = (AL['x1'] - AL['x0']) * (AL['y1'] - AL['y0']) - (STAIR[1] - STAIR[0]) * (STAIR[3] - STAIR[2])
+N30 = dict(arch=int((0.3 * A_arch - eq_arch) // (DM * LM)), low=int((0.3 * A_low) // (DEP * LM)), A_arch=round(A_arch, 1), A_low=round(A_low, 1), eq_arch=round(eq_arch, 1),
+           mod_arch=round(DM * LM, 3), mod_low=round(DEP * LM, 3))
+print('ДБН: arch', len(archD), 'walks', walksD, 'N30', N30)
 geo = dict(AL=AL, AB=AB, stair=STAIR, zst=ZST, vents=VENTS, vr=VR, vh=VH, boxes=BOXES, ladder=LADDER, par=dict(lo=PAR_LO, w=PAR_W, e=PAR_E, g=PAR_G), hlow=HLOW, dep=round(DEP, 4), rise=round(RISE, 4), lm=LM, dm=DM)
-json.dump(dict(geo=geo, arch=arch, low=low), open('abk_k1.json', 'w'), ensure_ascii=False)
+json.dump(dict(geo=geo, arch=arch, low=low, archD=archD, walks=walksD, ladP1=LADP1, n30=N30), open('abk_k1.json', 'w'), ensure_ascii=False)
