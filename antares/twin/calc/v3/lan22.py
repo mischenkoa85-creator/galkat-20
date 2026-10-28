@@ -29,7 +29,7 @@ PW, GAMT, ETA, LOSS, ALB = ns['PW'], ns['GAMT'], ns['ETA'], ns['LOSS'], ns['ALB'
 horizon, svf = ns['horizon'], ns['svf']
 LM, DM, GAP = 2.384, 1.303, 0.022
 TILT = float(os.environ.get('TILT', '22')); tg, ct, st_ = math.tan(math.radians(TILT)), math.cos(math.radians(TILT)), math.sin(math.radians(TILT))
-CURB = 0.30; THK = 0.16                                   # низ модуля над покрівлею (оцінка); рейка 0,12 + модуль 0,035
+CURB = float(os.environ.get('CURB', '0.30')); THK = 0.16                                   # низ модуля над покрівлею (оцінка); рейка 0,12 + модуль 0,035
 VAL = 7.00 / 1.2 / 44.89 * 0.975; COST = 250.0
 MODES = {
     'base': dict(name='Як зараз: ліхтарі 3,66 × 1,89 («домік»), без модулів на ліхтарях', half=LW0 / 2),

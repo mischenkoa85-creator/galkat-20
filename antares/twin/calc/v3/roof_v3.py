@@ -20,7 +20,7 @@ dj = open(TW + 'data.js', encoding='utf-8').read(); S = json.loads(dj[dj.find('{
 b = open(TW + 'bess.js', encoding='utf-8').read(); BE = json.loads(b[b.find('{'):b.rfind('}') + 1])
 import os
 NODEFL = os.environ.get('NODEFL') == '1'                    # варіант для порівняння: дефлекторів немає (як у v2)
-DF = [] if NODEFL else [o for o in json.load(open(V + 'defl_v3.json')) if o['st'] in ('є', 'уточнити')]
+DF = [] if NODEFL else (json.load(open(V + os.environ['DFFILE'])) if os.environ.get('DFFILE') else [o for o in json.load(open(V + 'defl_v3.json')) if o['st'] in ('є', 'уточнити')])   # DFFILE=defl_final.json — 11 труб за фото 28.10
 f = lambda s: float(s.replace(',', '.'))
 PR = [dict(sp=r[0], x0=f(r[1]), x1=f(r[2]), z0=f(r[3]), z1=f(r[4]), what=r[7]) for r in list(csv.reader(open(V + 'profile.csv', encoding='utf-8'), delimiter=';'))[1:]]
 XP = np.array(sum(([p['x0'], p['x1']] for p in PR), [])); ZP = np.array(sum(([p['z0'], p['z1']] for p in PR), []))
