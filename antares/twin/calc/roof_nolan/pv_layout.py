@@ -75,11 +75,12 @@ def roof_cands():
                                  tilt=round(math.degrees(math.atan(abs(k))), 1), face='W' if k > 0 else 'E', why=why))
     return cand, Z, ROWS, bands
 def frame_mods():
-    """модулі на каркасах: сегменти між проходами Сх–Зх (і периметром), по 1 ряду книжково на кожен схил"""
+    """модулі на каркасах: по 1 ряду книжково на кожен схил; якщо RULES.paths_y_frames ≠ false — сегменти між проходами Сх–Зх"""
     c = RULES['clear']; out = []
+    cut = RULES['paths_y'] if RULES.get('paths_y_frames', True) else []   # false — каркас з модулями суцільний, прохід Сх–Зх переривається на ліхтарі
     for li, F in enumerate(R.FRAMES):
         segs = [(F['y0'], F['y1'])]
-        for p in RULES['paths_y']:
+        for p in cut:
             a, b = p['yc'] - p['w'] / 2, p['yc'] + p['w'] / 2; ns = []
             for s0, s1 in segs:
                 if b <= s0 or a >= s1: ns.append((s0, s1))
