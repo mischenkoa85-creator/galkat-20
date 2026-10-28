@@ -184,6 +184,10 @@ h3{margin:0 0 6px;font-size:12.5px;font-weight:650;letter-spacing:.04em;text-tra
 .blk.sel{border:1px solid var(--line);border-left:3px solid var(--ours,#1f6f8b);border-radius:8px;padding:10px 12px;background:var(--card,rgba(255,255,255,.6))}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
 table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:rgba(31,111,139,.08)} table.cmp.ep tbody tr.cur td{background:rgba(31,111,139,.16);font-weight:600}
+#l28bar .sep{flex:none;width:1px;align-self:stretch;margin:3px 4px;background:var(--line)}
+#l28bar button[data-v][aria-pressed="true"]{background:var(--ours,#1f6f8b);color:#fff}
+.legend .l28br{flex-basis:100%;height:0;padding:0;margin:0}
+.pane > .l28w{grid-column:1/-1;overflow-x:auto;min-width:0;display:flex;flex-direction:column;gap:6px} .l28w table.cmp{min-width:640px} .l28w .l28h{margin:6px 0 0;font-size:14px}
 </style>
 <div class="app">
   <header class="bar">
@@ -203,6 +207,7 @@ table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:
       </div>
       <div class="ctx" id="ctx">
         <div class="pill" id="modes" role="group" aria-label="Режим розділу"></div>
+        <div class="pill" id="l28bar" role="group" aria-label="Ліхтарі: покриття і етап" hidden></div>
         <div class="legend" id="legend"></div>
       </div>
     </div>

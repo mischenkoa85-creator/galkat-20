@@ -13,13 +13,15 @@
 #   сценарії «Ліхтарі → каркас 22° / 13°» у roofv2.js з живими тінями і річною тінню даху, порівняння в «Загальному» — roofv3.js)
 # + roof28data.js / roof28.js (28.10: дах без ліхтарів — каркаси 13°, 11 труб, лівневки; два варіанти розкладки: В1 з проходами і відступами, В2 максимальний;
 #   модулі поза стрінгами — на освітлення; calc/roof_nolan/twin28_export.py; показується в «Загальному», перемикач над моделлю)
+# + lan28data.js / lan28.js (28.10, вечір: ліхтарі в деталях на даху 28.10 — бортик, каркас 13°, прогони, покриття А / Б профнастил / Б сендвіч / 2 на склі, етапи «як є → демонтаж → готово»;
+#   модулі — місця з ROOF28.V[k].frame, вартість — кошторис покриття 28.10; та сама модель — elements-ses/calculator/lihtar)
 # + fasad.js (фасади цеху: панелі, вікна, ворота, кабелі; ДГУ, сходи, контейнери, ТП, адмінкорпус, покриття двору; після obst.js)
 # Самих фото в репозиторії немає (номери авто, договори) — вони лише в приватній версії двійника; тут перегляд показує «Фото немає в цій версії».
 cd "$(dirname "$0")" && python3 - <<'PY'
 r = lambda f: open('src/' + f, encoding='utf-8').read()
 app = r('app.js'); cut = app.rstrip().rfind('})();')   # montage.js (Будівництво) — всередину app.js, у ту саму область видимості
-app = app[:cut] + r('montage.js') + '\n' + r('obst.js') + '\n' + r('fasad.js') + '\n' + r('rad.js') + '\n' + r('facpv.js') + '\n' + r('roofv2.js') + '\n' + r('roofv3.js') + '\n' + r('roof28.js') + '\n' + app[cut:]
-body = r('tpl.html').replace('<script>/*DATA*/</script>', ''.join('<script>' + r(f) + '</script>' for f in ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
+app = app[:cut] + r('montage.js') + '\n' + r('obst.js') + '\n' + r('fasad.js') + '\n' + r('rad.js') + '\n' + r('facpv.js') + '\n' + r('roofv2.js') + '\n' + r('roofv3.js') + '\n' + r('roof28.js') + '\n' + r('lan28.js') + '\n' + app[cut:]
+body = r('tpl.html').replace('<script>/*DATA*/</script>', ''.join('<script>' + r(f) + '</script>' for f in ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
 head = '<!doctype html>\n<html lang="uk">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
 open('index.html', 'w', encoding='utf-8').write(head + body + '\n</html>\n')
 print('built index.html', len(head + body) // 1024, 'KB')
