@@ -11,6 +11,7 @@
 | `abk_app.js` | окрема сторінка (стандарт Антарес): сцена, сонце, панелі, UA / EN; викликає `ABKModel` |
 | `p1_head.html` | CSS і розмітка окремої сторінки |
 | `build.py` | `index.html` = p1 + model + app + дані; плюс `abk_data.js` |
+| `abk_cad.json`, `cad_extract.py` | П-кронштейни з CAD-моделей «Елементів SES» (домік, трикутник 15°), мм від центру деталі |
 | `old/` | p2_geo / p3_el / p4_ui до розділення, у збірку не входять |
 
 Дані: `abk_k1.json` (layout.py), `abk_dbn.json` (calc/v3/abk_dbn.py), `abk_mount.json` (mount.py — кріплення за «Елементами SES»: пози модулів і кожна деталь), `abk_bom.json` (calc/abk_kosh/bom.py), `abk_est.json` (calc/abk_kosh/pdf.py; рядки кошторису в `rows`).
@@ -38,7 +39,9 @@ A.paintStatus(r);                                   // колір: сонце / 
 - `TAGS`: позиція специфікації → об'єкти сцени.
   - Групи: `mod, arch, frame, wrail, blk, dc, tray, inv, ac, shch, meter, bz, p1, plat, rail, walk, safety`.
   - Деталі кріплення — тип@група (тег рядка специфікації): `lag@arch, slv@arch, rod@arch, prof@arch, ang@arch, cm@arch, cz@arch, anc@arch, blkn@arch, dfr@dom, brk@dom, diag@dom, ce@dom, sfr@one, brk@one, diag@one, ce@one, wr@wall, wbrk@wall, ce@wall, cm@wall`.
-- Пози модулів — з `D.mount.mods` (арка — на верхах лаг, «домік» 15,36° за стандартом, трикутники 15°, стіни 160 мм від стіни). Кріплення — `InstancedMesh` на кожен тип@група в шарі `groups.mount`; у тінь (`OCC`) не входить.
+- Пози модулів — з `D.mount.mods` (арка — на верхах лаг, «домік» 15,36° за стандартом, трикутники 15°, стіни 160 мм від стіни). Модуль — скло під лапкою рами (тінь і стан), рама ZNSHINE 33 мм — окремі екземпляри в шарі модулів.
+- Кріплення — геометрія «Елементів SES» (29.10): профіль 41×41×9×8 з пазом, бічними отворами і прорізами; середній притиск і Z33 з болтами DIN 912, гайкою з пружиною і тримачем (arka.js); гільза П 45 з муфтою, болтами і трубками; шпильки з контргайками; крайні притиски і рейки фасаду (calculator/fasad); П-кронштейни — сітки з CAD-моделей «доміку» і трикутника 15° (`abk_cad.json`, `cad_extract.py`); болти M10 — за позиціями з тих самих моделей (`D.mount.parts.bolt`).
+- Екземпляри групуються за геометрією і тегом (`InstancedMesh` у `groups.mount`, `frustumCulled = false`); у тінь (`OCC`) не входять. Отвори й прорізи мають `userData.keep` — не підсвічуються при фокусі.
 - `MODS`: 132 модулі. Кожен має стрінг `k`, MPPT, місце в стрінгу, генерацію за рік, години без роботи, графік 12×24 і стан зараз. Також `STR` / `STRO` (модулі й кабелі стрінга) і `BYKEY`.
 - `evaluate`, `paintStatus`, `sunAt`, `sunTimes`, `sky`, `tAir`: тінь і стан модулів (модель K1, bypass при ≥ 6 робочих у стрінгу).
 - `picks`: об'єкти з підказкою `userData.info = {uk: [назва, опис], en: [...]}`. У двійнику підказка має вигляд `{t, d}`, тому: `A.picks.forEach(o => pick(o, ...o.userData.info.uk))`.

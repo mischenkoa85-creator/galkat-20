@@ -313,6 +313,7 @@ box(103 - 96.64, 4.5, 35, mat.tp, (96.64 + 103) / 2, (-0.4 + 34.6) / 2, 2.25, gr
 })();
 // ================= модулі (лише «ДБН»): арка з доріжками, нижній дах «домік», надбудова «домік», південні стіни
 const T = 0.033;
+const lamG = () => { const g = new THREE.BoxGeometry(G.dm - 0.0036, 0.005, G.lm - 0.0036); g.translate(0, 0.0122, 0); return g; };   // скло з комірками в рамі ZNSHINE 33 мм
 const DROP = new Set(DB.drop.map(i => DB.mods[i].src + ':' + DB.mods[i].i));
 const MODREC = {}; DB.mods.forEach((m, j) => { m.j = j; MODREC[m.src + ':' + m.i] = m; });
 function modInfo(where, whereEn, extra, extraEn) { return I(where, extra, whereEn, extraEn); }
@@ -326,7 +327,7 @@ function poseMat(c, xv, nv, sx, sy, sz) {                             // цен�
 function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.matrixAutoUpdate = true; poseMat(q.c, q.x, q.n).decompose(mesh.position, mesh.quaternion, mesh.scale); return true; }
 (function buildArch() {
   D.archD.forEach((m, idx) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); placeMod(mesh, 'archD:' + idx);
+    const mesh = new THREE.Mesh(lamG(), pv[m.face]); placeMod(mesh, 'archD:' + idx);
     mesh.castShadow = mesh.receiveShadow = true; groups.arch.add(mesh);
     Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'archD', idx, key: 'archD:' + idx});
     mesh.userData.info = modInfo(`Модуль на арці · ${m.face === 'E' ? 'схід' : 'захід'} ${fx(m.tilt)}°`, `Arch module · ${m.face === 'E' ? 'east' : 'west'} ${m.tilt}°`,
@@ -340,7 +341,7 @@ function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.mat
     const key = 'low:' + idx, out = DROP.has(key) || !m.used;
     let mesh;
     if (!out) {
-      mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true; placeMod(mesh, key);
+      mesh = new THREE.Mesh(lamG(), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true; placeMod(mesh, key);
       Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'low', idx, key});
       const one = Math.abs(Math.abs(MP[key].tilt) - 15) < 0.01;
       mesh.userData.info = modInfo(`Модуль на нижньому даху · ${m.face === 'W' ? 'захід' : 'схід'} 15°`, `Lower roof module · ${m.face === 'W' ? 'west' : 'east'} 15°`,
@@ -361,7 +362,7 @@ function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.mat
 })();
 (function buildNad() {
   D.nad.d6.forEach((m, idx) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true;
+    const mesh = new THREE.Mesh(lamG(), pv[m.face]); mesh.castShadow = mesh.receiveShadow = true;
     placeMod(mesh, 'nad:' + idx); groups.nad.add(mesh); picks.push(mesh); tag(mesh, 'mod');
     Object.assign(mesh.userData, {base: pv[m.face], face0: pv[m.face], dat: m, src: 'nad', idx, key: 'nad:' + idx});
     mesh.userData.info = modInfo(`Модуль на надбудові · ${m.part === 'N' ? 'пн. частина +13,0' : 'пд. частина +11,95'} · ${m.face === 'W' ? 'захід' : 'схід'}`, `Stair house module · ${m.part === 'N' ? 'north part +13.0' : 'south part +11.95'} · ${m.face === 'W' ? 'west' : 'east'}`,
@@ -371,7 +372,7 @@ function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.mat
 (function buildWalls() {
   Object.keys(MP).filter(k => k.startsWith('wall:')).forEach(key => {
     const q = MP[key], i = +key.slice(5), P_ = q.how === 'P';
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(G.dm, T, G.lm), pv.S); placeMod(mesh, key);
+    const mesh = new THREE.Mesh(lamG(), pv.S); placeMod(mesh, key);
     mesh.castShadow = mesh.receiveShadow = true; Object.assign(mesh.userData, {base: pv.S, face0: pv.S, src: 'wall', idx: i, key, dat: q}); groups.wall.add(mesh);
     const z0 = q.c[2] - q.h / 2, z1 = q.c[2] + q.h / 2;
     mesh.userData.info = modInfo(`Вертикальний модуль · ${P_ ? 'книжково' : 'альбомно'}`, `Vertical module · ${P_ ? 'portrait' : 'landscape'}`,
@@ -380,25 +381,121 @@ function placeMod(mesh, key) { const q = MP[key]; if (!q) return false; mesh.mat
     picks.push(mesh); tag(mesh, 'mod');
   });
 })();
-// ---------- кріплення: кожна деталь — екземпляр; тип@група → тег для специфікації
+// ---------- кріплення: кожна деталь — за геометрією «Елементів SES» (arka-src/arka.js, calculator/fasad, t1568/ant_15, гілка antares-domik), мм → м
+// Екземпляри за видом геометрії і тегом специфікації (тип@група). Локальні осі деталі: X — уздовж (u), Y — нормаль (n), Z = X × Y.
 const MATS = {
   zn: mat.lag, fr: mat.frame, blk: mat.blk, rub: M(0x1f2124, {roughness: 1}), al: M(0xdfe4e8, {metalness: 0.35, roughness: 0.35}),
   dk: M(0x6f7a82, {metalness: 0.45, roughness: 0.45}), cu: M(0xb98b2f, {metalness: 0.5, roughness: 0.35}), rod: M(0x9aa3aa, {metalness: 0.6, roughness: 0.32}),
-  anc: M(0xc2410c, {roughness: 0.6}), ss: M(0xc9ced2, {metalness: 0.7, roughness: 0.25}),
+  anc: M(0xc2410c, {roughness: 0.6}), ss: M(0xc9ced2, {metalness: 0.7, roughness: 0.25}), a2: M(0xaeb4b9, {metalness: 0.35, roughness: 0.3}),
+  pl: M(0x2f6fd6, {roughness: 0.45}), gil: M(0x8fa3b2, {metalness: 0.3, roughness: 0.45}), lh: M(0xc2410c, {roughness: 0.6}),
+  lhn: M(0xd9822b, {metalness: 0.4, roughness: 0.4}), tube: M(0x6d777f, {metalness: 0.4, roughness: 0.5}), st: M(0xa9b1b7, {metalness: 0.35, roughness: 0.45}),
+  hole: new THREE.MeshBasicMaterial({color: 0x23282c, side: THREE.DoubleSide}), mfr: M(0xc9cfd4, {metalness: 0.3, roughness: 0.35, side: THREE.DoubleSide}),
 };
-const PT = {   // тип: [геометрія (одиниця по X, якщо масштабується), матеріал, масштабувати по L, тег]
-  lag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'zn', 1, 'lag'], prof: [new THREE.BoxGeometry(1, 0.041, 0.041), 'zn', 1, 'prof'],
-  dlag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'], dbeam: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'], dstrut: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'dfr'],
-  slag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'], sbeam: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'], sstrut: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'sfr'],
-  ddiag: [new THREE.BoxGeometry(1, 0.041, 0.041), 'dk', 1, 'diag'], wrail: [new THREE.BoxGeometry(1, 0.041, 0.041), 'fr', 1, 'wr'],
-  blk: [new THREE.BoxGeometry(0.3, 0.06, 0.3), 'blk', 0, 'blk'], blkn: [new THREE.BoxGeometry(0.3, 0.06, 0.3), 'blk', 0, 'blkn'], mat: [new THREE.BoxGeometry(0.32, 0.003, 0.32), 'rub', 0, 'mat'],
-  cm: [new THREE.BoxGeometry(0.05, 0.012, 0.044), 'al', 0, 'cm'], cz: [new THREE.BoxGeometry(0.05, 0.03, 0.026), 'al', 0, 'cz'], ce: [new THREE.BoxGeometry(0.05, 0.016, 0.04), 'al', 0, 'ce'],
-  slv: [new THREE.BoxGeometry(0.2, 0.037, 0.0455), 'dk', 0, 'slv'], cpl: [new THREE.CylinderGeometry(0.0098, 0.0098, 0.05, 6).rotateZ(Math.PI / 2), 'cu', 0, 'slv'],
-  rod: [new THREE.CylinderGeometry(0.005, 0.005, 1, 6).rotateZ(Math.PI / 2), 'rod', 1, 'rod'],
-  angP: [new THREE.BoxGeometry(1, 0.04, 0.008), 'dk', 1, 'ang'], angL: [new THREE.BoxGeometry(1, 0.04, 0.008), 'dk', 1, 'ang'],
-  anc: [new THREE.CylinderGeometry(0.06, 0.06, 0.05, 16), 'anc', 0, 'anc'], dbrk: [new THREE.BoxGeometry(0.05, 0.053, 0.05), 'ss', 0, 'brk'],
-  wbrk: [new THREE.BoxGeometry(0.06, 0.06, 0.06), 'dk', 0, 'wbrk'],
-};
+const MM = 0.001;
+const shp = pts => { const s = new THREE.Shape(); pts.forEach((p, i) => i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1])); s.closePath(); return s; };
+const mir = pts => pts.map(p => [-p[0], p[1]]).reverse();
+function exZ(pts, len) { const g = new THREE.ExtrudeGeometry(shp(pts), {depth: len, bevelEnabled: false}); g.translate(0, 0, -len / 2); return g; }   // переріз (x, y), уздовж z, центр по довжині
+const bx = (w, h, d, x, y, z) => { const g = new THREE.BoxGeometry(w, h, d); g.translate(x || 0, y || 0, z || 0); return g; };
+function cy(r, h, seg, x, y, z, ax) { const g = new THREE.CylinderGeometry(r, r, h, seg || 16); if (ax === 'x') g.rotateZ(Math.PI / 2); if (ax === 'z') g.rotateX(Math.PI / 2); g.translate(x || 0, y || 0, z || 0); return g; }
+const hexX = (x0, len, S) => cy(S / Math.sqrt(3), len, 6, x0 + len / 2, 0, 0, 'x');          // шестигранник уздовж x від x0
+function ringX(x0, len, R, r) { const s = new THREE.Shape(); s.absarc(0, 0, R, 0, Math.PI * 2, false); const h = new THREE.Path(); h.absarc(0, 0, r, 0, Math.PI * 2, true); s.holes.push(h);
+  const g = new THREE.ExtrudeGeometry(s, {depth: len, bevelEnabled: false, curveSegments: 14}); g.rotateY(Math.PI / 2); g.translate(x0, 0, 0); return g; }
+function mergeG(list) {
+  const gs = list.map(g => g.index ? g.toNonIndexed() : g); let n = 0; gs.forEach(g => { if (!g.attributes.normal) g.computeVertexNormals(); n += g.attributes.position.count; });
+  const p = new Float32Array(n * 3), q = new Float32Array(n * 3); let o = 0;
+  gs.forEach(g => { p.set(g.attributes.position.array, o * 3); q.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; });
+  const m = new THREE.BufferGeometry(); m.setAttribute('position', new THREE.BufferAttribute(p, 3)); m.setAttribute('normal', new THREE.BufferAttribute(q, 3)); return m;
+}
+const toL = (g, yc, sx) => { g.translate(sx || 0, -yc, 0); g.rotateY(Math.PI / 2); g.scale(MM, MM, MM); return g; };   // arka: x поперек, y від покрівлі, z уздовж → осі деталі, м
+// переріз профілю 41×41×9×8 (паз догори, центр у 0): стінка t, полиця всередину до прорізу 22, відгин униз 9 мм (variant-domik/passport.json)
+function cpro(t) { const a = 20.5, s = 11, r = 9, W = 41;
+  return [[-a, 0], [a, 0], [a, W], [s, W], [s, W - r], [s + t, W - r], [s + t, W - t], [a - t, W - t], [a - t, t], [-(a - t), t], [-(a - t), W - t], [-(s + t), W - t], [-(s + t), W - r], [-s, W - r], [-s, W], [-a, W]].map(([x, y]) => [x, y - 20.5]); }
+// arka.js, мм над покрівлею: лага 63…104, рама 104…137; середній притиск і Z33 з болтами DIN 912, гайка з пружиною в пазу, тримач
+const HL_ = 63, HT_ = 104, HM_ = 137, YMC_ = 143, YZ_ = 108, VB_ = 24;
+const MIDP = [[-8, HM_ - 12], [8, HM_ - 12], [8, HM_], [22, HM_], [22, YMC_], [-22, YMC_], [-22, HM_], [-8, HM_]];
+const ZP = [[-17, HT_], [12, HT_], [12, HM_], [24, HM_], [24, HM_ + 4], [9, HM_ + 4], [9, YZ_], [-17, YZ_]];    // модуль з боку +x
+const GU = [[-22.75, 61], [22.75, 61], [22.75, 96], [20.75, 96], [20.75, HL_], [-20.75, HL_], [-20.75, 96], [-22.75, 96]];   // гільза П 45 знизу на лазі
+const b912 = (L, y) => mergeG([cy(6.5, 8, 20, 0, y + 4, 0), cy(4, L, 12, 0, y - L / 2, 0)]);
+const sockG = y => { const g = new THREE.CircleGeometry(3.46, 6); g.rotateX(-Math.PI / 2); g.translate(0, y + 8.05, 0); return g; };
+const clampSub = (sub, yb, Lb, body) => sub === 'body' ? body : sub === 'bolt' ? b912(Lb, yb) : sub === 'sock' ? sockG(yb) : sub === 'nut' ? bx(35, 8, 20, 0, HL_ + VB_ + 4, 0)
+  : mergeG([bx(16, VB_ - 1.5, 14, 0, HL_ + 1.5 + (VB_ - 1.5) / 2, 0), bx(3, 6, 14, 9.5, HL_ + VB_ - 3, 0), bx(3, 6, 14, -9.5, HL_ + VB_ - 3, 0)]);
+// рама ZNSHINE (паспорт, переріз A-A / B-B): 33 мм, полиця 30 на довгій стороні і 14 на короткій, лапка над склом 10
+const FR_ = {h: 33, fl: 30, flS: 14, tube: 8, lip: 10, t: 1.8};
+const frs = fl => [[0, 0], [fl, 0], [fl, FR_.t], [FR_.tube, FR_.t], [FR_.tube, 26.2], [FR_.t, 26.2], [FR_.t, 31.2], [FR_.lip, 31.2], [FR_.lip, FR_.h], [0, FR_.h]];
+function frameG(len, fl) { const h = new THREE.Path(); h.moveTo(FR_.t, FR_.t); h.lineTo(FR_.t, 24.4); h.lineTo(FR_.tube - FR_.t, 24.4); h.lineTo(FR_.tube - FR_.t, FR_.t); h.closePath();
+  const s = shp(frs(fl)); s.holes.push(h); return new THREE.ExtrudeGeometry(s, {depth: len, bevelEnabled: false}); }
+function cadG(k) {                                                // П-кронштейни з моделей «Елементів SES» (abk_cad.json, мм від центру деталі)
+  const c = D.cad && D.cad[k]; if (!c) return bx(0.05, 0.053, 0.05);
+  const b = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0)).buffer;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(b(c.p)), 3)); g.setIndex(new THREE.BufferAttribute(new Uint16Array(b(c.i)), 1));
+  g.computeVertexNormals(); g.scale(MM, MM, MM); return g;
+}
+function MKG(key) {
+  const a = key.split(':'), k = a[0], sub = a[a.length - 1];
+  let g;
+  switch (k) {
+    case 'pro': g = exZ(cpro(+a[1]), 1000); g.rotateY(Math.PI / 2); g.scale(MM, MM, MM); return g;                       // профіль 1 м уздовж X (масштаб — довжина деталі)
+    case 'holeS': { const c1 = new THREE.CircleGeometry(5.25, 10); c1.translate(0, 0, 20.65); const c2 = new THREE.CircleGeometry(5.25, 10); c2.rotateY(Math.PI); c2.translate(0, 0, -20.65); g = mergeG([c1, c2]); g.scale(MM, MM, MM); return g; }
+    case 'slotB': { const s = new THREE.Shape(), r = 6.75, l = 15 - r; s.moveTo(-l, -r); s.lineTo(l, -r); s.absarc(l, 0, r, -Math.PI / 2, Math.PI / 2, false); s.lineTo(-l, r); s.absarc(-l, 0, r, Math.PI / 2, Math.PI * 1.5, false);
+      g = new THREE.ShapeGeometry(s, 3); g.rotateX(-Math.PI / 2); g.translate(0, -20.5 + 1.5 + 0.15, 0); g.scale(MM, MM, MM); return g; }   // проріз 30×13,5 у глухій стінці — видно крізь паз
+    case 'blk': return bx(0.3, 0.06, 0.3);
+    case 'mat': return bx(0.32, 0.003, 0.32);
+    case 'm8w': g = mergeG([cy(12, 2, 20, 0, 31.5 + 1, 0), cy(13 / Math.sqrt(3), 5.3, 6, 0, 33.5 + 2.65, 0)]); g.scale(MM, MM, MM); return g;   // M8×20 + DIN 9021 у жолобі лаги
+    case 'cmA': return toL(clampSub(sub, YMC_, 60, exZ(MIDP, 50)), YMC_);
+    case 'cz': return toL(clampSub(sub, YZ_, 25, exZ(a[1] === 'P' ? ZP : mir(ZP), 50)), 120, +a[2]);
+    case 'ce': { const L = +a[1] * MM, off = +a[2] * MM, z0 = -0.039;                                                     // притиск крайній (calculator/fasad): край рами при Z = 0, модуль з боку +Z
+      g = sub === 'body' ? mergeG([bx(L, 0.004, 0.022, 0, 0.035 + z0, -0.001), bx(L, 0.037, 0.004, 0, 0.0185 + z0, -0.014), bx(L, 0.004, 0.022, 0, 0.002 + z0, -0.027)])
+        : sub === 'bolt' ? cy(0.004, 0.052, 12, 0, 0.001 + z0, -0.027) : sub === 'head' ? cy(0.0075, 0.005, 6, 0, 0.0065 + z0, -0.027) : bx(0.022, 0.008, 0.02, 0, -0.031 + z0, -0.027);
+      g.translate(0, 0, off); if (+a[3] < 0) g.rotateY(Math.PI); return g; }
+    case 'cmW': return sub === 'body' ? mergeG([bx(0.08, 0.004, 0.04, 0, -0.004, 0), bx(0.07, 0.031, 0.014, 0, -0.0215, 0)]) : sub === 'bolt' ? cy(0.004, 0.07, 12, 0, -0.034, 0)
+      : sub === 'head' ? cy(0.0075, 0.005, 6, 0, 0.0005, 0) : bx(0.022, 0.008, 0.02, 0, -0.07, 0);
+    case 'slv': {
+      const two = f => mergeG([-50, 50].map(z => { const q = f(); q.translate(0, 83.5, z); return q; })), o = 22.75, w = 2;
+      g = sub === 'body' ? exZ(GU, 200) : sub === 'bolt' ? two(() => mergeG([cy(5, 60, 12, -o - w - 8 - 2.5 + 30, 0, 0, 'x'), hexX(o + w, 6.4, 17), ringX(o, w, 10, 5.25), ringX(-o - w, w, 10, 5.25), hexX(-o - w - 8, 8, 17)]))
+        : two(() => ringX(-19, 38, 7, 5.25));                                                                             // 2 × M10×60 з трубкою 14×1,75×38 у бічних отворах
+      return toL(g, 79.5); }
+    case 'cpl': g = sub === 'body' ? hexX(-25, 50, 17) : bx(22, 1.2, 8.5, -12.5, -(8.5 + 0.4), 0); g.scale(MM, MM, MM); return g;   // муфта M10×50, позначка лівої різьби
+    case 'rod': return cy(0.0046, 1, 10, 0, 0, 0, 'x');
+    case 'jam': g = hexX(-4, 8, 17); g.scale(MM, MM, MM); return g;
+    case 'ang': return bx(1, 0.04, 0.008);
+    case 'anc': return cy(0.06, 0.05, 16);
+    case 'brk': return cadG(a[1] === 'dom' ? 'brkD' : 'brkO');
+    case 'bolt': { const Ln = +a[1], h = Ln / 2;                                                                          // M10: стрижень Ln уздовж X, голівка з боку +X, фланцева гайка з другого
+      g = sub === 'shaft' ? cy(5, Ln, 12, 0, 0, 0, 'x') : sub === 'head' ? mergeG([hexX(h, 6.4, 16), ringX(h - 2, 2, 10, 5.25)]) : mergeG([hexX(-h + 2, 9, 15), cy(9.5, 1.5, 16, -h + 11.75, 0, 0, 'x'), ringX(-h + 12.5, 2, 10, 5.25)]);
+      g.scale(MM, MM, MM); return g; }
+    case 'wbrk': { const L = 0.155, w0 = -0.06, yr = w0 + 0.1395;                                                        // кронштейн L 60×60×5 з пазом (calculator/fasad), анкер M10, болт M10×35
+      if (sub === 'body') return mergeG([bx(0.08, 0.005, 0.06, 0, w0 + 0.0025, 0.053), bx(0.08, L - 0.005, 0.005, 0, w0 + 0.005 + (L - 0.005) / 2, 0.023)]);
+      if (sub === 'slot') return bx(0.013, 0.04, 0.0055, 0, yr, 0.023);
+      if (sub === 'bolt') return mergeG([cy(0.005, 0.07, 12, 0, yr, 0.001, 'z'), cy(0.009, 0.008, 6, 0, yr, 0.029, 'z')]);
+      return mergeG([cy(0.005, 0.09, 12, 0, w0 - 0.028, 0.053), cy(0.011, 0.002, 16, 0, w0 + 0.006, 0.053), cy(0.0085, 0.008, 6, 0, w0 + 0.011, 0.053)]); }
+    case 'frame': { const W = G.dm * 1000, Lm = G.lm * 1000, gl = frameG(Lm, FR_.fl), gs = frameG(W, FR_.flS);
+      const p1 = gl.clone(); p1.translate(-W / 2, 0, 0); const p2 = gl.clone(); p2.scale(-1, 1, 1); p2.translate(W / 2, 0, 0);
+      const p3 = gs.clone(); p3.rotateY(-Math.PI / 2); p3.translate(W / 2, 0, 0); const p4 = gs.clone(); p4.rotateY(Math.PI / 2); p4.translate(-W / 2, 0, Lm);
+      g = mergeG([p1, p2, p3, p4]); g.translate(0, -16.5, -Lm / 2); g.scale(MM, MM, MM); return g; }
+  }
+  return bx(0.02, 0.02, 0.02);
+}
+const GEO = {}, geoOf = k => GEO[k] || (GEO[k] = MKG(k));
+const SUBS = {cmA: [['body', 'al', 1], ['bolt', 'a2'], ['sock', 'hole'], ['nut', 'zn'], ['hold', 'pl']], cz: [['body', 'al', 1], ['bolt', 'a2'], ['sock', 'hole'], ['nut', 'zn'], ['hold', 'pl']],
+  ce: [['body', 'al', 1], ['bolt', 'ss'], ['head', 'ss'], ['nut', 'zn']], cmW: [['body', 'al', 1], ['bolt', 'ss'], ['head', 'ss'], ['nut', 'zn']],
+  slv: [['body', 'gil', 1], ['bolt', 'a2'], ['tube', 'tube']], cpl: [['body', 'cu', 1], ['mark', 'lh']], bolt: [['shaft', 'a2'], ['head', 'a2'], ['nut', 'a2']],
+  wbrk: [['body', 'st', 1], ['slot', 'hole'], ['bolt', 'ss'], ['anc', 'ss']]};
+const ACC = new Map(), m4 = () => new THREE.Matrix4(), TT = (x, y, z) => m4().makeTranslation(x, y, z), SX = s => m4().makeScale(s, 1, 1);
+function put(gk, mk, M, tg, g, o) {                               // накопичити екземпляр: геометрія | матеріал | тег@група
+  const k = gk + '|' + mk + '|' + tg + '@' + g; let r = ACC.get(k);
+  if (!r) ACC.set(k, r = {gk, mk, tg, g, ms: [], sh: !!(o && o.sh), keep: !!(o && o.keep), info: o && o.info}); r.ms.push(M);
+}
+const kit = (base, key, M, tg, g, info) => SUBS[base].forEach(([sub, mk, sh]) => put(key + ':' + sub, mk, M, tg, g, {sh, info}));
+const PRO = {lag: ['lag', 1.5, 'zn', 0.05], prof: ['prof', 1.5, 'zn', 0.05], dlag: ['dfr', 1.5, 'fr', 0.025], dbeam: ['dfr', 1.5, 'fr', 0.025], dstrut: ['dfr', 1.5, 'fr', 0.025],
+  slag: ['sfr', 1.5, 'fr', 0.025], sbeam: ['sfr', 1.5, 'fr', 0.025], sstrut: ['sfr', 1.5, 'fr', 0.025], ddiag: ['diag', 1.5, 'dk', 0.025], wrail: ['wr', 2.5, 'fr', 0.025]};
+const BTXT = {ang: {70: ['Болт M10×70 + гайка + шайби', 'Кутник(и) до лаги — крізь полицю кутника і обидві стінки лаги.', 'Bolt M10×70 + nut + washers', 'Angle(s) to the rail — through the angle leg and both rail walls.'],
+  60: ['Болт M10×60 + гайка + шайби', 'Кутник до крайнього профілю — 2 на кутник.', 'Bolt M10×60 + nut + washers', 'Angle to the edge profile — 2 per angle.']},
+  dfr: {100: ['Болт M10×100, шарнір', 'Балка до лаги в заводському бічному отворі на половині висоти (25 мм від торця лаги).', 'Bolt M10×100, hinge', 'Beam to rail in the factory side hole at mid-height (25 mm from the rail end).'],
+    140: ['Болт M10×140, вершина', 'Крізь балку – стійку – балку.', 'Bolt M10×140, apex', 'Through beam – strut – beam.'], 65: ['Болт M10×65, низ стійки', 'Крізь вуха П-кронштейна і стійку.', 'Bolt M10×65, strut foot', 'Through the U-bracket ears and the strut.'],
+    60: ['Болт M10×60, кронштейн до лаги', 'Голівка на спинці всередині стійки, гайка під лагою між середніми блоками.', 'Bolt M10×60, bracket to rail', 'Head on the bracket back inside the strut, nut under the rail between the inner blocks.']},
+  sfr: {60: ['Болт M10×60', 'Шарнір кронштейна крізь вуха і лагу; стійка до лаги внизу і до балки вгорі — по одному на вузол.', 'Bolt M10×60', 'Bracket hinge through the ears and the rail; strut to the rail below and to the beam above — one per joint.'],
+    20: ['Болт M10×20, кронштейн до балки', 'Голівка з шайбою між вухами, гайка всередині жолоба балки.', 'Bolt M10×20, bracket to beam', 'Head with washer between the ears, nut inside the beam channel.']},
+  diag: {20: ['Болт M10×20 з фланцевою гайкою', 'Діагональ до стійки, у заводських отворах.', 'Bolt M10×20 with flange nut', 'Diagonal to the strut, in factory holes.']}};
 const GRP = {arch: 'arch', dom: 'frame', one: 'frame', wall: 'wrail'};
 const MINFO = {
   'lag@arch': ['Лага 41×41×1,5 перфорована', 'Пазом догори, під стиком двох колонок модулів (крайня — 12 мм за рамою); на блоках 300×300×60 з муфтою і матом — 2 на панель через 1 200 мм і під кожним кінцем. Шматки 4 800 і 2 400, стик — у гільзі 200. Лага до блока — M8×20 + DIN 9021 у муфту.', 'Rail 41×41×1.5 perforated', 'Slot up, under the joint of two module columns (edge rail 12 mm outside the frame); on 300×300×60 blocks with coupling and mat — 2 per panel 1200 mm apart and one under each end. 4800 and 2400 pieces, splice inside a 200 sleeve. Rail to block — M8×20 + DIN 9021 into the coupling.'],
@@ -430,17 +527,50 @@ const MINFO = {
   'cm@wall': ['Притиск середній 80 мм', 'Між сусідніми модулями групи, на кожній рейці.', 'Mid clamp 80 mm', 'Between adjacent modules of a group, on each rail.'],
 };
 (function buildMount() {
+  const B8 = {arch: 'lag', dom: 'dfr', one: 'sfr'};
+  for (const [t, list] of Object.entries(MT.parts)) list.forEach(p => {
+    const g = p.k, M0 = poseMat(p.c, p.u, p.n);
+    if (PRO[t]) {
+      const [tg, th, mk, c0] = PRO[t], L = p.L;
+      put('pro:' + th, mk, M0.clone().multiply(SX(L)), tg, g, {sh: 1});
+      for (let s = c0; s <= L - c0 + 1e-6; s += th > 2 ? 0.05 : 0.1) put('holeS', 'hole', M0.clone().multiply(TT(s - L / 2, 0, 0)), tg, g, {keep: 1});
+      if (th < 2 && L > 0.3) for (let s = 0.025; s <= L - 0.025 + 1e-6; s += 0.05) put('slotB', 'hole', M0.clone().multiply(TT(s - L / 2, 0, 0)), tg, g, {keep: 1});
+      return;
+    }
+    switch (t) {
+      case 'blk': put('blk', 'blk', M0, 'blk', g, {sh: 1}); put('m8w', 'zn', M0.clone().multiply(TT(0, g === 'dom' ? 0.002 : 0, 0)), B8[g] || 'lag', g); break;
+      case 'blkn': put('blk', 'blk', M0, 'blkn', g, {sh: 1}); put('m8w', 'zn', M0.clone().multiply(TT(0, 0.003, 0)), 'lag', g); break;
+      case 'mat': put('mat', 'rub', M0, 'mat', g); break;
+      case 'cm': if (g === 'wall') kit('cmW', 'cmW', M0, 'cm', g); else kit('cmA', 'cmA', M0, 'cm', g); break;
+      case 'cz': { const v = p.fs ? (p.fs > 0 ? 'P:0' : 'M:0') : (p.side > 0 ? 'M:4' : 'P:-4'); kit('cz', 'cz:' + v, M0, 'cz', g); break; }
+      case 'ce': kit('ce', `ce:${g === 'wall' ? 80 : 50}:${Math.round((p.off || 0) * 1000)}:${p.sd || 1}`, M0, 'ce', g); break;
+      case 'slv': kit('slv', 'slv', M0, 'slv', g); break;
+      case 'cpl': kit('cpl', 'cpl', M0, 'slv', g); break;
+      case 'rod': { const L = p.L; put('rod', 'rod', M0.clone().multiply(SX(L)), 'rod', g);
+        [[-L / 2 + 0.016, 'a2'], [-L / 2 + 0.024, 'a2'], [L / 2 - 0.016, 'lhn']].forEach(([x, mk]) => put('jam', mk, M0.clone().multiply(TT(x, 0, 0)), 'rod', g)); break; }   // контргайки: 2 праві, 1 ліва
+      case 'angP': case 'angL': put('ang', 'st', M0.clone().multiply(SX(p.L)), 'ang', g, {sh: 1}); break;
+      case 'anc': put('anc', 'anc', M0, 'anc', g); break;
+      case 'dbrk': put('brk:' + g, 'ss', M0, 'brk', g, {sh: 1}); break;
+      case 'wbrk': kit('wbrk', 'wbrk', M0, 'wbrk', g); break;
+      case 'bolt': { const tx = (BTXT[p.tg] || {})[p.b], inf = tx ? I(tx[0], tx[1], tx[2], tx[3]) : null; kit('bolt', 'bolt:' + p.b, M0, p.tg, g, inf); break; }
+    }
+  });
+  ACC.forEach(r => {
+    const im = new THREE.InstancedMesh(geoOf(r.gk), MATS[r.mk], r.ms.length);
+    r.ms.forEach((M, i) => im.setMatrixAt(i, M)); im.instanceMatrix.needsUpdate = true; im.frustumCulled = false;
+    im.castShadow = r.sh; im.receiveShadow = !r.keep; im.userData.noOcc = true; if (r.keep) im.userData.keep = true;
+    const inf = r.info || (MINFO[r.tg + '@' + r.g] && I(...MINFO[r.tg + '@' + r.g]));
+    if (inf && !r.keep) { im.userData.info = inf; picks.push(im); }
+    groups.mount.add(im); tag(im, r.tg + '@' + r.g); tag(im, r.tg);
+    if (!['blk', 'blkn', 'mat'].includes(r.tg)) tag(im, GRP[r.g]); if (r.tg === 'mat' || r.tg === 'blkn') tag(im, 'blk');
+  });
+})();
+// рами модулів ZNSHINE 33 мм — екземпляри в шарі модулів (поза тінню: тінь рахують панелі)
+(function buildFrames() {
   const by = {};
-  for (const [t, list] of Object.entries(MT.parts)) list.forEach(p => { const k = t + '|' + p.k; (by[k] = by[k] || []).push(p); });
-  for (const [key, list] of Object.entries(by)) {
-    const [t, g] = key.split('|'), def = PT[t]; if (!def) continue;
-    const [geo, mk, scl, tg] = def, im = new THREE.InstancedMesh(geo, MATS[mk], list.length);
-    list.forEach((p, i) => im.setMatrixAt(i, poseMat(p.c, p.u, p.n, scl ? p.L : 1, 1, 1)));
-    im.instanceMatrix.needsUpdate = true; im.castShadow = t !== 'mat' && t !== 'rod'; im.receiveShadow = true; im.userData.noOcc = true;
-    const inf = MINFO[tg + '@' + g];
-    if (inf) im.userData.info = I(inf[0], inf[1], inf[2], inf[3]);
-    groups.mount.add(im); picks.push(im); tag(im, tg + '@' + g); tag(im, tg); if (!['blk', 'blkn', 'mat'].includes(tg)) tag(im, GRP[g]); if (tg === 'mat' || tg === 'blkn') tag(im, 'blk');
-  }
+  Object.entries(MP).forEach(([key, q]) => { const g = {archD: 'arch', low: 'low', nad: 'nad', wall: 'wall'}[key.split(':')[0]]; (by[g] = by[g] || []).push(poseMat(q.c, q.x, q.n)); });
+  Object.entries(by).forEach(([g, ms]) => { const im = new THREE.InstancedMesh(geoOf('frame'), MATS.mfr, ms.length); ms.forEach((M, i) => im.setMatrixAt(i, M)); im.instanceMatrix.needsUpdate = true;
+    im.frustumCulled = false; im.castShadow = im.receiveShadow = true; im.userData.noOcc = true; im.userData.keep = true; groups[g].add(im); tag(im, 'mod'); });
 })();
 
 // ================= кольори стрінгів
@@ -450,6 +580,19 @@ const sMat = {}; const strMat = k => sMat[k] || (sMat[k] = M(new THREE.Color(sco
 const LB = [];                                                        // підписи: [позиція, {uk, en}, клас, шар]
 const lbl = (pos, uk, en, cls = '', layer = null, k = 0) => { LB.push({p: pos, t: {uk, en}, cls, layer, k}); };
 const V3 = a => P(a[0], a[1], a[2]);
+// трос безпеки на стінах (calculator/fasad): від гайки-вушка на рейці до отвору в задній полиці рами, коуш і 2 втулки
+(function buildRopes() {
+  const rm = M(0x6f787e, {metalness: 0.55, roughness: 0.38}), sm = MATS.ss, inf = MINFO['wr@wall'] && I('Трос безпеки Ø3 AISI 316', 'У ПВХ ≈0,6 м: від гайки-вушка M8 на рейці до отвору в задній полиці рами, коуш і 2 втулки — модуль не впаде, якщо притиск ослабне.', 'Safety rope Ø3 AISI 316', 'PVC-coated ≈0.6 m: from an M8 eye nut on the rail to the hole in the frame back flange, thimble and 2 ferrules — the module cannot fall if a clamp loosens.');
+  Object.entries(MP).filter(([k]) => k.startsWith('wall:')).forEach(([k, q]) => {
+    const x0 = q.c[0] - q.w / 2, top = q.c[2] + q.h / 2, yb = q.c[1] + T / 2, P_ = q.how === 'P';
+    const E = P_ ? [x0 + 0.15, yb + 0.0205, top - 0.54 + 0.0205 + 0.012] : [x0 + 0.54 + 0.0205 + 0.012, yb + 0.0205, q.c[2] + 0.3];
+    const H = P_ ? [x0 + 0.012, yb + 0.002, top - 0.4] : [x0 + 0.54 + 0.15, yb + 0.002, top - 0.012];
+    const mid = [(E[0] + H[0]) / 2, yb + 0.07, (E[2] + H[2]) / 2 - 0.08];
+    const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([E, [E[0], E[1] + 0.03, E[2] - 0.02], mid, [H[0], H[1] + 0.03, H[2] - 0.03], H].map(V3)), 40, 0.0018, 6, false), rm);
+    const ey = new THREE.Mesh(new THREE.TorusGeometry(0.009, 0.003, 8, 16), sm); ey.position.copy(V3(E)); ey.rotation.y = Math.PI / 2;
+    [t, ey].forEach(o => { o.userData.noOcc = true; groups.mount.add(o); if (inf) { o.userData.info = inf; picks.push(o); } tag(o, 'wr@wall'); tag(o, 'wr'); tag(o, 'wrail'); });
+  });
+})();
 function tubeOf(pts, r, m, grp, info, tg) {
   const vs = pts.map(V3); if (vs.length < 2) return null;
   const segs = []; for (let i = 0; i < vs.length - 1; i++) if (vs[i].distanceTo(vs[i + 1]) > 1e-4) segs.push([vs[i], vs[i + 1]]);
@@ -478,9 +621,9 @@ Object.entries(DB.trays).forEach(([key, t]) => {
     if (dz < 0.3 || dh > dz) { const n = Math.floor(dh / 1.5); for (let k = 1; k <= n; k++) { const f = k / (n + 1), x = a[0] + (b[0] - a[0]) * f, y = a[1] + (b[1] - a[1]) * f; supPts.push([x, y, roofZ(x, y)]); } }
   }
 });
-{ const B = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.06, 0.3), mat.blk, supPts.length), TR = new THREE.InstancedMesh(new THREE.BoxGeometry(0.2, 0.041, 0.041), mat.frame, supPts.length), o = new THREE.Object3D();
+{ const B = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.06, 0.3), mat.blk, supPts.length), TR = new THREE.InstancedMesh((() => { const q = geoOf('pro:2.5').clone(); q.scale(0.2, 1, 1); return q; })(), mat.frame, supPts.length), o = new THREE.Object3D();
   supPts.forEach(([x, y, z], i) => { o.position.copy(P(x, y, z + 0.03)); o.updateMatrix(); B.setMatrixAt(i, o.matrix); o.position.copy(P(x, y, z + 0.08)); o.updateMatrix(); TR.setMatrixAt(i, o.matrix); });
-  [B, TR].forEach(x => { x.castShadow = x.receiveShadow = true; groups.elec.add(x); x.userData.info = I('Опора лотка', 'Траверса 41×41×2,5 (L = 0,2 м) на баластному блоці з муфтою, через 1,5 м; лоток кріпиться 2 болтами M8 з гайкою з пружиною.', 'Tray support', 'Cross-bar 41×41×2.5 (L = 0.2 m) on a ballast block with coupling, every 1.5 m; tray fixed with 2 M8 bolts with spring nuts.'); picks.push(x); tag(x, 'tray'); });
+  [B, TR].forEach(x => { x.castShadow = x.receiveShadow = true; x.frustumCulled = false; groups.elec.add(x); x.userData.info = I('Опора лотка', 'Траверса 41×41×2,5 (L = 0,2 м) на баластному блоці з муфтою, через 1,5 м; лоток кріпиться 2 болтами M8 з гайкою з пружиною.', 'Tray support', 'Cross-bar 41×41×2.5 (L = 0.2 m) on a ballast block with coupling, every 1.5 m; tray fixed with 2 M8 bolts with spring nuts.'); picks.push(x); tag(x, 'tray'); });
   tag(B, 'blk'); }
 // ---------- інвертор Deye SUN-100K-G03 на північній стіні надбудови
 const IV = DB.inv.pos;
@@ -564,11 +707,11 @@ lbl(P(BD[0], BD[1], BD[2] + 1.4), 'ПЗІП AC тип 2 — у щиті СЕС',
 // ---------- позначка «не працює»: хрест на модулі
 const xMat = new THREE.MeshBasicMaterial({color: 0xe23a2e});
 function addX(mesh) {
-  const isWall = mesh.userData.src === 'wall', g = mesh.geometry.parameters, w = g.width, l = isWall ? g.height : g.depth, d = Math.hypot(w, l), ang = Math.atan2(l, w);
+  const g = mesh.geometry.parameters, w = g.width, l = g.depth, d = Math.hypot(w, l), ang = Math.atan2(l, w);
   const grp = new THREE.Group();
   for (const s of [1, -1]) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(d * 0.92, isWall ? 0.07 : 0.006, isWall ? 0.006 : 0.07), xMat);
-    if (isWall) { b.rotation.z = s * ang; b.position.z = T / 2 + 0.008; } else { b.rotation.y = s * ang; b.position.y = T / 2 + 0.008; }
+    const b = new THREE.Mesh(new THREE.BoxGeometry(d * 0.92, 0.006, 0.07), xMat);
+    b.rotation.y = s * ang; b.position.y = T / 2 + 0.008;
     b.userData.noOcc = true; grp.add(b);
   }
   grp.visible = false; mesh.add(grp); return grp;

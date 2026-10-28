@@ -12,6 +12,7 @@ D['dbn'] = json.load(open(os.path.join(A, 'abk_dbn.json'), encoding='utf-8'))
 D['bom'] = json.load(open(os.path.join(A, 'abk_bom.json'), encoding='utf-8'))
 D['est'] = json.load(open(os.path.join(A, 'abk_est.json'), encoding='utf-8'))
 M = json.load(open(os.path.join(A, 'abk_mount.json'), encoding='utf-8')); D['mount'] = {k: M[k] for k in ('mods', 'parts', 'q', 'ac', 'bond')}   # mount.py — кріплення за «Елементи SES»
+C_ = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'abk_cad.json'))); D['cad'] = {k: C_[k] for k in ('brkD', 'brkO')}   # П-кронштейни з моделей «Елементів SES» (cad_extract.py)
 data = json.dumps(D, ensure_ascii=False, separators=(',', ':'))
 rd = lambda f: open(os.path.join(d, f), encoding='utf-8').read()
 html = rd('p1_head.html').replace('__DATA__', data) + rd('abk_model.js') + '\n' + rd('abk_app.js')

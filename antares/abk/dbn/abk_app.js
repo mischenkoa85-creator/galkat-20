@@ -180,7 +180,7 @@ function focus(key, label) {
   else if (key.startsWith('m:')) { const r = BYKEY[key.slice(2)]; if (r) { objs = [r.mesh]; layers = [r.g]; } }
   else { objs = TAGS[key] || []; layers = LAYER_OF[key] || (key.includes('@') || objs.some(o => o.parent === groups.mount) ? ['mount'] : []); }
   layers.forEach(l => { if (!state.lay[l]) { state.lay[l] = true; } }); setVis(true);
-  objs.forEach(o => { if (o.isLine || o.isLineSegments) return; if (o.userData.rec) { FOC.add(o); return; } FOCMAT.set(o, o.material); o.material = hiF; });
+  objs.forEach(o => { if (o.isLine || o.isLineSegments || o.userData.keep) return; if (o.userData.rec) { FOC.add(o); return; } FOCMAT.set(o, o.material); o.material = hiF; });
   $('#focustxt').textContent = label || (TAGNAME[key] ? TAGNAME[key][LANG === 'en' ? 1 : 0] : key); $('#focusbar').hidden = false;
   paint(); flyTo(bboxOf(objs.filter(o => !o.isLine)), key === 'mod' ? 0.75 : 1); need = true;
   if (['spec', 'kosh', 'str', 'el', 'bz', 'mnt', 'sun'].includes(state.sec)) renderPane();

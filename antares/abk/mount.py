@@ -40,6 +40,10 @@ def part(t, c, u, n, L=None, **kw):
     d = {'c': r4(c), 'u': r4(unit(u)), 'n': r4(unit(n)), 'k': CUR['k']}
     if L is not None: d['L'] = round(L, 4)
     d.update(kw); P[t].append(d)
+def bolt(c, ax, Ln, tg, d=10):
+    """болт: c — центр стрижня, ax — вісь (голівка з боку +ax), Ln — номінальна довжина, мм (як у «Елементах SES»: t1568/ant_15, antares-domik)"""
+    u = unit(ax); n = [1, 0, 0] if abs(u[2]) > 0.9 else [0, 0, 1]
+    part('bolt', c, u, n, b=Ln, d=d, tg=tg)
 Q = defaultdict(float)                          # кількості для специфікації
 MODS = {}                                       # пози модулів: ключ → {c, u (уздовж 2 384), n (нормаль), w (ширина поперек), tilt}
 UP, YN = [0, 0, 1], [0, 1, 0]
@@ -163,14 +167,19 @@ for y, a, b, ps in profs:
     d = unit(sub(pb, pa)); L = math.dist(pa, pb) - 0.062; mid = [(pa[0] + pb[0]) / 2, y, (pa[2] + pb[2]) / 2]
     nn = [-d[2], 0, d[0]]
     part('prof', mid, d, nn, L, ps=ps)
+    iy = 1 if (lag_at(a, y + 0.5) or lag_at(b, y + 0.5)) and not (lag_at(a, y - 0.5) and lag_at(b, y - 0.5)) else -1   # у бік поля
     for s in (-1, 1):
         part('blkn', add(add(mid, d, s * 0.33), nn, -(H_LC - 0.03)), d, nn)
-        if not ps: part('cz', add(add(mid, d, s * 0.30), nn, 0.0205 + 0.016), d, nn, side=0)
-    iy = 1 if (lag_at(a, y + 0.5) or lag_at(b, y + 0.5)) and not (lag_at(a, y - 0.5) and lag_at(b, y - 0.5)) else -1   # у бік поля
+        if not ps: part('cz', add(add(mid, d, s * 0.30), nn, 0.0205 + 0.016), d, nn, side=0, fs=iy)   # fs — модуль з боку +Y (1) чи −Y (−1)
     for j, s in ((a, 1), (b, -1)):
         p0 = add(onroof(LX[j], y, H_LC), d, s * 0.0245); nj = nrm(LX[j])
-        part('angP', add(p0, d, s * 0.075), [d[0] * s, 0, d[2] * s], nj, 0.15)
-        part('angL', add(p0, [0, iy * 0.08, 0], 0), [0, iy, 0], nj, 0.16); m10x70.add((j, y))
+        part('angP', add(add(p0, d, s * 0.075), [0, iy * 0.0245, 0]), [d[0] * s, 0, d[2] * s], nj, 0.15)   # полиця на грані профілю з боку поля
+        part('angL', add(p0, [0, iy * (0.0205 + 0.08), 0]), [0, iy, 0], nj, 0.16)                        # полиця на грані лаги, від профілю в поле
+        for e in (0.035, 0.115):                                                                         # 2 × M10×60 крізь кутник і профіль
+            bolt(add(add(p0, d, s * (0.0045 + e)), [0, iy * 0.0005, 0]), [0, iy, 0], 60, 'ang')
+        if (j, y) not in m10x70:                                                                         # M10×70 крізь кутник(и) і лагу
+            bolt(add(onroof(LX[j], y + iy * 0.1005, H_LC), d, -s * 0.0045), [d[0] * s, 0, d[2] * s], 70, 'ang')
+        m10x70.add((j, y))
     angles += [a, b]
 Q['arch_slv'] = len(sleeves); Q['arch_rod'] = sum(1 for r in rods if not r[3]); Q['arch_rod_pass'] = sum(1 for r in rods if r[3])
 Q['arch_rod_m'] = sum(math.dist(onroof(LX[a], y, 0), onroof(LX[b], y, 0)) - 0.026 for y, a, b, _ in rods)
@@ -209,19 +218,27 @@ def dom_tri(xr, yc, zr):
     part('dlag', c(0, YLAG), [1, 0, 0], UP, 2.75)
     for f in (-1, 1):                            # f = −1 — західна балка, +1 — східна; балка з боку лаги (зсув уздовж ряду f·ZB)
         a = c(f * (HX + BE * math.cos(TILT)), YLAG - BE * math.sin(TILT), f * ZB); b = c(-f * BE * math.cos(TILT), YAP + BE * math.sin(TILT), f * ZB)
-        d = sub(b, a); part('dbeam', [(a[i] + b[i]) / 2 for i in range(3)], d, [-d[2], 0, d[0]], math.dist(a, b) + 0.05)
+        d = sub(b, a); nb = [-d[2], 0, d[0]] if d[0] > 0 else [d[2], 0, -d[0]]                 # паз балки догори, до панелі
+        part('dbeam', [(a[i] + b[i]) / 2 for i in range(3)], d, nb, math.dist(a, b) + 0.05)
     part('dstrut', c(0, (YST0 + YST1) / 2), UP, [1, 0, 0], YST1 - YST0)
     part('dbrk', c(0, 0.106 + 0.0265), [1, 0, 0], UP)
+    for x_, h_, z_, Ln in ((-HX, YLAG, -0.0275, 100), (HX, YLAG, 0.014, 100), (0, YAP, -0.006, 140), (0, YF, -0.0055, 65)):
+        bolt(c(x_, h_, z_), YN, Ln, 'dfr')                       # 2 шарніри, вершина, низ стійки
+    bolt(c(0, 0.081), UP, 60, 'dfr')                             # кронштейн до лаги, гайка під лагою
     for s in DBX:
         part('blk', c(s, 0.033), [1, 0, 0], UP, k='dom'); part('mat', c(s, 0.0015), [1, 0, 0], UP, k='dom')
 def one_tri(xlag, dirx, yc, zr):
-    """трикутник 15° модифікація Антарес (t1568/a/ant_15): локально lx — від нижнього торця лаги вгору по схилу, ly — висота, мм"""
-    q = lambda lx, ly, dz=0.0: [xlag + dirx * lx / 1000, yc + dz, zr + ly / 1000]
+    """трикутник 15° модифікація Антарес (t1568/a/ant_15): lx — від нижнього торця лаги вгору по схилу, ly — висота, zc — поперек (вісь лаги 492), мм"""
+    q = lambda lx, ly, zc=492.0: [xlag + dirx * lx / 1000, yc + (zc - 492.0) / 1000, zr + ly / 1000]
     part('slag', q(775, 83.5), [1, 0, 0], UP, 1.55)
-    a, b = q(103, 127), q(1444, 503); d = sub(b, a)
-    part('sbeam', [(a[i] + b[i]) / 2 for i in range(3)], d, [-d[2], 0, d[0]], 1.419)
-    part('sstrut', q(1425, 289.5, 0.041), UP, [1, 0, 0], 0.4475)
-    part('dbrk', q(121, 95), [1, 0, 0], UP)
+    a, b = q(103, 127), q(1444, 503); d = sub(b, a); nb = [-d[2], 0, d[0]] if d[0] > 0 else [d[2], 0, -d[0]]
+    part('sbeam', [(a[i] + b[i]) / 2 for i in range(3)], d, nb, 1.419)
+    part('sstrut', q(1425, 289.5, 533.5), UP, [dirx, 0, 0], 0.4475)
+    part('dbrk', q(121.5, 95), [dirx, 0, 0], UP)
+    for lx, zc in ((125, 488.6), (1425, 486.6)): bolt(q(lx, 83.5, zc), YN, 60, 'sfr')       # шарнір кронштейна, низ стійки
+    bolt(q(1425, 489.5, 486.6), YN, 60, 'sfr')                                              # верх стійки до балки
+    sb, cb_ = math.sin(math.radians(15.66)), math.cos(math.radians(15.66))
+    bolt(q(126.6, 124.6), [dirx * sb, 0, -cb_], 20, 'sfr')                                   # кронштейн до балки: голівка між вухами
     for lx in (25, 1525):
         part('blk', q(lx, 33), [1, 0, 0], UP, k='one'); part('mat', q(lx, 1.5), [1, 0, 0], UP, k='one')
 CUR['k'] = 'dom'
@@ -236,7 +253,7 @@ for kind, ridge, y0, d, zr in LOWS:
             for dy in (-TRI, TRI):                # 4 притиски на панель: на балках двох опор, нижній і верхній край
                 for e in (-1, 1):
                     sc = f * DMD + f * e * DM / 2 * math.cos(TILT); h = HCD - e * DM / 2 * math.sin(TILT) + T / 2 + 0.006
-                    part('ce', [ridge + sc, yc + dy + f * ZB, zr + h], [0, 1, 0], nn, k='dom')
+                    part('ce', [ridge + sc, yc + dy + f * ZB, zr + h], [0, 1, 0], nn, k='dom', sd=-f * e, off=0)
         CUR['k'] = 'dom'
         for dy in (-TRI, TRI): dom_tri(ridge, yc + dy, zr)
         dom_rows[(ridge, zr)].append(yc)
@@ -253,7 +270,7 @@ for kind, ridge, y0, d, zr in LOWS:
         for dy in (-TRI, TRI):
             one_tri(xlag, -f, yc + dy, zr)
             for pnt, e in ((lo, 1), (hi, -1)):
-                part('ce', add([pnt[0] + e * f * 0.0 , yc + dy, pnt[2]], nn, T + 0.006), [0, 1, 0], nn, k='one')
+                part('ce', add([pnt[0], yc + dy, pnt[2]], nn, T + 0.006), [0, 1, 0], nn, k='one', sd=-f * e, off=0)
         one_rows[(round(xlag, 3), -f, zr)].append(yc)
 # діагоналі вздовж ряду: від верху стійки однієї опори до низу стійки сусідньої (ОС-108, розріз Б-Б)
 NDIAG_D = NDIAG_S = 0
@@ -264,6 +281,7 @@ for (ridge, zr), ycs in dom_rows.items():
         if abs(q - p - PITCH) > 0.05: continue
         a = [ridge + 0.041, p + TRI + 0.03, zr + YAP - 0.06]; b = [ridge + 0.041, q - TRI - 0.03, zr + YF + 0.06]
         d = sub(b, a); part('ddiag', [(a[i] + b[i]) / 2 for i in range(3)], d, [1, 0, 0], math.dist(a, b)); NDIAG_D += 1
+        for yy, pt in ((p + TRI, a), (q - TRI, b)): bolt([ridge + 0.015, yy, pt[2]], [1, 0, 0], 20, 'diag')   # у стійці (вісь стійки — центр опори)
 CUR['k'] = 'one'
 for (xlag, dirx, zr), ycs in one_rows.items():
     ycs.sort()
@@ -272,6 +290,7 @@ for (xlag, dirx, zr), ycs in one_rows.items():
         xs = xlag + dirx * 1.4665
         a = [xs, p + TRI + 0.02, zr + 0.161]; b = [xs, q - TRI - 0.02, zr + 0.411]
         d = sub(b, a); part('ddiag', [(a[i] + b[i]) / 2 for i in range(3)], d, [1, 0, 0], math.dist(a, b)); NDIAG_S += 1
+        for yy, pt in ((p + TRI + 0.0415, a), (q - TRI + 0.0415, b)): bolt([xlag + dirx * 1.440, yy, pt[2]], [dirx, 0, 0], 20, 'diag')   # у стійці
 Q.update(dom=NDOM, dom_tri=2 * NDOM, dom_pan=2 * NDOM, one=NONE, one_tri=2 * NONE, dom_diag=NDIAG_D, one_diag=NDIAG_S)
 
 # ================================================================== СТІНИ — фасадні вузли
@@ -295,14 +314,14 @@ for how, yw, xs in WG:
             nb = math.ceil((L - 0.34) / 1.2) + 1
             for k in range(nb):
                 xx = x0 + 0.17 + k * (L - 0.34) / (nb - 1); part('wbrk', [xx, yw - 0.06, z], [1, 0, 0], [0, -1, 0]); WQ['brk'] += 1
-            part('ce', [xs[0] - 0.02, yw - 0.160 - T - 0.006, z], [0, 0, 1], [0, -1, 0]); part('ce', [xs[-1] + w + 0.02, yw - 0.160 - T - 0.006, z], [0, 0, 1], [0, -1, 0]); WQ['ce'] += 2
+            part('ce', [xs[0] - 0.02, yw - 0.160 - T - 0.006, z], [0, 0, 1], [0, -1, 0], sd=1, off=0.02); part('ce', [xs[-1] + w + 0.02, yw - 0.160 - T - 0.006, z], [0, 0, 1], [0, -1, 0], sd=-1, off=0.02); WQ['ce'] += 2
             for x in xs[1:]: part('cm', [x - GAPW / 2, yw - 0.160 - T - 0.006, z], [0, 0, 1], [0, -1, 0]); WQ['cm'] += 1
     else:                                            # «Вертикально, альбомно»: на модуль 2 вертикальні рейки 1 400, 4 кронштейни, 4 притиски
         for x in xs:
             for xx in (x + 0.54, x + w - 0.54):
                 part('wrail', [xx, yr, zb + h / 2], [0, 0, 1], [0, -1, 0], 1.40); WQ['rail_m'] += 1.40; WQ['rail_n'] += 1
                 for dz in (-0.45, 0.45): part('wbrk', [xx, yw - 0.06, zb + h / 2 + dz], [0, 0, 1], [0, -1, 0]); WQ['brk'] += 1
-                for z in (zb - 0.02, zb + h + 0.02): part('ce', [xx, yw - 0.160 - T - 0.006, z], [1, 0, 0], [0, -1, 0]); WQ['ce'] += 1
+                for z, sd in ((zb - 0.02, -1), (zb + h + 0.02, 1)): part('ce', [xx, yw - 0.160 - T - 0.006, z], [1, 0, 0], [0, -1, 0], sd=sd, off=0.02); WQ['ce'] += 1
 Q.update({'wall_' + k: v for k, v in WQ.items()})
 
 # ================================================================== вирівнювання потенціалів (як том 7 СЕС цеху): механічно зв'язані блоки, по 2 приєднання
