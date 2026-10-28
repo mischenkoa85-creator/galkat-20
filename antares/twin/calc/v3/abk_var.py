@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-"""АБК: варіанти «Як є» / «ДБН» / «ДБН + 30 %» з доміком на надбудові — генерація і стрінги по 11 повною моделлю K1 (запит 28.10, 14:55).
+"""АБК: варіанти «Як є» / «ДБН» з доміком на надбудові — генерація і стрінги по 11 повною моделлю K1 (запит 28.10, 14:55).
 Модель — як у abk.py / abk_nad.py (Meteonorm 8.1, крок 10 хв, тіні DSM 0,25 м, горизонт, байпас-діоди), геометрія — antares/abk/abk_k1.json (layout.py).
-Надбудова: «як є» і «ДБН» — домік 6 модулів (пара по центру, пн 1 ряд, пд 2 ряди), «ДБН + 30 %» — 5 (у межах 30 % кожної частини).
-«ДБН + 30 %»: на арці і нижньому даху — найкращі місця варіанта «ДБН» за цією моделлю (арка 43, нижній дах 21).
+Надбудова: домік 6 модулів (пара по центру, пн 1 ряд, пд 2 ряди). Варіант «ДБН + 30 %» прибрано 28.10 (рішення власника).
 Стрінги: по 11 у межах орієнтації, залишки — спільні стрінги, поки втрати від різної освітленості ≤ 12 % (як на ліхтарях); решта — поза стрінгами.
 → antares/abk/abk_var.json"""
 import os, collections
@@ -77,16 +76,8 @@ def run_var(name, A, LW, NADL):
 NADJ = J['nad']; OUT = {}
 OUT['as'], _, _ = run_var('Як є', M_arch(J['arch'], 'arch'), M_dom(LOWU, 'low', 'L'), NADJ['d6'])
 OUT['as0'], _, _ = run_var('Як є без надбудови', M_arch(J['arch'], 'arch'), M_dom(LOWU, 'low', 'L'), [])
-OUT['dbn'], Ed, Md = run_var('ДБН', M_arch(J['archD'], 'archD'), M_dom(LOWU, 'low', 'L'), NADJ['d6'])
+OUT['dbn'], _, _ = run_var('ДБН', M_arch(J['archD'], 'archD'), M_dom(LOWU, 'low', 'L'), NADJ['d6'])
 OUT['dbn0'], _, _ = run_var('ДБН без надбудови', M_arch(J['archD'], 'archD'), M_dom(LOWU, 'low', 'L'), [])
-# найкращі місця ДБН у межах 30 % (за річною генерацією модуля в цій моделі)
-rk_a = sorted([(Ed[i], m['i']) for i, m in enumerate(Md) if m['src'] == 'archD'], reverse=True)[:J['n30']['arch']]
-rk_l = sorted([(Ed[i], m['i']) for i, m in enumerate(Md) if m['src'] == 'low'], reverse=True)[:J['n30']['low']]
-K30A = sorted(i for _, i in rk_a); K30L = sorted(i for _, i in rk_l)                  # індекси в archD і в LOWU
-A30 = [m for m in M_arch(J['archD'], 'archD') if m['i'] in K30A]; L30 = [m for m in M_dom(LOWU, 'low', 'L') if m['i'] in K30L]
-OUT['d30'], _, _ = run_var('ДБН + 30 %', A30, L30, NADJ['d5'])
-OUT['d300'], _, _ = run_var('ДБН + 30 % без надбудови', A30, L30, [])
-OUT['k30'] = dict(archD=K30A, low=[LOW_IDX[i] for i in K30L])                       # low — індекси в повному J['low']
-for k in ('as', 'as0', 'dbn', 'dbn0', 'd30', 'd300'):                                # low-індекси → у повному списку J['low']
+for k in ('as', 'as0', 'dbn', 'dbn0'):                                # low-індекси → у повному списку J['low']
     if 'low' in OUT[k]['idx']: OUT[k]['idx']['low'] = [LOW_IDX[i] for i in OUT[k]['idx']['low']]
 json.dump(OUT, open('/home/claude/galkat-20/antares/abk/abk_var.json', 'w'), ensure_ascii=False)
