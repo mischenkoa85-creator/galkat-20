@@ -673,24 +673,35 @@
 {
 "g": "G",
 "key": "ac",
-"uk": "Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК",
-"en": "Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board",
+"uk": "Провід СІП-4 4×70 мм² (Al, 0,6/1 кВ) — інвертор → лоток → підвіс через проїзд → щит СЕС у ТП-5913",
+"en": "Self-supporting insulated cable SIP-4 4×70 mm² (Al, 0.6/1 kV) — inverter → tray → overhead span across the driveway → PV board in TP-5913",
 "u": "м / m",
-"q": 45,
+"q": 29,
 "ref": "4.3",
 "tag": "ac",
-"src": "по стіні і стояку сходів, + 10 % / along wall and stair riser, + 10 %"
+"src": "траса 26,1 м (проліт 8,1 м), + 10 % / route, span, + 10 %"
+},
+{
+"g": "G",
+"key": "sipa",
+"uk": "Арматура підвісу СІП: затискач анкерний ЗА 31 4×(25–70) — 2, гак GHP 16М з дюбелями — 2, кронштейн фасадний SC 93-6PC — 4",
+"en": "Overhead span fittings: anchor clamp ZA 31 4×(25–70) — 2, wall hook GHP 16M with plugs — 2, facade bracket SC 93-6PC — 4",
+"u": "компл / set",
+"q": 1,
+"ref": "4.14",
+"tag": "ac",
+"src": "стіна АБК і стіна ТП-5913 / building wall and TP-5913 wall"
 },
 {
 "g": "G",
 "key": "lug70",
-"uk": "Наконечник мідний луджений ТМЛ 70",
-"en": "Tinned copper lug 70 mm²",
+"uk": "Наконечник алюмінієво-мідний DTL-2-70",
+"en": "Aluminium-copper lug DTL-2-70",
 "u": "шт / pcs",
-"q": 10,
+"q": 8,
 "ref": "5.3",
 "tag": "ac",
-"src": "5 жил × 2 кінці / 5 cores × 2 ends"
+"src": "4 жили × 2 кінці / 4 cores × 2 ends"
 },
 {
 "g": "G",
@@ -701,13 +712,13 @@
 "q": 1,
 "ref": "4.4",
 "tag": "shch",
-"src": "струм інвертора до 159,4 А / inverter current up to 159.4 A"
+"src": "струм інвертора до 159,4 А; щит СЕС — у ТП-5913, приєднання до РУ-0,4 кВ / inverter current up to 159.4 A; PV board in TP-5913"
 },
 {
 "g": "G",
 "key": "box",
-"uk": "Корпус щита IEK ЩМП-4.6.2-0 74 У2, 400 × 600 × 250, IP54 — щит СЕС",
-"en": "Enclosure IEK ShchMP-4.6.2-0, 400 × 600 × 250, IP54 — PV board",
+"uk": "Корпус щита IEK ЩМП-4.6.2-0 74 У2, 400 × 600 × 250, IP54 — щит СЕС у ТП-5913",
+"en": "Enclosure IEK ShchMP-4.6.2-0, 400 × 600 × 250, IP54 — PV board in TP-5913",
 "u": "шт / pcs",
 "q": 1,
 "ref": "4.4",
@@ -717,19 +728,19 @@
 {
 "g": "G",
 "key": "spdac",
-"uk": "ПЗІП AC тип 2, 4P, 280 В (Eaton SPCT2-280/4) — у щиті СЕС",
-"en": "AC surge protector type 2, 4P, 280 V (Eaton SPCT2-280/4) — in PV board",
+"uk": "ПЗІП AC тип 2, 4P, 280 В (Eaton SPCT2-280/4) — у щиті СЕС у ТП-5913",
+"en": "AC surge protector type 2, 4P, 280 V (Eaton SPCT2-280/4) — in PV board in TP-5913",
 "u": "шт / pcs",
 "q": 1,
 "ref": "4.5",
 "tag": "shch",
-"src": "вхід AC у будівлю / AC entry into the building"
+"src": "на вводі лінії СІП у ТП / at the overhead line entry into the TP"
 },
 {
 "g": "G",
 "key": "meter",
-"uk": "Лічильник CHINT DTSU666 з трансформаторами струму 250 А — на вводі АБК, обмеження видачі в мережу (Zero Export)",
-"en": "Meter CHINT DTSU666 with 250 A current transformers — at the building input, export limiting (Zero Export)",
+"uk": "Лічильник CHINT DTSU666 з трансформаторами струму 250 А — на вводі АБК: інвертор видає не більше, ніж споживає АБК (Zero Export)",
+"en": "Meter CHINT DTSU666 with 250 A current transformers — at the building input: inverter output limited to the building load (Zero Export)",
 "u": "компл / set",
 "q": 1,
 "ref": "4.6",
@@ -750,10 +761,10 @@
 {
 "g": "G",
 "key": "gland",
-"uk": "Прохід кабелів крізь стіну надбудови з ущільненням",
-"en": "Cable wall pass-through into the stair house with sealing",
+"uk": "Прохід крізь стіну з ущільненням: у ТП-5913 (СІП і PE) і в надбудову (RS485)",
+"en": "Wall pass-through with sealing: into TP-5913 (SIP and PE) and into the stair house (RS485)",
 "u": "компл / set",
-"q": 1,
+"q": 2,
 "ref": "5.3",
 "tag": "ac",
 "src": ""
@@ -764,10 +775,10 @@
 "uk": "Провід Cu 1×6 мм² жовто-зелений — вирівнювання потенціалів у лотках і відгалуження до кріплення",
 "en": "Cu wire 1×6 mm² green-yellow — equipotential bonding in trays and branches to mounting",
 "u": "м / m",
-"q": 245,
+"q": 185,
 "ref": "1.7",
 "tag": "bz",
-"src": "лотки 106,3 м + 10 % і 28 відгалужень / trays + 10 % and 28 branches"
+"src": "лотки 106,3 м + 10 % і 28 відгалужень до 14 механічно зв'язаних блоків / trays + 10 % and branches to bonded blocks"
 },
 {
 "g": "H",
@@ -779,6 +790,17 @@
 "ref": "1.7",
 "tag": "bz",
 "src": ""
+},
+{
+"g": "H",
+"key": "pe16",
+"uk": "Провід Cu 1×16 мм² жовто-зелений — PE від інвертора уздовж СІП до головної заземлювальної шини ТП-5913",
+"en": "Cu wire 1×16 mm² green-yellow — PE from the inverter along the SIP to the main earthing bar of TP-5913",
+"u": "м / m",
+"q": 31,
+"ref": "4.15",
+"tag": "pe",
+"src": "траса 27,6 м + 10 %; на прольоті — стяжками до СІП / route + 10 %; tied to the SIP on the span"
 },
 {
 "g": "H",
@@ -808,10 +830,10 @@
 "uk": "Наконечник 16 мм² і контрольне з'єднання",
 "en": "Lug 16 mm² and test joint",
 "u": "шт / pcs",
-"q": 4,
+"q": 6,
 "ref": "1.7",
 "tag": "bz",
-"src": ""
+"src": "прут на парапеті, PE інвертора, ГЗШ ТП-5913 / parapet rod, inverter PE, TP-5913 earthing bar"
 },
 {
 "g": "H",

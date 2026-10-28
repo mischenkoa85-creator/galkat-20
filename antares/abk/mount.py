@@ -305,13 +305,101 @@ for how, yw, xs in WG:
                 for z in (zb - 0.02, zb + h + 0.02): part('ce', [xx, yw - 0.160 - T - 0.006, z], [1, 0, 0], [0, -1, 0]); WQ['ce'] += 1
 Q.update({'wall_' + k: v for k, v in WQ.items()})
 
+# ================================================================== вирівнювання потенціалів (як том 7 СЕС цеху): механічно зв'язані блоки, по 2 приєднання
+TRAYS = [[tuple(pt) for pt in t['pts']] for t in DBN['trays'].values()]
+def near_tray(q):
+    best = (1e9, None)
+    for pl in TRAYS:
+        for a_, b_ in zip(pl, pl[1:]):
+            d = [b_[i] - a_[i] for i in range(3)]; L2 = sum(c * c for c in d) or 1e-9
+            t = max(0.0, min(1.0, sum((q[i] - a_[i]) * d[i] for i in range(3)) / L2)); pt = [a_[i] + d[i] * t for i in range(3)]
+            dd = math.dist(q, pt)
+            if dd < best[0]: best = (dd, pt)
+    return best
+class UF:
+    def __init__(s_, n): s_.p = list(range(n))
+    def f(s_, a_):
+        while s_.p[a_] != a_: s_.p[a_] = s_.p[s_.p[a_]]; a_ = s_.p[a_]
+        return a_
+    def u(s_, a_, b_): s_.p[s_.f(a_)] = s_.f(b_)
+def run_at(j, y):
+    for i, rn in enumerate(runs):
+        if rn['j'] == j and rn['ys'] - 0.2 <= y <= rn['ye'] + 0.2: return i
+    return None
+uf = UF(len(runs))
+for y, ties in merged.items():
+    for j0, j1, k in ties:
+        a_, b_ = run_at(j0, y), run_at(j1, y)
+        if a_ is not None and b_ is not None: uf.u(a_, b_)
+for y, a0, b0, k in PASS:
+    a_, b_ = run_at(a0, y), run_at(b0, y)
+    if a_ is not None and b_ is not None: uf.u(a_, b_)
+GROUPS = defaultdict(list)                       # назва → точки приєднання (на кріпленні)
+for i, rn in enumerate(runs):
+    x = LX[rn['j']]
+    for y in (rn['ys'] + 0.3, (rn['ys'] + rn['ye']) / 2, rn['ye'] - 0.3): GROUPS['arch-%d' % uf.f(i)].append(onroof(x, y, H_LT - 0.02))
+def chains(rows, key):
+    for (k0, *rest), ycs in rows.items():
+        ycs = sorted(ycs); cur = [ycs[0]]
+        for yy in ycs[1:] + [None]:
+            if yy is not None and abs(yy - cur[-1] - PITCH) < 0.05: cur.append(yy); continue
+            yield k0, rest, cur
+            if yy is not None: cur = [yy]
+for ridge, (zr,), ycs in chains(dom_rows, 'dom'):
+    for yc in ycs:
+        for dy in (-TRI, TRI): GROUPS['dom-%.2f-%.2f-%.2f' % (ridge, zr, ycs[0])].append([ridge, yc + dy, zr + YLAG + 0.02])
+for xlag, (dirx, zr), ycs in chains(one_rows, 'one'):
+    for yc in ycs:
+        for dy in (-TRI, TRI): GROUPS['one-%.2f-%.2f' % (xlag, ycs[0])].append([xlag + dirx * 0.775, yc + dy, zr + 0.104])
+for gi, (how, yw, xs) in enumerate(WG):
+    w, h = (DM, LM) if how == 'P' else (LM, DM)
+    for x in xs: GROUPS['wall-%d' % gi].append([x + w / 2, yw - ZR_ - 0.0205, zb + 0.54])
+BOND = []
+for g, pts in GROUPS.items():
+    cand = sorted(((near_tray(q), q) for q in pts), key=lambda z: z[0][0])
+    first = cand[0]                                   # друге приєднання — найближча до лотка точка іншої деталі блоку (≥ 1 м від першої)
+    far = [c for c in cand[1:] if math.dist(first[1], c[1]) >= 1.0] or cand[1:2] or cand[:1]
+    second = min(far, key=lambda z: z[0][0])
+    con = []
+    for (dd, tp), q in (first, second):
+        path = [q, [q[0], q[1], max(tp[2], q[2] - 0.08)], [tp[0], tp[1], tp[2]]] if g.startswith('wall') else [q, [tp[0], tp[1], tp[2] + 0.02]]
+        L = sum(math.dist(a_, b_) for a_, b_ in zip(path, path[1:])) + 1.0
+        con.append({'len': round(L, 1), 'pts': [r4(p_) for p_ in path]})
+    BOND.append({'g': g, 'n': len(pts), 'con': con})
+TRAY_LEN = DBN['tray_len']
+Q['bond_groups'] = len(BOND); Q['bond_con'] = 2 * len(BOND)
+Q['bond6'] = round(TRAY_LEN * 1.1 + sum(c['len'] for b_ in BOND for c in b_['con']), 1)
+
+# ================================================================== AC: інвертор → лоток → підвіс СІП-4 4×70 через проїзд → ТП-5913 (рішення власника 28.10, 21:58)
+IV = DBN['inv']['pos']; TRK = DBN['trays']
+p_pass, p_wall = TRK['pass']['pts'], TRK['wallW']['pts']
+XA, YA = AL['x0'], 20.0                            # гак на західній стіні південного блоку АБК
+TPX = 103.0                                        # східна стіна ТП-5913 (двійник: X 96,64…103,0)
+hookA, hookB = [XA - 0.05, YA, AL['h'] + 0.25], [TPX + 0.05, YA, 4.0]
+def off(pl, dx, dy, dz): return [[p_[0] + dx, p_[1] + dy, p_[2] + dz] for p_ in pl]
+sip_roof = [[IV['x'] + IV['w'] / 2 - 0.05, IV['y'] + 0.06, IV['z0'] + 0.15], [IV['x'] + IV['w'] / 2 - 0.05, IV['y'] + 0.12, 10.2]] \
+    + off([p_pass[0], p_pass[-1]], -0.03, 0, 0.03) + off([p_wall[1], p_wall[0]], 0, -0.03, 0.03) \
+    + [[AL['x0'] + 0.32, YA + 0.09, AL['h'] + 0.18], [AL['x0'] + 0.32, YA + 0.09, AL['h'] + 0.62], [AL['x0'] - 0.08, YA + 0.09, AL['h'] + 0.62], [AL['x0'] - 0.06, YA, hookA[2] + 0.05]]
+NS = 12; SAG = 0.12
+span = [[hookA[0] + (hookB[0] - hookA[0]) * t, YA, hookA[2] + (hookB[2] - hookA[2]) * t - 4 * SAG * t * (1 - t)] for t in [i / NS for i in range(NS + 1)]]
+sip_tp = [[TPX + 0.06, YA, 3.95], [TPX + 0.06, YA, 2.6], [TPX - 0.45, YA, 2.6], [TPX - 0.45, YA, 1.95]]
+BOARD = [TPX - 0.45, YA, 1.6]; GZSH = [TPX - 0.35, YA - 0.6, 0.45]
+dist = lambda pl: sum(math.dist(a_, b_) for a_, b_ in zip(pl, pl[1:]))
+L_sip = dist(sip_roof) + dist(span) + dist(sip_tp) + 1.0           # +1,0 м на розробку кінців
+pe = off(sip_roof, 0.04, -0.04, -0.01) + off(span, 0, -0.05, -0.04) + [[TPX + 0.06, YA - 0.05, 3.9], [TPX + 0.06, YA - 0.05, 2.55], [TPX - 0.35, YA - 0.05, 2.55], GZSH]
+L_pe = dist(pe) + 1.0
+BRK = [[XA - 0.06, YA, AL['h'] + 0.45]] + [[TPX + 0.07, YA, z] for z in (3.5, 3.05, 2.65)]
+AC = {'sip': [r4(p_) for p_ in sip_roof], 'span': [r4(p_) for p_ in span], 'tp': [r4(p_) for p_ in sip_tp], 'pe': [r4(p_) for p_ in pe], 'hooks': [r4(hookA), r4(hookB)],
+      'brk': [r4(p_) for p_ in BRK], 'board': r4(BOARD), 'gzsh': r4(GZSH), 'len': round(L_sip, 1), 'pe_len': round(L_pe, 1), 'span_len': round(dist(span), 1)}
+Q.update(sip_m=round(L_sip, 1), pe16_m=round(L_pe, 1), sip_span=AC['span_len'], sip_hooks=2, sip_clamps=2, sip_brk=len(BRK))
+
 # ================================================================== кількості
 for t in ('blk', 'mat'): Q['n_' + t] = len(P[t])
 Q['n_blkn'] = len(P['blkn'])
 for t in ('blk', 'ce', 'dbrk', 'mat'):
     for g in ('arch', 'dom', 'one', 'wall'): Q[f'{g}_{t}'] = sum(1 for p in P[t] if p['k'] == g)
 out = {'note': 'mount.py 28.10.2026: кріплення за «Елементи SES»', 'mods': MODS, 'parts': P, 'q': {k: (round(v, 3) if isinstance(v, float) else v) for k, v in sorted(Q.items())},
-       'lagx': {str(j): round(x, 4) for j, x in LX.items()}, 'anch': [[round(y, 3), j] for y, j in ANCH], 'pass': [[round(y, 3), a, b, k] for y, a, b, k in PASS]}
+       'lagx': {str(j): round(x, 4) for j, x in LX.items()}, 'bond': BOND, 'ac': AC, 'anch': [[round(y, 3), j] for y, j in ANCH], 'pass': [[round(y, 3), a, b, k] for y, a, b, k in PASS]}
 json.dump(out, open(os.path.join(HERE, 'abk_mount.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print(json.dumps(out['q'], ensure_ascii=False, indent=0))
 print('parts', {k: len(v) for k, v in P.items()}, 'mods', len(MODS))

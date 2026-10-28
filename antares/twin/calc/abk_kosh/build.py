@@ -43,7 +43,7 @@ Q = [  # key, name uk / en, value, unit, src, fmt, kind
  ('MWH', 'Генерація модулів за рік (DC) / Annual module yield (DC)', DB['mwh'], 'МВт·год / MWh', 'повна модель K1: Meteonorm 8.1, тіні DSM, байпас-діоди / full K1 model', '#,##0.0', 'in'),
  ('TRB', 'Блоків під опори лотків / Blocks under tray supports', BOM['blk']['tray'], 'шт', f"лотки на даху {DB['tray_stats']['roof']} м, опора через 1,5 м / roof trays, support every 1.5 m", QTY, 'in'),
  ('BLKN', 'Баластних блоків до замовлення (+1 %) / Ballast blocks to order (+1 %)', '=ROUNDUP(({BLKA}+B15)*1.01,0)', 'шт', 'кріплення модулів — 3D-модель (кожен блок), опори лотків / module mounting — 3D model (every block), tray supports', QTY, 'f'),
- ('ACM', 'Кабель AC інвертор → щит СЕС / AC cable inverter → PV board', 45, 'м', 'по стіні і стояку сходів, + 10 % / along wall and stair riser, + 10 %', QTY, 'in'),
+ ('ACM', 'Провід СІП-4 4×70: інвертор → ТП-5913 / SIP-4 4×70: inverter → TP-5913', next(x['q'] for x in BOM['items'] if x['key'] == 'ac'), 'м', 'траса з 3D-моделі: лоток, підвіс через проїзд, стіна ТП, + 10 % / route from the 3D model, + 10 %', QTY, 'in'),
  ('RSM', 'Кабель RS485 лічильник → інвертор / RS485 cable meter → inverter', 55, 'м', 'уздовж кабелю AC / along AC cable', QTY, 'in'),
  ('LP1', 'Драбина П1 на арку: 4,8 + 1,0 м / Fixed ladder P1 to arch: 4.8 + 1.0 m', 5.8, 'м', 'ДБН В.1.1-7:2016 п. 8.8–8.10', QTY, 'in'),
  ('PLAT', 'Площадка з огорожею 0,6 м на арці / Landing with 0.6 m guard on arch', 1, 'шт', 'ДБН В.1.1-7:2016 табл. 5', QTY, 'in'),
@@ -52,6 +52,7 @@ Q = [  # key, name uk / en, value, unit, src, fmt, kind
  ('WALK', 'Ходові доріжки 0,8 м / Walkways 0.8 m', 63, 'м²', 'ДБН В.2.6-220:2017 п. 7.1.3', QTY, 'in'),
  ('HRS', 'Монтаж драбин, площадки, огородження і доріжок / Installation of ladders, landing, guardrail, walkways', 112, 'люд.·год / man-h', 'драбини 2 × 16, огородження 64, доріжки 16 / ladders 2 × 16, guardrail 64, walkways 16', QTY, 'in'),
  ('NANC', 'Анкерів від сповзання на арці / Anti-slide anchors on the arch', BOM['anc'], 'шт', 'ланцюжок тяг лінії не переходить гребінь — анкер на верхній лазі (правило КМ даху цеху) / tie chain not crossing the ridge', QTY, 'in'),
+ ('PEM', 'Провід PE Cu 1×16 до ГЗШ ТП-5913 / PE Cu 1×16 to TP-5913 earthing bar', next(x['q'] for x in BOM['items'] if x['key'] == 'pe16'), 'м', 'уздовж СІП, + 10 % / along the SIP, + 10 %', QTY, 'in'),
 ]
 R0 = 5 + len(Q) + 1
 SKEYS = ['PW', 'FX', 'SPARE', 'PMOD', 'MFL', 'MDOM', 'MWAL', 'DCS', 'TRS', 'BZM', 'RS', 'COM', 'DMOD', 'DOTH', 'INS', 'DUTK', 'BLK', 'BLKA', 'BLKD']
@@ -94,6 +95,7 @@ S = [
  ('VAT', 'ПДВ / VAT', 0.2, '', 'ПКУ, ст. 193 / Tax Code art. 193', PCT, 'in'),
  ('TAR', 'Ціна 1 кВт·год, з ПДВ / Electricity price incl. VAT', 7.00, 'грн/кВт·год', 'оцінка власника / owner estimate', '#,##0.00', 'in'),
  ('ETA', 'ККД інвертора (європейський) / Inverter Euro efficiency', PU['eta'][0], '', PU['eta'][1], PCT, 'in'),
+ ('CU16', 'Провід Cu 1×16 мм² ж-з, Україна / Cu wire 1×16 mm² green-yellow, Ukraine', 3.17, '$/м', 'кошторис СЕС і УЗЕ 26.10, позиція «Провід Cu 1×16 мм² ж-з» / estimate 26.10', USD2, 'in'),
  ('ANC', 'Анкер від сповзання з герметизацією, Україна / Anti-slide anchor with sealing, Ukraine', 44.99, '$/шт', 'кошторис СЕС і УЗЕ 26.10, позиція «Анкер від сповзання» / estimate 26.10', USD2, 'in'),
 ]
 for k, (uah, src) in PU.items():
@@ -175,10 +177,10 @@ sec('4. Купуємо в Україні: інвертор, підключенн
 s4 = r
 line('4.1', "Інвертор мережевий Deye SUN-100K-G03: 100 кВт, 3 фази 400 В, 6 MPPT, DC до 1 000 В, IP65; DC-роз'єднувач, ПЗІП тип II на DC і AC", 'Grid inverter Deye SUN-100K-G03: 100 kW, 3-phase 400 V, 6 MPPT, DC up to 1000 V, IP65; DC switch, type II SPD on DC and AC', 'шт / pcs', 1, f'={usd("deye")}', None, src_of('deye'), 'inv')
 line('4.2', 'Баластний блок 300×300×60 з муфтою: під лаги, опори «доміку» і трикутники — з матом, під крайні профілі арки — без мата; опори лотків (+1 %)', 'Ballast block 300×300×60 with coupling: under rails, dual-tilt supports and triangles — with mat, under arch edge profiles — without mat; tray supports (+1 %)', 'шт / pcs', q('BLKN'), f'={pa("BLK")}', None, 'рішення власника 26.10 / owner decision', 'blk')
-line('4.3', 'Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК', 'Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board', 'м / m', q('ACM'), f'={usd("ac")}', None, src_of('ac'), 'ac')
-line('4.4', 'Щит СЕС: автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А) у корпусі IP54', 'PV board: MCCB ABB A2B 250 TMF 200 (3P, 200 A) in IP54 enclosure', 'компл / set', 1, f'={usd("mccb")}+{usd("box")}', None, src_of('mccb') + '; ' + src_of('box'), 'mccb')
+line('4.3', 'Провід СІП-4 4×70 мм² (Al, 0,6/1 кВ) — інвертор → лоток → підвіс через проїзд → щит СЕС у ТП-5913', 'SIP-4 4×70 mm² (Al, 0.6/1 kV) — inverter → tray → overhead span across the driveway → PV board in TP-5913', 'м / m', q('ACM'), f'={usd("sip4")}', None, src_of('sip4'), 'ac')
+line('4.4', 'Щит СЕС у ТП-5913: автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А) у корпусі IP54, приєднання до РУ-0,4 кВ', 'PV board in TP-5913: MCCB ABB A2B 250 TMF 200 (3P, 200 A) in IP54 enclosure, connection to the 0.4 kV switchgear', 'компл / set', 1, f'={usd("mccb")}+{usd("box")}', None, src_of('mccb') + '; ' + src_of('box'), 'mccb')
 line('4.5', 'ПЗІП AC тип 2, 4P (Eaton SPCT2-280/4) у щиті СЕС', 'AC surge protector type 2, 4P (Eaton SPCT2-280/4) in PV board', 'шт / pcs', 1, f'={usd("spd")}', None, src_of('spd'), 'spd')
-line('4.6', 'Лічильник CHINT DTSU666 з трансформаторами струму 250 А — обмеження видачі в мережу (Zero Export)', 'Meter CHINT DTSU666 with 250 A CTs — export limiting (Zero Export)', 'компл / set', 1, f'={usd("meter")}', None, src_of('meter'), 'meter')
+line('4.6', 'Лічильник CHINT DTSU666 з трансформаторами струму 250 А на вводі АБК — інвертор видає не більше, ніж споживає АБК (Zero Export)', 'Meter CHINT DTSU666 with 250 A CTs at the building input — inverter output limited to the building load (Zero Export)', 'компл / set', 1, f'={usd("meter")}', None, src_of('meter'), 'meter')
 line('4.7', "Доставка матеріалів України на об'єкт", 'Delivery of Ukrainian materials to site', 'блок / block', q('BLKN'), f'={pa("BLKDEL")}', None, f'{K27}, поз. 4.9', 'del')
 line('4.8', 'Драбина П1 на арку з поручнями над парапетом', 'Fixed ladder P1 to the arch with handrails above parapet', 'м / m', q('LP1'), f'={usd("lp1")}', None, src_of('lp1'), 'lp1')
 line('4.9', 'Площадка з огорожею 0,6 м на арці перед виходом на покрівлю', 'Landing with 0.6 m guard on the arch at the roof exit', 'шт / pcs', q('PLAT'), 0, None, 'ціна — за КП виробника драбини / price per ladder maker quote', 'plat', pfmt=USD)
@@ -187,6 +189,8 @@ line('4.10', 'Драбини П1 на надбудову сходів (2 шт.)'
 line('4.11', 'Огородження покрівлі 0,6 м, металеве', 'Roof guardrail 0.6 m, steel', 'м / m', q('RAIL'), f'={usd("rail")}', None, src_of('rail'), 'rail')
 line('4.12', 'Ходові доріжки 0,8 м — гумові плити 500×500×20 мм', 'Walkways 0.8 m — rubber tiles 500×500×20 mm', 'м² / m²', q('WALK'), f'={usd("walk")}', None, src_of('walk'), 'walk')
 line('4.13', 'Анкер від сповзання на арці, до основи покрівлі, з герметизацією', 'Anti-slide anchor on the arch, to the roof deck, with sealing', 'шт / pcs', q('NANC'), f'={pa("ANC")}', None, 'кошторис СЕС і УЗЕ 26.10 / estimate 26.10', 'anc')
+line('4.14', 'Арматура підвісу СІП: затискачі анкерні ЗА 31 4×(25–70) — 2, гаки GHP 16М з дюбелями — 2, кронштейни фасадні SC 93-6PC — 4', 'Overhead span fittings: anchor clamps ZA 31 4×(25–70) — 2, wall hooks GHP 16M with plugs — 2, facade brackets SC 93-6PC — 4', 'компл / set', 1, f'=2*{usd("za31")}+2*{usd("ghp16")}+4*{usd("sc93")}', None, src_of('za31').split(',')[0] + ', 28.10.2026', 'sipa')
+line('4.15', 'Провід Cu 1×16 мм² ж-з — PE від інвертора уздовж СІП до ГЗШ ТП-5913', 'Cu wire 1×16 mm² green-yellow — PE from the inverter along the SIP to the TP-5913 earthing bar', 'м / m', q('PEM'), f'={pa("CU16")}', None, 'кошторис СЕС і УЗЕ 26.10 / estimate 26.10', 'pe')
 e4 = r - 1
 total('Разом купуємо в Україні', 'Total purchased in Ukraine', f'=SUM(H{s4}:H{e4})', 't4')
 sec('5. Роботи', '5. Works')
@@ -233,12 +237,12 @@ r += 1
 NOTES = [
  (f"Стрінги: {NB['ST']} × {DB['L']} модулів, по 2 на MPPT, стрінг стін — на окремому MPPT; Voc при −30 °C — {DB['strings'][0]['voc30']:.0f} В ≤ 1 000 В. Повна специфікація — аркуш «Специфікація», стрінги — аркуш «Стрінги».",
   f"Strings: {NB['ST']} × {DB['L']} modules, 2 per MPPT, the wall string on its own MPPT; Voc at −30 °C {DB['strings'][0]['voc30']:.0f} V ≤ 1000 V. Full bill of materials — sheet «Специфікація», strings — sheet «Стрінги»."),
- ('Інвертор — на північній стіні надбудови сходів над нижнім дахом (+10,6), у тіні; кабель AC — у надбудову і стояком сходів до щита СЕС біля вступного щита АБК. Струм інвертора до 159,4 А при 400 В, вимикач 200 А, кабель 5×70 мм² мідь.',
-  'Inverter on the north wall of the stair house above the lower roof (+10.6), in shade; AC cable into the stair house and down the stair riser to the PV board next to the building main board. Inverter current up to 159.4 A at 400 V, 200 A breaker, 5×70 mm² copper cable.'),
- ('Блискавкозахист — без зовнішніх щогл (як том 7 СЕС цеху): вирівнювання потенціалів кріплення провідником Cu 1×6 у лотках, по 2 приєднання на блок кріплення, Cu 1×16 до PE інвертора і до прутка на парапеті в місці переходу лотка; ПЗІП тип II в інверторі, тип II у щиті СЕС, ПЗІП RS485.',
-  'Lightning protection without external masts (as volume 7 of the shop PV): bonding of the mounting with Cu 1×6 in trays, 2 connections per mounting block, Cu 1×16 to inverter PE and to the parapet rod where the tray crosses; type II SPD in the inverter and in the PV board, RS485 SPD.'),
- ('Робота без видачі в мережу: лічильник на вводі АБК і обмеження потужності інвертора (Zero Export); про генеруючу установку без видачі в мережу повідомляють ОСР за Додатком 11 до Кодексу систем розподілу.',
-  'Operation without export: meter at the building input and inverter power limiting (Zero Export); the DSO is notified of a non-exporting generating unit per Annex 11 of the Distribution System Code.'),
+ ('Інвертор — на північній стіні надбудови сходів над нижнім дахом (+10,6), у тіні; провід СІП-4 4×70 — у лотку до західного парапету, з даху на підвісі через проїзд до ТП-5913 (проліт ≈8 м, анкерні затискачі на гаках), щит СЕС — у ТП-5913. Струм інвертора до 159,4 А при 400 В, вимикач 200 А.',
+  'Inverter on the north wall of the stair house above the lower roof (+10.6), in shade; SIP-4 4×70 in the tray to the west parapet, then an overhead span across the driveway to TP-5913 (≈8 m, anchor clamps on hooks); the PV board is in TP-5913. Inverter current up to 159.4 A at 400 V, 200 A breaker.'),
+ ('Блискавкозахист — без зовнішніх щогл (як том 7 СЕС цеху): механічно зв\'язані блоки кріплення з\'єднані провідником Cu 1×6 у лотках, по 2 приєднання на блок; Cu 1×16 — до PE інвертора, до прутка на парапеті і уздовж СІП до головної заземлювальної шини ТП-5913; ПЗІП тип II в інверторі і в щиті СЕС, ПЗІП лінії RS485.',
+  'Lightning protection without external masts (as volume 7 of the shop PV): mechanically connected mounting blocks bonded with Cu 1×6 in trays, 2 connections per block; Cu 1×16 to the inverter PE, to the parapet rod and along the SIP to the TP-5913 main earthing bar; type II SPD in the inverter and in the PV board, RS485 SPD.'),
+ ('Робота без видачі в мережу: лічильник на вводі АБК, інвертор видає не більше, ніж споживає АБК (Zero Export); про генеруючу установку без видачі в мережу повідомляють ОСР за Додатком 11 до Кодексу систем розподілу.',
+  'Operation without export: meter at the building input, inverter output limited to the building load (Zero Export); the DSO is notified of a non-exporting generating unit per Annex 11 of the Distribution System Code.'),
  ('Не входить: обстеження будівлі й несучої здатності покрівлі (постанова КМУ № 406), проєктна документація, ремонт покрівлі; площадка з огорожею на арці (поз. 4.9) — за КП виробника драбини.',
   'Not included: building and roof load survey (CMU Resolution No. 406), design documentation, roof repair; the landing on the arch (item 4.9) — per ladder maker quote.'),
 ]

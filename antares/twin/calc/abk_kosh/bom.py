@@ -116,21 +116,26 @@ it('F', 'trw', 'Кронштейн лотка на стіну з анкером,
 # G
 it('G', 'inv', "Інвертор мережевий Deye SUN-100K-G03: 100 кВт, 3 фази 400 В, 6 MPPT, DC до 1 000 В, IP65; DC-роз'єднувач, ПЗІП тип II на DC і AC; кронштейн і роз'єми DC у комплекті",
    'Grid inverter Deye SUN-100K-G03: 100 kW, 3-phase 400 V, 6 MPPT, DC up to 1000 V, IP65; DC switch, type II SPD on DC and AC; bracket and DC connectors included', 'шт / pcs', 1, '4.1', 'inv', 'паспорт Deye / Deye datasheet')
-it('G', 'ac', 'Кабель ВВГнг 5×70 мм², мідь — інвертор → щит СЕС біля вступного щита АБК', 'Cable VVGng 5×70 mm² copper — inverter to PV board at the building main board', 'м / m', 45, '4.3', 'ac', 'по стіні і стояку сходів, + 10 % / along wall and stair riser, + 10 %')
-it('G', 'lug70', 'Наконечник мідний луджений ТМЛ 70', 'Tinned copper lug 70 mm²', 'шт / pcs', 10, '5.3', 'ac', '5 жил × 2 кінці / 5 cores × 2 ends')
-it('G', 'mccb', 'Автоматичний вимикач ABB FormulA A2B 250 TMF 200, 3P, 200 А', 'Moulded-case breaker ABB FormulA A2B 250 TMF 200, 3P, 200 A', 'шт / pcs', 1, '4.4', 'shch', 'струм інвертора до 159,4 А / inverter current up to 159.4 A')
-it('G', 'box', 'Корпус щита IEK ЩМП-4.6.2-0 74 У2, 400 × 600 × 250, IP54 — щит СЕС', 'Enclosure IEK ShchMP-4.6.2-0, 400 × 600 × 250, IP54 — PV board', 'шт / pcs', 1, '4.4', 'shch', '')
-it('G', 'spdac', 'ПЗІП AC тип 2, 4P, 280 В (Eaton SPCT2-280/4) — у щиті СЕС', 'AC surge protector type 2, 4P, 280 V (Eaton SPCT2-280/4) — in PV board', 'шт / pcs', 1, '4.5', 'shch', 'вхід AC у будівлю / AC entry into the building')
-it('G', 'meter', 'Лічильник CHINT DTSU666 з трансформаторами струму 250 А — на вводі АБК, обмеження видачі в мережу (Zero Export)', 'Meter CHINT DTSU666 with 250 A current transformers — at the building input, export limiting (Zero Export)', 'компл / set', 1, '4.6', 'meter', '')
+it('G', 'ac', 'Провід СІП-4 4×70 мм² (Al, 0,6/1 кВ) — інвертор → лоток → підвіс через проїзд → щит СЕС у ТП-5913', 'Self-supporting insulated cable SIP-4 4×70 mm² (Al, 0.6/1 kV) — inverter → tray → overhead span across the driveway → PV board in TP-5913', 'м / m', up(MQ['sip_m'] * 1.1), '4.3', 'ac',
+   f"траса {F(MQ['sip_m'])} м (проліт {F(MQ['sip_span'])} м), + 10 % / route, span, + 10 %")
+it('G', 'sipa', 'Арматура підвісу СІП: затискач анкерний ЗА 31 4×(25–70) — 2, гак GHP 16М з дюбелями — 2, кронштейн фасадний SC 93-6PC — 4', 'Overhead span fittings: anchor clamp ZA 31 4×(25–70) — 2, wall hook GHP 16M with plugs — 2, facade bracket SC 93-6PC — 4', 'компл / set', 1, '4.14', 'ac',
+   'стіна АБК і стіна ТП-5913 / building wall and TP-5913 wall')
+it('G', 'lug70', 'Наконечник алюмінієво-мідний DTL-2-70', 'Aluminium-copper lug DTL-2-70', 'шт / pcs', 8, '5.3', 'ac', '4 жили × 2 кінці / 4 cores × 2 ends')
+it('G', 'mccb', 'Автоматичний вимикач ABB FormulA A2B 250 TMF 200, 3P, 200 А', 'Moulded-case breaker ABB FormulA A2B 250 TMF 200, 3P, 200 A', 'шт / pcs', 1, '4.4', 'shch', 'струм інвертора до 159,4 А; щит СЕС — у ТП-5913, приєднання до РУ-0,4 кВ / inverter current up to 159.4 A; PV board in TP-5913')
+it('G', 'box', 'Корпус щита IEK ЩМП-4.6.2-0 74 У2, 400 × 600 × 250, IP54 — щит СЕС у ТП-5913', 'Enclosure IEK ShchMP-4.6.2-0, 400 × 600 × 250, IP54 — PV board in TP-5913', 'шт / pcs', 1, '4.4', 'shch', '')
+it('G', 'spdac', 'ПЗІП AC тип 2, 4P, 280 В (Eaton SPCT2-280/4) — у щиті СЕС у ТП-5913', 'AC surge protector type 2, 4P, 280 V (Eaton SPCT2-280/4) — in PV board in TP-5913', 'шт / pcs', 1, '4.5', 'shch', 'на вводі лінії СІП у ТП / at the overhead line entry into the TP')
+it('G', 'meter', 'Лічильник CHINT DTSU666 з трансформаторами струму 250 А — на вводі АБК: інвертор видає не більше, ніж споживає АБК (Zero Export)', 'Meter CHINT DTSU666 with 250 A current transformers — at the building input: inverter output limited to the building load (Zero Export)', 'компл / set', 1, '4.6', 'meter', '')
 it('G', 'rs485', 'Кабель RS485 2×2×0,75 мм² в екрані — лічильник → інвертор', 'RS485 cable 2×2×0.75 mm² screened — meter to inverter', 'м / m', 55, '1.8', 'ac', 'уздовж кабелю AC / along AC cable')
-it('G', 'gland', 'Прохід кабелів крізь стіну надбудови з ущільненням', 'Cable wall pass-through into the stair house with sealing', 'компл / set', 1, '5.3', 'ac', '')
+it('G', 'gland', 'Прохід крізь стіну з ущільненням: у ТП-5913 (СІП і PE) і в надбудову (RS485)', 'Wall pass-through with sealing: into TP-5913 (SIP and PE) and into the stair house (RS485)', 'компл / set', 2, '5.3', 'ac', '')
 # H
-it('H', 'b6', 'Провід Cu 1×6 мм² жовто-зелений — вирівнювання потенціалів у лотках і відгалуження до кріплення', 'Cu wire 1×6 mm² green-yellow — equipotential bonding in trays and branches to mounting', 'м / m', up(D['lps']['bond6'], 5), '1.7', 'bz',
-   f'лотки {F(TL)} м + 10 % і {LPSN} відгалужень / trays + 10 % and {LPSN} branches')
+it('H', 'b6', 'Провід Cu 1×6 мм² жовто-зелений — вирівнювання потенціалів у лотках і відгалуження до кріплення', 'Cu wire 1×6 mm² green-yellow — equipotential bonding in trays and branches to mounting', 'м / m', up(MQ['bond6'], 5), '1.7', 'bz',
+   f"лотки {F(TL)} м + 10 % і {MQ['bond_con']} відгалужень до {MQ['bond_groups']} механічно зв'язаних блоків / trays + 10 % and branches to bonded blocks")
 it('H', 'b16', 'Провід Cu 1×16 мм² жовто-зелений — до PE інвертора і до наявного прутка на парапеті', 'Cu wire 1×16 mm² green-yellow — to inverter PE and to the existing parapet rod', 'м / m', D['lps']['bond16'], '1.7', 'bz', '')
-it('H', 'bcl', 'Затискач до профілю і відгалужувальний EN 62561-1', 'Profile and branch clamp EN 62561-1', 'шт / pcs', LPSN + 4, '1.7', 'bz', f'по 2 на {len(D["lps"]["groups"])} блоків кріплення + 4 / 2 per mounting block + 4')
+it('H', 'pe16', 'Провід Cu 1×16 мм² жовто-зелений — PE від інвертора уздовж СІП до головної заземлювальної шини ТП-5913', 'Cu wire 1×16 mm² green-yellow — PE from the inverter along the SIP to the main earthing bar of TP-5913', 'м / m', up(MQ['pe16_m'] * 1.1), '4.15', 'pe',
+   f"траса {F(MQ['pe16_m'])} м + 10 %; на прольоті — стяжками до СІП / route + 10 %; tied to the SIP on the span")
+it('H', 'bcl', 'Затискач до профілю і відгалужувальний EN 62561-1', 'Profile and branch clamp EN 62561-1', 'шт / pcs', MQ['bond_con'] + 4, '1.7', 'bz', f"по 2 на {MQ['bond_groups']} блоків кріплення + 4 / 2 per mounting block + 4")
 it('H', 'bws', 'Шайба контактна зубчаста під болти гільз', 'Serrated contact washer under sleeve bolts', 'шт / pcs', fx5(MQ['arch_m10x60s']), '1.7', 'bz', 'як болти M10×60 гільз / as sleeve bolts M10×60')
-it('H', 'b16l', 'Наконечник 16 мм² і контрольне з\'єднання', 'Lug 16 mm² and test joint', 'шт / pcs', 4, '1.7', 'bz', '')
+it('H', 'b16l', 'Наконечник 16 мм² і контрольне з\'єднання', 'Lug 16 mm² and test joint', 'шт / pcs', 6, '1.7', 'bz', 'прут на парапеті, PE інвертора, ГЗШ ТП-5913 / parapet rod, inverter PE, TP-5913 earthing bar')
 it('H', 'spd485', 'ПЗІП лінії RS485', 'RS485 data line surge protector', 'шт / pcs', 1, '1.7', 'bz', '')
 # I
 it('I', 'p1', 'Драбина П1 на арку з поручнями над парапетом (перепад 4,8 м + 1,0 м)', 'Fixed fire ladder P1 to the arch roof with handrails above parapet (4.8 m + 1.0 m)', 'м / m', 5.8, '4.8', 'p1', 'ДБН В.1.1-7:2016 п. 8.8–8.10')

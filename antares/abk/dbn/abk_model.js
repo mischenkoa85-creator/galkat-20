@@ -485,8 +485,8 @@ Object.entries(DB.trays).forEach(([key, t]) => {
 // ---------- інвертор Deye SUN-100K-G03 на північній стіні надбудови
 const IV = DB.inv.pos;
 const invBody = box(IV.w, IV.h, IV.d, M(0xe9ecee, {roughness: 0.45, metalness: 0.2}), IV.x, IV.y, IV.z0 + IV.h / 2, groups.elec,
-  I('Інвертор Deye SUN-100K-G03', `100 кВт, 3 фази 400 В, 6 MPPT по 2 стрінги, DC до 1 000 В, MPPT 200–850 В, 40 А на MPPT; DC-роз'єднувач, ПЗІП тип II на DC і AC; ККД 98,2 % (європейський); IP65, 81 кг, 824 × 516 × 313 мм. На північній стіні надбудови над нижнім дахом (+10,6) — у тіні, низ 0,6 м над покрівлею. Знизу — вводи DC з лотка, справа — кабель AC у надбудову.`,
-    'Inverter Deye SUN-100K-G03', `100 kW, 3-phase 400 V, 6 MPPT with 2 strings each, DC up to 1000 V, MPPT 200–850 V, 40 A per MPPT; DC switch, type II SPD on DC and AC; Euro efficiency 98.2 %; IP65, 81 kg, 824 × 516 × 313 mm. On the north wall of the stair house above the lower roof (+10.6), in shade, bottom 0.6 m above the roof. DC inputs from the tray below, AC cable into the stair house on the right.`));
+  I('Інвертор Deye SUN-100K-G03', `100 кВт, 3 фази 400 В, 6 MPPT по 2 стрінги, DC до 1 000 В, MPPT 200–850 В, 40 А на MPPT; DC-роз'єднувач, ПЗІП тип II на DC і AC; ККД 98,2 % (європейський); IP65, 81 кг, 824 × 516 × 313 мм. На північній стіні надбудови над нижнім дахом (+10,6) — у тіні, низ 0,6 м над покрівлею. Знизу — вводи DC з лотка; AC — провід СІП-4 4×70 у лоток переходу і з даху до ТП-5913.`,
+    'Inverter Deye SUN-100K-G03', `100 kW, 3-phase 400 V, 6 MPPT with 2 strings each, DC up to 1000 V, MPPT 200–850 V, 40 A per MPPT; DC switch, type II SPD on DC and AC; Euro efficiency 98.2 %; IP65, 81 kg, 824 × 516 × 313 mm. On the north wall of the stair house above the lower roof (+10.6), in shade, bottom 0.6 m above the roof. DC inputs from the tray below; AC — SIP-4 4×70 into the crossing tray and over the roof to TP-5913.`));
 tag(invBody, 'inv');
 { const fr = box(IV.w * 0.86, IV.h * 0.7, 0.01, M(0x2a3238, {roughness: 0.5}), IV.x, IV.y + IV.d / 2 + 0.006, IV.z0 + IV.h * 0.55, groups.elec); fr.userData.info = invBody.userData.info; picks.push(fr); tag(fr, 'inv');
   const led = box(0.12, 0.03, 0.012, new THREE.MeshBasicMaterial({color: 0x37c871}), IV.x - 0.25, IV.y + IV.d / 2 + 0.012, IV.z0 + IV.h * 0.82, groups.elec); led.userData.noOcc = true;
@@ -509,42 +509,58 @@ DB.strings.forEach(s => {
   const hm = tubeOf(s.minus.pts.map((p, i) => i < 3 ? [p[0], p[1], p[2] + 0.07] : [p[0] + 0.02, p[1] + 0.02, p[2] + 0.04]), 0.014, dcM, groups.str, iS, 'dc'); if (hm) list.push(hm);
   const c0 = DB.mods[s.chain[0]].c; lbl(P(c0[0], c0[1], c0[2] + 0.55), `S${k}`, `S${k}`, 'st', 'str', k);
 });
-// ---------- AC: інвертор → у надбудову → стояк сходів → щит СЕС і вступний щит АБК (усередині — поверх стін)
-const acM = M(0x1b1e21, {roughness: 0.6}), ovM = c => new THREE.MeshBasicMaterial({color: c, transparent: true, opacity: 0.85, depthTest: false});
-const iAC = I('Кабель AC ВВГнг 5×70 мм², мідь', 'Від інвертора — у надбудову сходів і стояком сходів до щита СЕС біля вступного щита АБК; у кошторисі 45 м. Струм інвертора до 159,4 А, вимикач 200 А. Уздовж — кабель RS485 від лічильника до інвертора (55 м).', 'AC cable VVGng 5×70 mm², copper', 'From the inverter into the stair house and down the stair riser to the PV board next to the building main board; 45 m in the estimate. Inverter current up to 159.4 A, 200 A breaker. RS485 cable from the meter to the inverter runs alongside (55 m).');
-const AC0 = [IV.x + IV.w / 2 - 0.05, IV.y, IV.z0 + 0.2], AC1 = [IV.x + IV.w / 2 + 0.25, IV.y, IV.z0 + 0.2], AC2 = [IV.x + IV.w / 2 + 0.25, s3 + 0.02, IV.z0 + 0.2];
-tubeOf([AC0, AC1, AC2], 0.022, acM, groups.elec, iAC, 'ac');
-const RISE = [[IV.x + IV.w / 2 + 0.25, s3 - 0.4, IV.z0 + 0.2], [IV.x + IV.w / 2 + 0.25, s3 - 0.4, 0.9], [117.6, 9.4, 0.9]];
-{ const g = new THREE.BufferGeometry().setFromPoints([V3(AC2), ...RISE.map(V3)]); const ln = new THREE.Line(g, new THREE.LineDashedMaterial({color: 0x1b1e21, dashSize: 0.3, gapSize: 0.2, depthTest: false, transparent: true}));
-  ln.computeLineDistances(); ln.renderOrder = 5; groups.elec.add(ln); tag(ln, 'ac'); }
+// ---------- AC: інвертор → лоток → з даху на підвісі СІП-4 4×70 через проїзд → щит СЕС у ТП-5913 (рішення власника 28.10, 21:58); облік — на вводі АБК
+const ACD = D.mount.ac, acM = M(0x1b1e21, {roughness: 0.6}), ovM = c => new THREE.MeshBasicMaterial({color: c, transparent: true, opacity: 0.85, depthTest: false});
+const iAC = I('Провід СІП-4 4×70 мм² (Al, 0,6/1 кВ)', `Від інвертора — у лотку переходу і вздовж стіни основного блоку до західного парапету, з даху на підвісі через проїзд до ТП-5913 (проліт ${fx(ACD.span_len)} м, анкерні затискачі ЗА 31 на гаках GHP 16М), по стіні ТП — у ТП до щита СЕС. Траса ${fx(ACD.len)} м. Струм інвертора до 159,4 А, вимикач 200 А у ТП; на інверторі — наконечники DTL-2-70.`,
+  'SIP-4 4×70 mm² (Al, 0.6/1 kV)', `From the inverter in the crossing tray and along the main block wall to the west parapet, then an overhead span across the driveway to TP-5913 (${ACD.span_len} m, ZA 31 anchor clamps on GHP 16M hooks), down the TP wall into the PV board. Route ${ACD.len} m. Inverter current up to 159.4 A, 200 A breaker in the TP; DTL-2-70 lugs at the inverter.`);
+[ACD.sip, ACD.span, ACD.tp].forEach(pl => tubeOf(pl, 0.019, acM, groups.elec, iAC, 'ac'));
+{ const hkM = M(0x9aa3aa, {metalness: 0.6, roughness: 0.35}), clM = M(0x2b3035, {roughness: 0.6});
+  const iFit = I('Арматура підвісу СІП', 'Гак GHP 16М з дюбелями на стіні, анкерний затискач ЗА 31 4×(25–70) на гаку; фасадні кронштейни SC 93-6PC на стінах.', 'Overhead span fittings', 'GHP 16M wall hook with plugs, ZA 31 4×(25–70) anchor clamp on the hook; SC 93-6PC facade brackets on the walls.');
+  ACD.hooks.forEach((h, i) => { const s_ = i ? 1 : -1;
+    const hk = box(0.06, 0.05, 0.12, hkM, h[0], h[1], h[2], groups.elec, iFit); tag(hk, 'ac');
+    const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.22, 10), clM); const a_ = V3(h), b_ = V3(ACD.span[i ? ACD.span.length - 2 : 1]); cl.position.copy(a_.clone().lerp(b_, 0.5 * 0.22 / a_.distanceTo(b_)));
+    cl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b_.clone().sub(a_).normalize()); cl.userData.info = iFit; groups.elec.add(cl); picks.push(cl); tag(cl, 'ac'); });
+  ACD.brk.forEach(q => { const bk = box(0.07, 0.05, 0.05, hkM, q[0], q[1], q[2], groups.elec, iFit); tag(bk, 'ac'); }); }
+lbl(P(ACD.span[6][0], ACD.span[6][1], ACD.span[6][2] + 0.6), 'СІП-4 4×70 → ТП-5913', 'SIP-4 4×70 → TP-5913', 'el', 'elec');
 const brdM = ovM(0x0f6b80), vruM = ovM(0x52514e), mtM = ovM(0xd98a1c);
-const shch = box(0.6, 0.4, 0.25, brdM, 117.6, 9.25, 1.2, groups.elec, I('Щит СЕС', 'Корпус IP54 400 × 600 × 250 (IEK ЩМП-4.6.2), автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А), ПЗІП AC тип 2 4P (Eaton SPCT2-280/4). Поруч із вступним щитом АБК, внизу сходів; точне місце — за обстеженням.',
-  'PV board', 'Enclosure IP54 400 × 600 × 250 (IEK ShchMP-4.6.2), breaker ABB A2B 250 TMF 200 (3P, 200 A), AC surge protector type 2 4P (Eaton SPCT2-280/4). Next to the building main board at the foot of the stairs; exact place per survey.'));
+const BD = ACD.board;
+const shch = box(0.25, 0.6, 0.4, brdM, BD[0], BD[1], BD[2], groups.elec, I('Щит СЕС у ТП-5913', 'Корпус IP54 400 × 600 × 250 (IEK ЩМП-4.6.2), автоматичний вимикач ABB A2B 250 TMF 200 (3P, 200 А), ПЗІП AC тип 2 4P (Eaton SPCT2-280/4); приєднання до РУ-0,4 кВ ТП-5913. Провід СІП заходить крізь стіну ТП з ущільненням.',
+  'PV board in TP-5913', 'Enclosure IP54 400 × 600 × 250 (IEK ShchMP-4.6.2), breaker ABB A2B 250 TMF 200 (3P, 200 A), AC surge protector type 2 4P (Eaton SPCT2-280/4); connected to the TP-5913 0.4 kV switchgear. The SIP enters through the TP wall with sealing.'));
 shch.renderOrder = 6; tag(shch, 'shch');
-const vru = box(0.8, 1.2, 0.3, vruM, 116.6, 9.25, 1.0, groups.elec, I('Вступний щит АБК і облік', 'Існуючий вступний щит будівлі: тут трансформатори струму 250 А на вводі і лічильник CHINT DTSU666 — інвертор обмежує потужність так, щоб у мережу не йшло нічого (Zero Export). Місце щита — за обстеженням.',
-  'Building main board and metering', 'Existing building main board: 250 A current transformers on the incomer and a CHINT DTSU666 meter — the inverter limits power so nothing is exported (Zero Export). Board location per survey.'));
+lbl(P(BD[0], BD[1], BD[2] + 0.9), 'Щит СЕС у ТП-5913', 'PV board in TP-5913', 'el', 'elec');
+// RS485 від лічильника на вводі АБК до інвертора — стояком сходів (усередині — поверх стін)
+const RS = [[IV.x + IV.w / 2 - 0.05, IV.y, IV.z0 + 0.25], [IV.x + IV.w / 2 + 0.25, IV.y, IV.z0 + 0.25], [IV.x + IV.w / 2 + 0.25, s3 - 0.4, IV.z0 + 0.25], [IV.x + IV.w / 2 + 0.25, s3 - 0.4, 0.9], [116.6, 9.4, 0.9]];
+{ const g = new THREE.BufferGeometry().setFromPoints(RS.map(V3)); const ln = new THREE.Line(g, new THREE.LineDashedMaterial({color: 0xd98a1c, dashSize: 0.3, gapSize: 0.2, depthTest: false, transparent: true}));
+  ln.computeLineDistances(); ln.renderOrder = 5; ln.userData.info = I('Кабель RS485 2×2×0,75 в екрані', 'Від лічильника на вводі АБК до інвертора — стояком сходів і крізь стіну надбудови; ПЗІП лінії RS485.', 'RS485 cable 2×2×0.75 screened', 'From the meter at the building input to the inverter — up the stair riser and through the stair house wall; RS485 SPD.'); groups.elec.add(ln); tag(ln, 'meter'); }
+const vru = box(0.8, 1.2, 0.3, vruM, 116.6, 9.25, 1.0, groups.elec, I('Вступний щит АБК і облік', 'Існуючий вступний щит будівлі: трансформатори струму 250 А на вводі і лічильник CHINT DTSU666 — інвертор видає не більше, ніж споживає АБК (Zero Export); сигнал — кабелем RS485 до інвертора. Місце щита — за обстеженням.',
+  'Building main board and metering', 'Existing building main board: 250 A current transformers on the incomer and a CHINT DTSU666 meter — the inverter output is limited to the building load (Zero Export); signal over RS485 to the inverter. Board location per survey.'));
 vru.renderOrder = 6; tag(vru, 'meter');
 const mtr = box(0.12, 0.2, 0.08, mtM, 116.6, 9.05, 1.35, groups.elec); mtr.renderOrder = 7; mtr.userData.info = vru.userData.info; picks.push(mtr); tag(mtr, 'meter');
-lbl(P(117.1, 9.25, 2.0), 'Щит СЕС · вступний щит · лічильник', 'PV board · main board · meter', 'el', 'elec');
+lbl(P(116.6, 9.25, 2.0), 'Вступний щит АБК · лічильник', 'Main board · meter', 'el', 'elec');
 // ---------- блискавкозахист і вирівнювання потенціалів (без зовнішніх щогл, як том 7 СЕС цеху)
 const bzM = M(0x7fa82a, {roughness: 0.5, metalness: 0.2}), bz16 = M(0x5d8a12, {roughness: 0.5, metalness: 0.2});
-const iB6 = I('Провідник вирівнювання Cu 1×6 мм² ж-з', 'Іде в лотках уздовж трас DC до інвертора; відгалуження до кожного механічно зв\'язаного блоку кріплення — по 2 приєднання затискачами EN 62561-1. Разом 245 м. Зовнішніх щогл немає: каркас з\'єднано між собою і з PE інвертора, а через PE кабелю AC — з головною заземлювальною шиною будівлі.',
-  'Bonding conductor Cu 1×6 mm² green-yellow', 'Runs in the trays along the DC routes to the inverter; branches to every mechanically connected mounting block — 2 connections each with EN 62561-1 clamps. 245 m in total. No external masts: the frames are bonded together and to the inverter PE, and via the AC cable PE to the building main earthing bar.');
+const iB6 = I('Провідник вирівнювання Cu 1×6 мм² ж-з', `Іде в лотках уздовж трас DC до інвертора; відгалуження до кожного механічно зв\'язаного блоку кріплення (${D.mount.q.bond_groups} блоків) — по 2 приєднання затискачами EN 62561-1. Разом ${fx(D.mount.q.bond6)} м. Зовнішніх щогл немає (як том 7 СЕС цеху): каркас з\'єднано між собою і з PE інвертора, а провідником PE Cu 1×16 уздовж СІП — з головною заземлювальною шиною ТП-5913.`,
+  'Bonding conductor Cu 1×6 mm² green-yellow', `Runs in the trays along the DC routes to the inverter; branches to every mechanically connected mounting block (${D.mount.q.bond_groups} blocks) — 2 connections each with EN 62561-1 clamps. ${D.mount.q.bond6} m in total. No external masts (as volume 7 of the shop PV): the frames are bonded together and to the inverter PE, and by the Cu 1×16 PE along the SIP to the TP-5913 main earthing bar.`);
 Object.values(DB.trays).forEach(t => tubeOf(t.pts.map(p => [p[0] + 0.03, p[1] + 0.03, p[2] + 0.035]), 0.008, bzM, groups.lps, iB6, 'bz'));
 const iCon = I('Приєднання до кріплення', 'Затискач EN 62561-1 на лазі / рейці, контактні зубчасті шайби під болти гільз — каркас блоку електрично з\'єднаний.', 'Connection to the mounting', 'EN 62561-1 clamp on the rail; serrated contact washers under the sleeve bolts make the block frame electrically continuous.');
 const conG = new THREE.SphereGeometry(0.06, 10, 8);
-DB.lps.groups.forEach(g => g.con.forEach(c => {
+D.mount.bond.forEach(g => g.con.forEach(c => {
   tubeOf(c.pts.map(p => [p[0], p[1], p[2] - 0.02]), 0.008, bzM, groups.lps, iB6, 'bz');
   const s = new THREE.Mesh(conG, bzM); s.position.copy(V3([c.pts[0][0], c.pts[0][1], c.pts[0][2] - 0.02])); s.userData.info = iCon; s.userData.noOcc = true; groups.lps.add(s); picks.push(s); tag(s, 'bz');
 }));
-const iB16 = I('Провідник Cu 1×16 мм² ж-з', 'Від провідника вирівнювання — до PE інвертора і до наявного прутка на парапеті в місці, де лоток DC переходить через південний парапет основного блоку (контрольне з\'єднання, наконечники 16 мм²). Разом 6 м.', 'Cu 1×16 mm² green-yellow conductor', 'From the bonding conductor to the inverter PE and to the existing parapet rod where the DC tray crosses the main block south parapet (test joint, 16 mm² lugs). 6 m in total.');
+const iB16 = I('Провідник Cu 1×16 мм² ж-з', 'Від провідника вирівнювання — до PE інвертора і до наявного прутка на парапеті в місці, де лоток DC переходить через південний парапет основного блоку (контрольне з\'єднання, наконечники 16 мм²). Разом 6 м. Окремо — PE Cu 1×16 від інвертора уздовж СІП до ГЗШ ТП-5913.', 'Cu 1×16 mm² green-yellow conductor', 'From the bonding conductor to the inverter PE and to the existing parapet rod where the DC tray crosses the main block south parapet (test joint, 16 mm² lugs). 6 m in total.');
 { const t = DB.lps.tie, d = DB.trays.desc.pts, top = d[2];
   tubeOf([[top[0] + 0.03, top[1], top[2] + 0.03], [t[0], t[1], t[2] + 0.07]], 0.011, bz16, groups.lps, iB16, 'bz');
   const s = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), bz16); s.position.copy(V3([t[0], t[1], t[2] + 0.07])); s.userData.info = iB16; groups.lps.add(s); picks.push(s); tag(s, 'bz');
   const n = DB.inv.node; tubeOf([[n[0] + 0.03, n[1] + 0.03, n[2] + 0.035], [IV.x - IV.w / 2 + 0.05, IV.y - 0.1, IV.z0 + 0.05]], 0.011, bz16, groups.lps, iB16, 'bz'); }
 lbl(P(DB.lps.tie[0], DB.lps.tie[1], DB.lps.tie[2] + 0.9), 'Приєднання до прутка на парапеті', 'Bond to the parapet rod', 'bz', 'lps');
 lbl(P(IV.x - 0.6, IV.y + 0.3, IV.z0 - 0.15), 'ПЗІП DC і AC тип II — в інверторі', 'SPD DC and AC type II — in the inverter', 'bz', 'lps');
-lbl(P(117.6, 9.25, 2.6), 'ПЗІП AC тип 2 — у щиті СЕС; ПЗІП RS485', 'SPD AC type 2 — in the PV board; RS485 SPD', 'bz', 'lps');
+lbl(P(BD[0], BD[1], BD[2] + 1.4), 'ПЗІП AC тип 2 — у щиті СЕС', 'SPD AC type 2 — in the PV board', 'bz', 'lps');
+{ const iPE = I('PE Cu 1×16 мм² ж-з → ГЗШ ТП-5913', `Від PE інвертора уздовж СІП (на прольоті — стяжками до СІП) до головної заземлювальної шини ТП-5913: каркаси СЕС АБК і ПЗІП мають спільне заземлення з ТП. Траса ${fx(D.mount.ac.pe_len)} м, контрольне з'єднання в ТП.`,
+    'PE Cu 1×16 mm² green-yellow → TP-5913 earthing bar', `From the inverter PE along the SIP (tied to it on the span) to the TP-5913 main earthing bar: the PV frames and SPDs share the TP earthing. Route ${D.mount.ac.pe_len} m, test joint in the TP.`);
+  tubeOf(D.mount.ac.pe, 0.009, bz16, groups.lps, iPE, 'pe'); tag(groups.lps.children[groups.lps.children.length - 1], 'bz');
+  const g_ = box(0.3, 0.05, 0.06, bz16, D.mount.ac.gzsh[0], D.mount.ac.gzsh[1], D.mount.ac.gzsh[2], groups.lps, I('Головна заземлювальна шина ТП-5913', 'Наявна ГЗШ ТП: сюди приходить PE Cu 1×16 від СЕС АБК (наконечник 16 мм², контрольне з\'єднання).', 'TP-5913 main earthing bar', 'Existing TP earthing bar: the Cu 1×16 PE from the building PV lands here (16 mm² lug, test joint).')); tag(g_, 'pe'); tag(g_, 'bz');
+  lbl(P(D.mount.ac.gzsh[0], D.mount.ac.gzsh[1], D.mount.ac.gzsh[2] + 0.6), 'PE → ГЗШ ТП-5913', 'PE → TP-5913 earthing bar', 'bz', 'lps'); }
 // ---------- позначка «не працює»: хрест на модулі
 const xMat = new THREE.MeshBasicMaterial({color: 0xe23a2e});
 function addX(mesh) {
@@ -677,7 +693,7 @@ TAGS.safety = [...(TAGS.p1 || []), ...(TAGS.plat || []), ...(TAGS.rail || []), .
 const qty = (tags, gl) => D.bom.items.filter(x => (gl || []).includes(x.g) || tags.includes(x.tag));
 // рядок кошторису → позиція в моделі (рядки без позиції — комісія, страхування, мито, доставка кріплення, механізація, витратні, запас, винагорода)
 const EKF = {'1.1': 'mod', '1.2': 'arch', '1.3': 'frame', '1.4': 'wrail', '1.5': 'dc', '1.6': 'tray', '1.7': 'bz', '1.8': 'meter', '3.1': 'mod',
-  '4.1': 'inv', '4.2': 'blk', '4.3': 'ac', '4.4': 'shch', '4.5': 'shch', '4.6': 'meter', '4.7': 'blk', '4.8': 'p1', '4.9': 'plat', '4.10': 'p1', '4.11': 'rail', '4.12': 'walk', '4.13': 'anc', '5.1': 'mod', '5.4': 'safety'};
+  '4.1': 'inv', '4.2': 'blk', '4.3': 'ac', '4.4': 'shch', '4.5': 'shch', '4.6': 'meter', '4.7': 'blk', '4.8': 'p1', '4.9': 'plat', '4.10': 'p1', '4.11': 'rail', '4.12': 'walk', '4.13': 'anc', '4.14': 'ac', '4.15': 'pe', '5.1': 'mod', '5.4': 'safety'};
 const ELINES = (D.est && D.est.rows || []).filter(r => r.t === 'line');
 const estOf = tags => ELINES.filter(r => tags.includes(EKF[r.no]) || (EKF[r.no] === 'safety' && tags.some(t => ['p1', 'plat', 'rail', 'walk'].includes(t))));
 const STAGES = [
@@ -689,8 +705,8 @@ const STAGES = [
   ['mod', 'Фотомодулі з притисками', 'PV modules with clamps', ['mod'], ['A']],
   ['dc', 'Кабелі стрінгів, перемички, MC4', 'String cables, jumpers, MC4', ['dc'], ['E']],
   ['inv', 'Інвертор Deye SUN-100K-G03', 'Inverter Deye SUN-100K-G03', ['inv'], []],
-  ['ac', 'Кабель AC, щит СЕС, облік, RS485', 'AC cable, PV board, metering, RS485', ['ac', 'shch', 'meter'], []],
-  ['bz', 'Вирівнювання потенціалів, ПЗІП', 'Bonding, surge protection', ['bz'], ['H']],
+  ['ac', 'Провід СІП з даху до ТП-5913, щит СЕС у ТП, облік, RS485', 'Overhead SIP to TP-5913, PV board in the TP, metering, RS485', ['ac', 'shch', 'meter'], []],
+  ['bz', 'Вирівнювання потенціалів, ПЗІП, PE до ТП-5913', 'Bonding, surge protection, PE to TP-5913', ['bz', 'pe'], ['H']],
   ['safety', 'Драбини П1, площадка, огородження, доріжки', 'P1 ladders, landing, guardrail, walkways', ['p1', 'plat', 'rail', 'walk'], ['I']]
 ].map(([k, uk, en, tags, gl]) => { const est = estOf(tags); return {k, uk, en, tags, objs: [...new Set(tags.flatMap(t => TAGS[t] || []))], items: qty(tags, gl), est, sum: est.reduce((x, r) => x + (r.s || 0), 0)}; });
 return {root: S, I, G, AL, AB, DB, XC, HW, zA, P, fx, fx1, M, mat, pv, hi, hiF, picks, TAGS, tag, groups, LB, MODS, STR, STRO, BYKEY, MODREC, T, s0, s1, s2, s3, SPLIT, pt, canvasTex,
