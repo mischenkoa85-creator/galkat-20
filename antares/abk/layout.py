@@ -93,6 +93,24 @@ eq_arch = sum(math.pi * v[2] ** 2 for v in VENTS) + sum(b[2] * b[3] for b in BOX
 A_arch = (AB['x1'] - AB['x0']) * (AB['y1'] - AB['y0']); A_low = (AL['x1'] - AL['x0']) * (AL['y1'] - AL['y0']) - (STAIR[1] - STAIR[0]) * (STAIR[3] - STAIR[2])
 N30 = dict(arch=int((0.3 * A_arch - eq_arch) // (DM * LM)), low=int((0.3 * A_low) // (DEP * LM)), A_arch=round(A_arch, 1), A_low=round(A_low, 1), eq_arch=round(eq_arch, 1),
            mod_arch=round(DM * LM, 3), mod_low=round(DEP * LM, 3))
+# ---------- надбудова сходів: «домік» схід–захід 15° (запит 28.10, 14:30 і 14:55); модуль 2384 уздовж Пн–Пд, пара спина до спини по центру
+SPLIT, WT, PARH, HN, HS = 13.95, 0.38, 0.3, 3.3, 2.25          # як у 3D-моделі: межа частин, парапет 0,38 × 0,3, висоти над нижнім дахом
+ZRN, ZRS = AL['h'] + HN - PARH, AL['h'] + HS - PARH             # покрівля: пн. частина +13,0, пд. +11,95
+XM = (STAIR[0] + STAIR[1]) / 2
+yN = STAIR[3] - WT - (STAIR[3] - WT - SPLIT - WT - LM) / 2 - LM                      # пн.: 1 ряд по центру між парапетами
+yS0 = STAIR[2] + WT + (SPLIT - STAIR[2] - WT - (2 * LM + GAP)) / 2; ySN = [yS0, yS0 + LM + GAP]   # пд.: 2 ряди
+def dom(slopes, y, zr, part):
+    return [dict(xa=round(xa, 3), xb=round(xa + DEP, 3), y0=round(y, 3), y1=round(y + LM, 3), face=fc, lo=round(xa if fc == 'W' else xa + DEP, 3), zr=round(zr, 3), part=part, tilt=15.0) for xa, fc in slopes]
+PAIR = [(XM - DEP, 'W'), (XM, 'E')]
+NAD6 = dom(PAIR, yN, ZRN, 'N') + dom(PAIR, ySN[0], ZRS, 'S') + dom(PAIR, ySN[1], ZRS, 'S')
+NAD5 = dom(PAIR, yN, ZRN, 'N') + dom(PAIR, ySN[0], ZRS, 'S') + dom([(XM - DEP / 2, 'W')], ySN[1], ZRS, 'S')    # у межах 30 % кожної частини
+N30.update(A_nadN=round((STAIR[1] - STAIR[0]) * (STAIR[3] - SPLIT), 2), A_nadS=round((STAIR[1] - STAIR[0]) * (SPLIT - STAIR[2]), 2))
+# варіант ДБН: П1 з нижнього даху на пд. частину — на західній стіні біля межі частин (там смуга 1,0 м без модулів, прохід на сході не звужуємо);
+# з пд. частини на пн. (перепад 1,05 м) — коротка П1 на південній стіні пн. частини в західній смузі 0,96 м між парапетом і доміком
+LADN = [dict(axis='x', x=round(STAIR[0] - 0.2, 3), y=round(SPLIT - 0.9, 3), z0=AL['h'], ztop=round(ZRS + PARH, 3), side=-1, roof=round(ZRS, 3)),
+        dict(axis='y', x=round((STAIR[0] + WT + XM - DEP) / 2, 3), y=round(SPLIT - 0.2, 3), z0=round(ZRS, 3), ztop=round(ZRN + PARH, 3), side=1, roof=round(ZRN, 3))]
+NAD = dict(split=SPLIT, wt=WT, parh=PARH, zrn=round(ZRN, 3), zrs=round(ZRS, 3), d6=NAD6, d5=NAD5, lad=LADN)
 print('ДБН: arch', len(archD), 'walks', walksD, 'N30', N30)
+print('надбудова: d6', [(m['part'], m['face'], m['xa'], m['y0']) for m in NAD6], 'd5', len(NAD5), 'драбини', LADN)
 geo = dict(AL=AL, AB=AB, stair=STAIR, zst=ZST, vents=VENTS, vr=VR, vh=VH, boxes=BOXES, ladder=LADDER, par=dict(lo=PAR_LO, w=PAR_W, e=PAR_E, g=PAR_G), hlow=HLOW, dep=round(DEP, 4), rise=round(RISE, 4), lm=LM, dm=DM)
-json.dump(dict(geo=geo, arch=arch, low=low, archD=archD, walks=walksD, ladP1=LADP1, n30=N30), open('abk_k1.json', 'w'), ensure_ascii=False)
+json.dump(dict(geo=geo, arch=arch, low=low, archD=archD, walks=walksD, ladP1=LADP1, n30=N30, nad=NAD), open('abk_k1.json', 'w'), ensure_ascii=False)
