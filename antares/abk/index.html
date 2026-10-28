@@ -250,12 +250,13 @@ function box(w, h, d, m, x, y, z, grp, info) {         // центр у (x, y-п
 const gnd = new THREE.Mesh(new THREE.PlaneGeometry(220, 160), mat.ground); gnd.rotation.x = -Math.PI / 2; gnd.position.copy(P(110, 20, 0)); gnd.receiveShadow = true; S.add(gnd);
 // ---------- південний блок (АЛ)
 const EST = 'Висота — оцінка за поверхами, рулеткою не міряно; план — супутник Google (±0,5 м).';
-box(AL.x1 - AL.x0, AL.h, AL.y1 - AL.y0, mat.wall2, (AL.x0 + AL.x1) / 2, (AL.y0 + AL.y1) / 2, AL.h / 2, null,
+const ALbody = box(AL.x1 - AL.x0, AL.h, AL.y1 - AL.y0, mat.wall2, (AL.x0 + AL.x1) / 2, (AL.y0 + AL.y1) / 2, AL.h / 2, null,
   ['Південний блок АБК', `${(AL.x1 - AL.x0).toFixed(1).replace('.', ',')} × ${(AL.y1 - AL.y0).toFixed(1).replace('.', ',')} м, 3 поверхи, плаский дах +10,0 м. ${EST}`]);
 const pl = G.par.lo, pt = 0.25;
-box(AL.x1 - AL.x0, pl, pt, mat.par, (AL.x0 + AL.x1) / 2, AL.y0 + pt / 2, AL.h + pl / 2, null, ['Парапет південного блоку', '≈0,5 м (оцінка) — південь, захід, схід. Відступ модулів 0,5 м: біля парапетів ринви з водою (фото 27.10).']);
-box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x0 + pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2);
-box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x1 - pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2);
+const ALpar = [];
+ALpar.push(box(AL.x1 - AL.x0, pl, pt, mat.par, (AL.x0 + AL.x1) / 2, AL.y0 + pt / 2, AL.h + pl / 2, null, ['Парапет південного блоку', '≈0,5 м (оцінка) — південь, захід, схід. Відступ модулів 0,5 м: біля парапетів ринви з водою (фото 27.10).']));
+ALpar.push(box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x0 + pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2));
+ALpar.push(box(pt, pl, AL.y1 - AL.y0, mat.par, AL.x1 - pt / 2, (AL.y0 + AL.y1) / 2, AL.h + pl / 2));
 const [s0, s1, s2, s3] = G.stair;
 // ---------- надбудова сходів: дві цегляні частини (фото 26.10 123523 і 27.10 112733). Довжини — частка від 9,8 м за фото;
 // висоти — за рядами цегли (75 мм на ряд), ±0,15 м; покрівля — бітумна в парапеті з бетонними плитами; знизу — профлист.
@@ -263,15 +264,41 @@ const SPLIT = 13.95, PARH = 0.3, WT = 0.38;
 function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; }
 const BRICK = canvasTex(512, 256, (g, w, h) => {            // 16 рядів по 75 мм = 1,2 м; цегла 250 мм ≈ 52 px → 2,5 м по ширині
-  g.fillStyle = '#b9ab83'; g.fillRect(0, 0, w, h); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = '#c9bf9f'; g.fillRect(0, 0, w, h); let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   for (let r = 0; r < 16; r++) for (let x = (r % 2) * -26; x < w; x += 52) {
-    const l = 66 + rnd() * 10, hue = 42 + rnd() * 6; g.fillStyle = `hsl(${hue},${38 + rnd() * 12}%,${l}%)`; g.fillRect(x + 1.5, r * 16 + 1.5, 49, 13); }
+    const o = rnd() < 0.07, l = o ? 62 + rnd() * 8 : 72 + rnd() * 9, hue = o ? 24 + rnd() * 8 : 44 + rnd() * 6; g.fillStyle = `hsl(${hue},${o ? 45 : 42 + rnd() * 12}%,${l}%)`; g.fillRect(x + 1.5, r * 16 + 1.5, 49, 13); }
 });
 const PROF = canvasTex(32, 256, (g, w, h) => {              // профлист: 5 гофрів на ≈1,05 м
   for (let y = 0; y < h; y++) { const k = Math.cos(y / h * 5 * 2 * Math.PI); const v = 205 + 38 * k; g.fillStyle = `rgb(${v},${v + 4},${v + 8})`; g.fillRect(0, y, w, 1); }
 });
 const bitum = M(0x2e3236, {roughness: 0.95}), coping = M(0xa8a49a, {roughness: 0.9});
 function brickMat(lenM, hM) { const t = BRICK.clone(); t.needsUpdate = true; t.repeat.set(lenM / 2.5, hM / 1.2); return M(0xffffff, {map: t}); }
+// ---------- деталі за фото (дах АБК 27.10 — 54 фото; 26.10 123523, 123527; 27.10 112733): цегла скрізь, рулонна покрівля, плити на парапетах з лишайником
+const BRICKV = canvasTex(256, 512, (g, w, h) => {           // та сама кладка, повернута: по x — ряди (1,2 м), по y — уздовж цегли (2,5 м)
+  g.fillStyle = '#c9bf9f'; g.fillRect(0, 0, w, h); let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let r = 0; r < 16; r++) for (let y = (r % 2) * -26; y < h; y += 52) {
+    const o = rnd() < 0.07, l = o ? 62 + rnd() * 8 : 72 + rnd() * 9, hue = o ? 24 + rnd() * 8 : 44 + rnd() * 6; g.fillStyle = `hsl(${hue},${o ? 45 : 42 + rnd() * 12}%,${l}%)`; g.fillRect(r * 16 + 1.5, y + 1.5, 13, 49); }
+});
+const ROLL = canvasTex(256, 256, (g, w, h) => {             // бітумні рулони ≈1 м (на фото 110828 — смуги вздовж гребеня, Пн–Пд); 256 px = 4 м
+  g.fillStyle = '#383c3f'; g.fillRect(0, 0, w, h); let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 1400; i++) { const v = 48 + rnd() * 22; g.fillStyle = `rgba(${v},${v + 3},${v + 5},0.5)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); }
+  for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(20,22,24,0.9)'; g.fillRect(x, 0, 2, h); g.fillStyle = 'rgba(90,94,96,0.55)'; g.fillRect(x + 2, 0, 1, h); }
+  for (let i = 0; i < 4; i++) { g.fillStyle = 'rgba(70,74,76,0.35)'; g.fillRect(rnd() * w, rnd() * h, 20 + rnd() * 40, 12 + rnd() * 30); }
+});
+const COPT = canvasTex(256, 64, (g, w, h) => {              // бетонні плити парапету з жовто-зеленим лишайником (фото 110806, 110904, 110949)
+  g.fillStyle = '#a7a397'; g.fillRect(0, 0, w, h); let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 900; i++) { const v = 140 + rnd() * 50; g.fillStyle = `rgba(${v},${v - 4},${v - 14},0.5)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); }
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${190 + rnd() * 30},${170 + rnd() * 30},${50 + rnd() * 30},${0.35 + rnd() * 0.4})`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 1 + rnd() * 3, 0, 7); g.fill(); }
+  for (let x = 0; x < w; x += 64) { g.fillStyle = 'rgba(70,70,64,0.5)'; g.fillRect(x, 0, 1, h); }      // шви плит ≈1 м
+});
+const repT = (T, u, v) => { const t = T.clone(); t.needsUpdate = true; t.repeat.set(u, v); return t; };
+const brickW = () => M(0xffffff, {map: repT(BRICK, 1 / 2.5, 1 / 1.2)});           // для світових UV (м)
+const brickVW = () => M(0xffffff, {map: repT(BRICKV, 1 / 1.2, 1 / 2.5)});
+const rollM = (u, v) => M(0xffffff, {map: repT(ROLL, u / 4, v / 4), roughness: 0.95});
+const copM = len => M(0xffffff, {map: repT(COPT, len / 4, 1), roughness: 0.9});
+{ const dX = AL.x1 - AL.x0, dY = AL.y1 - AL.y0;              // південний блок: цегла і рулонна покрівля
+  ALbody.material = [brickMat(dY, AL.h), brickMat(dY, AL.h), rollM(dX, dY), mat.wall2, brickMat(dX, AL.h), brickMat(dX, AL.h)];
+  ALpar.forEach(b => { const pr = b.geometry.parameters, L = Math.max(pr.width, pr.depth); b.material = brickMat(L, G.par.lo); }); }
 function profMat(col, lenM) { const t = PROF.clone(); t.needsUpdate = true; t.repeat.set(lenM, 1); return M(col, {map: t, metalness: 0.45, roughness: 0.45}); }
 function nadb(y0, y1, H, name, col, hc, info) {
   const x0 = s0, x1 = s1, L = Math.max(x1 - x0, y1 - y0), zr = AL.h + H - PARH;
@@ -308,24 +335,71 @@ nadb(s2, SPLIT, 2.25, 'південна', 0x9aa2a8, 1.02, ['Надбудова �
   const N = 40; for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh.lineTo(x, zA(x)); }
   sh.lineTo(AB.x0, 0);
   const g = new THREE.ExtrudeGeometry(sh, {depth: AB.y1 - AB.y0, bevelEnabled: false, curveSegments: 1});
-  const walls = new THREE.Mesh(g, [mat.wall, mat.wall]); walls.position.set(0, 0, -AB.y1); walls.castShadow = walls.receiveShadow = true; walls.userData.noOcc = true; groups.bld.add(walls);
+  const walls = new THREE.Mesh(g, [brickW(), brickVW()]); walls.position.set(0, 0, -AB.y1); walls.castShadow = walls.receiveShadow = true; walls.userData.noOcc = true; groups.bld.add(walls);
   walls.userData.info = ['Основний блок АБК', `${(AB.x1 - AB.x0).toFixed(1).replace('.', ',')} × ${(AB.y1 - AB.y0).toFixed(1).replace('.', ',')} м, 4 поверхи. Дах арковий, гребінь уздовж Пн–Пд: карниз +13,2 м, стріла 1,3 м (оцінка), покрівля бітумна рулонна. ${EST}`]; picks.push(walls);
   // покрівля арки — тонка оболонка темного кольору поверх стін
   const sh2 = new THREE.Shape(); sh2.moveTo(AB.x0, AB.h - 0.02);
   for (let i = 0; i <= N; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh2.lineTo(x, zA(x) + 0.01); }
   for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; sh2.lineTo(x, zA(x) - 0.05); }
-  const rf = new THREE.Mesh(new THREE.ExtrudeGeometry(sh2, {depth: AB.y1 - AB.y0 - 0.02, bevelEnabled: false, curveSegments: 1}), mat.roofA);
+  const rf = new THREE.Mesh(new THREE.ExtrudeGeometry(sh2, {depth: AB.y1 - AB.y0 - 0.02, bevelEnabled: false, curveSegments: 1}), rollM(1, 1));
   rf.position.set(0, 0, -AB.y1 + 0.01); rf.receiveShadow = true; rf.castShadow = true; rf.userData.noOcc = true; groups.bld.add(rf);
   // парапети: захід 0,5, схід 0,7 над карнизом; торці — по арці +0,5
-  box(pt, G.par.w, AB.y1 - AB.y0, mat.par, AB.x0 + pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.w / 2, null, ['Західний парапет основного блоку', '≈0,5 м над карнизом (оцінка); біля нього ринва з водою і пруток блискавкозахисту.']);
-  box(pt, G.par.e, AB.y1 - AB.y0, mat.par, AB.x1 - pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.e / 2, null, ['Східний парапет основного блоку', '≈0,7 м над карнизом (оцінка).']);
+  const pW = box(pt, G.par.w, AB.y1 - AB.y0, mat.par, AB.x0 + pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.w / 2, null, ['Західний парапет основного блоку', '≈0,5 м над карнизом (оцінка); біля нього ринва з водою і пруток блискавкозахисту.']);
+  const pE = box(pt, G.par.e, AB.y1 - AB.y0, mat.par, AB.x1 - pt / 2, (AB.y0 + AB.y1) / 2, AB.h + G.par.e / 2, null, ['Східний парапет основного блоку', '≈0,7 м над карнизом (оцінка).']);
   for (const yy of [AB.y0, AB.y1 - pt]) {
     const s3_ = new THREE.Shape(); s3_.moveTo(AB.x0, zA(AB.x0));
     for (let i = 0; i <= N; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; s3_.lineTo(x, zA(x) + G.par.g); }
     for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; s3_.lineTo(x, zA(x)); }
-    const gp = new THREE.Mesh(new THREE.ExtrudeGeometry(s3_, {depth: pt, bevelEnabled: false, curveSegments: 1}), mat.par);
+    const gp = new THREE.Mesh(new THREE.ExtrudeGeometry(s3_, {depth: pt, bevelEnabled: false, curveSegments: 1}), [brickW(), brickVW()]);
     gp.position.set(0, 0, -(yy + pt)); gp.castShadow = gp.receiveShadow = true; gp.userData.noOcc = true; groups.bld.add(gp);
   }
+  pW.material = brickMat(AB.y1 - AB.y0, G.par.w); pE.material = brickMat(AB.y1 - AB.y0, G.par.e);
+})();
+// ---------- деталі за фото: плити на парапетах, бітум на внутрішніх гранях, пруток по парапетах, вікна і кабель на західному фасаді, кондиціонери на східному
+// Усе це — декор: у розрахунок тіні не входить (noOcc), щоб генерація збігалась з моделлю K1.
+(function () {
+  const deco = (m, info) => { m.castShadow = m.receiveShadow = true; m.userData.noOcc = true; if (info) { m.userData.info = info; picks.push(m); } groups.bld.add(m); return m; };
+  const bx = (w, h, d, mt, x, y, z, info) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mt); m.position.copy(P(x, y, z)); return deco(m, info); };
+  const iCop = ['Бетонні плити на парапеті', 'Плити ≈0,4 м завширшки з напуском, зверху жовто-зелений лишайник і мох (фото 27.10: 110806, 110904, 110949, 110951). Внутрішня грань парапету обклеєна бітумом ≈0,3 м. Ширина і висота — оцінка.'];
+  const bit = M(0x26292c, {roughness: 0.95}), CW = pt + 0.16, CT = 0.06;
+  // прямі парапети: основний блок захід/схід, південний блок пд/зх/сх — плита зверху і бітум на внутрішній грані
+  [[AB.x0 + pt / 2, null, AB.y0, AB.y1, AB.h + G.par.w, +1], [AB.x1 - pt / 2, null, AB.y0, AB.y1, AB.h + G.par.e, -1],
+   [AL.x0 + pt / 2, null, AL.y0, AL.y1, AL.h + G.par.lo, +1], [AL.x1 - pt / 2, null, AL.y0, AL.y1, AL.h + G.par.lo, -1], [null, AL.y0 + pt / 2, AL.x0, AL.x1, AL.h + G.par.lo, +1]].forEach(([x, y, a, b, zt, sg]) => {
+    const L = b - a, zr = x !== null ? (zt === AL.h + G.par.lo ? AL.h : AB.h) : AL.h;
+    if (x !== null) { bx(CW, CT, L, copM(L), x, (a + b) / 2, zt + CT / 2, iCop); bx(0.012, Math.min(0.3, zt - zr), L, bit, x + sg * (pt / 2 + 0.006), (a + b) / 2, zr + Math.min(0.3, zt - zr) / 2); }
+    else { bx(L, CT, CW, copM(L), (a + b) / 2, y, zt + CT / 2, iCop); bx(L, 0.3, 0.012, bit, (a + b) / 2, y + sg * (pt / 2 + 0.006), zr + 0.15); }
+  });
+  // торцеві парапети по арці — плита по дузі
+  for (const yy of [AB.y0, AB.y1 - pt]) {
+    const shp = new THREE.Shape(), N = 40; shp.moveTo(AB.x0 - 0.05, zA(AB.x0) + G.par.g);
+    for (let i = 0; i <= N; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; shp.lineTo(x, zA(x) + G.par.g + CT); }
+    for (let i = N; i >= 0; i--) { const x = AB.x0 + (AB.x1 - AB.x0) * i / N; shp.lineTo(x, zA(x) + G.par.g); }
+    const cp = new THREE.Mesh(new THREE.ExtrudeGeometry(shp, {depth: CW, bevelEnabled: false, curveSegments: 1}), M(0xa7a397, {roughness: 0.9})); cp.position.set(0, 0, -(yy + pt / 2 + CW / 2)); deco(cp, iCop);
+  }
+  // пруток уздовж парапетів основного блоку (фото 110806, 110904, 110949, 110951) — ймовірно блискавкоприймач
+  const iWire = ['Пруток по верху парапету', 'Сталевий пруток ≈8 мм, іржавий, лежить на плитах парапету по периметру основного блоку (фото 27.10: 110806, 110904, 110949, 110951) — схоже на блискавкоприймач старої системи. Що це і куди йде — перевірити при обстеженні.'];
+  const wireM = M(0x6b4a33, {roughness: 0.7, metalness: 0.4}), tube = (pts) => deco(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(8, pts.length * 4), 0.012, 5, false), wireM), iWire);
+  tube([P(AB.x0 + pt / 2, AB.y0, AB.h + G.par.w + CT + 0.012), P(AB.x0 + pt / 2, AB.y1, AB.h + G.par.w + CT + 0.012)]);
+  tube([P(AB.x1 - pt / 2, AB.y0, AB.h + G.par.e + CT + 0.012), P(AB.x1 - pt / 2, AB.y1, AB.h + G.par.e + CT + 0.012)]);
+  for (const yy of [AB.y0 + pt / 2, AB.y1 - pt / 2]) { const pts = []; for (let i = 0; i <= 24; i++) { const x = AB.x0 + (AB.x1 - AB.x0) * i / 24; pts.push(P(x, yy, zA(x) + G.par.g + CT + 0.012)); } tube(pts); }
+  // західний фасад основного блоку: один ряд вікон (фото 26.10 123527, 27.10 112733); нижче фасад на фото закриває цех — не показано
+  const iWin = ['Вікно на західному фасаді', 'Біла рама ПВХ, світле обрамлення. Ряд ≈8,7–10,1 м від землі, вище — глуха цегла ≈3 м до карниза (за фото 26.10 123527 і 27.10 112733; розміри — за пропорціями, ±0,3 м; положення ±1 м). Нижчі поверхи на фото закриває цех — не показано.'];
+  const frame = M(0xf2f2ee, {roughness: 0.6}), glass = M(0x93a8b6, {roughness: 0.2, metalness: 0.1}), surr = M(0xd8d2c2, {roughness: 0.9});
+  [[41.3, 1.05, 1.45], [38.8, 1.05, 1.45], [36.4, 1.05, 1.45], [33.3, 1.05, 1.45], [30.8, 1.05, 1.45], [27.1, 1.05, 1.45], [24.1, 1.6, 1.9]].forEach(([y, w, h]) => {
+    const zt = 10.1, zc = zt - h / 2, x = AB.x0;
+    bx(0.04, h + 0.2, w + 0.2, surr, x - 0.02, y, zc, iWin); bx(0.06, h, w, frame, x - 0.03, y, zc, iWin); bx(0.07, h - 0.12, w - 0.12, glass, x - 0.035, y, zc, iWin);
+    if (w < 1.5) bx(0.075, h - 0.12, 0.05, frame, x - 0.035, y, zc);                                  // імпост
+  });
+  // кабель по західному фасаду на гачках (фото 26.10 123527): уздовж під карнизом і два спуски донизу
+  const iCab = ['Кабель на західному фасаді', 'Чорний кабель на гачках під карнизом, з двома спусками донизу (фото 26.10 123527). Чий і куди йде — немає в даних; траса — оцінка.'];
+  const cabM = M(0x1d1f21, {roughness: 0.6}), cab = pts => deco(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), pts.length * 6, 0.015, 5, false), cabM), iCab);
+  const xc = AB.x0 - 0.06, run = []; for (let y = 44.6; y >= 32.0 - 1e-6; y -= 0.9) { const k = ((44.6 - y) / 3.15) % 1; run.push(P(xc, y, 12.3 - 0.25 * Math.sin(Math.PI * k) - (44.6 - y) * 0.012)); }
+  cab(run); cab([P(xc, 44.6, 12.35), P(xc, 44.6, 9.0), P(xc, 44.7, 8.0)]); cab([P(xc, 32.0, 12.2), P(xc, 32.0, 10.6), P(xc, 32.05, 8.0)]);
+  // кондиціонери на східному фасаді (фото 27.10 110949, 110951): ≈13 білих зовнішніх блоків під парапетом
+  const iAC = ['Кондиціонери на східному фасаді', '≈13 зовнішніх блоків на кронштейнах уздовж східного фасаду, під парапетом (фото 27.10 110949, 110951 — знято згори). Висота і крок — оцінка; вікна за ними з даху не видно — не показано.'];
+  const acM = M(0xeef0ee, {roughness: 0.5}), brM = M(0x9aa0a4, {metalness: 0.5, roughness: 0.5});
+  for (let i = 0; i < 13; i++) { const y = 21.8 + i * 1.85, x = AB.x1 + 0.17;
+    bx(0.3, 0.55, 0.8, acM, x + 0.05, y, 11.0, iAC); bx(0.34, 0.03, 0.04, brM, x, y - 0.3, 10.71); bx(0.34, 0.03, 0.04, brM, x, y + 0.3, 10.71); }
 })();
 // вентшахти і вентвиходи
 // тумби — бетон у бітумі, верх з мохом (фото 27.10); 28.10 додано 3 за фото і супутником
@@ -350,6 +424,8 @@ G.vents.forEach(([x, y, r, h, kind, src]) => {
     parts[0].userData.info = ['Вентшахта на арці', `Кругла тумба Ø${fx(2 * r)} м (рулетка), ≈${fx(h)} м над покрівлею, обклеєна бітумом. Навколо — 0,3 м без модулів. X ${fx(x)}, Y ${fx(y)} м.${NEW}`];
   }
   parts.forEach(c => picks.push(c));
+  const moss = new THREE.Mesh(new THREE.RingGeometry(r * 0.98, r + 0.28, 28), M(0xa8a24c, {roughness: 1, transparent: true, opacity: 0.55, polygonOffset: true, polygonOffsetFactor: -2}));
+  moss.rotation.x = -Math.PI / 2; moss.position.copy(P(x, y, z0 + 0.01)); moss.userData.noOcc = true; groups.bld.add(moss);   // мох і лишайник біля основи (фото 110801, 110841)
 });
 // ---------- сталева драбина з дугами: з нижнього даху на арку (фото 27.10 110806, 110837, 111154; 26.10 123523), оцінка ±0,5 м — варіант «як є»
 const ladA = new THREE.Group(), ladP = new THREE.Group(), railG = new THREE.Group(), walkG = new THREE.Group(); groups.bld.add(ladA, ladP, railG, walkG);
@@ -438,7 +514,9 @@ const ladA = new THREE.Group(), ladP = new THREE.Group(), railG = new THREE.Grou
     const m = new THREE.Mesh(g, wm); m.material.side = THREE.DoubleSide; m.receiveShadow = true; m.userData.noOcc = true; m.userData.info = info(w.kind); walkG.add(m); picks.push(m);
   });
 })();
-G.boxes.forEach(([x, y, dx, dy, h], i) => box(dx, h, dy, mat.zn, x, y, zA(x) + h / 2, null, [i ? 'Низький вентвихід' : 'Високий вентвихід', `${dx.toString().replace('.', ',')} × ${dy.toString().replace('.', ',')} м, висота ≈${h.toString().replace('.', ',')} м над покрівлею (оцінка). Оцинкований.`]));
+G.boxes.forEach(([x, y, dx, dy, h], i) => { if (!i) {             // високий: оцинкований короб з похилим козирком (фото 27.10 110912–110916)
+    const hd = new THREE.Mesh(new THREE.BoxGeometry(dx + 0.16, 0.05, dy + 0.3), mat.zn); hd.position.copy(P(x, y + 0.12, zA(x) + h + 0.1)); hd.rotation.x = 0.35; hd.castShadow = true; hd.userData.noOcc = true; groups.bld.add(hd); }
+  box(dx, h, dy, mat.zn, x, y, zA(x) + h / 2, null, [i ? 'Низький вентвихід' : 'Високий вентвихід', `${dx.toString().replace('.', ',')} × ${dy.toString().replace('.', ',')} м, висота ≈${h.toString().replace('.', ',')} м над покрівлею (оцінка). Оцинкований.`]); });
 // ---------- контекст: край цеху і ТП-5913
 const cx0 = 84, cx1 = 96.64;
 box(cx1 - cx0, 15.9, 60, mat.ctx, (cx0 + cx1) / 2, 25, 15.9 / 2, groups.ctx, ['Цех (край, для орієнтації)', 'Східна стіна цеху — X 96,6 м, за 11,7 м від АБК. Покрівля в ендовах +15,9 м, гребені до +18,15 м (розріз 1-1). Тінь на АБК дає лише ввечері.']);
@@ -900,7 +978,8 @@ function panelLay() {
 function panelEst() {
   return `<div class="ph"><span class="eyebrow">Що оцінка, а що виміряно</span><h2>Висоти — оцінка, план — супутник ±0,5 м</h2></div>
   <div class="note warn">Висоти рулеткою не міряно: південний блок 10,0 м, карниз основного 13,2 м, стріла арки 1,3 м, надбудова — дві частини, ≈3,3 і ≈2,25 м над дахом за рядами цегли на фото (±0,15 м). Вентшахти Ø1,2 м — рулеткою. Розрахунок К1 рахував надбудову однією коробкою +12,6 м; таблиця варіантів — уже з двома частинами. Кріплення «доміку» на нижньому даху і на надбудові показано схематично; несуча здатність покрівлі надбудови і вітер на +13 м — немає в даних. Покрівля арки — бітумна рулонна (фото 27.10); тип покрівлі нижнього даху і несуча здатність обох дахів — немає в даних.</div>
-  <div class="blk"><h3>Виміряти на місці</h3><ul class="blist"><li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li><li>висоту парапетів і південного блоку;</li><li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li><li>чи немає вікон на стіні 4-го поверху за модулями на південній стіні;</li><li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li></ul>
+  <div class="blk"><h3>Виміряти на місці</h3><ul class="blist"><li>висоту карниза основного блоку і стрілу арки (від ринви до гребеня);</li><li>висоту парапетів і південного блоку;</li><li>де двері з надбудови на нижній дах і прохід до драбини; чи драбина закріплена;</li><li>чи немає вікон на південній стіні основного блоку на схід від надбудови (на захід від неї — на фото 27.10 112733 вікон немає);</li><li>трасу від щитів АБК до контейнера K-3 (≈30 м за планом).</li></ul>
+    <h3>Деталі будівлі за фото</h3><ul class="blist"><li>жовта цегла на всіх стінах, рулонна бітумна покрівля смугами Пн–Пд (дах АБК, 54 фото 27.10);</li><li>бетонні плити з лишайником на парапетах, бітум на внутрішніх гранях, іржавий пруток по парапетах основного блоку (110806, 110904, 110949);</li><li>західний фасад: ряд із 7 вікон ≈8,7–10,1 м і кабель на гачках (26.10 123527, 27.10 112733); нижче фасад закриває цех — не показано;</li><li>≈13 кондиціонерів на східному фасаді (110949, 110951); вікон там з даху не видно;</li><li>мох біля тумб, козирок високого вентвиходу. Усе це декор — у тіні й генерацію не входить.</li></ul>
     <h3>Варіанти ДБН</h3><ul class="blist"><li>драбина П1, площадка й огородження — схема, конструкцію визначає проєкт;</li><li>ширина доріжок 0,8 м — наше рішення, у прочитаних ДБН її немає;</li><li>драбини П1 на надбудову — на західній стіні і між частинами: де двері виходу на дах, не видно на фото;</li><li>МВт·год варіантів — повна модель K1 з геометрією 28.10 (calc/v3/abk_var.py), стрінги по 11 зі спільними залишками, якщо втрати ≤ 12 %.</li></ul>
     <p class="src">Розкладка — calc/v3/abk.py, antares/abk/layout.py; генерація варіантів — calc/v3/abk_var.py; звіт «Розрахунок радіації і розкладки модулів на даху АБК…» 27.10.2026. Координати — як у двійнику даху цеху: X на схід, Y на північ, висота від землі.</p></div>`;
 }
