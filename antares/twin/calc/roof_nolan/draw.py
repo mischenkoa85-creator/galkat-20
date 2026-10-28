@@ -18,7 +18,7 @@ NAME = 'Креслення_покрівля_цеху_без_ліхтарів_к�
 IRR = json.load(open(W + 'irr_nolan.json'))
 nf = lambda v, n=0: (f'{v:,.{n}f}').replace(',', ' ').replace('.', ',').replace('-', '−')
 DOC = S.Doc('ЕСЕ-2610-01-ПК', 'Сонячна електростанція на покрівлі цеху ТОВ МК «Антарес», м. Київ, вул. Миколи Василенка, 1-А',
-            ('Покрівля цеху: стан після демонтажу ліхтарів і розміщення модулів' if os.path.exists(W + 'pv_eval.json') else 'Покрівля цеху. Вихідні дані: стан після демонтажу ліхтарів'), N=10 if os.path.exists(W + 'pv_eval.json') else 8)
+            ('Покрівля цеху: стан після демонтажу ліхтарів і розміщення модулів' if os.path.exists(W + 'pv_eval.json') else 'Покрівля цеху. Вихідні дані: стан після демонтажу ліхтарів'), N=11 if os.path.exists(W + 'pv_eval.json') else 8)
 # ------------------------------------------------------------------ кольори об'єктів
 K = dict(roof='#ffffff', par=C['conc'], west='#e7e2d8', valley='#3f6e95', frame='#1d2a33', ang='#5b6770', lan='#9aa5ae',
          ac='#e9eef2', acu='#ffffff', exit='#d8c3ad', defl='#ffffff', phok='#bfe3c6', drain='#2a78d6', drain2='#2a78d6', other='#b4461b')
@@ -647,14 +647,16 @@ for F, fs_ in zip(R.FRAMES, FST):
     msp.add_mtext(f"Зх {nf(fs_['W'])} · Сх {nf(fs_['E'])} кВт·год/м²", dxfattribs={'layer': '30_РАДІАЦІЯ_ПІДПИСИ', 'char_height': TH(FS['small']), 'style': 'DV', 'insert': (F['xc'], F['y0'] - 1.6), 'attachment_point': 5})
 to_dxf(plan('full'))
 if os.path.exists(W + 'pv_eval.json'):          # модулі, проходи — окремими шарами в тому самому кресленні
-    for nm, rgb in (('50_МОДУЛІ_ДАХ', (42, 93, 176)), ('51_МОДУЛІ_КАРКАСИ', (42, 93, 176)), ('52_ПРОХОДИ', (46, 139, 87))):
-        l = doc.layers.add(nm); l.rgb = rgb
-    GP = Prims()
-    for it in plan_pv().P:
-        if it[1] in ('50_МОДУЛІ_ДАХ', '51_МОДУЛІ_КАРКАСИ', '52_ПРОХОДИ'): GP.P.append(it)
-    to_dxf(GP)
+    for V in PVV:                                 # вар. 1 — шари 50–53, вар. 2 — 60–63 (вмикати по черзі)
+        GP = Prims(); LL = set(V['L'].values())
+        for nm in LL:
+            l = doc.layers.add(nm); l.rgb = (46, 139, 87) if 'ПРОХОДИ' in nm else (183, 121, 31) if 'ОСВІТЛЕННЯ' in nm else (42, 93, 176)
+            if V is PVV[1]: l.off()
+        for it in plan_pv(V).P:
+            if it[1] in LL: GP.P.append(it)
+        to_dxf(GP)
 # шари радіації — під усім іншим (порядок відображення)
-msp.add_mtext('Покрівля цеху Антарес після демонтажу ліхтарів (28.10.2026). Координати — осі моделі, м: X від осі 1 на схід, Y на північ. Шари 30_РАДІАЦІЯ_* — опромінення, кВт·год/м² за рік.',
+msp.add_mtext('Покрівля цеху Антарес після демонтажу ліхтарів (28.10.2026). Координати — осі моделі, м: X від осі 1 на схід, Y на північ. Шари 30_РАДІАЦІЯ_* — опромінення, кВт·год/м² за рік; 50–53 — модулі, варіант 1 (з проходами); 60–63 — варіант 2 (максимальний, вимкнено); 53/63 — модулі на освітлення.',
               dxfattribs={'layer': '40_ТЕКСТ', 'char_height': 0.6, 'style': 'DV', 'insert': (-4.0, 101.5), 'attachment_point': 7})
 doc.saveas(OUT + NAME + '.dxf')
 print('dxf ok')

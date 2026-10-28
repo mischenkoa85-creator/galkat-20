@@ -12,10 +12,11 @@ LM, DM = 2.384, 1.303; FR_EDGE = (0.02 + LM) * math.cos(math.radians(13))
 EV = json.load(open(os.environ.get('EVAL', W + 'pv_eval.json'))); CA = json.load(open(os.environ.get('CANDS', W + 'pv_cands.json')))
 RU = CA['rules']; PATH = min([p['w'] for p in RU['paths_y']] + [p['w'] for p in RU['paths_x']] + [9])
 rect = []
+# усі встановлені модулі: у стрінгах і поза стрінгами (на освітлення, s = −1)
 for m in EV['roof_mods']:
-    if m['s'] >= 0: rect.append(('roof', m['xa'], m['xb'], m['y'] - LM / 2, m['y'] + LM / 2))
+    if True: rect.append(('roof', m['xa'], m['xb'], m['y'] - LM / 2, m['y'] + LM / 2))
 for m in EV['frame_mods']:
-    if m['s'] >= 0:
+    if True:
         F = R.FRAMES[m['l'] - 1]; sg = 1 if m['side'] == 'E' else -1
         rect.append(('frame', min(F['xc'], F['xc'] + sg * FR_EDGE), max(F['xc'], F['xc'] + sg * FR_EDGE), m['y'], m['y1']))
 n = len(rect)

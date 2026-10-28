@@ -4,7 +4,7 @@
 Модулі ZNSHINE 730 Вт 2 384 × 1 303: на гранях — короткою стороною поперек грані (як у v3), рядами вздовж Y з кроком 2 406;
 на каркасах ліхтарів 13° — книжково, 1 ряд на схил, крок 1 325 уздовж ліхтаря.
 Правила — RULES (кожне з підставою в RULES_SRC); генерація — модель v3 (lan22: Meteonorm 8.1, DSM 0,25 м, тінь, стрінги по 11).
-→ pv_layout.json"""
+→ pv_cands.json (env RULES — файл правил, OUT — вихід)"""
 import os, sys, json, math, collections
 W = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, W)
@@ -12,7 +12,7 @@ import roofobj as R
 LM, DM, GAP, MRG = 2.384, 1.303, 0.022, 0.12          # модуль, зазор, відступ від краю грані (як v3)
 PY, PL = 2.406, 1.325                                 # крок рядів на гранях (Y), крок модулів на каркасі (Y)
 FR_EDGE = (0.02 + LM) * math.cos(math.radians(13))    # край модуля на каркасі від осі ліхтаря, 2,34 м
-RULES = json.load(open(W + 'pv_rules.json', encoding='utf-8'))
+RULES = json.load(open(os.environ.get('RULES', W + 'pv_rules.json'), encoding='utf-8'))
 ov = lambda a0, a1, b0, b1: a0 < b1 - 1e-9 and b0 < a1 - 1e-9
 def hitc(xa, xb, ya, yb, cx, cy, r):
     dx = max(xa - cx, 0, cx - xb); dy = max(ya - cy, 0, cy - yb); return dx * dx + dy * dy < r * r
@@ -103,4 +103,4 @@ if __name__ == '__main__':
     print('roof cand', len(cand), 'free', len(free), dict(collections.Counter(c_['why'] for c_ in cand)))
     print('frame places', len(FM), 'free', sum(1 for m in FM if not m['why']))
     print('rows', len(ROWS), 'bands', [(round(a, 2), round(b, 2)) for a, b in bands])
-    json.dump(dict(rules=RULES, Z=Z, ROWS=ROWS, bands=bands, cand=cand, frame=FM), open(W + 'pv_cands.json', 'w'), ensure_ascii=False)
+    json.dump(dict(rules=RULES, Z=Z, ROWS=ROWS, bands=bands, cand=cand, frame=FM), open(os.environ.get('OUT', W + 'pv_cands.json'), 'w'), ensure_ascii=False)
