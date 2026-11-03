@@ -70,7 +70,22 @@ const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||stat
   add('stgA',`Весь об'єкт · ${nf(S.all.n)}`,STG()==='all',()=>setStage('all'));
   add('stg2',`Етап 2 · дах · ${nf(S.s2.n)}`,STG()==='2',()=>setStage('2'),'Покрівля цеху на новій мембрані');
   add('stg1',`Етап 1 · ${nf(S.s1.n)}`,STG()==='1',()=>setStage('1'),'АБК, фасади цеху (південь, схід), ліхтарі без демонтажу, УЗЕ');
-  m.hidden=false; };
+  m.hidden=false;
+  // у режимі етапів: ряд покриттів ліхтарів не потрібен (ліхтарі без демонтажу, модулі на склі), легенда — коротка, за етапом
+  const bar=$('#l28bar'); if(bar) bar.hidden=true;
+  const l=$('#legend'); if(l){ const x=STG()==='1'?S.s1:STG()==='2'?S.s2:S.all, sw=(c,t)=>`<span><i class="sw" style="background:${c}"></i>${t}</span>`;
+    const nm=STG()==='1'?'Етап 1':STG()==='2'?'Етап 2 · дах':'Весь об\'єкт';
+    const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923 (умовно)</span>`;
+    const p2=`<span>дах В1: ${nf(S.roof.st)} у стрінгах</span>${sw('#e8b23a',`на освітлення (${S.roof.lit})`)}${sw('#2e8b57','прохід')}${sw('#8cc98c','відступ')}${sw('#4a4f53','труби')}${sw('#2a78d6','лівневки')}`;
+    l.innerHTML=`<span class="t">${nm} · ${nf(x.n)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.n)}</span><span>етап 2: ${nf(S.s2.n)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
+    l.hidden=false; }
+  };
+// ---------- легенда згортається (усі розділи): видно перший рядок і кнопку; на телефоні — згорнута, поки не розгорнути
+if(state.lay.legOpen===undefined) state.lay.legOpen=window.innerWidth>=700;
+const hudL=hudCtx; hudCtx=function(){ hudL.apply(this,arguments); const l=$('#legend'); if(!l||l.hidden||!l.children.length) return;
+  if(l.children.length<2){ l.classList.remove('min'); return; }
+  const open=!!state.lay.legOpen, b=document.createElement('button'); b.type='button'; b.className='lgx'; b.textContent=open?'▴ менше':'▾ ще'; b.setAttribute('aria-expanded',String(open)); b.title=open?'Згорнути легенду':'Розгорнути легенду';
+  b.onclick=e=>{ e.stopPropagation(); state.lay.legOpen=!state.lay.legOpen; hudCtx(); save(); }; l.insertBefore(b,l.children[1]); l.classList.toggle('min',!open); };
 // ---------- панель «Загальне»: склад етапів
 const row=(t,x,cls)=>`<tr class="${cls||''}"><td>${t}</td><td>${nf(x.n)}${x.lit?` <small>(${x.lit} на освітлення)</small>`:''}</td><td>${nf(x.kwp,1)}</td><td>${nf(x.mwh,1)}</td></tr>`;
 const pzS=panelPZ; panelPZ=function(){ const h=pzS.apply(this,arguments); if(!ON()) return h; const S=sums(), VN={'1':'В1 · з проходами','2':'В2 · максимальний'}, c=q=>STG()===q?' class="cur"':'';

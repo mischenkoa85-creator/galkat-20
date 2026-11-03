@@ -50,6 +50,8 @@ button{cursor:pointer}
 .ctx{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:100%}
 .legend{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line);border-radius:9px;padding:5px 9px;font-size:12px;color:var(--ink-2);backdrop-filter:blur(6px);max-width:min(560px,100%)}
 .legend .t{color:var(--ink);font-weight:600}
+.legend .lgx{border:0;background:transparent;color:var(--accent,#1f6f8b);font:inherit;font-weight:600;padding:0 2px;cursor:pointer;white-space:nowrap}
+.legend.min>*:not(:first-child):not(.lgx){display:none}
 .legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .sw{width:11px;height:11px;border-radius:3px;flex:none;border:1px solid rgba(0,0,0,.15);display:inline-block}
 .compass{position:absolute;right:10px;top:10px;width:46px;height:46px;border-radius:50%;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--line);display:grid;place-items:center;z-index:3;backdrop-filter:blur(6px)}
