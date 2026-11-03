@@ -22,6 +22,7 @@ const STG=()=>state.lay.stg, ON=()=>state.proj==='ours'&&!!(R28&&R28.ON());
 const in1=()=>STG()!=='2', in2=()=>STG()!=='1';
 // ---------- підсумки етапів
 const MP=0.73;
+const WH={n:176,mwh:148.7};   // склад, варіант Б: 176 модулів (16 стрінгів), 148,7 МВт·год — економічний ефект 26.10 (модель 25.10, пропорційно від 180)
 function sums(){ const k=state.lay.r28&&R28.D.V[state.lay.r28]?state.lay.r28:'1', V=R28.D.V[k];
   const fr=V.frame, frS=fr.filter(m=>m[5]>=0), frMWh=V.sum.frame.mwh;
   const roof={n:V.sum.all-fr.length, st:V.sum.st.n-frS.length, lit:V.sum.lit.n-(fr.length-frS.length), mwh:V.sum.st.mwh-frMWh};
@@ -31,8 +32,23 @@ function sums(){ const k=state.lay.r28&&R28.D.V[state.lay.r28]?state.lay.r28:'1'
   const T=FP?FP.T:null, fac=T?{n:T.all.n,st:T.all.n,lit:0,kwp:T.all.n*MP,mwh:T.all.kwh/1000}:{n:0,st:0,lit:0,kwp:0,mwh:0};
   const ab=A?{n:ABK_DATA.dbn.n,st:ABK_DATA.dbn.n,lit:0,kwp:ABK_DATA.dbn.kwp,mwh:ABK_DATA.dbn.mwh}:{n:0,st:0,lit:0,kwp:0,mwh:0};
   const add=(...a)=>a.reduce((s,x)=>({n:s.n+x.n,st:s.st+x.st,lit:s.lit+x.lit,kwp:s.kwp+x.kwp,mwh:s.mwh+x.mwh}),{n:0,st:0,lit:0,kwp:0,mwh:0});
-  const s1=add(ab,fac,lan), s2=roof;
-  return {k,ab,fac,lan,roof,s1,s2,all:add(s1,s2)}; }
+  const wh={n:WH.n,st:WH.n,lit:0,kwp:WH.n*MP,mwh:WH.mwh};
+  const s1=add(ab,fac,lan,wh), s2=roof;
+  return {k,ab,fac,lan,wh,roof,s1,s2,all:add(s1,s2)}; }
+// ---------- накопичувачі етапу 1: по 2 контейнери на кожну ТП (рішення власника 03.11, 23:15)
+const NK={}; let K2=[];
+if(BS){ const k2=BS.K.find(k=>k.id==='K-2'); if(k2){ const cx=(k2.box[0]+k2.box[1])/2, cy=(k2.box[2]+k2.box[3])/2; K2=ESS.filter(o=>o.parent===G.oursBase&&Math.abs(o.position.x-cx)<0.6&&Math.abs(-o.position.z-cy)<0.6); }   // К-2 (МС-2) у варіанті «по 2 на ТП» не ставиться
+  KCOL['K-4']=0x7b5bd6; KCOL['K-5']=0x1aa3b4;
+  const g=grp('stgESS',G.ours), Y0=SHOP[3]+3.0, LL=6.058, WW=2.438;
+  [['K-4',27.0],['K-5',35.5]].forEach(([id,x0])=>{ const k={id,box:[x0,x0+LL,Y0,Y0+WW],lines:0,kwp:0,ac_len:0}, cx=x0+LL/2, cy=Y0+WW/2;
+    const pl=box(LL+2,0.04,WW+2,UZM.plat,cx,0.02,-cy,g); pl.castShadow=false; box(LL+1,0.25,WW+1,MAT.slab,cx,0.175,-cy,g);
+    const c=golenH20(k); g.add(c); const body=c.children[0];
+    body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · біля ТП-6923 (умовно)`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Місце умовне — уздовж північного фасаду, 3 м від стіни, на схід від цегляної прибудови; вільність ділянки, проїзди й відстані не перевіряли. AC — до ТП-6923 (≈${nf(x0-19.5+1,0)} м по прямій). Етап 1: входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), етап 2 — західна половина даху.`};
+    const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-6923 · умовно`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
+    lb.scale.set(0.2,0.05,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.6)); lb.renderOrder=18; g.add(lb);
+    const ac=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([W(x0+0.4,cy,0.36),W(x0+0.4,cy,0.08),W(19.6,cy,0.08),W(19.6,cy,0.9)],false,'catmullrom',0.02),24,0.07,8,false),new THREE.MeshStandardMaterial({color:lin(0xc0392b),roughness:0.5}));
+    ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923 (умовно)`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE); траса умовна.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
+  NK.g=g; }
 // ---------- видимість
 const ABK_SEC={arch:1,low:1,wall:1,nad:1,xm:1,mount:s=>s!=='bz',elec:s=>s==='pz'||s==='ep'||s==='bud',str:s=>s==='ep',lps:s=>s==='bz',safety:s=>s==='pz'||s==='km'||s==='bud'};
 function abkVis(){ if(!A) return; const s=effSec(), on=state.proj==='ours'&&(!ON()||in1());
@@ -41,7 +57,11 @@ const svS=setVis; setVis=function(){ svS.apply(this,arguments); abkVis(); if(!ON
   const g=R28.VG[state.lay.r28]; if(g) g.children.forEach(o=>{ if(o.userData.part==='roof'||o.userData.part==='zone') o.visible=in2(); });
   if(L28&&L28.LG28){ const k=state.lay.r28; L28.LG28.forEach(q=>{ if(q.v2m&&q.v2m[k]){ q.v2m[k].visible=q.v2m[k].visible&&in1(); q.v2r[k].visible=q.v2r[k].visible&&in1(); } }); }
   if(FP&&FP.FG) FP.FG.visible=FP.FG.visible&&in1();
-  if(G.uze) G.uze.visible=G.uze.visible&&in1(); };
+  if(G.uze) G.uze.visible=G.uze.visible&&in1();
+  WHI.forEach(w=>{ w.im.visible=in1(); });                          // склад — етап 1
+  K2.forEach(o=>o.visible=false); if(NK.g) NK.g.visible=true; };
+// поза режимом етапів — як було: 3 контейнери на МС-1…МС-3, без К-4 / К-5
+const svK=setVis; setVis=function(){ svK.apply(this,arguments); if(ON()) return; K2.forEach(o=>o.visible=true); if(NK.g) NK.g.visible=false; WHI.forEach(w=>{ w.im.visible=true; }); };
 // перемикання етапу: ліхтарі — без демонтажу (варіант «2 · модулі на склі», етап «готово»), фасади увімкнено
 function setStage(v){ state.lay.stg=v; state.lay.l28=true; state.lay.l28v='v2'; state.lay.l28s=2; state.lay.fac25=true; if(!state.lay.r28) state.lay.r28='1'; apply(); save(); }
 const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||state.sec!=='pz') return;
@@ -58,13 +78,13 @@ const pzS=panelPZ; panelPZ=function(){ const h=pzS.apply(this,arguments); if(!ON
   <p>Етап 1 — те, що можна ставити зараз: АБК за ДБН, фасади цеху і ліхтарі без демонтажу (модулі поверх скління), накопичувачі. Етап 2 — покрівля цеху, коли покладуть нову мембрану.</p></div>
   <table class="cmp"><thead><tr><th></th><th>Модулів</th><th>кВтп</th><th>МВт·год за рік</th></tr></thead><tbody>
   <tr${c('1')}><td colspan="4"><b>Етап 1</b> <button type="button" class="lnk stgtg" data-t="1">показати</button></td></tr>
-  ${row('АБК — дах, надбудова, стіни (ДБН)',S.ab)}${row('Фасади цеху: південь вертикально, схід — козирок 25° верхнім рядом + вертикально',S.fac)}${row('Ліхтарі без демонтажу — модулі поверх скління',S.lan)}
+  ${row('АБК — дах, надбудова, стіни (ДБН)',S.ab)}${row('Фасади цеху: південь вертикально, схід — козирок 25° верхнім рядом + вертикально',S.fac)}${row('Ліхтарі без демонтажу — модулі поверх скління',S.lan)}${row('Склад — модулі на скатах',S.wh)}
   ${row('Разом етап 1',S.s1,'tot')}
   <tr${c('2')}><td colspan="4"><b>Етап 2</b> <button type="button" class="lnk stgtg" data-t="2">показати</button></td></tr>
   ${row(`Дах цеху на новій мембрані · розкладка 28.10 ${VN[S.k]} без місць на ліхтарях`,S.roof)}
   ${row('Весь об\'єкт',S.all,'tot')}</tbody></table>
-  <p class="src">кВтп і МВт·год — модулі у стрінгах (жовті «на освітлення» — окремо). АБК — розрахунок ДБН 28.10 (модель K1, вихід інвертора Deye); фасади — calc/fac_v2.py (висота за розрізом 1-1); ліхтарі — місця розкладки 28.10 на склінні 41–46°, опромінення площини (lan28); дах — розкладка 28.10 мінус каркаси ліхтарів. Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 ще не перерахована (у розкладці 28.10 — каркаси 13° на бортику 0,30 м, нижчі за скління). Склад (модулі на скатах) у етапи не віднесено.</p>
-  <div class="blk"><h3>Накопичувачі — етап 1</h3><p class="src">У моделі — контейнери Golen LES-H20 (500 кВт / 1 205 кВт·год) на майданчику біля фасаду по осі 17, як було. План — 4 контейнери біля ТП; місце і чи можна ставити один на один — уточнюється (запит Golen). Для АБК — окремий накопичувач, 2 варіанти: шафа на 0,4 кВ у ТП або гібридна шафа Golen LES-241L120 (120 кВт / 241 кВт·год) з модулями MPPT біля АБК — у модель після погодження місця.</p></div>`+h; };
+  <p class="src">кВтп і МВт·год — модулі у стрінгах (жовті «на освітлення» — окремо). АБК — розрахунок ДБН 28.10 (модель K1, вихід інвертора Deye); фасади — calc/fac_v2.py (висота за розрізом 1-1); ліхтарі — місця розкладки 28.10 на склінні 41–46°, опромінення площини (lan28); дах — розкладка 28.10 мінус каркаси ліхтарів. Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 ще не перерахована (у розкладці 28.10 — каркаси 13° на бортику 0,30 м, нижчі за скління). Склад — 176 модулів, 148,7 МВт·год (економічний ефект 26.10).</p>
+  <div class="blk"><h3>Накопичувачі — етап 1: по 2 контейнери на кожну ТП</h3><p class="src">4 × Golen LES-H20-1205W500C-PS = 2 000 кВт / 4 820 кВт·год. <b>ТП-5913</b> — К-3 і К-1 на майданчиках МС-3, МС-1 біля східного фасаду (як у варіанті Б); входи PV — фасади і склад (55 стрінгів, 441,7 кВтп), на етапі 2 — східна половина даху. <b>ТП-6923</b> — К-4 і К-5 уздовж північного фасаду (місце умовне, ділянку не перевіряли); входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), на етапі 2 — західна половина даху. На пару контейнерів — 24 входи по 60 кВт (до 1 440 кВт). Для АБК — окремий накопичувач, 2 варіанти: Golen LES-241L120-PSC (із зарядкою авто) або LES-241L120-PS (гібрид); у модель — після вибору місця.</p></div>`+h; };
 document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.stgtg'); if(b) setStage(b.dataset.t); });
 // ---------- рядок унизу
 const suS=sunUI; sunUI=function(){ suS.apply(this,arguments); if(!ON()||state.sec==='sun') return; const el=$('#now'); if(!el) return; const S=sums(), x=STG()==='1'?S.s1:STG()==='2'?S.s2:S.all;
@@ -76,6 +96,12 @@ function solarT(){ const dd=DAYS[state.day], n=DOY[state.day], off=kyivOffset(20
 function abkSun(){ if(!A) return; const on=effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
   if(on){ const r=A.evaluate(DOY[state.day],solarT(),true); A.paintStatus(r); } else A.paintStatus(null); need=true; }
 const psS=placeSun; placeSun=function(){ psS.apply(this,arguments); abkSun(); };
+// ---------- вид «Контейнери»: з АБК у моделі стара точка (над дахом АБК) закрита — дивимось з північного сходу; вид на К-4 / К-5
+VIEWS.ess.p=[136,30,-58]; VIEWS.ess.c=[100,1,-66];
+VIEWS.ess2={t:'Контейнери ТП-6923',p:[40,15,-124],c:[28,1.5,-100]};
+{ const cams=$('#cams'), b=document.createElement('button'); b.type='button'; b.dataset.c='ess2'; b.textContent=VIEWS.ess2.t; b.setAttribute('aria-pressed','false');
+  b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('ess2'); };
+  const e=cams.querySelector('button[data-c="ess"]'); if(e&&e.nextSibling) cams.insertBefore(b,e.nextSibling); else cams.appendChild(b); }
 // ---------- вид «АБК»
 VIEWS.abk={t:'АБК',p:[158,44,22],c:[114,8,-26]};
 { const cams=$('#cams'), b=document.createElement('button'); b.type='button'; b.dataset.c='abk'; b.textContent=VIEWS.abk.t; b.setAttribute('aria-pressed','false');
