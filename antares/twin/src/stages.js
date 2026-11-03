@@ -1,0 +1,85 @@
+// ================= Весь об'єкт: АБК за ДБН + цех, два етапи будівництва — src/stages.js (вставляється після lan28.js)
+// АБК — модуль antares/abk/dbn/abk_model.js з даними ABK_DATA (abk/dbn/build.py): ті самі координати й three r128, див. abk/dbn/ZBIRKA.md.
+// Етап 1: АБК (132 модулі), фасади цеху (південь вертикально; схід — верхній ряд козирком 25° і вертикально нижче, facpv.js),
+//         ліхтарі без демонтажу — модулі поверх скління (lan28.js, варіант «2»), УЗЕ.
+// Етап 2: дах цеху на новій мембрані — розкладка 28.10 В1 / В2 (roof28.js) без місць на ліхтарях.
+{ const R28=window.__twin.r28, L28=window.__twin.lan28, FP=window.__twin.facpv;
+let A=null;
+if(typeof ABKModel!=='undefined'&&typeof ABK_DATA!=='undefined'){
+  A=ABKModel(THREE,ABK_DATA,{ground:false,ctx:true});
+  A.root.name='abk'; scene.add(A.root);
+  A.groups.ctx.visible=false;                                       // край цеху і ТП-5913 моделі АБК — лише для тіні на АБК (у двійнику вони свої)
+  A.picks.forEach(o=>{ const inf=o.userData.info; if(!inf||typeof inf==='function') return; const [t,d]=Array.isArray(inf)?inf:(inf.uk||inf.en);
+    o.userData.info=()=>{ const r=o.userData.rec; let x=''; if(r&&r.d){ const s=(ABK_DATA.dbn.strings||[]).find(q=>q.k===r.k);
+        x=` Стрінг S${r.k}${s?` · MPPT ${s.mppt} · ${r.d.ord}-й з ${s.n}`:''} · за рік ≈${nf(r.d.kwh)} кВт·год.`; }
+      return {t:'АБК · '+t,d:(d||'')+x}; };
+    PICK.push({o}); });
+  window.__twin.abk=A;
+}
+// ---------- етап: '1' | '2' | 'all'
+if(!['1','2','all'].includes(state.lay.stg)) state.lay.stg='all';
+const STG=()=>state.lay.stg, ON=()=>state.proj==='ours'&&!!(R28&&R28.ON());
+const in1=()=>STG()!=='2', in2=()=>STG()!=='1';
+// ---------- підсумки етапів
+const MP=0.73;
+function sums(){ const k=state.lay.r28&&R28.D.V[state.lay.r28]?state.lay.r28:'1', V=R28.D.V[k];
+  const fr=V.frame, frS=fr.filter(m=>m[5]>=0), frMWh=V.sum.frame.mwh;
+  const roof={n:V.sum.all-fr.length, st:V.sum.st.n-frS.length, lit:V.sum.lit.n-(fr.length-frS.length), mwh:V.sum.st.mwh-frMWh};
+  roof.kwp=roof.st*MP;
+  let lan={n:fr.length,st:frS.length,lit:fr.length-frS.length,kwp:frS.length*MP,mwh:frMWh};
+  if(L28&&L28.K28){ const v0=state.lay.l28v; state.lay.l28v='v2'; const K=L28.K28(); state.lay.l28v=v0; lan={n:K.n,st:K.st,lit:K.lit,kwp:K.kw,mwh:K.gen/1000}; }
+  const T=FP?FP.T:null, fac=T?{n:T.all.n,st:T.all.n,lit:0,kwp:T.all.n*MP,mwh:T.all.kwh/1000}:{n:0,st:0,lit:0,kwp:0,mwh:0};
+  const ab=A?{n:ABK_DATA.dbn.n,st:ABK_DATA.dbn.n,lit:0,kwp:ABK_DATA.dbn.kwp,mwh:ABK_DATA.dbn.mwh}:{n:0,st:0,lit:0,kwp:0,mwh:0};
+  const add=(...a)=>a.reduce((s,x)=>({n:s.n+x.n,st:s.st+x.st,lit:s.lit+x.lit,kwp:s.kwp+x.kwp,mwh:s.mwh+x.mwh}),{n:0,st:0,lit:0,kwp:0,mwh:0});
+  const s1=add(ab,fac,lan), s2=roof;
+  return {k,ab,fac,lan,roof,s1,s2,all:add(s1,s2)}; }
+// ---------- видимість
+const ABK_SEC={arch:1,low:1,wall:1,nad:1,xm:1,mount:s=>s!=='bz',elec:s=>s==='pz'||s==='ep'||s==='bud',str:s=>s==='ep',lps:s=>s==='bz',safety:s=>s==='pz'||s==='km'||s==='bud'};
+function abkVis(){ if(!A) return; const s=effSec(), on=state.proj==='ours'&&(!ON()||in1());
+  Object.entries(ABK_SEC).forEach(([k,f])=>{ if(A.groups[k]) A.groups[k].visible=on&&(f===1||f(s)); }); }
+const svS=setVis; setVis=function(){ svS.apply(this,arguments); abkVis(); if(!ON()) return;
+  const g=R28.VG[state.lay.r28]; if(g) g.children.forEach(o=>{ if(o.userData.part==='roof'||o.userData.part==='zone') o.visible=in2(); });
+  if(L28&&L28.LG28){ const k=state.lay.r28; L28.LG28.forEach(q=>{ if(q.v2m&&q.v2m[k]){ q.v2m[k].visible=q.v2m[k].visible&&in1(); q.v2r[k].visible=q.v2r[k].visible&&in1(); } }); }
+  if(FP&&FP.FG) FP.FG.visible=FP.FG.visible&&in1();
+  if(G.uze) G.uze.visible=G.uze.visible&&in1(); };
+// перемикання етапу: ліхтарі — без демонтажу (варіант «2 · модулі на склі», етап «готово»), фасади увімкнено
+function setStage(v){ state.lay.stg=v; state.lay.l28=true; state.lay.l28v='v2'; state.lay.l28s=2; state.lay.fac25=true; if(!state.lay.r28) state.lay.r28='1'; apply(); save(); }
+const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||state.sec!=='pz') return;
+  const m=$('#modes'); if(!m) return; const S=sums();
+  const add=(key,t,on,fn,ttl)=>{ const b=document.createElement('button'); b.type='button'; b.dataset.m=key; b.textContent=t; if(ttl) b.title=ttl; b.setAttribute('aria-pressed',String(!!on)); b.onclick=fn; m.insertBefore(b,m.firstChild); };
+  add('stgA',`Весь об'єкт · ${nf(S.all.n)}`,STG()==='all',()=>setStage('all'));
+  add('stg2',`Етап 2 · дах · ${nf(S.s2.n)}`,STG()==='2',()=>setStage('2'),'Покрівля цеху на новій мембрані');
+  add('stg1',`Етап 1 · ${nf(S.s1.n)}`,STG()==='1',()=>setStage('1'),'АБК, фасади цеху (південь, схід), ліхтарі без демонтажу, УЗЕ');
+  m.hidden=false; };
+// ---------- панель «Загальне»: склад етапів
+const row=(t,x,cls)=>`<tr class="${cls||''}"><td>${t}</td><td>${nf(x.n)}${x.lit?` <small>(${x.lit} на освітлення)</small>`:''}</td><td>${nf(x.kwp,1)}</td><td>${nf(x.mwh,1)}</td></tr>`;
+const pzS=panelPZ; panelPZ=function(){ const h=pzS.apply(this,arguments); if(!ON()) return h; const S=sums(), VN={'1':'В1 · з проходами','2':'В2 · максимальний'}, c=q=>STG()===q?' class="cur"':'';
+  return `<div class="ph"><span class="eyebrow ours">Весь об'єкт · АБК і цех · два етапи</span><h2>${nf(S.all.n)} модулів · ${nf(S.all.kwp,0)} кВтп · ≈${nf(S.all.mwh,0)} МВт·год за рік</h2>
+  <p>Етап 1 — те, що можна ставити зараз: АБК за ДБН, фасади цеху і ліхтарі без демонтажу (модулі поверх скління), накопичувачі. Етап 2 — покрівля цеху, коли покладуть нову мембрану.</p></div>
+  <table class="cmp"><thead><tr><th></th><th>Модулів</th><th>кВтп</th><th>МВт·год за рік</th></tr></thead><tbody>
+  <tr${c('1')}><td colspan="4"><b>Етап 1</b> <button type="button" class="lnk stgtg" data-t="1">показати</button></td></tr>
+  ${row('АБК — дах, надбудова, стіни (ДБН)',S.ab)}${row('Фасади цеху: південь вертикально, схід — козирок 25° верхнім рядом + вертикально',S.fac)}${row('Ліхтарі без демонтажу — модулі поверх скління',S.lan)}
+  ${row('Разом етап 1',S.s1,'tot')}
+  <tr${c('2')}><td colspan="4"><b>Етап 2</b> <button type="button" class="lnk stgtg" data-t="2">показати</button></td></tr>
+  ${row(`Дах цеху на новій мембрані · розкладка 28.10 ${VN[S.k]} без місць на ліхтарях`,S.roof)}
+  ${row('Весь об\'єкт',S.all,'tot')}</tbody></table>
+  <p class="src">кВтп і МВт·год — модулі у стрінгах (жовті «на освітлення» — окремо). АБК — розрахунок ДБН 28.10 (модель K1, вихід інвертора Deye); фасади — calc/fac_v2.py (висота за розрізом 1-1); ліхтарі — місця розкладки 28.10 на склінні 41–46°, опромінення площини (lan28); дах — розкладка 28.10 мінус каркаси ліхтарів. Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 ще не перерахована (у розкладці 28.10 — каркаси 13° на бортику 0,30 м, нижчі за скління). Склад (модулі на скатах) у етапи не віднесено.</p>
+  <div class="blk"><h3>Накопичувачі — етап 1</h3><p class="src">У моделі — контейнери Golen LES-H20 (500 кВт / 1 205 кВт·год) на майданчику біля фасаду по осі 17, як було. План — 4 контейнери біля ТП; місце і чи можна ставити один на один — уточнюється (запит Golen). Для АБК — окремий накопичувач, 2 варіанти: шафа на 0,4 кВ у ТП або гібридна шафа Golen LES-241L120 (120 кВт / 241 кВт·год) з модулями MPPT біля АБК — у модель після погодження місця.</p></div>`+h; };
+document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.stgtg'); if(b) setStage(b.dataset.t); });
+// ---------- рядок унизу
+const suS=sunUI; sunUI=function(){ suS.apply(this,arguments); if(!ON()||state.sec==='sun') return; const el=$('#now'); if(!el) return; const S=sums(), x=STG()==='1'?S.s1:STG()==='2'?S.s2:S.all;
+  const nm=STG()==='1'?'Етап 1 · АБК, фасади, ліхтарі':STG()==='2'?'Етап 2 · дах цеху':'Весь об\'єкт · етапи 1 + 2', sun=(el.innerHTML.match(/<span class="sun">.*?<\/span>/)||[''])[0];
+  el.innerHTML=`<span class="who ours">${nm}</span>${sun}<span><b class="num">${nf(x.n)}</b> модулів · ${nf(x.kwp,0)} кВтп</span><span>за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; };
+// ---------- АБК у «Сонці»: стан кожного модуля (модель K1 АБК) за сонячним часом дня й години двійника
+function solarT(){ const dd=DAYS[state.day], n=DOY[state.day], off=kyivOffset(2026,dd[1],dd[2]), B=2*Math.PI*(n-81)/364, eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+  return state.hour-off+LON/15+eot/60; }
+function abkSun(){ if(!A) return; const on=effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
+  if(on){ const r=A.evaluate(DOY[state.day],solarT(),true); A.paintStatus(r); } else A.paintStatus(null); need=true; }
+const psS=placeSun; placeSun=function(){ psS.apply(this,arguments); abkSun(); };
+// ---------- вид «АБК»
+VIEWS.abk={t:'АБК',p:[158,44,22],c:[114,8,-26]};
+{ const cams=$('#cams'), b=document.createElement('button'); b.type='button'; b.dataset.c='abk'; b.textContent=VIEWS.abk.t; b.setAttribute('aria-pressed','false');
+  b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('abk'); };
+  const nd=cams.querySelector('button[data-c="node"]'); if(nd) cams.insertBefore(b,nd); else cams.appendChild(b); }
+window.__twin.stages={sums,setStage,A}; apply();
+}

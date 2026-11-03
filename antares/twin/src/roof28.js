@@ -46,7 +46,7 @@ KS.forEach(k=>{ const V=D.V[k], g=grp('r28v'+k,G28), S=V.sum;
   rl.forEach((m,i)=>il.setMatrixAt(i,onRoof(m[0],m[1],m[2],0.12,0.033,LM-0.02))); il.instanceMatrix.needsUpdate=true;
   im.userData.info=i=>{ const m=rs[i]; return {t:`Модуль даху · ${VN[k]} · стрінг ${m[4]+1}`,d:`ZNSHINE 730 Вт, короткою стороною поперек арки, 0,12 м над покрівлею; ряди йдуть по розгортці від ендови до ендови, через злами граней (власник 28.10, 22:39: вимогу ZNSHINE про злами не враховувати). ≈${nf(m[3])} кВт·год за рік (${nf(m[3]/0.73)} на 1 кВтп). ${tot}`}; };
   il.userData.info=i=>{ const m=rl[i]; return {t:`Модуль поза стрінгами · ${VN[k]} — на освітлення цеху`,d:`Не складає стрінг по 11 — ставиться і підключається до світлодіодного освітлення (DC), рішення власника 28.10. Потенційно ≈${nf(m[3])} кВт·год за рік — у міру навантаження освітлення. ${tot}`}; };
-  PICK.push({o:im,when:()=>g.visible},{o:il,when:()=>g.visible});
+  im.userData.part=il.userData.part='roof'; PICK.push({o:im,when:()=>g.visible&&im.visible},{o:il,when:()=>g.visible&&il.visible});
   // модулі на каркасах 13° (площина — як у calc/v3/lan22.py, режим V1: низ модуля 0,16 над площиною від карниза каркаса)
   const fs=V.frame.filter(m=>m[5]>=0), fl=V.frame.filter(m=>m[5]<0);
   const fM=(m)=>{ const F=D.frames[m[0]-1], sg=m[1]==='E'?1:-1, th=F.tilt*D2R, tg=Math.tan(th), uc=0.02+LM/2, dc=uc*Math.cos(th), zc=F.ze+(F.hw-dc)*tg+F.thk-0.0165;
@@ -72,7 +72,7 @@ KS.forEach(k=>{ const V=D.V[k], g=grp('r28v'+k,G28), S=V.sum;
   [[zp,pathM],[zq,perM]].forEach(([arr,mt])=>{ if(!arr.length) return; const zi=inst(BOX,mt,arr.length,g,false);
     arr.forEach(([a,b,z],i)=>zi.setMatrixAt(i,onRoof(a,b,(z[2]+z[3])/2,0.015,0.01,z[3]-z[2]))); zi.instanceMatrix.needsUpdate=true;
     zi.userData.info=i=>{ const z=arr[i][2]; return {t:z[4]==='path'?`Прохід / протипожежний розрив`:`Відступ без модулів`,d:`${z[5]}. ${k==='1'?'Правила — IFC 2021 § 1205.3 (прохід ≥ 1,22 м через ≤ 45,7 м, від краю ≥ 1,83 м) і FK Bauaufsicht (поля ≤ 40 м, смуги 2,5 м); окремих українських цифр для СЕС на покрівлі не знайдено.':''}`}; };
-    PICK.push({o:zi,when:()=>g.visible}); });
+    zi.userData.part='zone'; PICK.push({o:zi,when:()=>g.visible&&zi.visible}); });
   VG[k]=g; });
 // ---------- видимість: у «Загальному» замість даху 27.10 (ліхтарі, дефлектори v3, розкладки 25.10 і 27.10)
 const sv=setVis; setVis=function(){ sv.apply(this,arguments); const on=ON();
