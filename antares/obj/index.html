@@ -5302,7 +5302,8 @@ const suS=sunUI; sunUI=function(){ suS.apply(this,arguments); if(!ON()||state.se
 // ---------- АБК у «Сонці»: стан кожного модуля (модель K1 АБК) за сонячним часом дня й години двійника
 function solarT(){ const dd=DAYS[state.day], n=DOY[state.day], off=kyivOffset(2026,dd[1],dd[2]), B=2*Math.PI*(n-81)/364, eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
   return state.hour-off+LON/15+eot/60; }
-function abkSun(){ if(!A) return; const on=!window.__twin.clean&&effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
+function abkSun(){ if(!A||window.__twin.clean) return; // у чистій збірці колір АБК веде лише statusPaint (clean.js) — інакше кожен крок сонця скидав колір і модулі блимали
+  const on=!window.__twin.clean&&effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
   if(on){ const r=A.evaluate(DOY[state.day],solarT(),true); A.paintStatus(r); } else A.paintStatus(null); need=true; }
 const psS=placeSun; placeSun=function(){ psS.apply(this,arguments); abkSun(); };
 // ---------- вид «Контейнери»: з АБК у моделі стара точка (над дахом АБК) закрита — дивимось з північного сходу; вид на К-4 / К-5
