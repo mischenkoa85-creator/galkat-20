@@ -1,8 +1,8 @@
 #!/bin/sh
-# Чиста збірка «Антарес · весь об'єкт» (без Вінницького проєкту): ті самі джерела, що twin/build.sh, + twin/src/clean.js після stages.js.
-# Результат — antares/obj/index.html (артефакт «Антарес 3D-двійник»). Двійник з порівнянням Вінниця / наш Б лишається в antares/twin.
+# Збірка 3D-двійника «Антарес · весь об'єкт»: джерела — src/ (app.js + модулі, clean.js — шаблон меню і розділи), модель АБК — ../abk/dbn/.
+# Результат — index.html (артефакт «Антарес · весь об'єкт»).
 cd "$(dirname "$0")" && python3 - <<'PY'
-r = lambda f: open('../twin/src/' + f, encoding='utf-8').read()
+r = lambda f: open('src/' + f, encoding='utf-8').read()
 app = r('app.js'); cut = app.rstrip().rfind('})();')
 mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js', 'elec04.js']
 app = app[:cut] + '\n'.join(r(f) for f in mods) + '\n' + app[cut:]
