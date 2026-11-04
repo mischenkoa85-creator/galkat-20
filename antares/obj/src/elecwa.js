@@ -139,7 +139,7 @@ function tagTex(l1,l2,hex){ const h=150, c=document.createElement('canvas'), x=c
   x.fillStyle='rgba(255,255,255,0.96)'; x.fillRect(0,0,w,h); x.fillStyle=hex; x.fillRect(0,0,26,h); x.strokeStyle=hex; x.lineWidth=6; x.strokeRect(3,3,w-6,h-6);
   x.fillStyle='#1d2a33'; x.font=F1; x.textBaseline='top'; x.fillText(l1,48,14); x.font=F2; x.fillStyle='#3f4a52'; x.fillText(l2,48,84);
   const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=4; t.userData={ar:w/h}; return t; }
-const strW=n=>n===1?'стрінг':n<5?'стрінги':'стрінгів';
+const pl=(n,a,b,c)=>{ const d=n%10, h=n%100; return d===1&&h!==11?a:d>=2&&d<=4&&(h<12||h>14)?b:c; }, strW=n=>pl(n,'стрінг','стрінги','стрінгів'), shW=n=>pl(n,'щит','щити','щитів');
 Object.values(BX).forEach(b=>{ if(!b.pos||!b.ss.length) return; const n=b.ss.length, kw=b.ss.reduce((a,s)=>a+s.mem.length,0)*0.73;
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex(`${b.z==='abk'?'Інвертор АБК':b.id} → ${b.z==='abk'?'ТП-5913':KN(b.K)}`,`${n} ${strW(n)} · ${nf1(kw)} кВтп`,HUE[b.K]),depthWrite:false,transparent:true}));
   const sc=b.z==='abk'?1.5:1.35, ar=sp.material.map.userData.ar||3.7; sp.scale.set(0.67*sc*ar,0.67*sc,1); sp.renderOrder=20;
@@ -161,10 +161,26 @@ function paint(on){ if(on){ ALLI.forEach(im=>{ ORIG.set(im,im.material); im.mate
   else { ORIG.forEach((m,im)=>{ im.material=m; for(let i=0;i<im.count;i++) im.setColorAt(i,white); if(im.instanceColor) im.instanceColor.needsUpdate=true; }); ORIG.clear();
     ABO.forEach(([m,b],me)=>{ me.material=m; me.userData.base=b; }); ABO.clear(); abkCabSet(false); if(CDw.statusPaint) CDw.statusPaint(); } }
 // ---------- підсумки по групах
-const GRP=[['fac','Фасади і козирок',1,'південь → К-3, схід і козирок → К-1'],['lan','Ліхтарі Л1–Л4',1,'Л1–Л3 → К-4 / К-5, Л4 → К-1'],['wh','Склад',1,'→ К-3 / К-1'],['abk','АБК',1,'свій інвертор → ТП-5913'],['roof','Дах цеху В1',2,'захід → К-4 / К-5, схід → К-3 / К-1']];
+const GRP=[['fac','Фасади і козирок',1,'південь → К-3, схід і козирок → К-1'],['lan','Ліхтарі Л1–Л4',1,'усі → К-3 / К-1 (ТП-5913)'],['wh','Склад',1,'→ К-3 / К-1 (ТП-5913)'],['abk','АБК',1,'свій інвертор → ТП-5913'],['roof','Дах цеху В1',2,'захід → К-4 / К-5, схід → К-3 / К-1']];
 const gsum=z=>{ const L=STR.filter(s=>s.z===z), bx=Object.values(BX).filter(b=>b.ss.length&&b.ss[0].z===z); return {nb:bx.length,ns:L.length,nm:L.reduce((a,s)=>a+s.mem.length,0),kw:L.reduce((a,s)=>a+s.mem.length,0)*0.73,L:bx.reduce((a,b)=>a+(b.L||0),0),du:bx.reduce((a,b)=>Math.max(a,b.du||0),0),bx}; };
 const SUM=Object.fromEntries(GRP.map(([z])=>[z,gsum(z)]));
 const chk=Object.values(BX).filter(b=>b.ns!=null&&b.ss.length!==b.ns).map(b=>`${b.id}: ${b.ss.length} з ${b.ns}`);
+// ---------- «Накопичувачі»: як під'єднано по етапах (власник 04.11, 18:04: етап 1 — усе PV на одну пару контейнерів, друга пара — лише мережа; етап 2 — дах)
+const V1={s1:45868+35781,s2:97863+43005,l1:3.1,l2:9.0}, V2={s1:47695+36309,s2:98134+43066,l1:3.5,l2:9.2};   // calc/ep04: bom_v1 / bom_v2 — матеріали + роботи PV до ШВ за етап, $; втрати в лініях, МВт·год/рік
+const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B=E4w.E4.boxes, var2=(E4w.E4.var||'1')==='2';
+  const cnt=(K,st)=>{ const L=B.filter(b=>b.K===K&&b.st===st); return {n:L.length,ns:L.reduce((a,b)=>a+b.ns,0),kw:L.reduce((a,b)=>a+b.kwp,0),z:[...new Set(L.map(b=>({fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах'})[b.z]))].join(', ')}; };
+  const rows=['K-3','K-1','K-4','K-5'].map(K=>{ const a=cnt(K,1), c=cnt(K,2);
+    return `<tr><td class="w"><i class="sw" style="background:${HUE[K]}"></i>${KN(K)}<span class="stg">${TPN[K]}</span></td><td style="white-space:normal">${a.n?`${a.n} ${shW(a.n)} · ${a.ns} ${strW(a.ns)} · ${nf1(a.kw)} кВтп<small>${a.z}</small>`:'без панелей — лише мережа<small>заряд і розряд (активний споживач)</small>'}</td><td style="white-space:normal">${c.n?`+${c.n} ${shW(c.n)} · ${c.ns} ${strW(c.ns)} · ${nf1(c.kw)} кВтп<small>дах</small>`:'—'}</td><td>${a.n+c.n} з 12</td></tr>`; }).join('');
+  const f$=v=>nf(v,0)+' $';
+  return html+`<div class="blk wide"><h3>Як під'єднано — по етапах</h3><div class="tw"><table class="cmp an"><thead><tr><th>Контейнер</th><th>Етап 1</th><th>Етап 2</th><th>Входи PV</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="src"><b>AC</b> — кожен контейнер (PCS 500 кВт) окремою лінією до РУ-0,4 кВ своєї ТП: ВВГнг 3 × (6 × 1×120) + N 4 × 1×95 + PE 2 × 1×95 за вимогою Golen, автомат 800 А на початку лінії; К-3, К-1 — до ТП-5913, К-4, К-5 — вводом у північну стіну ТП-6923. <b>DC</b> — від щитів PV лінії Al до шафи вводу PV біля контейнера (перехід на мідь 1×50, ПЗІП T2) і далі на входи DC/DC по 60 кВт.
+  ${var2?`Етап 1: усі панелі етапу 1 (фасади, склад, ліхтарі) — на К-3 / К-1 біля ТП-5913; К-4 / К-5 біля ТП-6923 — без панелей, працюють від мережі (заряд у дешеві години, розряд у пікові). Етап 2: дах — захід на К-4 / К-5, схід на вільні входи К-3 / К-1; лоток спуску до ТП-6923 будується в етапі 2.`:''}</p>
+  <table class="cmp an"><thead><tr><th>Порівняння</th><th>Етап 1 на обидві ТП</th><th>Етап 1 на ТП-5913</th></tr></thead><tbody>
+  <tr><td class="w">Матеріали і роботи PV до ШВ, етап 1<span class="stg">кріплення, кабелі, щити, лінії, лотки, блискавкозахист; без модулів і контейнерів</span></td><td>${f$(V1.s1)}</td><td><b>${f$(V2.s1)}</b><small>+${f$(V2.s1-V1.s1)}</small></td></tr>
+  <tr><td class="w">Те саме, етап 2</td><td>${f$(V1.s2)}</td><td><b>${f$(V2.s2)}</b><small>+${f$(V2.s2-V1.s2)}</small></td></tr>
+  <tr><td class="w">Втрати в лініях Al, етап 1 / 2<span class="stg">МВт·год за рік</span></td><td>${nf1(V1.l1)} / ${nf1(V1.l2)}</td><td>${nf1(V2.l1)} / ${nf1(V2.l2)}</td></tr>
+  <tr><td class="w">Лінії ліхтарів Л1–Л3<span class="stg">Al, м</span></td><td>86 / 98 / 117 → К-4 / К-5</td><td>203 (Al 185) / 157 / 144 → К-3 / К-1 / К-3</td></tr></tbody></table>
+  <p class="src">Різниця — довші лінії трьох ліхтарів через прохід на півночі даху до спуску на сході; натомість у етапі 1 не потрібні траса до ТП-6923, лоток на її дах і місток над приямком. Для роботи К-4 / К-5 від мережі ще потрібні: дозволена потужність заряду від ДТЕК і запас трансформатора ТП-6923, тариф (зонний або ціни РДН) і погодинне споживання цеху з АСКОЕ — від них графік заряду / розряду і ефект.</p></div>`; };
 window.__twin.elecwa={g,g2,STR,BX,SUM,jumps,chk,paint,TN:TNh,toneConf,confZ};
 // ---------- видимість: кнопка «Електрика» (state.lay.e04) у «Об'єкті», режим етапів
 const onW=()=>!!state.lay.e04&&state.sec==='pz'&&state.proj==='ours'&&!!(R28w&&R28w.ON());

@@ -18,7 +18,7 @@
       for(let j=0;j<(i===pp.length-2?n+1:n);j++){ const t=j/n, x=x0+(x1-x0)*t+(hor?0:o), y=y0+(y1-y0)*t+(hor?o:0); out.push(W(x,y,rz(x)+0.28)); } }
     return out; };
   const nfL=v=>nf(v,1);
-  const bInfo=b=>({t:`${b.id} · щит PV 7/1 · етап ${b.st} → ${b.K} (${TPN[b.K]})`,d:`${b.ns} стрінгів по 11 модулів, ${nfL(b.kwp)} кВтп, 1 вхід DC/DC 60 кВт. Лінія Al 2 × 1×${b.S} мм², ${nfL(b.L)} м до ШВ, падіння напруги ${nf(b.du,2)} % при STC. ${b.z==='lan'?'Стрінги ліхтаря — лише одного схилу (по 3 на схил + 1 через сусідній ліхтар). ':''}Переріз — мінімум «кабель + втрати за 25 років» (аналіз 04.11).`});
+  const bInfo=b=>({t:`${b.id} · щит PV 7/1 · етап ${b.st} → ${b.K} (${TPN[b.K]})`,d:`${b.ns} стрінгів по 11 модулів, ${nfL(b.kwp)} кВтп, 1 вхід DC/DC 60 кВт. Лінія Al 2 × 1×${b.S} мм², ${nfL(b.L)} м до ШВ, падіння напруги ${nf(b.du,2)} % при STC. ${b.z==='lan'?'Стрінги ліхтаря — уздовж схилів по 11 модулів (Л1 — 6, Л2–Л4 — по 7, один із них через гребінь). ':''}Переріз — мінімум «кабель + втрати за 25 років» (аналіз 04.11).`});
   const rInfo=r=>({t:`Лінія Al ${r.id} → ${r.K} · етап ${r.st}`,d:`По ${r.d==='E'?'проходах і смугах даху до спуску на сході (Y 63,8), далі фасадом до ШВ біля контейнера':'проходах і смугах даху до спуску на північному заході, далі стіною цеху, дахом ТП-6923 і містком над приямком на берму до ШВ'}. Лоток з кришкою на траверсах на баластних блоках.`});
   // щити даху і ліхтарів + траси
   const BB=new THREE.BoxGeometry(0.8,0.9,0.36);
@@ -34,9 +34,10 @@
   const [ex,ey]=E4.DE, [nx,ny]=E4.DN, sh=E4.shv;
   const descE=(k,st)=>{ const o=KO[k]; return [W(ex,ey+o,rz(ex)+0.28),W(96.64+0.25,ey+o,rz(96.64)+0.3),W(96.64+0.25,ey+o,0.6),W(sh[k][0]-0.2,ey+o,0.3),W(sh[k][0]-0.2,sh[k][1],0.3),W(sh[k][0],sh[k][1],0.9)]; };
   const descN=(k)=>{ const o=KO[k]; return [W(nx+o,ny,rz(nx)+0.28),W(nx+o,96.59+0.25,rz(nx)+0.3),W(nx+o,96.59+0.25,4.7),W(nx+o,107.0,4.7),W(nx+o,107.3,4.7),W(nx+o,109.6,2.5),W(sh[k][0],109.9,2.4),W(sh[k][0],sh[k][1],2.4)]; };
+  const nN=E4.boxes.filter(b=>b.K==='K-4'||b.K==='K-5').length, n1N=E4.boxes.filter(b=>(b.K==='K-4'||b.K==='K-5')&&b.st===1).length;
   const used={1:new Set(),2:new Set()}; E4.routes.forEach(r=>used[r.st].add(r.K+r.d));
   [1,2].forEach(st=>used[st].forEach(kd=>{ const k=kd.slice(0,3), d=kd.slice(3); if(st===2&&used[1].has(kd)) return;
-    tube(d==='E'?descE(k):descN(k),k,st,{t:d==='E'?`Спуск Сх → ШВ ${k}`:`Спуск ПнЗх → ШВ ${k}`,d:d==='E'?'Лоток зі спуску на сході даху (Y 63,8) по фасаду до ШВ біля контейнера; будується в етапі 1 під усі лінії даху.':'Лоток 400×100 на 19 ліній: північна стіна цеху → дах ТП-6923 → місток над приямком → берма +1,8 м → ШВ біля К-4 / К-5. Будується в етапі 1 одразу під етап 2.'},0.12); }));
+    tube(d==='E'?descE(k):descN(k),k,st,{t:d==='E'?`Спуск Сх → ШВ ${k}`:`Спуск ПнЗх → ШВ ${k}`,d:d==='E'?'Лоток зі спуску на сході даху (Y 63,8) по фасаду до ШВ біля контейнера; будується в етапі 1 під усі лінії даху.':`Лоток на ${nN} ліній: північна стіна цеху → дах ТП-6923 → місток над приямком → берма +1,8 м → ШВ біля К-4 / К-5. ${n1N?'Будується в етапі 1 одразу під етап 2.':'Будується в етапі 2: в етапі 1 ліній PV до ТП-6923 немає (К-4, К-5 працюють лише від мережі).'}`},0.12); }));
   // фасадні лінії: південний фасад → кут → східний фасад над ТП-5913 → ШВ К-3; східний фасад → ШВ К-1
   E4.boxes.filter(b=>b.z==='fac').forEach(b=>{ const k=b.K, o=KO[k];
     const pts=b.f==='S'?[new V3(b.s,3.5,0.5+0.25),new V3(96.64+0.3,3.5,0.5+0.25),new V3(96.64+0.3,6.0,-0.5),new V3(96.64+0.3,6.0,-(sh[k][1]-1)),new V3(sh[k][0],0.9,-sh[k][1])]
@@ -53,7 +54,7 @@
     const b=document.createElement('button'); b.type='button'; b.textContent='Електрика'; b.title='Щити PV, лінії до контейнерів, спуски (аналіз 04.11)'; b.setAttribute('aria-pressed',String(!!state.lay.e04));
     b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b);   // після етапів, як кнопка розділу шаблону
     const l=$('#legend'); if(l&&state.lay.e04){ const s=STG(), n=st=>E4.boxes.filter(x=>x.st===st).length;
-      l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
+      l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].filter(k=>E4.boxes.some(x=>x.K===k&&(s==='all'||String(x.st)===s))).map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
   window.__twin.elec04={g,PART,E4};
   if(window.__twin.clean) apply();   // чиста збірка: перший apply() був до цього модуля — кнопка «Електрика» і її шар з'являються одразу
   } }
