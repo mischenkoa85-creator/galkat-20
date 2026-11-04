@@ -309,6 +309,6 @@ VIEWS.lan28={t:'Ліхтар',p:[L2.xc-8.5,L2.zb+6.2,-(L2.y0-7.5)],c:[L2.xc+0.8,
 { const cams=$('#cams'), b=document.createElement('button'); b.type='button'; b.dataset.c='lan28'; b.textContent=VIEWS.lan28.t; b.setAttribute('aria-pressed','false');
   b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('lan28'); };
   const nd=cams.querySelector('button[data-c="node"]'); if(nd) cams.insertBefore(b,nd); else cams.appendChild(b); }
-window.__twin.lan28={LG28,LANS,MDS,HIDE,playStages,ON,COV,K28,VAR,applyVar28};
+window.__twin.lan28={LG28,LANS,MDS,HIDE,playStages,ON,COV,K28,VAR,applyVar28,MT};
 applyLook(); apply();
 } }

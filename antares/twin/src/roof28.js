@@ -6,7 +6,7 @@
 const LM=2.384, DM=1.303, KS=['1','2'];
 const VN={'1':'В1 · з проходами','2':'В2 · максимальний'}, VL={'1':'варіант 1 — з проходами і відступами','2':'варіант 2 — максимальний, без проходів'};
 if(state.lay.r28===undefined) state.lay.r28='1';
-const ON=()=>state.proj==='ours'&&!!state.lay.r28&&state.sec==='pz';
+const ON=()=>state.proj==='ours'&&!!state.lay.r28&&(state.sec==='pz'||(state.sec==='sun'&&!!window.__twin.clean));   // у чистій збірці (antares/obj) — і в «Сонці»
 const G28=grp('r28',G.ours), GC=grp('r28c',G28);
 const ZAX=new V3(0,0,1), Pv=new V3(), Sv=new V3(), Qv=new Q(), Mv=new M4();
 // бокс на грані покрівлі від xa до xb (як modM у roofv2.js): lift — над покрівлею, th — товщина, ly — вздовж будівлі

@@ -45,7 +45,7 @@ if(BS){ const k2=BS.K.find(k=>k.id==='K-2'); if(k2){ const cx=(k2.box[0]+k2.box[
     const c=golenH20(k); g.add(c); const body=c.children[0];
     body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · біля ТП-6923 (умовно)`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Місце умовне — уздовж північного фасаду, 3 м від стіни, на схід від цегляної прибудови; вільність ділянки, проїзди й відстані не перевіряли. AC — до ТП-6923 (≈${nf(x0-19.5+1,0)} м по прямій). Етап 1: входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), етап 2 — західна половина даху.`};
     const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-6923 · умовно`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
-    lb.scale.set(0.2,0.05,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.6)); lb.renderOrder=18; g.add(lb);
+    lb.scale.set(0.13,0.0325,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.6)); lb.renderOrder=18; g.add(lb);
     const ac=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([W(x0+0.4,cy,0.36),W(x0+0.4,cy,0.08),W(19.6,cy,0.08),W(19.6,cy,0.9)],false,'catmullrom',0.02),24,0.07,8,false),new THREE.MeshStandardMaterial({color:lin(0xc0392b),roughness:0.5}));
     ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923 (умовно)`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE); траса умовна.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
   NK.g=g; }
@@ -77,7 +77,7 @@ const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||stat
     const nm=STG()==='1'?'Етап 1':STG()==='2'?'Етап 2 · дах':'Весь об\'єкт';
     const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923 (умовно)</span>`;
     const p2=`<span>дах В1: ${nf(S.roof.st)} у стрінгах</span>${sw('#e8b23a',`на освітлення (${S.roof.lit})`)}${sw('#2e8b57','прохід')}${sw('#8cc98c','відступ')}${sw('#4a4f53','труби')}${sw('#2a78d6','лівневки')}`;
-    l.innerHTML=`<span class="t">${nm} · ${nf(x.n)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.n)}</span><span>етап 2: ${nf(S.s2.n)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
+    l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.n)}</span><span>етап 2: ${nf(S.s2.n)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
     l.hidden=false; }
   };
 // ---------- легенда згортається (усі розділи): видно перший рядок і кнопку; на телефоні — згорнута, поки не розгорнути
@@ -108,7 +108,7 @@ const suS=sunUI; sunUI=function(){ suS.apply(this,arguments); if(!ON()||state.se
 // ---------- АБК у «Сонці»: стан кожного модуля (модель K1 АБК) за сонячним часом дня й години двійника
 function solarT(){ const dd=DAYS[state.day], n=DOY[state.day], off=kyivOffset(2026,dd[1],dd[2]), B=2*Math.PI*(n-81)/364, eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
   return state.hour-off+LON/15+eot/60; }
-function abkSun(){ if(!A) return; const on=effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
+function abkSun(){ if(!A) return; const on=!window.__twin.clean&&effSec()==='sun'&&state.proj==='ours'&&!state.lay.sunPlain&&(!ON()||in1());
   if(on){ const r=A.evaluate(DOY[state.day],solarT(),true); A.paintStatus(r); } else A.paintStatus(null); need=true; }
 const psS=placeSun; placeSun=function(){ psS.apply(this,arguments); abkSun(); };
 // ---------- вид «Контейнери»: з АБК у моделі стара точка (над дахом АБК) закрита — дивимось з північного сходу; вид на К-4 / К-5
