@@ -4,9 +4,9 @@
 cd "$(dirname "$0")" && python3 - <<'PY'
 r = lambda f: open('../twin/src/' + f, encoding='utf-8').read()
 app = r('app.js'); cut = app.rstrip().rfind('})();')
-mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js']
+mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js', 'elec04.js']
 app = app[:cut] + '\n'.join(r(f) for f in mods) + '\n' + app[cut:]
-data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js')
+data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js', 'elec04data.js')
 body = r('tpl.html').replace('<script>/*DATA*/</script>', ''.join('<script>' + r(f) + '</script>' for f in data) + ''.join('<script>' + open('../abk/dbn/' + f, encoding='utf-8').read() + '</script>' for f in ('abk_data.js', 'abk_model.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
 body = body.replace('<title>Антарес 3D-двійник</title>', "<title>Антарес · весь об'єкт</title>")
 head = '<!doctype html>\n<html lang="uk">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
