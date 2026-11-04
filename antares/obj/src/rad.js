@@ -28,7 +28,7 @@ function build(k){ const C=RADD.cells[k], list=[];
   PICK.push({o:im,when:()=>RG.visible}); return im; }
 ['roof','S','N','E','whA','whB','whC1'].forEach(build);
 // ---------- режим у розділі «Сонце і генерація»
-const radOn=()=>effSec()==='sun'&&state.sec!=='mis'&&!!state.lay.rad;
+const radOn=()=>state.sec!=='mis'&&!!state.lay.rad;
 const hud0=hudCtx; hudCtx=function(){ hud0.apply(this,arguments); if(!(effSec()==='sun'&&state.sec!=='mis')) return;
   const L=state.lay, m=$('#modes'), b=document.createElement('button'); b.type='button'; b.dataset.m='rad'; b.textContent=innerWidth<760?'Радіація':'Радіація, м²';
   m.querySelectorAll('button').forEach(x=>{ if(L.rad) x.setAttribute('aria-pressed','false'); x.addEventListener('click',()=>{ L.rad=false; },{capture:true}); });

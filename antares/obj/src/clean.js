@@ -124,9 +124,9 @@ function dayE(day,keys,upto){ const P=DAYC[day]; if(!P) return null; const o={c:
 const stKeys=()=>GK.filter(inStage);
 const fe=(v,ref=v)=>ref>=1000?`${nf(v/1000,ref>=10000?1:2)} МВт·год`:`${nf(v,0)} кВт·год`;   // одиниця — за більшим числом рядка
 // ---------- колір модулів за станом
-const statOn=()=>state.sec==='sun'&&state.lay.stat!==false;
+const statOn=()=>(state.sec==='sun'?state.lay.stat!==false:state.lay.stat===true)&&!state.lay.rad&&!state.lay.str&&state.sec!=='mis';   // шар «Стан модулів» (власник 04.11, 23:05: «панелі, коли затемнені і не працюють, змінюють колір»)
 let painted=false;
-function statusPaint(){ if(!statOn()||!NOW){ if(!painted) return; MESH.forEach((m,im)=>{ im.material=m; for(let i=0;i<im.count;i++) im.setColorAt(i,white); im.instanceColor.needsUpdate=true; });
+function statusPaint(){ if(statOn()&&!NOW) compute(); if(!statOn()||!NOW){ if(!painted) return; MESH.forEach((m,im)=>{ im.material=m; for(let i=0;i<im.count;i++) im.setColorAt(i,white); im.instanceColor.needsUpdate=true; });
     if(A) A.MODS.forEach(r=>{ if(r.mesh){ r.mesh.material=PVA; r.mesh.userData.base=PVA; } }); painted=false; need=true; return; }
   const night=!(NOW.alt>0); MESH.forEach((m,im)=>{ im.material=STM; });
   Object.values(SETS).forEach(S=>S.ref.forEach(([im,k],i)=>im.setColorAt(k,STL[night?3:S.cat[i]]))); MESH.forEach((m,im)=>{ im.instanceColor.needsUpdate=true; });
@@ -157,9 +157,6 @@ sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) retur
 hudCtx=(f=>function(){ f.apply(this,arguments); const m=$('#modes'); if(!m) return; const S=ST.sums(), stg=state.lay.stg;
   m.innerHTML=''; document.querySelectorAll('#stgseg button').forEach(b=>{ const v=b.dataset.stg, x=v==='1'?S.s1:v==='2'?S.s2:S.all; b.setAttribute('aria-pressed',String(stg===v)); b.title=`${b.title.split(' · ')[0]} · ${nf(x.st)} модулів`; b.onclick=()=>ST.setStage(v); });   // етапи — у шапці, де був перемикач проєктів (власник 04.11, 22:49)
   m.hidden=false; const bar=$('#l28bar'); if(bar) bar.hidden=true;
-  if(state.sec==='sun'&&!state.lay.rad){
-    [['stat','Стан модулів','Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні',()=>state.lay.stat!==false,()=>{ state.lay.stat=state.lay.stat===false; }]].forEach(([k,txt,ttl,on,fn])=>{
-      const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(on())); b.onclick=()=>{ fn(); apply(); save(); }; m.appendChild(b); }); }
   const T=SECTOG[state.sec]; if(T){ const [key,txt,ttl]=T, b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(state.lay[key]!==false));
     b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; m.appendChild(b); }
   if(state.sec==='sun') legendSun(); if(state.sec==='uze') legendUZE(); })(hudCtx);
@@ -436,7 +433,7 @@ function abkBuild(){ const C=ABR.cells, k=RADD.ghi/abkGhi(); ABR.k=k; C.forEach(
   Object.values(st).forEach(s_=>{ s_.mean=s_.sum/s_.area; s_.shade=(1-s_.sum/s_.sum0)*100; }); ABR.st=st; ABR.done=true; }
 function abkRun(){ if(ABR.done||ABR.job||!A) return; if(!ABR.cells) abkPrep();
   const tick=()=>{ ABR.job=null; const done=abkStep(); if(done){ abkBuild(); setVis(); legendSun(); panelNow(); need=true; return; } legendSun(); ABR.job=setTimeout(tick,0); }; ABR.job=setTimeout(tick,0); }
-const radOn2=()=>state.sec==='sun'&&!!state.lay.rad&&state.proj==='ours';
+const radOn2=()=>!!state.lay.rad&&state.proj==='ours'&&state.sec!=='mis';   // шар «Радіація» — у будь-якому розділі (власник 04.11, 23:05)
 setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGA.visible=on&&ABR.done; if(!on) return; abkRun();
   G.ours.visible=true; if(FP&&FP.FG) FP.FG.visible=false; WHI.forEach(w=>{ w.im.visible=false; });
   L28.LG28.forEach(q=>{ Object.values(q.v2m||{}).forEach(g=>g.visible=false); Object.values(q.v2r||{}).forEach(g=>g.visible=false); });
@@ -452,17 +449,9 @@ function radBlock(){ const S=RADD.st, f0=v=>nf(v,0), RN={roof:'Дах цеху',
     ${['roof','whA','whB','whC1','S','E','N'].map(k=>row(RN[k],S[k])).join('')}${ab}</tbody></table></div>
     <p class="src">Горизонтальна площина без тіні — ${f0(RADD.ghi)} кВт·год/м² за рік (Meteonorm 8.1). Колір поверхні в моделі — та сама шкала; модулі в цьому шарі сховано. Дах, фасади цеху і склад — розрахунок 26.10 (клітинки 0,5–1 м); АБК — тут, клітинки 1 × 1 м на дахах і стінах, 12 характерних днів місяців по 10 хв, тінь від АБК, цеху, ТП і будівель поруч.</p></div>`; }
 { const v=VIEWS.over; camera.position.set(...v.p); controls.target.set(...v.c); controls.update(); need=true; }   // старт — «Огляд» з південного сходу
-// ---------- вкладка «Радіація за рік» (власник 04.11, 18:04: «окремим просто шаром натискаєш і бачимо карту… поверхні по кольору в залежності від того, скільки вони
-// на рік отримують сонячної радіації… і середня»): той самий шар радіації (rad.js + АБК тут), окремою вкладкою поруч із «Сонце і генерація»; над поверхнями — середнє
+// ---------- шар «Радіація» (власник 04.11, 18:04 і 23:05: «сонячна радіація — окремий шар, перемикаємо»): поверхні кольором за кВт·год/м² за рік, над поверхнями — середнє;
+// у «Сонці і генерації» з цим шаром панель показує радіацію по поверхнях
 const isRad=()=>state.sec==='sun'&&!!state.lay.rad;
-{ const tb=$('#tabs'), sb=tb&&tb.querySelector('button[data-s="sun"]');
-  if(sb&&typeof RADD!=='undefined'){ const rb=document.createElement('button'); rb.type='button'; rb.setAttribute('role','tab'); rb.dataset.s='radt'; rb.textContent='Радіація за рік'; sb.after(rb);
-    rb.onclick=()=>{ state.sec='sun'; state.lay.rad=true; apply(); };
-    tb.querySelectorAll('button[data-s]').forEach(b=>{ if(b!==rb) b.addEventListener('click',()=>{ state.lay.rad=false; },{capture:true}); });
-    const ORD=['pz','sun','radt','uze'];
-    stepSec=function(dir){ const i=ORD.indexOf(isRad()?'radt':state.sec), n=ORD[((i<0?0:i)+dir+ORD.length)%ORD.length]; if(n==='radt'){ state.sec='sun'; state.lay.rad=true; } else { state.sec=n; state.lay.rad=false; } apply(); };
-    const hudR=hudCtx; hudCtx=function(){ hudR.apply(this,arguments); const r=isRad(); sb.setAttribute('aria-selected',String(state.sec==='sun'&&!r)); rb.setAttribute('aria-selected',String(r));
-      if(r){ const x=rb.offsetLeft-tb.clientWidth/2+rb.offsetWidth/2; tb.scrollTo({left:Math.max(0,x)}); const m=$('#modes'); if(m) m.hidden=true; } }; } }
 // середнє над кожною поверхнею — табличкою на моделі
 const RGL=grp('radLbl'); RGL.visible=false; let rglABK=false;
 function radTag(l1,l2,hex){ const h=150, c=document.createElement('canvas'), x=c.getContext('2d'), F1='700 50px system-ui,sans-serif', F2='500 40px system-ui,sans-serif';
@@ -490,7 +479,10 @@ function radTabPanel(){ const T=radStatsAll(), f0=v=>nf(v,0), tile=(k,v,sub)=>`<
 const psR=panelSun; panelSun=function(){ return isRad()?radTabPanel():psR.apply(this,arguments); };
 const pnR=panelNow; panelNow=function(){ if(isRad()){ radLblABK(); const el=document.getElementById('gRadBody'); if(el) el.innerHTML=radBlock(); return; } return pnR.apply(this,arguments); };
 setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGL.visible=on; if(on) radLblABK(); })(setVis);
-window.__twin.cleanDbg={SETS,litC,obstacles,compute,dayE,DAYC,statusPaint,K13,ABR,get NOW(){return NOW;}};
+function legendLayer(){ if(state.sec==='sun'||state.sec==='mis') return; const l=$('#legend'); if(!l) return; const sw=c=>`<i class="sw" style="background:${c}"></i>`;
+  if(state.lay.rad){ l.hidden=false; l.insertAdjacentHTML('beforeend',`<span class="e4">Сонце за рік, кВт·год/м²: ${RCc.map((c,i)=>sw(c)+RADD.cln[i]).join(' ')}</span>`); }
+  else if(statOn()){ l.hidden=false; l.insertAdjacentHTML('beforeend',`<span class="e4">Стан модулів о ${hhmm(state.hour)}: ${[0,1,2,3].map(i=>sw(STC[i])+STS[i]).join(' · ')}</span>`); } }
+window.__twin.cleanDbg={SETS,litC,obstacles,compute,dayE,DAYC,statusPaint,legendLayer,statOn,K13,ABR,get NOW(){return NOW;}};
 buildSets(); apply();
 }
 }
