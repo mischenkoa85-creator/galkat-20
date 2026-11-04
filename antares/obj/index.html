@@ -5232,7 +5232,7 @@ const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||stat
     const nm=STG()==='1'?'Етап 1':STG()==='2'?'Етап 2 · дах':'Весь об\'єкт';
     const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923 (умовно)</span>`;
     const p2=`<span>дах В1: ${nf(S.roof.st)} у стрінгах</span>${sw('#e8b23a',`на освітлення (${S.roof.lit})`)}${sw('#2e8b57','прохід')}${sw('#8cc98c','відступ')}${sw('#4a4f53','труби')}${sw('#2a78d6','лівневки')}`;
-    l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.n)}</span><span>етап 2: ${nf(S.s2.n)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
+    l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.st)}</span><span>етап 2: ${nf(S.s2.st)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
     l.hidden=false; }
   };
 // ---------- легенда згортається (усі розділи): видно перший рядок і кнопку; на телефоні — згорнута, поки не розгорнути
@@ -5392,6 +5392,44 @@ function grpInfo(k){ const S=ST.sums(), Y=S[k], G=NOW&&NOW.g[k], E=k==='roof'?S.
   if(FP) [FP.pvL,FP.pvP,FP.pc].forEach(o=>set(o,'fac'));
   WHI.forEach(w=>set(w.im,'wh'));
   if(A) A.MODS.forEach(r=>set(r.mesh,'ab')); }
+// ---------- «Об'єкт»: структурована аналітика замість старих звітів (порівняння з Вінницею, В1 / В2, покриття ліхтарів)
+{ const st=document.createElement('style'); st.textContent=`
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;grid-column:1/-1}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface-2);display:flex;flex-direction:column;gap:2px;cursor:default}
+.kpi.cur{border-color:var(--ours);box-shadow:inset 0 0 0 1px var(--ours)}
+.kpi .k{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.kpi .v{font:650 18px/1.2 var(--mono);color:var(--ink)} .kpi .v small{font:500 12px var(--font);color:var(--ink-2)}
+.kpi .s{font-size:12px;color:var(--ink-2)}
+button.kpi{font:inherit;text-align:left;color:inherit;cursor:pointer}
+.gb{display:block;height:5px;border-radius:3px;background:var(--ours);opacity:.75;margin:3px 0 0 auto}
+.an td{white-space:nowrap} .an td.w{white-space:normal;min-width:7.5em;font-family:var(--font)} .an td small,.an td .stg{display:block;font:500 11px var(--font);color:var(--ink-3);white-space:normal}
+.stg{font:600 11px var(--font);color:var(--ink-3)}
+ul.open{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:flex;flex-direction:column;gap:3px}`; document.head.appendChild(st); }
+panelPZ=function(){ const S=ST.sums(), stg=state.lay.stg, f1=v=>nf(v,1), f0=v=>nf(v,0), sy=x=>x.kwp?f0(x.mwh*1000/x.kwp):'—';
+  const G=[['roof','Дах цеху','2'],['fac','Фасади цеху','1'],['lan','Ліхтарі — модулі на склі','1'],['wh','Склад','1'],['ab','АБК','1']], mx=Math.max(...G.map(([k])=>S[k].mwh));
+  const tile=(v,k,big,sub,line)=>`<button type="button" class="kpi${stg===v?' cur':''}" data-stg="${v}"><span class="k">${k}</span><span class="v">${big}</span><span class="s">${sub}</span>${line?`<span class="s">${line}</span>`:''}</button>`;
+  const rows=G.map(([k,n,e])=>{ const x=S[k]; return `<tr><td class="w">${n}<span class="stg">етап ${e} · ${sy(x)} кВт·год/кВтп</span></td><td>${nf(x.st)}${x.lit?`<small>+${x.lit} осв.</small>`:''}</td><td>${f1(x.kwp)}</td><td>${f1(x.mwh)}<span class="gb" style="width:${Math.max(3,Math.round(56*x.mwh/mx))}px"></span></td><td>${f0(x.mwh/S.all.mwh*100)} %</td></tr>`; }).join('');
+  return `<div class="ph"><span class="eyebrow ours">Весь об'єкт · АБК і цех</span><h2>${f0(S.all.kwp)} кВтп · ≈${f0(S.all.mwh)} МВт·год за рік</h2>
+  <p>${nf(S.all.st)} модулів у мережу (+${S.all.lit} на освітлення) · два етапи · накопичувачі 4 × 500 кВт / 1 205 кВт·год</p></div>
+  <div class="kpis">${tile('1','Етап 1 · зараз',`${f0(S.s1.kwp)} <small>кВтп</small>`,`≈${f0(S.s1.mwh)} МВт·год · ${nf(S.s1.st)} модулів`,'АБК, фасади, ліхтарі, склад')}
+  ${tile('2','Етап 2 · після мембрани',`${f0(S.s2.kwp)} <small>кВтп</small>`,`≈${f0(S.s2.mwh)} МВт·год · ${nf(S.s2.st)} модулів`,'дах цеху, В1 з проходами')}
+  ${tile('all','Весь об\'єкт',`${f0(S.all.kwp)} <small>кВтп</small>`,`≈${f0(S.all.mwh)} МВт·год · ${f0(S.all.mwh*1000/S.all.kwp)} кВт·год/кВтп`,'')}
+  <div class="kpi"><span class="k">Накопичувачі · етап 1</span><span class="v">2 000 <small>кВт</small></span><span class="s">4 820 кВт·год · 4 контейнери, по 2 на ТП</span><span class="s">відпуск у мережу до 2 000 кВт</span></div></div>
+  <div class="blk"><h3>Генерація за рік по групах</h3><table class="cmp an"><thead><tr><th>Група</th><th>Модулів</th><th>кВтп</th><th>МВт·год</th><th>Частка</th></tr></thead><tbody>${rows}
+  <tr class="tot"><td class="w">Разом<span class="stg">${sy(S.all)} кВт·год/кВтп</span></td><td>${nf(S.all.st)}</td><td>${f1(S.all.kwp)}</td><td>${f1(S.all.mwh)}</td><td>100 %</td></tr></tbody></table>
+  <p class="src">Модулі ZNSHINE 730 Вт; у стрінгах по 11, модулі «осв.» не складають стрінг і живлять освітлення цеху. МВт·год — розрахунки розкладок: АБК — ДБН 28.10 (на виході інвертора), фасади — 27.10, ліхтарі — 28.10 на склі, склад — 26.10, дах — 28.10 В1 (ще без тіні від ліхтарів, що лишаються).</p></div>
+  <div class="blk"><h3>Накопичувачі</h3><table class="cmp an"><thead><tr><th>Де і що</th><th>кВт</th><th>кВт·год</th></tr></thead><tbody>
+  <tr><td class="w">ТП-5913 · К-3, К-1<span class="stg">LES-H20 на МС-3, МС-1 біля східного фасаду; входи PV — фасади і склад (441,7 кВтп), етап 2 — схід даху</span></td><td>1 000</td><td>2 410</td></tr>
+  <tr><td class="w">ТП-6923 · К-4, К-5<span class="stg">LES-H20 біля північного фасаду (місце умовне); входи PV — ліхтарі (216,8 кВтп), етап 2 — захід даху</span></td><td>1 000</td><td>2 410</td></tr>
+  <tr class="tot"><td class="w">Цех · 4 контейнери</td><td>2 000</td><td>4 820</td></tr>
+  <tr><td class="w">АБК · окремо<span class="stg">LES-241L120-PSC (із зарядкою авто) або LES-241L120-PS (гібрид); місце уточнюється</span></td><td>120</td><td>241</td></tr></tbody></table>
+  <p class="src">Ємність остаточно — за погодинними даними АСКОЕ від ДТЕК (запит надіслано через ТОВ МК «АНТАРЕС»).</p></div>
+  <div class="blk"><h3>Що ще відкрито</h3><ul class="open"><li>Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 — річну генерацію перерахувати.</li><li>Місце контейнерів К-4, К-5 біля ТП-6923 — у моделі умовне.</li><li>Накопичувач АБК: варіант (із зарядкою чи без) і місце біля АБК; панелі АБК — на MPPT гібрида замість Deye.</li><li>Розподіл стрінгів даху між парами контейнерів.</li><li>Ємність накопичувачів — після даних ДТЕК.</li></ul></div>`; };
+document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.kpi[data-stg]'); if(b) ST.setStage(b.dataset.stg); });
+// ---------- старі підказки: без В2 і без старого варіанта Б з 3 контейнерами
+scene.traverse(o=>{ const u=o.userData&&o.userData.info; if(u&&typeof u==='object'&&typeof u.d==='string'&&/\(В2\)/.test(u.d)) u.d=u.d.replace(/\s*або\s*[\d,]+\s*м\s*\(В2\)/g,''); });
+if(BS) ESS.forEach(o=>{ if(!o.isGroup||!o.children.length) return; const body=o.children[0], u=body.userData&&body.userData.info; if(!u||typeof u!=='object'||!/^K-[13] /.test(u.t||'')) return; const id=u.t.slice(0,3);
+  body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — фасади і склад (55 стрінгів, 441,7 кВтп), етап 2 — східна половина даху. Майданчик ${id==='K-3'?'МС-3':'МС-1'} біля східного фасаду, торець PCS — 3,0 м від стіни.`}; });
 // ---------- старт
 window.__twin.cleanDbg={SETS,litC,obstacles,compute,get NOW(){return NOW;}};
 buildSets(); apply();

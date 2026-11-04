@@ -5232,7 +5232,7 @@ const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||stat
     const nm=STG()==='1'?'Етап 1':STG()==='2'?'Етап 2 · дах':'Весь об\'єкт';
     const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923 (умовно)</span>`;
     const p2=`<span>дах В1: ${nf(S.roof.st)} у стрінгах</span>${sw('#e8b23a',`на освітлення (${S.roof.lit})`)}${sw('#2e8b57','прохід')}${sw('#8cc98c','відступ')}${sw('#4a4f53','труби')}${sw('#2a78d6','лівневки')}`;
-    l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.n)}</span><span>етап 2: ${nf(S.s2.n)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
+    l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.st)}</span><span>етап 2: ${nf(S.s2.st)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
     l.hidden=false; }
   };
 // ---------- легенда згортається (усі розділи): видно перший рядок і кнопку; на телефоні — згорнута, поки не розгорнути
