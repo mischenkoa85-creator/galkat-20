@@ -1138,7 +1138,7 @@ const POLY={A:[[54.98,-25.08],[66.55,-25.03],[70.82,-24.51],[73.5,-24.51],[73.5,
             C2:[[146.1,-24.5],[155.1,-24.5],[155.1,-6.5],[146.1,-6.5]]};
 const WHF={A:(X,Y)=>HE+(Y+25.05)*T11, B:(X,Y)=>HE+(Y+24.5)*T11, C1:(X,Y)=>HE+(9-Math.abs(Y+15.5))*T22, C2:(X,Y)=>HE+(9-Math.abs(Y+15.5))*T17};
 const SLOPE={A:11,B:11,C1:22,C2:17};
-const TPS=[{b:[-0.5,19.5,96.6,107.1],h:4.5,n:'ТП-6923'},{b:[19.5,24.2,96.6,99.4],h:3.5,n:''},{b:[96.64,103.0,-0.4,34.6],h:4.5,n:'ТП-5913'}];
+const TPS=[{b:[-0.5,19.5,96.6,107.1],h:4.5,n:'ТП-6923'},{b:[19.5,24.2,96.6,99.4],h:3.5,n:''},{b:[19.5,21.0,99.4,101.8],h:3.1,n:''},{b:[96.64,103.0,-0.4,34.6],h:4.5,n:'ТП-5913'}];
 function inPoly(P,x,y){ let c=false; for(let i=0,j=P.length-1;i<P.length;j=i++){ const a=P[i],b=P[j]; if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])) c=!c; } return c; }
 function partAt(X,Y){ if(X>=SHOP[0]&&X<=SHOP[1]&&Y>=SHOP[2]&&Y<=SHOP[3]) return 'R'; for(const k in POLY) if(inPoly(POLY[k],X,Y)) return k; return null; }
 function surfZ(X,Y){ const p=partAt(X,Y); if(p==='R') return roofZ(X); if(p) return WHF[p](X,Y); for(const t of TPS){ const b=t.b; if(X>=b[0]&&X<=b[1]&&Y>=b[2]&&Y<=b[3]) return t.h; } return null; }
@@ -4070,6 +4070,12 @@ const tpG=n=>ctex(260,240,(x,w,h)=>{ x.fillStyle='#8f979c'; x.fillRect(0,0,w,h);
   x.fillStyle='#f2f2ee'; x.fillRect(22,70,62,24); x.fillStyle='#222'; x.font='bold 15px sans-serif'; x.fillText('Тр-р №'+n,25,88);
   x.beginPath(); x.moveTo(w*0.75,66); x.lineTo(w*0.75+26,112); x.lineTo(w*0.75-26,112); x.closePath(); x.fillStyle='#f0c419'; x.fill(); x.lineWidth=3; x.strokeStyle='#1d1d1d'; x.stroke(); });
 T.tp6=tpG(6); T.tp7=tpG(7);
+// ворота КТП 6923 (фото 144109, 144102): дві сірі стулки, внизу кожної — жалюзі, табличка «КТП 6923» і знак «Високовольтне»
+T.ktp=ctex(400,350,(x,w,h)=>{ x.fillStyle='#86939d'; x.fillRect(0,0,w,h); for(let i=0;i<24;i++){ x.fillStyle=`rgba(255,255,255,${rnd()*0.05})`; x.fillRect(rnd()*w,rnd()*h,30,70); }
+  frameR(x,w,h,10,'#6a7680'); x.fillStyle='#5a656e'; x.fillRect(w/2-3,0,6,h); [[16,8],[w-30,8],[16,h-60],[w-30,h-60]].forEach(([a,b])=>x.fillRect(a,b,14,22));
+  [[40,h-62,110,40],[w/2+50,h-62,110,40]].forEach(([a,b,c,d])=>{ x.fillStyle='#6d7881'; x.fillRect(a,b,c,d); x.fillStyle='#4e5860'; for(let y=b+5;y<b+d-3;y+=6) x.fillRect(a+4,y,c-8,3); });
+  x.fillStyle='#eceee9'; x.fillRect(46,150,70,20); x.fillStyle='#222'; x.font='bold 12px sans-serif'; x.fillText('КТП 6923',50,165);
+  x.beginPath(); x.moveTo(150,138); x.lineTo(168,172); x.lineTo(132,172); x.closePath(); x.lineWidth=3; x.strokeStyle='#e8eaec'; x.stroke(); x.fillStyle='#e8eaec'; x.font='bold 14px sans-serif'; x.fillText('ϟ',145,168); });
 const MW={}; Object.keys(T).forEach(k=>{ if(T[k]) MW[k]=tm(T[k],{roughness:/up|tall|old|rib|wb|adm|bar|grid/.test(k)?0.35:0.7,metalness:/up|tall|old|rib|wb|adm/.test(k)?0.15:0.05}); });
 MW.rev=std(lin(0x4f5355),{roughness:0.9});
 // ---------- грані: точка (s — уздовж грані, h — висота, o — відступ назовні), напрям уздовж (ax); нормаль = ax × вгору
@@ -4084,6 +4090,8 @@ const FACE={
   T5N:{p:(s,h,o)=>new V3(s,h,-34.6-o),ax:new V3(-1,0,0)},        // ТП-5913, північ
   T6N:{p:(s,h,o)=>new V3(s,h,-107.1-o),ax:new V3(-1,0,0)},       // ТП-6923, північ
   T6sN:{p:(s,h,o)=>new V3(s,h,-99.4-o),ax:new V3(-1,0,0)},       // прибудова ТП-6923, північ
+  T6E:{p:(s,h,o)=>new V3(19.5+o,h,-s),ax:new V3(0,0,-1)},         // ТП-6923, схід (s — це Y): ворота КТП до проїзду
+  T6aE:{p:(s,h,o)=>new V3(21.0+o,h,-s),ax:new V3(0,0,-1)},        // низька прибудова з дверима, схід
   WN:{p:(s,h,o)=>new V3(s,h,-96.59-o),ax:new V3(-1,0,0)}, WS:{p:(s,h,o)=>new V3(s,h,0.5+o),ax:new V3(1,0,0)}, WE:{p:(s,h,o)=>new V3(-0.15+o,h,-s),ax:new V3(0,0,-1)},
   AW:{p:(s,h,o)=>new V3(108.3-o,h,-s),ax:new V3(0,0,1)}, AW2:{p:(s,h,o)=>new V3(108.5-o,h,-s),ax:new V3(0,0,1)},   // АБК: захід південного і основного блоків
   AS:{p:(s,h,o)=>new V3(s,h,-6.6+o),ax:new V3(1,0,0)}, AS2:{p:(s,h,o)=>new V3(s,h,-20.3+o),ax:new V3(1,0,0)}};      // АБК: південь нижнього блоку і основного над нижнім дахом
@@ -4213,11 +4221,31 @@ op('S',86.0,86.8,3.6,4.4,'tlouv');
   const bbox=(x0,x1,y0,y1,h,t,d)=>{ const w=x1-x0, dd=y1-y0, m=[tm(rep(YBRICK,dd,h)),tm(rep(YBRICK,dd,h)),roofM,roofM,tm(rep(YBRICK,w,h)),tm(rep(YBRICK,w,h))];
     const b=mesh(new THREE.BoxGeometry(w+0.04,h+0.02,dd+0.04),m,FA); b.position.set((x0+x1)/2,h/2,-(y0+y1)/2); if(t) pick(b,t,d); return b; };
   bbox(96.64,103,-0.4,34.6,4.5,'ТП-5913 (прибудова з жовтої цегли)',`Трансформаторна підстанція вздовж південної частини східного фасаду; на сході — ворота камер «Тр-р №6», «Тр-р №7» з жалюзі, вище — жалюзійні ґратки. Фото № ${fno('144836','144847','143856')}. ${EST}`);
-  bbox(-0.5,19.5,96.6,107.1,4.5,'ТП-6923 (жовта цегла)',`Біля північно-західного кута цеху, великі жалюзі, приямок уздовж. Фото № ${fno('144221','144132')}. ${EST}`);
-  bbox(19.5,24.2,96.6,99.4,3.5,'Цегляна прибудова із сірими воротами',`Фото № ${fno('144049','144102','144109')}. ${EST}`);
+  bbox(-0.5,19.5,96.6,107.1,4.5,'ТП-6923 (КТП 6923, жовта цегла)',`Біля північно-західного кута цеху, прибудована до північного фасаду. Ворота камери трансформатора (сірі, 2 стулки з жалюзі внизу, табличка «КТП 6923», знак «Високовольтне») — на СХІДНОМУ торці, в кінці асфальтового проїзду вздовж цеху; перед ними — розворотний майданчик, його лишаємо вільним. Північна стіна — у приямку ≈1,8 м із бетонною підпірною стінкою: зі сходу великі жалюзі (2 верхні, 1 нижня), далі мале вікно, двері зі знаком «Високовольтне», двері з ґратчастим вентвікном; у західному кінці приямку — бочки і сходи нагору. Положення прорізів — оцінка за фото, ±1,5 м. Фото № ${fno('144109','144111','144102','144221','144132')}. ${EST}`);
+  bbox(19.5,24.2,96.6,99.4,3.5,'Прибудова між ТП-6923 і тамбуром',`Обриси в плані — за супутником; з проїзду видно бетонну стіну з камерою відеоспостереження біля тамбура. Ворота на цій прибудові не підтвердились — ворота КТП на східному торці ТП-6923, північніше. Фото № ${fno('144102','144109','144111')}. ${EST}`);
+  bbox(19.5,21.0,99.4,101.8,3.1,'Низька цегляна прибудова з дверима',`Між прибудовою біля тамбура і воротами КТП: металеві двері ≈0,9 × 2,0 м і круглий вентпатрубок над ними, зі сходу. Розміри — оцінка за фото, ±0,5 м. Фото № ${fno('144109','144111','144102')}. ${EST}`);
+  op('T6E',102.5,105.7,0,2.8,'ktp'); op('T6aE',100.2,101.1,0,2.0,'door');
+  { const v=mesh(new THREE.CylinderGeometry(0.21,0.21,0.32,18),std(lin(0x9ea6ab),{metalness:0.6,roughness:0.4}),FA); v.rotation.z=Math.PI/2; v.position.set(21.16,2.45,-100.65); }
+  pick(box(0.02,2.8,3.2,new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}),19.57,1.4,-104.1,FA),'Ворота КТП 6923 — камера трансформатора',`Сірі розпашні ворота ≈3,2 × 2,8 м на східному торці ТП-6923, лицем до проїзду; внизу стулок — жалюзі, табличка «КТП 6923», знак «Високовольтне». Під’їзд — асфальтовим проїздом уздовж північного фасаду цеху; майданчик перед воротами має лишатися вільним (заміна трансформатора). Розміри — оцінка за фото. Фото № ${fno('144109','144111','144102')}. ${EST}`);
   op('T5E',18.5,20.8,0,2.4,'tp6'); op('T5E',21.2,23.9,0,2.4,'tp7'); op('T5E',24.4,25.9,0,2.2,'door'); [[18.7,20.6],[21.4,23.7]].forEach(([a,b])=>op('T5E',a,b,2.8,3.5,'tlouv'));
   [[97.6,99.4],[100.0,101.8]].forEach(([a,b])=>{ op('T5N',a,b,0,2.4,'tp6'); op('T5N',a,b,2.8,3.4,'tlouv'); });
-  [[2.0,5.5],[7.5,10.0]].forEach(([a,b])=>op('T6N',a,b,2.3,3.4,'tlouv')); op('T6N',12.5,13.7,0,2.2,'door'); op('T6sN',20.6,23.2,0,2.8,'gate');
+  // північна стіна ТП-6923 у приямку (фото 144221, 144132, 144109): зі сходу на захід — жалюзі, мале вікно, двері «ВН», двері з ґратчастим вентвікном
+  op('T6N',16.6,18.8,2.5,3.5,'tlouv'); op('T6N',13.9,15.9,2.6,3.5,'tlouv'); op('T6N',15.2,17.6,0.3,1.8,'tlouv');
+  op('T6N',12.5,12.9,2.7,3.1,'wbar'); op('T6N',10.6,11.5,0,2.1,'door'); op('T6N',8.6,9.5,0,2.0,'door'); op('T6N',8.7,9.4,2.25,2.8,'wbar');
+  // приямок уздовж північної стіни, підпірна стінка, берма з травою; шафа з пропановими балонами біля СХ кута; бочки в західному кінці
+  { const tr=mesh(new THREE.PlaneGeometry(20,1.8),std(lin(0x55585a),{roughness:1}),FA,false); tr.rotation.x=-Math.PI/2; tr.position.set(9.5,-0.003,-108.0); tr.receiveShadow=true;
+    pick(tr,'Приямок уздовж північної стіни ТП-6923',`Ширина ≈1,8 м (оцінка). Через приямок — доступ до дверей і жалюзі ТП; вхід зі сходу, з розворотного майданчика біля воріт КТП, у західному кінці — сходи нагору. Дно приямку — на рівні проїзду; берма на північ від нього вища: ≈1 м на сході і ≈2–2,5 м на заході (оцінка за фото); у моделі рельєф не показано. Фото № ${fno('144132','144221','144109')}. ${EST}`);
+    const rw=box(20,0.45,0.25,std(lin(0xa3a29b),{roughness:0.95}),9.5,0.225,-109.03,FA);
+    pick(rw,'Підпірна стінка приямку',`Бетонна, по верху — рівень берми. Висота над дном приямку ≈1–2,5 м (оцінка), у моделі показано лише верх. Фото № ${fno('144132','144109')}. ${EST}`);
+    const gT=ctex(128,128,(x,w,h)=>{ x.fillStyle='#6f7f52'; x.fillRect(0,0,w,h); for(let i=0;i<1600;i++){ x.fillStyle=rnd()<0.5?'rgba(40,50,25,0.18)':'rgba(170,175,110,0.14)'; x.fillRect(rnd()*w,rnd()*h,1.5,3); } });
+    const gr=mesh(new THREE.PlaneGeometry(20,6.85),tm(rep(gT,5,2),{roughness:1}),FA,false); gr.rotation.x=-Math.PI/2; gr.position.set(9.5,-0.004,-(109.15+6.85/2)); gr.receiveShadow=true;
+    pick(gr,'Берма з травою на північ від ТП-6923',`Укіс, вищий за дно приямку (оцінка ≈1–2,5 м); далі на північ — паркан. Межі берми і паркан — оцінка за фото, у плані не міряно. Фото № ${fno('144132','144221','144109')}. ${EST}`);
+    const cg=new THREE.Group(); FA.add(cg); cg.position.set(20.3,0,-108.05);
+    const gm=std(lin(0xd9dcd8),{roughness:0.6}), rm=std(lin(0xb03a2e),{roughness:0.5});
+    box(1.45,0.06,1.35,gm,0,1.62,0,cg); [[-0.68,-0.62],[0.68,-0.62],[-0.68,0.62],[0.68,0.62]].forEach(([a,b])=>box(0.05,1.6,0.05,gm,a,0.8,b,cg));
+    [-0.4,0,0.4].forEach(a=>{ const c=mesh(new THREE.CylinderGeometry(0.15,0.15,1.3,12),rm,cg); c.position.set(a,0.65,0.1); });
+    cg.children.forEach(o=>pick(o,'Шафа-клітка з балонами пропану',`Біля північно-східного кута ТП-6923, на вході в приямок; на даху — бухта шлангів. Поруч — запропоноване місце К-4, К-5: відстані від балонів до контейнерів УЗЕ — перевірити за нормами або перенести шафу. Розміри — оцінка за фото. Фото № ${fno('144109','144111')}. ${EST}`));
+    const bm=std(lin(0x7a3b26),{roughness:0.7,metalness:0.2}); [[0.5,107.5],[1.15,107.5],[0.5,108.15],[1.15,108.15],[1.8,107.6]].forEach(([x,y],i)=>{ const b=mesh(new THREE.CylinderGeometry(0.29,0.29,0.88,14),i===4?std(lin(0x2a5aa8),{roughness:0.6}):bm,FA); b.position.set(x,0.44,-y); }); }
   // сіра металева шафа-контейнер біля східного фасаду (фото № 48)
   pick(box(2.3,2.5,2.4,std(lin(0x6f7a83),{metalness:0.3,roughness:0.6}),98.0,1.25,-36.4,FA),'Сірий металевий контейнер-шафа біля ТП-5913',`Фото № ${fno('143856')}. ${EST}`);
   // адмінкорпус (АБК): план — супутник Google (кадр 27.10, прив'язка по дефлекторах цеху, ±0,5 м), два блоки:
@@ -4279,7 +4307,7 @@ op('S',86.0,86.8,3.6,4.4,'tlouv');
     x.fillStyle='#55534d'; x.fillRect(0,0,w,3); x.fillRect(0,h/2,w,3); x.fillRect(0,0,3,h); });
   const asph=(c)=>ctex(256,256,(x,w,h)=>{ x.fillStyle=c; x.fillRect(0,0,w,h); for(let i=0;i<4000;i++){ x.fillStyle=rnd()<0.5?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.05)'; x.fillRect(rnd()*w,rnd()*h,1.5,1.5); } });
   const pl=(x0,x1,y0,y1,t,tx,ty)=>{ const m=mesh(new THREE.PlaneGeometry(x1-x0,y1-y0),tm(rep(t,(x1-x0)/tx,(y1-y0)/ty),{roughness:0.95}),FA,false); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,-0.006,-(y0+y1)/2); m.receiveShadow=true; return m; };
-  pl(-14,98.1,-16,-0.5,slab,6,6); pl(96.64,110,-8,105,asph('#64676a'),8,8); pl(-14,96.64,96.59,110,asph('#3f4245'),8,8); }
+  pl(-14,98.1,-16,-0.5,slab,6,6); pl(96.64,110,-8,105,asph('#64676a'),8,8); const an=asph('#3f4245'); pl(-14,-0.5,96.59,110,an,8,8); pl(-0.5,96.64,96.59,107.1,an,8,8); pl(19.5,96.64,107.1,110,an,8,8); }   // на північ від ТП-6923 — приямок і берма (розділ 5)
 
 // ================= 8. Кольори за фото: покрівля цеху — темний бітумний рулон, склад — сірий профнастил
 MAT.roof.color.copy(lin(0x6d7174)); MAT.whWall.color.copy(lin(0x737b81)); MAT.whRoof.color.copy(lin(0xc3c8cb)); MAT.tp.color.copy(lin(0xc2a06a));
@@ -5194,15 +5222,16 @@ function sums(){ const k=state.lay.r28&&R28.D.V[state.lay.r28]?state.lay.r28:'1'
 const NK={}; let K2=[];
 if(BS){ const k2=BS.K.find(k=>k.id==='K-2'); if(k2){ const cx=(k2.box[0]+k2.box[1])/2, cy=(k2.box[2]+k2.box[3])/2; K2=ESS.filter(o=>o.parent===G.oursBase&&Math.abs(o.position.x-cx)<0.6&&Math.abs(-o.position.z-cy)<0.6); }   // К-2 (МС-2) у варіанті «по 2 на ТП» не ставиться
   KCOL['K-4']=0x7b5bd6; KCOL['K-5']=0x1aa3b4;
-  const g=grp('stgESS',G.ours), Y0=SHOP[3]+3.0, LL=6.058, WW=2.438;
-  [['K-4',27.0],['K-5',35.5]].forEach(([id,x0])=>{ const k={id,box:[x0,x0+LL,Y0,Y0+WW],lines:0,kwp:0,ac_len:0}, cx=x0+LL/2, cy=Y0+WW/2;
+  // місце — за позначкою власника 04.11 (03:08): на північ від ТП-6923, за приямком, на бермі; дверима на північ (від ТП), AC — через приямок у північну стіну ТП
+  const g=grp('stgESS',G.ours), Y0=110.4, LL=6.058, WW=2.438;
+  [['K-4',1.2],['K-5',9.0]].forEach(([id,x0])=>{ const k={id,box:[x0,x0+LL,Y0,Y0+WW],lines:0,kwp:0,ac_len:0}, cx=x0+LL/2, cy=Y0+WW/2, xa=x0+LL-0.6;
     const pl=box(LL+2,0.04,WW+2,UZM.plat,cx,0.02,-cy,g); pl.castShadow=false; box(LL+1,0.25,WW+1,MAT.slab,cx,0.175,-cy,g);
-    const c=golenH20(k); g.add(c); const body=c.children[0];
-    body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · біля ТП-6923 (умовно)`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Місце умовне — уздовж північного фасаду, 3 м від стіни, на схід від цегляної прибудови; вільність ділянки, проїзди й відстані не перевіряли. AC — до ТП-6923 (≈${nf(x0-19.5+1,0)} м по прямій). Етап 1: входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), етап 2 — західна половина даху.`};
-    const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-6923 · умовно`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
+    const c=golenH20(k); c.rotation.y=Math.PI; g.add(c); const body=c.children[0];
+    body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-6923, з півночі`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Місце — за позначкою 04.11: на бермі за приямком ТП-6923, ${nf(Y0-107.1,1)} м від північної стіни ТП, дверима на північ; між К-4 і К-5 — ${nf(9.0-1.2-LL,1)} м. Берма вища за дно приямку на ≈1–2,5 м (оцінка за фото), паркан на півночі — не міряно: потрібні геодезія, рівень плит і під’їзд крана. Перевірити: відстані до ТП, до жалюзі камер і до шафи з пропаном біля СХ кута. AC — через приямок у північну стіну ТП-6923 (≈${nf(Y0-107.1+1,0)} м до стіни). Етап 1: входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), етап 2 — західна половина даху.`};
+    const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-6923 · з півночі`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
     lb.scale.set(0.13,0.0325,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.6)); lb.renderOrder=18; g.add(lb);
-    const ac=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([W(x0+0.4,cy,0.36),W(x0+0.4,cy,0.08),W(19.6,cy,0.08),W(19.6,cy,0.9)],false,'catmullrom',0.02),24,0.07,8,false),new THREE.MeshStandardMaterial({color:lin(0xc0392b),roughness:0.5}));
-    ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923 (умовно)`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE); траса умовна.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
+    const ac=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([W(xa,Y0+0.3,0.36),W(xa,Y0-0.4,0.08),W(xa,108.0,0.08),W(xa,107.2,0.25),W(xa,107.16,0.9)],false,'catmullrom',0.02),24,0.07,8,false),new THREE.MeshStandardMaterial({color:lin(0xc0392b),roughness:0.5}));
+    ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE). Траса умовна: по бермі, через підпірну стінку і приямок, вводом у північну стіну ТП; де всередині щит 0,4 кВ — уточнити.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
   NK.g=g; }
 // ---------- видимість
 const ABK_SEC={arch:1,low:1,wall:1,nad:1,xm:1,mount:s=>s!=='bz',elec:s=>s==='pz'||s==='ep'||s==='bud',str:s=>s==='ep',lps:s=>s==='bz',safety:s=>s==='pz'||s==='km'||s==='bud'};
@@ -5230,7 +5259,7 @@ const hudS=hudCtx; hudCtx=function(){ hudS.apply(this,arguments); if(!ON()||stat
   const bar=$('#l28bar'); if(bar) bar.hidden=true;
   const l=$('#legend'); if(l){ const x=STG()==='1'?S.s1:STG()==='2'?S.s2:S.all, sw=(c,t)=>`<span><i class="sw" style="background:${c}"></i>${t}</span>`;
     const nm=STG()==='1'?'Етап 1':STG()==='2'?'Етап 2 · дах':'Весь об\'єкт';
-    const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923 (умовно)</span>`;
+    const p1=`<span>АБК ${S.ab.n} · фасади ${S.fac.n} · ліхтарі ${S.lan.n} · склад ${S.wh.n}</span>${sw('#e8b23a',`на освітлення (${S.lan.lit})`)}<span>контейнери: К-3, К-1 — ТП-5913; К-4, К-5 — ТП-6923, з півночі</span>`;
     const p2=`<span>дах В1: ${nf(S.roof.st)} у стрінгах</span>${sw('#e8b23a',`на освітлення (${S.roof.lit})`)}${sw('#2e8b57','прохід')}${sw('#8cc98c','відступ')}${sw('#4a4f53','труби')}${sw('#2a78d6','лівневки')}`;
     l.innerHTML=`<span class="t">${nm} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · ≈${nf(x.mwh,0)} МВт·год</span>`+(STG()==='1'?p1:STG()==='2'?p2:`<span>етап 1: ${nf(S.s1.st)}</span><span>етап 2: ${nf(S.s2.st)}</span>${sw('#e8b23a',`на освітлення (${S.all.lit})`)}`);
     l.hidden=false; }
@@ -5254,7 +5283,7 @@ const pzS=panelPZ; panelPZ=function(){ const h=pzS.apply(this,arguments); if(!ON
   ${row(`Дах цеху на новій мембрані · розкладка 28.10 ${VN[S.k]} без місць на ліхтарях`,S.roof)}
   ${row('Весь об\'єкт',S.all,'tot')}</tbody></table>
   <p class="src">кВтп і МВт·год — модулі у стрінгах (жовті «на освітлення» — окремо). АБК — розрахунок ДБН 28.10 (модель K1, вихід інвертора Deye); фасади — calc/fac_v2.py (висота за розрізом 1-1); ліхтарі — місця розкладки 28.10 на склінні 41–46°, опромінення площини (lan28); дах — розкладка 28.10 мінус каркаси ліхтарів. Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 ще не перерахована (у розкладці 28.10 — каркаси 13° на бортику 0,30 м, нижчі за скління). Склад — 176 модулів, 148,7 МВт·год (економічний ефект 26.10).</p>
-  <div class="blk"><h3>Накопичувачі — етап 1: по 2 контейнери на кожну ТП</h3><p class="src">4 × Golen LES-H20-1205W500C-PS = 2 000 кВт / 4 820 кВт·год. <b>ТП-5913</b> — К-3 і К-1 на майданчиках МС-3, МС-1 біля східного фасаду (як у варіанті Б); входи PV — фасади і склад (55 стрінгів, 441,7 кВтп), на етапі 2 — східна половина даху. <b>ТП-6923</b> — К-4 і К-5 уздовж північного фасаду (місце умовне, ділянку не перевіряли); входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), на етапі 2 — західна половина даху. На пару контейнерів — 24 входи по 60 кВт (до 1 440 кВт). Для АБК — окремий накопичувач, 2 варіанти: Golen LES-241L120-PSC (із зарядкою авто) або LES-241L120-PS (гібрид); у модель — після вибору місця.</p></div>`+h; };
+  <div class="blk"><h3>Накопичувачі — етап 1: по 2 контейнери на кожну ТП</h3><p class="src">4 × Golen LES-H20-1205W500C-PS = 2 000 кВт / 4 820 кВт·год. <b>ТП-5913</b> — К-3 і К-1 на майданчиках МС-3, МС-1 біля східного фасаду (як у варіанті Б); входи PV — фасади і склад (55 стрінгів, 441,7 кВтп), на етапі 2 — східна половина даху. <b>ТП-6923</b> — К-4 і К-5 з півночі від ТП, на бермі за приямком (місце — за позначкою 04.11; рельєф, паркан і відстані ще не перевіряли); входи PV — ліхтарі (27 стрінгів, 216,8 кВтп), на етапі 2 — західна половина даху. На пару контейнерів — 24 входи по 60 кВт (до 1 440 кВт). Для АБК — окремий накопичувач, 2 варіанти: Golen LES-241L120-PSC (із зарядкою авто) або LES-241L120-PS (гібрид); у модель — після вибору місця.</p></div>`+h; };
 document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.stgtg'); if(b) setStage(b.dataset.t); });
 // ---------- рядок унизу
 const suS=sunUI; sunUI=function(){ suS.apply(this,arguments); if(!ON()||state.sec==='sun') return; const el=$('#now'); if(!el) return; const S=sums(), x=STG()==='1'?S.s1:STG()==='2'?S.s2:S.all;
@@ -5268,7 +5297,8 @@ function abkSun(){ if(!A) return; const on=!window.__twin.clean&&effSec()==='sun
 const psS=placeSun; placeSun=function(){ psS.apply(this,arguments); abkSun(); };
 // ---------- вид «Контейнери»: з АБК у моделі стара точка (над дахом АБК) закрита — дивимось з північного сходу; вид на К-4 / К-5
 VIEWS.ess.p=[136,30,-58]; VIEWS.ess.c=[100,1,-66];
-VIEWS.ess2={t:'Контейнери ТП-6923',p:[40,15,-124],c:[28,1.5,-100]};
+// К-4 / К-5 з півночі від ТП-6923 разом із воротами КТП на сході; на вузькому (телефон) — камера вдвічі далі, щоб влізли ворота і обидва контейнери
+VIEWS.ess2={t:'Контейнери ТП-6923',get c(){ return innerWidth<innerHeight?[13,1.0,-107.5]:[8,1.0,-108.5]; },get p(){ const n=innerWidth<innerHeight, c=this.c, d=[22,12,-15.5], k=n?1.9:1; return c.map((v,i)=>v+d[i]*k); }};
 { const cams=$('#cams'), b=document.createElement('button'); b.type='button'; b.dataset.c='ess2'; b.textContent=VIEWS.ess2.t; b.setAttribute('aria-pressed','false');
   b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('ess2'); };
   const e=cams.querySelector('button[data-c="ess"]'); if(e&&e.nextSibling) cams.insertBefore(b,e.nextSibling); else cams.appendChild(b); }

@@ -19,7 +19,7 @@ const POLY={A:[[54.98,-25.08],[66.55,-25.03],[70.82,-24.51],[73.5,-24.51],[73.5,
             C2:[[146.1,-24.5],[155.1,-24.5],[155.1,-6.5],[146.1,-6.5]]};
 const WHF={A:(X,Y)=>HE+(Y+25.05)*T11, B:(X,Y)=>HE+(Y+24.5)*T11, C1:(X,Y)=>HE+(9-Math.abs(Y+15.5))*T22, C2:(X,Y)=>HE+(9-Math.abs(Y+15.5))*T17};
 const SLOPE={A:11,B:11,C1:22,C2:17};
-const TPS=[{b:[-0.5,19.5,96.6,107.1],h:4.5,n:'ТП-6923'},{b:[19.5,24.2,96.6,99.4],h:3.5,n:''},{b:[96.64,103.0,-0.4,34.6],h:4.5,n:'ТП-5913'}];
+const TPS=[{b:[-0.5,19.5,96.6,107.1],h:4.5,n:'ТП-6923'},{b:[19.5,24.2,96.6,99.4],h:3.5,n:''},{b:[19.5,21.0,99.4,101.8],h:3.1,n:''},{b:[96.64,103.0,-0.4,34.6],h:4.5,n:'ТП-5913'}];
 function inPoly(P,x,y){ let c=false; for(let i=0,j=P.length-1;i<P.length;j=i++){ const a=P[i],b=P[j]; if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])) c=!c; } return c; }
 function partAt(X,Y){ if(X>=SHOP[0]&&X<=SHOP[1]&&Y>=SHOP[2]&&Y<=SHOP[3]) return 'R'; for(const k in POLY) if(inPoly(POLY[k],X,Y)) return k; return null; }
 function surfZ(X,Y){ const p=partAt(X,Y); if(p==='R') return roofZ(X); if(p) return WHF[p](X,Y); for(const t of TPS){ const b=t.b; if(X>=b[0]&&X<=b[1]&&Y>=b[2]&&Y<=b[3]) return t.h; } return null; }
