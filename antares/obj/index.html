@@ -5332,7 +5332,7 @@ function litC(g,kind,d){ let lit=0; for(const o of g.s){ let hit;
     else hit=shopRoofHit(o,d)||OBX.some(b=>rayBox(o,d,b))||OBSC.some(c=>rayCyl(o,d,c));
     if(!hit) lit++; } return lit/g.s.length; }
 // ---------- розрахунок «зараз»
-const NAMES={ab:'АБК',fac:'Фасади цеху',lan:'Ліхтарі (модулі на склі)',wh:'Склад',roof:'Дах цеху (етап 2)'};
+const NAMES={ab:'АБК',fac:'Фасади цеху',lan:'Ліхтарі (модулі на склі)',wh:'Склад',roof:'Дах цеху'};
 const inStage=k=>{ const s=state.lay.stg; return s==='all'||(s==='2'?k==='roof':k!=='roof'); };
 let NOW=null, nowKey='', job=null;
 function compute(){ if(!SETS.roof) buildSets(); obstacles();
@@ -5376,6 +5376,22 @@ panelSun=function(){ if(!NOW) compute(); const S=ST.sums(), stg=state.lay.stg, x
   <table class="cmp"><thead><tr><th>Група</th><th>Модулів</th><th>Зараз, кВт<br><small>ясно / сер.</small></th><th>У тіні</th><th>МВт·год за рік</th></tr></thead>
   <tbody id="gNowBody">${rowsNow()}</tbody><tbody><tr class="tot"><td>Разом <small id="gNowH">${hhmm(state.hour)} · ${MOS[state.day]}</small></td><td>${nf(x.st)}</td><td id="gNowTot">${NOW&&NOW.alt>0?`<b>${kn(NOW.Pc)}</b> / ${kn(NOW.Pa)}`:'—'}</td><td></td><td><b>${nf(x.mwh,1)}</b></td></tr></tbody></table>
   <p class="src">«Зараз»: Meteonorm 8.1, ясне небо і середня погода цього дня; тінь — від ліхтарів (лишаються, гребінь 1,89 м), труб даху, сусідніх будівель, АБК і ТП; без втрат від різної освітленості в стрінгах і без затінення модуль на модуль. АБК — модель K1 АБК (з байпас-діодами). «За рік» — розрахунки розкладок: АБК (ДБН 28.10), фасади (fac_v2), ліхтарі (28.10, скло), склад (26.10), дах (28.10 В1 — ще без тіні від ліхтарів, що лишаються).</p>`; };
+// ---------- один колір і для АБК: модулі всіх орієнтацій — той самий матеріал, що на цеху (раніше — свій колір на кожну орієнтацію)
+if(A){ const PVA=MAT.pvP.clone(); A.MODS.forEach(r=>{ if(!r.mesh) return; r.mesh.material=PVA; r.mesh.userData.face0=PVA; r.mesh.userData.base=PVA; }); }
+// проходи й відступи на даху — без кольорових смуг (порожня покрівля)
+setVis=(f=>function(){ f.apply(this,arguments); const V=R28.VG['1']; if(V) V.children.forEach(o=>{ if(o.userData.part==='zone') o.visible=false; }); })(setVis);
+// ---------- натискання на модуль: підсумок його групи, етапу і всього об'єкта
+const STGN={ab:'етап 1',fac:'етап 1',lan:'етап 1',wh:'етап 1',roof:'етап 2'};
+function grpInfo(k){ const S=ST.sums(), Y=S[k], G=NOW&&NOW.g[k], E=k==='roof'?S.s2:S.s1, T=FP&&FP.T;
+  const now=G&&G.on&&NOW.alt>0?` Зараз (${hhmm(state.hour)}, ${SEASN[state.day].toLowerCase()}): ${kn(G.Pc)} кВт ясно · ${kn(G.Pa)} кВт сер.`:'';
+  const det=k==='fac'&&T?` Південь — ${T.S.n} вертикально; схід — козирок 25° ${T.Ec.n} + вертикально ${T.Ev.n}.`:k==='lan'?' 4 ліхтарі без демонтажу, модулі поверх скління (≈41°).':k==='roof'?' Дах В1 на новій мембрані, без місць на ліхтарях.':k==='ab'?' Дах, надбудова і стіни АБК за ДБН, інвертор Deye 100 кВт.':' Модулі на скатах профнастилу.';
+  return {t:`${NAMES[k]} · ${STGN[k]}`, d:`${nf(Y.st)} модулів${Y.lit?` (+${Y.lit} на освітлення)`:''} · ${nf(Y.kwp,1)} кВтп · за рік ≈${nf(Y.mwh,1)} МВт·год.${det}${now} ${k==='roof'?'Етап 2':'Етап 1'} разом: ${nf(E.st)} модулів · ${nf(E.kwp,0)} кВтп · ≈${nf(E.mwh,0)} МВт·год. Весь об'єкт: ${nf(S.all.st)} модулів · ${nf(S.all.kwp,0)} кВтп · ≈${nf(S.all.mwh,0)} МВт·год за рік.`}; }
+{ const set=(o,k)=>{ if(o) o.userData.info=()=>grpInfo(k); };
+  const V=R28.VG['1']; if(V) V.children.forEach(o=>{ if(o.userData.part==='roof') set(o,'roof'); });
+  L28.LG28.forEach(q=>{ const g=q.v2m&&q.v2m['1']; if(g) g.traverse(o=>{ if(o.isInstancedMesh) set(o,'lan'); }); });
+  if(FP) [FP.pvL,FP.pvP,FP.pc].forEach(o=>set(o,'fac'));
+  WHI.forEach(w=>set(w.im,'wh'));
+  if(A) A.MODS.forEach(r=>set(r.mesh,'ab')); }
 // ---------- старт
 window.__twin.cleanDbg={SETS,litC,obstacles,compute,get NOW(){return NOW;}};
 buildSets(); apply();
