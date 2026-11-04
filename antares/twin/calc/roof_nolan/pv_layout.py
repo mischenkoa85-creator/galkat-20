@@ -76,42 +76,60 @@ def x2s(run, x):
         acc += L
     return acc
 def roof_cands_cross():
-    Z = keepout(); ROWS, bands = rows_y(); c = RULES['clear']; P_ = DM + GAP
+    """RULES.aligned (типово true, власник 04.11, 02:53 «вирівняй у один ряд»): на кожній арці — одна сітка колонок для всіх рядів;
+    модулі стоять лише в її місцях, тому колонки суцільні від ряду до ряду (раніше ряди біля ліхтарів ішли від ендов, а поза ліхтарями — по центру арки).
+    Початок сітки — від західної ендови, по центру або від східної, що дає більше модулів поза зонами."""
+    Z = keepout(); ROWS, bands = rows_y(); c = RULES['clear']; P_ = DM + GAP; al = RULES.get('aligned', True)
     cand = []
     for fi, run in enumerate(arch_runs()):
         S = sum(_seglen(p) for p in run); x0r, x1r = run[0]['x0'], run[-1]['x1']
-        for y in ROWS:
-            ya, yb = y - LM / 2, y + LM / 2; blk = []
-            for F in R.FRAMES:
-                if ov(ya, yb, F['y0'] - c['frame_end'], F['y1'] + c['frame_end']):
-                    a_, b_ = F['xc'] - FR_EDGE - c['frame'], F['xc'] + FR_EDGE + c['frame']
-                    if b_ > x0r and a_ < x1r: blk.append((x2s(run, max(a_, x0r)), x2s(run, min(b_, x1r))))
-            free = []; lo = 0.0
-            for a_, b_ in sorted(blk):
-                if a_ > lo: free.append((lo, a_))
-                lo = max(lo, b_)
-            if lo < S: free.append((lo, S))
-            for a_, b_ in free:
-                ma = MRG if a_ < 1e-6 else 0.0; mb = MRG if b_ > S - 1e-6 else 0.0
-                n = int((b_ - a_ - ma - mb + GAP) // P_)
-                if n <= 0: continue
-                used = n * P_ - GAP
-                if ma and mb: st = a_ + (b_ - a_ - used) / 2          # уся арка вільна — по центру
-                elif ma: st = a_ + ma                                   # від ендови до каркаса — від ендови
-                elif mb: st = b_ - mb - used                            # від каркаса до ендови — від ендови
-                else: st = a_ + (b_ - a_ - used) / 2
-                for j in range(n):
-                    u0 = st + j * P_; u1 = u0 + DM
-                    xa, za = s2xz(run, u0); xb, zb = s2xz(run, u1)
-                    xm, zm = (xa + xb) / 2, (za + zb) / 2; k = (zb - za) / (xb - xa); why = None
-                    for o in R.DEFL:
-                        if o['cls'] == 'є' and hitc(xa, xb, ya, yb, o['x'], o['y'], o['d'] / 2 + c['pipe']): why = 'pipe'; break
-                    if not why:
-                        for d in R.DRAINS:
-                            if hitc(xa, xb, ya, yb, d['x'], d['y'], c['drain']): why = 'drain'; break
-                    if not why: why = next((z['k'] for z in Z if ov(xa, xb, *z['x']) and ov(ya, yb, *z['y'])), None)
-                    cand.append(dict(f=fi, sp=run[0]['sp'], j=int(round(xm * 10)), xa=round(xa, 3), xb=round(xb, 3), xm=round(xm, 3), zm=round(zm, 3), y=y, k=k,
-                                     tilt=round(math.degrees(math.atan(abs(k))), 1), face='W' if k > 0 else 'E', why=why))
+        def place(origin):
+            out = []
+            for y in ROWS:
+                ya, yb = y - LM / 2, y + LM / 2; blk = []
+                for F in R.FRAMES:
+                    if ov(ya, yb, F['y0'] - c['frame_end'], F['y1'] + c['frame_end']):
+                        a_, b_ = F['xc'] - FR_EDGE - c['frame'], F['xc'] + FR_EDGE + c['frame']
+                        if b_ > x0r and a_ < x1r: blk.append((x2s(run, max(a_, x0r)), x2s(run, min(b_, x1r))))
+                free = []; lo = 0.0
+                for a_, b_ in sorted(blk):
+                    if a_ > lo: free.append((lo, a_))
+                    lo = max(lo, b_)
+                if lo < S: free.append((lo, S))
+                for a_, b_ in free:
+                    ma = MRG if a_ < 1e-6 else 0.0; mb = MRG if b_ > S - 1e-6 else 0.0
+                    if origin is None:
+                        n = int((b_ - a_ - ma - mb + GAP) // P_)
+                        if n <= 0: continue
+                        used = n * P_ - GAP
+                        if ma and mb: st = a_ + (b_ - a_ - used) / 2
+                        elif ma: st = a_ + ma
+                        elif mb: st = b_ - mb - used
+                        else: st = a_ + (b_ - a_ - used) / 2
+                        us = [st + j * P_ for j in range(n)]
+                    else:
+                        j0 = math.ceil((a_ + ma - origin) / P_ - 1e-9); j1 = math.floor((b_ - mb - DM - origin) / P_ + 1e-9)
+                        us = [origin + j * P_ for j in range(j0, j1 + 1)]
+                    for u0 in us:
+                        u1 = u0 + DM
+                        xa, za = s2xz(run, u0); xb, zb = s2xz(run, u1)
+                        xm, zm = (xa + xb) / 2, (za + zb) / 2; k = (zb - za) / (xb - xa); why = None
+                        for o in R.DEFL:
+                            if o['cls'] == 'є' and hitc(xa, xb, ya, yb, o['x'], o['y'], o['d'] / 2 + c['pipe']): why = 'pipe'; break
+                        if not why:
+                            for d in R.DRAINS:
+                                if hitc(xa, xb, ya, yb, d['x'], d['y'], c['drain']): why = 'drain'; break
+                        if not why: why = next((z['k'] for z in Z if ov(xa, xb, *z['x']) and ov(ya, yb, *z['y'])), None)
+                        out.append(dict(f=fi, sp=run[0]['sp'], j=int(round(xm * 10)), xa=round(xa, 3), xb=round(xb, 3), xm=round(xm, 3), zm=round(zm, 3), y=y, k=k,
+                                        tilt=round(math.degrees(math.atan(abs(k))), 1), face='W' if k > 0 else 'E', why=why))
+            return out
+        if al:
+            nf_ = int((S - 2 * MRG + GAP) // P_); used = nf_ * P_ - GAP; org = (MRG, (S - used) / 2, S - MRG - used)
+            AO = RULES.get('aligned_origin')                     # індекс початку сітки на кожній арці (0 — від західної ендови, 1 — по центру, 2 — від східної); підбір — align_pick.py
+            if os.environ.get('ALIGN_O'): AO = [int(v) for v in os.environ['ALIGN_O'].split(',')]
+            if AO: cand += place(org[AO[fi]])
+            else: cand += max((place(o) for o in org), key=lambda q: sum(1 for m in q if m['why'] is None))
+        else: cand += place(None)
     return cand, Z, ROWS, bands
 def roof_cands():
     Z = keepout(); ROWS, bands = rows_y(); c = RULES['clear']
