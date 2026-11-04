@@ -5322,7 +5322,7 @@ window.__twin.stages={sums,setStage,A}; apply();
 
 // ================= Чиста збірка «Антарес · весь об'єкт» — src/clean.js (лише в antares/obj/build.sh, після stages.js)
 // Без Вінницького проєкту. Два розділи: «Об'єкт» і «Сонце і генерація». Над моделлю — лише перемикач етапів.
-// Усі модулі одного кольору (без розфарбовування станом), тіні — справжні від сонця; генерація «зараз» — живий розрахунок
+// В «Об'єкті» модулі одного кольору; у «Сонці» — колір за станом на вибраний час (кнопка «Стан модулів»), тіні — справжні від сонця; генерація за добу — розрахунок
 // тіні й потужності кожного модуля етапу (та сама модель, що в «Сонці» двійника: Meteonorm 8.1, ясно / середня погода; без втрат від стрінгів).
 { const ST=window.__twin.stages, R28=window.__twin.r28, L28=window.__twin.lan28, FP=window.__twin.facpv, A=window.__twin.abk;
 if(ST&&R28&&L28){
@@ -5342,6 +5342,14 @@ ONSECS.splice(0,ONSECS.length,'pz','sun');
 { const V=R28.VG['1']; if(V){ const ims=V.children.filter(o=>o.userData.part==='roof'); if(ims.length>1){ const m0=Array.isArray(ims[0].material)?ims[0].material.map(x=>x.clone()):ims[0].material.clone(); ims.slice(1).forEach(o=>o.material=m0); } }   // окрема копія: у r128 один матеріал на InstancedMesh з instanceColor і без нього ламає рендер
   const MT=L28.MT; if(MT&&MT.mModL&&MT.mMod){ MT.mModL.color.copy(MT.mMod.color); if(MT.mMod.map) MT.mModL.map=MT.mMod.map; MT.mModL.needsUpdate=true; } }
 genPaint=function(){ WHI.forEach((w,i)=>w.im.material=WHMAT[i]); };
+// ---------- стан модулів у «Сонці» (власник 04.11, 05:13): які працюють, а які ні при освітленні на вибраний час — колір на кожен модуль; кнопка «Стан модулів»
+// 0 — на сонці, працює повністю; 1 — частково в тіні; 2 — у тіні або сонце з тилу (лише розсіяне світло; в АБК — і модулі, обійдені діодом); 3 — ніч
+const STC=['#2e8a57','#e3a21a','#c8423b','#5d636b'], STS=['працює · на сонці','частково в тіні','у тіні / сонце ззаду','ніч'], STL=STC.map(c=>lin(c));
+const STM=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,metalness:0.08});
+const ABM=STL.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:0.5,metalness:0.08}));
+const PVA=A?MAT.pvP.clone():null;
+// ---------- склад — 176 модулів (26.10, ред. 2): 4 місця попередньої розкладки без модулів не показуються
+if(EP&&EP.whRem) EP.whRem.forEach(key=>{ const [w,k]=key.split(':').map(Number), W_=WHI[w]; if(W_){ W_.im.setMatrixAt(k,ZERO); W_.im.instanceMatrix.needsUpdate=true; } });
 // ---------- модулі для живого розрахунку: роблю геометрію з екземплярів (світові координати, нормаль — найтонша вісь)
 const _I=new M4(), _M=new M4(), _S=new M4(), _bs=new V3(), _bc=new V3();
 function geo2(M){ const e=M.elements, ax=[BLD(e[0],e[1],e[2]),BLD(e[4],e[5],e[6]),BLD(e[8],e[9],e[10])], p=BLD(e[12],e[13],e[14]);
@@ -5354,14 +5362,25 @@ function geomsOf(im){ const out=[]; if(!im||!im.isInstancedMesh||!im.count) retu
   if(!im.geometry.boundingBox) im.geometry.computeBoundingBox(); im.geometry.boundingBox.getSize(_bs); im.geometry.boundingBox.getCenter(_bc);
   _S.makeScale(_bs.x||1e-3,_bs.y||1e-3,_bs.z||1e-3); _S.setPosition(_bc);
   for(let i=0;i<im.count;i++){ im.getMatrixAt(i,_I); _M.multiplyMatrices(im.matrixWorld,_I).multiply(_S); out.push(geo2(_M)); } return out; }
-const SETS={};
-function buildSets(){ const V=R28.VG['1'], roofIm=V?V.children.filter(o=>o.userData.part==='roof')[0]:null;
-  SETS.roof={kind:'roof',cfg:MCFG.ours,g:geomsOf(roofIm)};
-  const lan=[]; L28.LG28.forEach(q=>{ const g=q.v2m&&q.v2m['1']; if(g) g.traverse(o=>{ if(o.isInstancedMesh){ const m=Array.isArray(o.material)?o.material:[o.material]; if(m.includes(L28.MT.mModL)&&!m.includes(L28.MT.mMod)) return; lan.push(...geomsOf(o)); } }); });
-  SETS.lan={kind:'roof',cfg:MCFG.ours,g:lan};
-  SETS.fac={kind:'fac',cfg:MCFG.whours,g:FP?[FP.pvL,FP.pvP,FP.pc].flatMap(geomsOf):[]};
-  SETS.wh={kind:'wh',cfg:MCFG.whours,g:GEN.wh};
-  Object.values(SETS).forEach(S=>S.f=new Float32Array(S.g.length)); }
+const SETS={}, MESH=new Map();   // MESH: сітка → її власний матеріал (повертається, коли стан модулів вимкнено)
+const refsOf=im=>{ const r=[]; if(im&&im.isInstancedMesh) for(let i=0;i<im.count;i++) r.push([im,i]); return r; };
+function buildSets(){ const V=R28.VG['1'], rims=V?V.children.filter(o=>o.userData.part==='roof'):[], roofIm=rims[0]||null;
+  SETS.roof={kind:'roof',cfg:MCFG.ours,g:geomsOf(roofIm),ref:refsOf(roofIm)};
+  const lan=[], lr=[], lit=[], ltr=[];
+  rims.slice(1).forEach(o=>{ lit.push(...geomsOf(o)); ltr.push(...refsOf(o)); });   // модулі даху на освітлення — лише колір
+  L28.LG28.forEach(q=>{ const g=q.v2m&&q.v2m['1']; if(g) g.traverse(o=>{ if(o.isInstancedMesh){ const m=Array.isArray(o.material)?o.material:[o.material];
+    if(m.includes(L28.MT.mModL)&&!m.includes(L28.MT.mMod)){ lit.push(...geomsOf(o)); ltr.push(...refsOf(o)); return; } lan.push(...geomsOf(o)); lr.push(...refsOf(o)); } }); });
+  SETS.lan={kind:'roof',cfg:MCFG.ours,g:lan,ref:lr};
+  const fm=FP?[FP.pvL,FP.pvP,FP.pc]:[];
+  SETS.fac={kind:'fac',cfg:MCFG.whours,g:fm.flatMap(geomsOf),ref:fm.flatMap(refsOf)};
+  const whOK=g=>!(EP&&EP.whRem&&EP.whRem.has(WHI.findIndex(w=>w.im===g.mesh)+':'+g.k)), whG=GEN.wh.filter(whOK);
+  SETS.wh={kind:'wh',cfg:MCFG.whours,g:whG,ref:whG.map(g=>[g.mesh,g.k])};
+  SETS.lit={kind:'roof',cfg:MCFG.ours,g:lit,ref:ltr,only:true};
+  Object.values(SETS).forEach(S=>{ S.f=new Float32Array(S.g.length); S.tf=new Float32Array(S.g.length); S.one=new Float32Array(S.g.length).fill(1); S.cat=new Uint8Array(S.g.length);
+    S.ref.forEach(([im])=>{ if(MESH.has(im)) return;
+      // сітки без кольору на екземпляр отримують власну копію матеріалу (у r128 спільний матеріал на сітках з instanceColor і без нього ламає рендер)
+      if(!im.instanceColor){ im.material=Array.isArray(im.material)?im.material.map(x=>x.clone()):im.material.clone(); for(let i=0;i<im.count;i++) im.setColorAt(i,white); im.instanceColor.needsUpdate=true; }
+      MESH.set(im,im.material); }); }); }
 // перешкоди: ліхтарі 28.10 лишаються (бортик 3,66 м, гребінь 1,89 м), труби даху 28.10, АБК
 function obstacles(){ LANG.length=0; L28.LANS.forEach(L=>LANG.push({xc:L.xc,hw:1.83,y0:L.y0,y1:L.y1,zb:L.zb,h:1.89})); ZTOP=Math.max(...LANG.map(L=>L.zb+L.h))+0.6;
   OBSC.length=0; (R28.D.pipes||[]).forEach(([n,x,y,d,h])=>{ const z=roofZ(x); OBSC.push([x,y,d/2,z-0.05,z+h-0.05]); }); }
@@ -5377,53 +5396,158 @@ const inStage=k=>{ const s=state.lay.stg; return s==='all'||(s==='2'?k==='roof':
 let NOW=null, nowKey='', job=null;
 function compute(){ if(!SETS.roof) buildSets(); obstacles();
   const W_=WX.day[state.day], st=wxStep(state.day,state.hour), out={alt:0,g:{},Pc:0,Pa:0};
-  ['ab','fac','lan','wh','roof'].forEach(k=>out.g[k]={Pc:0,Pa:0,n:0,sh:0,on:inStage(k)});
+  ['ab','fac','lan','wh','roof'].forEach(k=>out.g[k]={Pc:0,Pa:0,n:0,sh:0,cnt:[0,0,0],on:inStage(k)});
   if(st){ const d=[st[1],st[2],st[3]]; out.alt=Math.asin(st[3]);
-    ['fac','lan','wh','roof'].forEach(k=>{ const S=SETS[k], G=out.g[k]; if(!G.on) return;
-      S.g.forEach((g,i)=>{ S.f[i]=dot3(d,g.n)>0?litC(g,S.kind,d):0; });
+    ['fac','lan','wh','roof','lit'].forEach(k=>{ const S=SETS[k], G=out.g[k]; if(G&&!G.on) return;
+      S.g.forEach((g,i)=>{ const c=dot3(d,g.n); S.f[i]=c>0?litC(g,S.kind,d):0; S.cat[i]=c<=0?2:S.f[i]>=0.999?0:S.f[i]>0?1:2; });
+      if(!G) return; S.cat.forEach(c=>G.cnt[c]++);
       const r=powerStep(S.g,S.f,st,W_,S.cfg); G.Pc=r.Pc; G.Pa=W_.p*r.Pc+(1-W_.p)*r.Po; G.n=S.g.length; G.sh=r.n[1]+r.n[2]+r.n[3]; });
-    if(A&&out.g.ab.on){ const rr=A.evaluate(DOY[state.day],solarT(),false), G=out.g.ab, k0=out.g.fac.Pc>0?out.g.fac.Pa/out.g.fac.Pc:W_.p;
-      G.Pc=rr.all.p; G.Pa=rr.all.p*k0; G.n=rr.all.n; G.sh=rr.all.n-rr.all.sun; } }
+    if(A&&out.g.ab.on){ const rr=A.evaluate(DOY[state.day],solarT(),true), G=out.g.ab, k0=out.g.fac.Pc>0?out.g.fac.Pa/out.g.fac.Pc:W_.p;
+      G.Pc=rr.all.p; G.Pa=rr.all.p*k0; G.n=rr.all.n; G.sh=rr.all.n-rr.all.sun; G.cnt=[rr.all.sun,rr.all.part,rr.all.n-rr.all.sun-rr.all.part]; } }
   else ['fac','lan','wh','roof'].forEach(k=>{ out.g[k].n=SETS[k].g.length; });
   if(!st&&A) out.g.ab.n=A.MODS.length;
   Object.values(out.g).forEach(G=>{ if(G.on){ out.Pc+=G.Pc; out.Pa+=G.Pa; } });
   NOW=out; nowKey=state.day+'|'+Math.round(state.hour*6)+'|'+state.lay.stg; }
-function solarT(){ const dd=DAYS[state.day], n=DOY[state.day], off=kyivOffset(2026,dd[1],dd[2]), B=2*Math.PI*(n-81)/364, eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B); return state.hour-off+LON/15+eot/60; }
+function solarT(day=state.day,h=state.hour){ const dd=DAYS[day], n=DOY[day], off=kyivOffset(2026,dd[1],dd[2]), B=2*Math.PI*(n-81)/364, eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B); return h-off+LON/15+eot/60; }
+// ---------- генерація за добу: усі 10-хвилинні кроки характерного дня (Meteonorm 8.1), тінь кожного модуля на кожному кроці; рахується частинами у фоні —
+// спершу вибраний день, далі решта пір року (для порівняння). c — ясне небо, a — середня погода дня, c0 / a0 — те саме без тіні (для втрат від тіні).
+const GK=['ab','fac','lan','wh','roof'], DT=1/6, DAYC=[null,null,null,null], DAYP=[null,null,null,null]; let dayT=null;
+function daySlice(day){ const W_=WX.day[day], N=W_.st.length; let P=DAYP[day];
+  if(!P){ const z=()=>new Float32Array(N); P=DAYP[day]={k:0,h:W_.st.map(s=>s[0]),g:Object.fromEntries(GK.map(k=>[k,{c:z(),a:z(),c0:z(),a0:z()}]))}; }
+  obstacles(); const t0=performance.now();   // перешкоди — щоразу (інші модулі між частинами можуть перебудувати LANG під свій варіант ліхтаря)
+  while(P.k<N&&performance.now()-t0<30){ const k=P.k, st=W_.st[k], d=[st[1],st[2],st[3]];
+    ['fac','lan','wh','roof'].forEach(q=>{ const S=SETS[q], f=S.tf, G=P.g[q]; S.g.forEach((g,i)=>{ f[i]=dot3(d,g.n)>0?litC(g,S.kind,d):0; });
+      const a=powerStep(S.g,f,st,W_,S.cfg), b=powerStep(S.g,S.one,st,W_,S.cfg);
+      G.c[k]=a.Pc; G.a[k]=W_.p*a.Pc+(1-W_.p)*a.Po; G.c0[k]=b.Pc; G.a0[k]=W_.p*b.Pc+(1-W_.p)*b.Po; });
+    if(A){ const rr=A.evaluate(DOY[day],solarT(day,st[0]),false), G=P.g.ab, F=P.g.fac, k0=F.c[k]>0?F.a[k]/F.c[k]:W_.p;
+      G.c[k]=G.c0[k]=rr.all.p; G.a[k]=G.a0[k]=rr.all.p*k0; }   // АБК — модель K1 з байпас-діодами; без окремого «без тіні»
+    P.k++; }
+  if(P.k>=N){ DAYC[day]=P; return true; } return false; }
+const dayPct=day=>{ const P=DAYP[day]; return P?Math.round(P.k/WX.day[day].st.length*100):0; };
+function dayRun(){ if(dayT||DAYC.every(Boolean)) return; if(!SETS.roof) buildSets(); obstacles();
+  const tick=()=>{ dayT=null; const d=DAYC[state.day]?[0,1,2,3].find(i=>!DAYC[i]):state.day; if(d===undefined) return;
+    const done=daySlice(d); if(done||d===state.day){ sunUI(); if(done) panelNow(); else if(state.sec==='sun'){ const h=document.getElementById('gSunH'), q=document.getElementById('gPct'); if(h) h.innerHTML=sunHead(); if(q) q.textContent=dayPct(d); } }
+    dayT=setTimeout(tick,d===state.day?0:15); };
+  dayT=setTimeout(tick,0); }
+// суми за добу для набору груп: повна доба і накопичено до години upto (кроки, що вже минули)
+function dayE(day,keys,upto){ const P=DAYC[day]; if(!P) return null; const o={c:0,a:0,c0:0,a0:0,cN:0,aN:0,kc:0,ka:0};
+  P.h.forEach((h,i)=>{ const past=upto!=null&&h<upto; keys.forEach(k=>{ const G=P.g[k]; o.c+=G.c[i]*DT; o.a+=G.a[i]*DT; if(k!=='ab'){ o.c0+=G.c0[i]*DT; o.a0+=G.a0[i]*DT; o.kc+=G.c[i]*DT; o.ka+=G.a[i]*DT; }
+    if(past){ o.cN+=G.c[i]*DT; o.aN+=G.a[i]*DT; } }); });
+  o.lc=o.c0>0?1-o.kc/o.c0:0; o.la=o.a0>0?1-o.ka/o.a0:0; return o; }
+const stKeys=()=>GK.filter(inStage);
+const fe=(v,ref=v)=>ref>=1000?`${nf(v/1000,ref>=10000?1:2)} МВт·год`:`${nf(v,0)} кВт·год`;   // одиниця — за більшим числом рядка
+// ---------- колір модулів за станом
+const statOn=()=>state.sec==='sun'&&state.lay.stat!==false;
+let painted=false;
+function statusPaint(){ if(!statOn()||!NOW){ if(!painted) return; MESH.forEach((m,im)=>{ im.material=m; for(let i=0;i<im.count;i++) im.setColorAt(i,white); im.instanceColor.needsUpdate=true; });
+    if(A) A.MODS.forEach(r=>{ if(r.mesh){ r.mesh.material=PVA; r.mesh.userData.base=PVA; } }); painted=false; need=true; return; }
+  const night=!(NOW.alt>0); MESH.forEach((m,im)=>{ im.material=STM; });
+  Object.values(SETS).forEach(S=>S.ref.forEach(([im,k],i)=>im.setColorAt(k,STL[night?3:S.cat[i]]))); MESH.forEach((m,im)=>{ im.instanceColor.needsUpdate=true; });
+  if(A) A.MODS.forEach(r=>{ if(!r.mesh) return; const c=night||r.state==='night'?3:r.state==='sun'?0:r.state==='part'?1:2; r.mesh.material=ABM[c]; r.mesh.userData.base=ABM[c]; });
+  painted=true; need=true; }
+function stCounts(){ const c=[0,0,0]; let n=0; if(NOW) GK.forEach(k=>{ const G=NOW.g[k]; if(!G.on) return; n+=G.n; G.cnt.forEach((v,i)=>c[i]+=v); }); return {c,n}; }
+function legendSun(){ const l=$('#legend'); if(!l||state.sec!=='sun') return; l.hidden=false; l.classList.remove('min');
+  if(state.lay.stat===false){ l.innerHTML=`<span class="t">Тіні — справжні, від сонця на вибраний час</span><span>▶ — день по 10 хв</span>`; return; }
+  const C=stCounts(), sw=i=>`<i class="sw" style="background:${STC[i]}"></i>`;
+  l.innerHTML=`<span class="t">Стан модулів о ${hhmm(state.hour)}</span>`+(!NOW||!(NOW.alt>0)?`<span>${sw(3)}ніч — не працюють усі ${nf(C.n)}</span>`
+    :[0,1,2].map(i=>`<span>${sw(i)}${STS[i]} <b class="num">${nf(C.c[i])}</b></span>`).join('')); }
 // не частіше ніж раз на 150 мс (повзунок, ▶)
-genRefresh=function(){ const key=state.day+'|'+Math.round(state.hour*6)+'|'+state.lay.stg; if(key===nowKey&&NOW){ sunUI(); panelNow(); return; }
-  if(job) return; job=setTimeout(()=>{ job=null; compute(); sunUI(); panelNow(); need=true; },NOW?150:0); };
+genRefresh=function(){ dayRun(); const key=state.day+'|'+Math.round(state.hour*6)+'|'+state.lay.stg; if(key===nowKey&&NOW){ sunUI(); panelNow(); legendSun(); statusPaint(); return; }
+  if(job) return; job=setTimeout(()=>{ job=null; compute(); sunUI(); panelNow(); legendSun(); statusPaint(); need=true; },NOW?150:0); };
 genPanelUpdate=function(){};
-// ---------- рядок унизу
+// ---------- рядок унизу: генерація за добу і накопичено до вибраного часу (замість потужності «зараз»)
 const kn=v=>nf(v,0);
 sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) return; const S=ST.sums(), stg=state.lay.stg, x=stg==='1'?S.s1:stg==='2'?S.s2:S.all;
   const nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт', sun=(el.innerHTML.match(/<span class="sun">.*?<\/span>/)||[''])[0];
-  const now=NOW&&NOW.alt>0?`<span>зараз <b class="num">${kn(NOW.Pc)} кВт</b> ясно · ${kn(NOW.Pa)} кВт сер.</span>`:'';
-  el.innerHTML=`<span class="who ours">${nm}</span>${sun}${now}<span><b class="num">${nf(x.st)}</b> модулів · ${nf(x.kwp,0)} кВтп · за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; })(sunUI);
+  let day=''; if(state.sec==='sun'){ const E=dayE(state.day,stKeys(),state.hour);
+    day=E?`<span>за добу ${DAYS[state.day][0]} <b class="num">${fe(E.c)}</b> ясно · ${fe(E.a,E.c)} сер.</span><span>накопичено до ${hhmm(state.hour)} <b class="num">${fe(E.cN,E.c)}</b> ясно · ${fe(E.aN,E.c)} сер.</span>`
+      :`<span>генерація за добу — рахую ${dayPct(state.day)} %</span>`; }
+  el.innerHTML=`<span class="who ours">${nm}</span>${sun}${day}<span><b class="num">${nf(x.st)}</b> модулів · ${nf(x.kwp,0)} кВтп · за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; })(sunUI);
 // ---------- над моделлю: лише етапи; легенда — один рядок
 hudCtx=(f=>function(){ f.apply(this,arguments); const m=$('#modes'); if(!m) return; const S=ST.sums(), stg=state.lay.stg;
   m.innerHTML=''; [['1',`Етап 1 · ${nf(S.s1.st)}`],['2',`Етап 2 · дах · ${nf(S.s2.st)}`],['all',`Весь об'єкт · ${nf(S.all.st)}`]].forEach(([v,t])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.setAttribute('aria-pressed',String(stg===v)); b.onclick=()=>ST.setStage(v); m.appendChild(b); });
   m.hidden=false; const bar=$('#l28bar'); if(bar) bar.hidden=true;
-  const l=$('#legend'); if(l&&state.sec==='sun'){ l.innerHTML=`<span class="t">Тіні — справжні, від сонця на вибраний час</span><span>▶ — день по 10 хв</span>`; l.hidden=false; l.classList.remove('min'); } })(hudCtx);
-// ---------- розділ «Сонце і генерація»
+  if(state.sec==='sun'){ const b=document.createElement('button'); b.type='button'; b.textContent='Стан модулів'; b.title='Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні'; b.setAttribute('aria-pressed',String(state.lay.stat!==false));
+    b.onclick=()=>{ state.lay.stat=state.lay.stat===false; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b); legendSun(); } })(hudCtx);
+// ---------- розділ «Сонце і генерація»: генерація за добу, накопичено до вибраного часу, стан модулів, аналітика
 const MOS=['весна (21.03)','літо (21.06)','осінь (23.09)','зима (21.12)'];
-function rowsNow(){ if(!NOW) return ''; const S=ST.sums(), Y={ab:S.ab,fac:S.fac,lan:S.lan,wh:S.wh,roof:S.roof};
-  return ['ab','fac','lan','wh','roof'].filter(k=>NOW.g[k].on).map(k=>{ const G=NOW.g[k];
-    return `<tr><td>${NAMES[k]}</td><td>${nf(Y[k].st)}</td><td id="gn_${k}">${NOW.alt>0?`<b>${kn(G.Pc)}</b> / ${kn(G.Pa)}`:'—'}</td><td id="gs_${k}">${NOW.alt>0?nf(G.sh):'—'}</td><td>${nf(Y[k].mwh,1)}</td></tr>`; }).join(''); }
-function panelNow(){ const tb=document.getElementById('gNowBody'); if(tb) tb.innerHTML=rowsNow(); const t=document.getElementById('gNowTot'); if(t&&NOW) t.innerHTML=NOW.alt>0?`<b>${kn(NOW.Pc)}</b> / ${kn(NOW.Pa)}`:'—'; const h=document.getElementById('gNowH'); if(h) h.textContent=`${hhmm(state.hour)} · ${MOS[state.day]}`; }
-panelSun=function(){ if(!NOW) compute(); const S=ST.sums(), stg=state.lay.stg, x=stg==='1'?S.s1:stg==='2'?S.s2:S.all, nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт';
-  return `<div class="ph"><span class="eyebrow ours">Сонце і генерація · ${nm}</span><h2>за рік ≈${nf(x.mwh,0)} МВт·год · ${nf(x.kwp,0)} кВтп</h2>
-  <p>Тягніть час або натисніть ▶ — сонце йде по дню, тіні на модулях справжні. Потужність «зараз» рахується для кожного модуля з його тінню; пора року — кнопка поруч із часом.</p></div>
-  <table class="cmp"><thead><tr><th>Група</th><th>Модулів</th><th>Зараз, кВт<br><small>ясно / сер.</small></th><th>У тіні</th><th>МВт·год за рік</th></tr></thead>
-  <tbody id="gNowBody">${rowsNow()}</tbody><tbody><tr class="tot"><td>Разом <small id="gNowH">${hhmm(state.hour)} · ${MOS[state.day]}</small></td><td>${nf(x.st)}</td><td id="gNowTot">${NOW&&NOW.alt>0?`<b>${kn(NOW.Pc)}</b> / ${kn(NOW.Pa)}`:'—'}</td><td></td><td><b>${nf(x.mwh,1)}</b></td></tr></tbody></table>
-  <p class="src">«Зараз»: Meteonorm 8.1, ясне небо і середня погода цього дня; тінь — від ліхтарів (лишаються, гребінь 1,89 м), труб даху, сусідніх будівель, АБК і ТП; без втрат від різної освітленості в стрінгах і без затінення модуль на модуль. АБК — модель K1 АБК (з байпас-діодами). «За рік» — розрахунки розкладок: АБК (ДБН 28.10), фасади (fac_v2), ліхтарі (28.10, скло), склад (26.10), дах (28.10 В1 — ще без тіні від ліхтарів, що лишаються).</p>`; };
+const GN=[['roof','Дах цеху'],['fac','Фасади цеху'],['lan','Ліхтарі — модулі на склі'],['wh','Склад'],['ab','АБК']];
+const pc0=v=>v>0?`${nf(v*100,1)} %`:'—';
+function curveSVG(day,keys){ const P=DAYC[day]; if(!P) return `<p class="src">Крива доби — рахую ${dayPct(day)} %…</p>`;
+  const n=P.h.length, C=new Float32Array(n), Av=new Float32Array(n); P.h.forEach((h,i)=>keys.forEach(k=>{ C[i]+=P.g[k].c[i]; Av[i]+=P.g[k].a[i]; }));
+  const W=360,H=168,l=40,r=8,t=12,b=22, h0=Math.floor(P.h[0]-DT/2), h1=Math.ceil(P.h[n-1]+DT/2), mx=Math.max(1,...C), st=mx>2000?500:mx>800?200:mx>300?100:50, top=Math.ceil(mx/st)*st;
+  const X=h=>l+(h-h0)/(h1-h0)*(W-l-r), Y=v=>t+(1-v/top)*(H-t-b), path=A=>P.h.map((h,i)=>`${i?'L':'M'}${X(h).toFixed(1)},${Y(A[i]).toFixed(1)}`).join('');
+  const nowH=state.hour, past=P.h.map((h,i)=>[h,i]).filter(([h])=>h<nowH);
+  const area=past.length?`M${X(past[0][0]-DT/2).toFixed(1)},${Y(0)}`+past.map(([h,i])=>`L${X(h).toFixed(1)},${Y(C[i]).toFixed(1)}`).join('')+`L${X(past[past.length-1][0]).toFixed(1)},${Y(0)}Z`:'';
+  let g=''; for(let v=0;v<=top;v+=st) g+=`<line x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${l-5}" y="${Y(v)+3.5}" class="ya">${nf(v,0)}</text>`;
+  let xa=''; for(let h=Math.ceil(h0/2)*2;h<=h1;h+=2) xa+=`<text x="${X(h)}" y="${H-6}" class="xa">${h}</text>`;
+  const nx=X(Math.min(h1,Math.max(h0,nowH)));
+  return `<div class="cv" data-day="${day}" data-keys="${keys.join(',')}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Потужність протягом доби, ясно і середня погода">${g}${xa}
+    ${area?`<path d="${area}" class="acc"/>`:''}<path d="${path(Av)}" class="la"/><path d="${path(C)}" class="lc"/>
+    <line x1="${nx}" x2="${nx}" y1="${t}" y2="${Y(0)}" class="nw"/><text x="${nx+3}" y="${t+8}" class="xa nwt">${hhmm(nowH)}</text>
+    <line class="hx" x1="0" x2="0" y1="${t}" y2="${Y(0)}" visibility="hidden"/><circle class="hc" r="4" visibility="hidden"/><circle class="ha" r="4" visibility="hidden"/>
+    <rect x="${l}" y="${t}" width="${W-l-r}" height="${Y(0)-t}" fill="transparent" class="hit" data-x0="${l}" data-x1="${W-r}" data-h0="${h0}" data-h1="${h1}" data-top="${top}" data-t="${t}" data-b="${Y(0)}"/></svg><div class="ctip" hidden></div></div>`; }
+function sunBody(){ if(!NOW) compute(); const S=ST.sums(), stg=state.lay.stg, x=stg==='1'?S.s1:stg==='2'?S.s2:S.all, keys=stKeys(), d=state.day, E=dayE(d,keys,state.hour), H=hhmm(state.hour);
+  const tile=(k,big,sub)=>`<div class="kpi"><span class="k">${k}</span><span class="v">${big}</span><span class="s">${sub}</span></div>`, C=stCounts(), night=!NOW||!(NOW.alt>0);
+  const kpis=`<div class="kpis">${E?tile(`За добу · ${DAYS[d][0]}`,`${fe(E.c).replace(/ (\S+)$/,' <small>$1</small>')}`,`ясне небо · ${nf(E.c/x.kwp,2)} кВт·год/кВтп`)
+    +tile('За добу · сер. погода',`${fe(E.a,E.c).replace(/ (\S+)$/,' <small>$1</small>')}`,`${nf(E.a/x.kwp,2)} кВт·год/кВтп · ${nf(E.a/E.c*100,0)} % від ясного`)
+    +tile(`Накопичено до ${H}`,`${fe(E.cN,E.c).replace(/ (\S+)$/,' <small>$1</small>')}`,`ясно · сер. ${fe(E.aN,E.c)} · ${nf(E.c?E.cN/E.c*100:0,0)} % доби`)
+    +tile('Втрати від тіні за добу',`${nf(E.lc*100,1)} <small>%</small>`,`ясно · сер. ${nf(E.la*100,1)} % (без АБК)`):tile('Генерація за добу',`<span id="gPct">${dayPct(d)}</span> <small>%</small>`,'рахую тінь кожного модуля на кожному 10-хв кроці дня…')}
+    ${tile(`Стан модулів о ${H}`,night?`ніч`:`${nf(C.c[0])} <small>з ${nf(C.n)}</small>`,night?'не працюють усі':`на сонці · частково ${nf(C.c[1])} · у тіні ${nf(C.c[2])}`)}</div>`;
+  // по групах
+  const rows=GN.filter(([k])=>inStage(k)).map(([k,n])=>{ const Y=S[k], e=dayE(d,[k],state.hour), G=NOW&&NOW.g[k];
+    return `<tr><td class="w">${n}<small>${nf(Y.st)} мод. · ${nf(Y.kwp,1)} кВтп · ${nf(Y.mwh,1)} МВт·год/рік</small></td><td>${e?`<b>${nf(e.c,0)}</b> / ${nf(e.a,0)}`:'…'}</td><td>${e?nf(e.a/Y.kwp,2):'…'}</td><td>${e?`${nf(e.cN,0)} / ${nf(e.aN,0)}`:'…'}</td><td>${e?(k==='ab'?'—':pc0(e.lc)):'…'}</td><td>${E&&e?`${nf(e.a/E.a*100,0)} %`:'…'}</td></tr>`; }).join('');
+  const tot=`<tr class="tot"><td class="w">Разом<small>${nf(x.st)} мод. · ${nf(x.kwp,0)} кВтп</small></td><td>${E?`<b>${nf(E.c,0)}</b> / ${nf(E.a,0)}`:'…'}</td><td>${E?nf(E.a/x.kwp,2):'…'}</td><td>${E?`${nf(E.cN,0)} / ${nf(E.aN,0)}`:'…'}</td><td>${E?pc0(E.lc):'…'}</td><td>${E?'100 %':'…'}</td></tr>`;
+  const grp=`<div class="blk wide"><h3>Генерація за добу по групах · ${MOS[d]}</h3><div class="tw"><table class="cmp an gt"><thead><tr><th>Група</th><th>За добу, кВт·год<br><small>ясно / сер.</small></th><th>кВт·год/ кВтп<br><small>сер.</small></th><th>До ${H}, кВт·год<br><small>ясно / сер.</small></th><th>Втрати від тіні<br><small>ясно</small></th><th>Частка</th></tr></thead><tbody>${rows}${tot}</tbody></table></div></div>`;
+  // стан модулів зараз
+  const sw=i=>`<i class="sw" style="background:${STC[i]}"></i>`;
+  const srows=GN.filter(([k])=>inStage(k)).map(([k,n])=>{ const G=NOW&&NOW.g[k]; return `<tr><td class="w">${n}</td>${night?`<td>—</td><td>—</td><td>${nf(G?G.n:0)}</td>`:G.cnt.map(v=>`<td>${nf(v)}</td>`).join('')}</tr>`; }).join('');
+  const stb=`<div class="blk"><h3>Стан модулів о ${H} · ${MOS[d]}</h3><div class="tw"><table class="cmp an"><thead><tr><th>Група</th><th>${sw(0)}Працює<br><small>на сонці</small></th><th>${sw(1)}Частково<br><small>у тіні</small></th><th>${sw(2)}У тіні<br><small>або ззаду</small></th></tr></thead><tbody>${srows}
+    <tr class="tot"><td class="w">Разом</td>${night?`<td>—</td><td>—</td><td>${nf(C.n)}</td>`:C.c.map(v=>`<td><b>${nf(v)}</b></td>`).join('')}</tr></tbody></table></div>
+    <p class="src">Колір у моделі — той самий (кнопка «Стан модулів» над моделлю). «У тіні» — модуль бере лише розсіяне світло (≈10–25 % від сонця); в АБК сюди ж — модулі, обійдені діодом через нижчий струм у стрінгу.${night?' Зараз ніч — не працює жоден модуль.':''}</p></div>`;
+  // крива доби
+  const cv=`<div class="blk"><h3>Потужність протягом доби, кВт</h3><div class="lg"><span><i class="ln c"></i>ясне небо</span><span><i class="ln a"></i>середня погода</span><span><i class="ar"></i>накопичено до ${H}</span></div>${curveSVG(d,keys)}</div>`;
+  // пори року
+  const SE=[0,1,2,3].map(i=>dayE(i,keys,null)), smx=Math.max(1,...SE.map(e=>e?e.c:0));
+  const sr=[0,1,2,3].map(i=>{ const e=SE[i]; return `<tr${i===d?' class="cur"':''}><td class="w">${MOS[i]}</td><td>${e?`<b>${nf(e.c,0)}</b><span class="gb" style="width:${Math.max(3,Math.round(56*e.c/smx))}px"></span>`:`${dayPct(i)} %…`}</td><td>${e?nf(e.a,0):'…'}</td><td>${e?nf(e.a/x.kwp,2):'…'}</td><td>${e?pc0(e.lc):'…'}</td></tr>`; }).join('');
+  const sea=`<div class="blk"><h3>Доба по порах року, кВт·год</h3><div class="tw"><table class="cmp an"><thead><tr><th>День</th><th>Ясно</th><th>Сер.</th><th>на кВтп<br><small>сер.</small></th><th>Тінь<br><small>втрати</small></th></tr></thead><tbody>${sr}</tbody></table></div>
+    <p class="src">Чотири характерні дні (рівнодення і сонцестояння); середня погода — частка ясних днів цього місяця за Meteonorm 8.1. Річна генерація — у розділі «Об'єкт».</p></div>`;
+  return kpis+grp+cv+stb+sea+`<p class="src" style="grid-column:1/-1">Генерація за добу — сума за всі 10-хвилинні кроки дня з тінню кожного модуля на кожному кроці: Meteonorm 8.1, ясне небо і середня погода цього дня; тінь — від ліхтарів (лишаються, гребінь 1,89 м), труб даху, сусідніх будівель, АБК і ТП; без втрат від різної освітленості в стрінгах і без затінення модуль на модуль. АБК — модель K1 АБК (з байпас-діодами). «За рік» — розрахунки розкладок: АБК (ДБН 28.10), фасади (fac_v2), ліхтарі (28.10, скло), склад (26.10), дах (28.10 В1 — ще без тіні від ліхтарів, що лишаються).</p>`; }
+function panelNow(){ const el=document.getElementById('gSunBody'); if(el) el.innerHTML=sunBody(); const h=document.getElementById('gSunH'); if(h) h.innerHTML=sunHead(); }
+function sunHead(){ const E=dayE(state.day,stKeys(),state.hour); return E?`за добу ${DAYS[state.day][0]} ≈${fe(E.c)} ясно · ${fe(E.a,E.c)} сер.`:`генерація за добу — рахую ${dayPct(state.day)} %`; }
+panelSun=function(){ if(!NOW) compute(); dayRun(); const S=ST.sums(), stg=state.lay.stg, x=stg==='1'?S.s1:stg==='2'?S.s2:S.all, nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт';
+  return `<div class="ph"><span class="eyebrow ours">Сонце і генерація · ${nm}</span><h2 id="gSunH">${sunHead()}</h2>
+  <p>${MOS[state.day][0].toUpperCase()+MOS[state.day].slice(1)} · ${nf(x.st)} модулів · ${nf(x.kwp,0)} кВтп · за рік ≈${nf(x.mwh,0)} МВт·год. Тягніть час або натисніть ▶ — сонце йде по дню, тіні справжні, колір модуля — його стан; пора року — кнопка поруч із часом.</p></div>
+  <div id="gSunBody" class="sunb">${sunBody()}</div>`; };
+// наведення на криву доби: година, потужність ясно / сер., накопичено до цієї години
+document.addEventListener('pointermove',e=>{ const hit=e.target&&e.target.classList&&e.target.classList.contains('hit')?e.target:null, cvs=document.querySelectorAll('.cv');
+  cvs.forEach(cv=>{ const sv=cv.querySelector('svg'), tip=cv.querySelector('.ctip'), hx=sv.querySelector('.hx'), hc=sv.querySelector('.hc'), ha=sv.querySelector('.ha');
+    if(!hit||!cv.contains(hit)){ tip.hidden=true; [hx,hc,ha].forEach(o=>o.setAttribute('visibility','hidden')); return; }
+    const P=DAYC[+cv.dataset.day]; if(!P) return; const keys=cv.dataset.keys.split(','), D=hit.dataset, r=sv.getBoundingClientRect(), vx=(e.clientX-r.left)/r.width*360;
+    const h=+D.h0+(vx-+D.x0)/(+D.x1-+D.x0)*(+D.h1-+D.h0); let i=0,bd=1e9; P.h.forEach((v,j)=>{ const dd=Math.abs(v-h); if(dd<bd){ bd=dd; i=j; } });
+    let c=0,a=0,cn=0,an=0; keys.forEach(k=>{ const G=P.g[k]; c+=G.c[i]; a+=G.a[i]; for(let j=0;j<=i;j++){ cn+=G.c[j]*DT; an+=G.a[j]*DT; } });
+    const X=+D.x0+(P.h[i]-+D.h0)/(+D.h1-+D.h0)*(+D.x1-+D.x0), Yv=v=>+D.t+(1-v/+D.top)*(+D.b-+D.t);
+    hx.setAttribute('x1',X); hx.setAttribute('x2',X); hc.setAttribute('cx',X); hc.setAttribute('cy',Yv(c)); ha.setAttribute('cx',X); ha.setAttribute('cy',Yv(a)); [hx,hc,ha].forEach(o=>o.setAttribute('visibility','visible'));
+    tip.innerHTML=`<b>${hhmm(P.h[i]-DT/2)}–${hhmm(P.h[i]+DT/2)}</b><br>ясно <b>${nf(c,0)} кВт</b> · сер. ${nf(a,0)} кВт<br>з ранку: ${fe(cn)} ясно · ${fe(an,cn)} сер.`; tip.hidden=false;
+    const px=(X/360)*r.width, tw=tip.offsetWidth||190; tip.style.left=Math.max(0,px+10+tw>r.width?px-10-tw:px+10)+'px'; tip.style.top='6px'; }); });
 // ---------- один колір і для АБК: модулі всіх орієнтацій — той самий матеріал, що на цеху (раніше — свій колір на кожну орієнтацію)
-if(A){ const PVA=MAT.pvP.clone(); A.MODS.forEach(r=>{ if(!r.mesh) return; r.mesh.material=PVA; r.mesh.userData.face0=PVA; r.mesh.userData.base=PVA; }); }
+if(A){ A.MODS.forEach(r=>{ if(!r.mesh) return; r.mesh.material=PVA; r.mesh.userData.face0=PVA; r.mesh.userData.base=PVA; }); }
 // проходи й відступи на даху — без кольорових смуг (порожня покрівля)
 setVis=(f=>function(){ f.apply(this,arguments); const V=R28.VG['1']; if(V) V.children.forEach(o=>{ if(o.userData.part==='zone') o.visible=false; }); })(setVis);
+// контейнери: по 2 на кожну ТП — К-3, К-1 біля ТП-5913 (зі stages.js NK — К-4, К-5 біля ТП-6923) видно в обох розділах і на всіх етапах; ШВ-2 старої схеми (К-2 не ставиться) — ні
+const K13=[], SHV2=ESS.filter(o=>{ const u=o.userData&&o.userData.info; return u&&typeof u==='object'&&/^ШВ-2 /.test(u.t||''); });
+if(BS) ['K-3','K-1'].forEach(id=>{ const k=BS.K.find(x=>x.id===id); if(!k) return; const cx=(k.box[0]+k.box[1])/2, cy=(k.box[2]+k.box[3])/2;
+  ESS.forEach(o=>{ if(o.parent===G.oursBase&&Math.abs(o.position.x-cx)<0.6&&Math.abs(-o.position.z-cy)<0.6) K13.push(o); }); });
+const K13L=grp('k13lbl',G.ours);
+if(BS) ['K-3','K-1'].forEach(id=>{ const k=BS.K.find(x=>x.id===id); if(!k) return; const cx=(k.box[0]+k.box[1])/2, cy=(k.box[2]+k.box[3])/2;
+  const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-5913 · схід`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
+  lb.scale.set(0.13,0.0325,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.9)); lb.renderOrder=18; K13L.add(lb); });
+setVis=(f=>function(){ f.apply(this,arguments); const on=state.proj==='ours'&&R28.ON(); if(on) K13.forEach(o=>o.visible=true); K13L.visible=on; SHV2.forEach(o=>o.visible=false); statusPaint(); })(setVis);
 // ---------- натискання на модуль: підсумок його групи, етапу і всього об'єкта
 const STGN={ab:'етап 1',fac:'етап 1',lan:'етап 1',wh:'етап 1',roof:'етап 2'};
 function grpInfo(k){ const S=ST.sums(), Y=S[k], G=NOW&&NOW.g[k], E=k==='roof'?S.s2:S.s1, T=FP&&FP.T;
-  const now=G&&G.on&&NOW.alt>0?` Зараз (${hhmm(state.hour)}, ${SEASN[state.day].toLowerCase()}): ${kn(G.Pc)} кВт ясно · ${kn(G.Pa)} кВт сер.`:'';
+  const e=dayE(state.day,[k],state.hour), sn=G&&G.on&&NOW.alt>0?` Зараз о ${hhmm(state.hour)}: на сонці ${nf(G.cnt[0])}, частково в тіні ${nf(G.cnt[1])}, у тіні ${nf(G.cnt[2])} з ${nf(G.n)}.`:G&&G.on?` Зараз (${hhmm(state.hour)}) ніч — модулі не працюють.`:'';
+  const now=(e?` За добу ${DAYS[state.day][0]} (${SEASN[state.day].toLowerCase()}): ${fe(e.c)} ясно · ${fe(e.a,e.c)} сер. погода (${nf(e.a/Y.kwp,2)} кВт·год/кВтп); накопичено до ${hhmm(state.hour)} — ${fe(e.cN,e.c)} ясно · ${fe(e.aN,e.c)} сер.`:'')+sn;
   const det=k==='fac'&&T?` Південь — ${T.S.n} вертикально; схід — козирок 25° ${T.Ec.n} + вертикально ${T.Ev.n}.`:k==='lan'?' 4 ліхтарі без демонтажу, модулі поверх скління (≈41°).':k==='roof'?' Дах В1 на новій мембрані, без місць на ліхтарях.':k==='ab'?' Дах, надбудова і стіни АБК за ДБН, інвертор Deye 100 кВт.':' Модулі на скатах профнастилу.';
   return {t:`${NAMES[k]} · ${STGN[k]}`, d:`${nf(Y.st)} модулів${Y.lit?` (+${Y.lit} на освітлення)`:''} · ${nf(Y.kwp,1)} кВтп · за рік ≈${nf(Y.mwh,1)} МВт·год.${det}${now} ${k==='roof'?'Етап 2':'Етап 1'} разом: ${nf(E.st)} модулів · ${nf(E.kwp,0)} кВтп · ≈${nf(E.mwh,0)} МВт·год. Весь об'єкт: ${nf(S.all.st)} модулів · ${nf(S.all.kwp,0)} кВтп · ≈${nf(S.all.mwh,0)} МВт·год за рік.`}; }
 { const set=(o,k)=>{ if(o) o.userData.info=()=>grpInfo(k); };
@@ -5444,7 +5568,19 @@ button.kpi{font:inherit;text-align:left;color:inherit;cursor:pointer}
 .gb{display:block;height:5px;border-radius:3px;background:var(--ours);opacity:.75;margin:3px 0 0 auto}
 .an td{white-space:nowrap} .an td.w{white-space:normal;min-width:7.5em;font-family:var(--font)} .an td small,.an td .stg{display:block;font:500 11px var(--font);color:var(--ink-3);white-space:normal}
 .stg{font:600 11px var(--font);color:var(--ink-3)}
-ul.open{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:flex;flex-direction:column;gap:3px}`; document.head.appendChild(st); }
+ul.open{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+#modes .sep{flex:none;width:1px;align-self:stretch;margin:3px 4px;background:var(--line)}
+.legend .sw,.cmp .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.pane > .sunb{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 28px;align-items:start;min-width:0} .sunb > .src,.sunb > .wide{grid-column:1/-1} .cmp.gt{min-width:600px} .cmp.gt td.w small{display:inline;margin-left:6px}
+.tw{overflow-x:auto;max-width:100%} .cmp tr.cur td{background:var(--surface-2)}
+.cv{position:relative} .cv svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.cv .gl{stroke:var(--line);stroke-width:1} .cv .ya,.cv .xa{font:10px var(--font);fill:var(--ink-3)} .cv .ya{text-anchor:end} .cv .xa{text-anchor:middle} .cv .nwt{text-anchor:start;fill:var(--ink-2)}
+.cv .lc{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round} .cv .la{fill:none;stroke:var(--sun);stroke-width:2;stroke-linejoin:round}
+.cv .acc{fill:var(--accent);opacity:.16} .cv .nw{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 3} .cv .hx{stroke:var(--ink-2);stroke-width:1}
+.cv .hc{fill:var(--accent);stroke:var(--surface);stroke-width:2} .cv .ha{fill:var(--sun);stroke:var(--surface);stroke-width:2}
+.cv .ctip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:5px 8px;font-size:12px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.14);white-space:nowrap}
+.lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink-2)} .lg i{display:inline-block;vertical-align:middle;margin-right:5px}
+.lg .ln{width:16px;height:2px;border-radius:1px} .lg .ln.c{background:var(--accent)} .lg .ln.a{background:var(--sun)} .lg .ar{width:12px;height:10px;border-radius:2px;background:var(--accent);opacity:.25}`; document.head.appendChild(st); }
 panelPZ=function(){ const S=ST.sums(), stg=state.lay.stg, f1=v=>nf(v,1), f0=v=>nf(v,0), sy=x=>x.kwp?f0(x.mwh*1000/x.kwp):'—';
   const G=[['roof','Дах цеху','2'],['fac','Фасади цеху','1'],['lan','Ліхтарі — модулі на склі','1'],['wh','Склад','1'],['ab','АБК','1']], mx=Math.max(...G.map(([k])=>S[k].mwh));
   const tile=(v,k,big,sub,line)=>`<button type="button" class="kpi${stg===v?' cur':''}" data-stg="${v}"><span class="k">${k}</span><span class="v">${big}</span><span class="s">${sub}</span>${line?`<span class="s">${line}</span>`:''}</button>`;
@@ -5471,7 +5607,7 @@ scene.traverse(o=>{ const u=o.userData&&o.userData.info; if(u&&typeof u==='objec
 if(BS) ESS.forEach(o=>{ if(!o.isGroup||!o.children.length) return; const body=o.children[0], u=body.userData&&body.userData.info; if(!u||typeof u!=='object'||!/^K-[13] /.test(u.t||'')) return; const id=u.t.slice(0,3);
   body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — фасади і склад (55 стрінгів, 441,7 кВтп), етап 2 — східна половина даху. Майданчик ${id==='K-3'?'МС-3':'МС-1'} біля східного фасаду, торець PCS — 3,0 м від стіни.`}; });
 // ---------- старт
-window.__twin.cleanDbg={SETS,litC,obstacles,compute,get NOW(){return NOW;}};
+window.__twin.cleanDbg={SETS,litC,obstacles,compute,dayE,DAYC,statusPaint,K13,get NOW(){return NOW;}};
 buildSets(); apply();
 }
 }
