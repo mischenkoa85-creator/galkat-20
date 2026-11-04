@@ -148,6 +148,8 @@ def fac_len(b, K):
     return abs(ysh - b['s']) + 1.5 + 10.0 + 2 * 3.0     # східний фасад: s — це Y; спуск з ≈10 м
 # ---------------- склад (етап 1): лінії варіанта Б (152–172 м до K-2/K-1) → до K-3/K-1
 WB = [{'id': b['n'], 'L0': b['L'], 'ns': b['ns'], 'z': 'wh', 'st': 1, 'K0': b['K']} for b in D['ep']['boxes'] if b['zone'] == 'склад']
+import os as _os
+WHN = {w['id']: w for w in json.load(open('wh_abk.json', encoding='utf-8'))['wh']} if _os.path.exists('wh_abk.json') else {}
 # ---------------- економіка перерізу
 def line_cost(S, L): return 2 * L * PRICE[S] * K_IMP + 4 * LUG[S]
 def loss_kw(S, L, ns, mat='Al'): I = ns * IMP; Rl = 2 * RHO[mat] * L / S; return I * I * Rl / 1000
@@ -173,6 +175,7 @@ def eval_all(assign_roof, rule='npv', lan_to=None):
         L = SLACK(fac_len(b, K)); r = best(L, b['ns'], TAU_F['fac'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
     for b in WB:
         L = b['L0'] - (12.0 if b['K0'] == 'K-2' else 0); K = 'K-3' if b['K0'] == 'K-2' else 'K-1'
+        if b['id'] in WHN: L, K = WHN[b['id']]['L'], WHN[b['id']]['K']      # 04.11: траса до нових місць К-3 / К-1 (wh_abk.py)
         r = best(L, b['ns'], TAU_F['wh'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
     for b in LB:
         side_ = (lan_to or {}).get(b['id'], 'N')
