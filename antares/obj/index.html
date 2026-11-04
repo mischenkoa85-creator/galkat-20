@@ -4767,7 +4767,7 @@ window.__twin.v3={DG3,LIVE,CYL,sync}; apply();
 const LM=2.384, DM=1.303, KS=['1','2'];
 const VN={'1':'В1 · з проходами','2':'В2 · максимальний'}, VL={'1':'варіант 1 — з проходами і відступами','2':'варіант 2 — максимальний, без проходів'};
 if(state.lay.r28===undefined) state.lay.r28='1';
-const ON=()=>state.proj==='ours'&&!!state.lay.r28&&(state.sec==='pz'||(state.sec==='sun'&&!!window.__twin.clean));   // у чистій збірці (antares/obj) — і в «Сонці»
+const ON=()=>state.proj==='ours'&&!!state.lay.r28&&(state.sec==='pz'||((state.sec==='sun'||state.sec==='uze')&&!!window.__twin.clean));   // у чистій збірці (antares/obj) — і в «Сонці», і в «Накопичувачах»
 const G28=grp('r28',G.ours), GC=grp('r28c',G28);
 const ZAX=new V3(0,0,1), Pv=new V3(), Sv=new V3(), Qv=new Q(), Mv=new M4();
 // бокс на грані покрівлі від xa до xb (як modM у roofv2.js): lift — над покрівлею, th — товщина, ly — вздовж будівлі
@@ -5321,23 +5321,31 @@ window.__twin.stages={sums,setStage,A}; apply();
 }
 
 // ================= Чиста збірка «Антарес · весь об'єкт» — src/clean.js (лише в antares/obj/build.sh, після stages.js)
-// Без Вінницького проєкту. Два розділи: «Об'єкт» і «Сонце і генерація». Над моделлю — лише перемикач етапів.
+// Шаблон двійника СЕС (власник 04.11, 12:26: «один шаблон, за допомогою якого ми завжди будемо робити так»; зрозуміле меню, без фото і без Вінниці):
+// над моделлю — види; етапи + одна кнопка розділу; легенда. Унизу — час, підсумок, розділи «Об'єкт» · «Сонце і генерація» · «Накопичувачі». Опис — antares/obj/Шаблон_3D-двійника_СЕС_і_УЗЕ.md
 // В «Об'єкті» модулі одного кольору; у «Сонці» — колір за станом на вибраний час (кнопка «Стан модулів»), тіні — справжні від сонця; генерація за добу — розрахунок
 // тіні й потужності кожного модуля етапу (та сама модель, що в «Сонці» двійника: Meteonorm 8.1, ясно / середня погода; без втрат від стрінгів).
 { const ST=window.__twin.stages, R28=window.__twin.r28, L28=window.__twin.lan28, FP=window.__twin.facpv, A=window.__twin.abk;
 if(ST&&R28&&L28){
 window.__twin.clean=true;
 // ---------- стан: лише наш об'єкт, дах В1, ліхтарі без демонтажу (модулі на склі), фасади
-state.proj='ours'; if(!['pz','sun'].includes(state.sec)) state.sec='pz';
+// ---------- ШАБЛОН: види і розділи (порядок і назви — лише тут)
+const TPL={ views:[['over','Огляд'],['top','Зверху'],['ess','ТП-5913'],['ess2','ТП-6923'],['lan28','Ліхтар'],['abk','АБК']],
+  secs:[['pz','Об\'єкт'],['sun','Сонце і генерація'],['uze','Накопичувачі']] };
+state.proj='ours'; if(!TPL.secs.some(([k])=>k===state.sec)) state.sec='pz';
+const CAP=1205, KK=[['K-3','ТП-5913','ess'],['K-1','ТП-5913','ess'],['K-4','ТП-6923','ess2'],['K-5','ТП-6923','ess2']], ZN={fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах'};
 Object.assign(state.lay,{r28:'1',l28:true,l28v:'v2',l28s:2,fac25:true,rad:false,sunPlain:false,sunYear:false});
 // ---------- інтерфейс: без Вінниці, невідповідностей, фото; два розділи
 const hide=el=>{ if(el) el.style.display='none'; };
-{ const pj=$('#proj'); if(pj) pj.remove(); }   // перемикача проєктів у чистій збірці немає взагалі (власник 04.11: «забути Вінницю») hide($('#misChip')); hide($('#fotoChip'));
-['ridge','wh','node'].forEach(c=>hide($(`#cams button[data-c="${c}"]`)));
+{ const fc=$('#fotoChip'); if(fc&&fc.getAttribute('aria-pressed')==='true') fc.click(); }   // фото обстеження вимкнути, потім сховати
+{ const pj=$('#proj'); if(pj) pj.remove(); }   // перемикача проєктів у чистій збірці немає взагалі (власник 04.11: «забути Вінницю»)
+{ const st=document.createElement('style'); st.textContent='#misChip,#fotoChip,#proj{display:none!important}'; document.head.appendChild(st); }   // без фото і без невідповідностей
+{ const cams=$('#cams'); if(cams){ const bs=[...cams.querySelectorAll('button')]; bs.forEach(b=>hide(b));
+  TPL.views.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.c===k); if(!b) return; b.textContent=t; b.style.display=''; cams.appendChild(b); const dsc=VIEWS[k]&&Object.getOwnPropertyDescriptor(VIEWS[k],'t'); if(dsc&&!dsc.get) VIEWS[k].t=t; }); } }
 { const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small>'; document.title='Антарес · весь об\'єкт'; }
-document.querySelectorAll('#tabs button').forEach(b=>{ if(!['pz','sun'].includes(b.dataset.s)) hide(b); else if(b.dataset.s==='pz') b.textContent='Об\'єкт'; });
-ONSECS.splice(0,ONSECS.length,'pz','sun');
-{ const fc=$('#fotoChip'); if(fc&&fc.getAttribute('aria-pressed')==='true') fc.click(); }
+{ const tb=$('#tabs'), bs=[...tb.querySelectorAll('button')]; bs.forEach(b=>hide(b));
+  TPL.secs.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.s===k); if(!b) return; b.textContent=t; b.style.display=''; b.disabled=false; b.classList.remove('mis'); tb.appendChild(b); }); }
+ONSECS.splice(0,ONSECS.length,...TPL.secs.map(([k])=>k));
 // ---------- один колір: модулі «на освітлення» — як решта
 { const V=R28.VG['1']; if(V){ const ims=V.children.filter(o=>o.userData.part==='roof'); if(ims.length>1){ const m0=Array.isArray(ims[0].material)?ims[0].material.map(x=>x.clone()):ims[0].material.clone(); ims.slice(1).forEach(o=>o.material=m0); } }   // окрема копія: у r128 один матеріал на InstancedMesh з instanceColor і без нього ламає рендер
   const MT=L28.MT; if(MT&&MT.mModL&&MT.mMod){ MT.mModL.color.copy(MT.mMod.color); if(MT.mMod.map) MT.mModL.map=MT.mMod.map; MT.mModL.needsUpdate=true; } }
@@ -5426,7 +5434,7 @@ function daySlice(day){ const W_=WX.day[day], N=W_.st.length; let P=DAYP[day];
 const dayPct=day=>{ const P=DAYP[day]; return P?Math.round(P.k/WX.day[day].st.length*100):0; };
 function dayRun(){ if(dayT||DAYC.every(Boolean)) return; if(!SETS.roof) buildSets(); obstacles();
   const tick=()=>{ dayT=null; const d=DAYC[state.day]?[0,1,2,3].find(i=>!DAYC[i]):state.day; if(d===undefined) return;
-    const done=daySlice(d); if(done||d===state.day){ sunUI(); if(done) panelNow(); else if(state.sec==='sun'){ const h=document.getElementById('gSunH'), q=document.getElementById('gPct'); if(h) h.innerHTML=sunHead(); if(q) q.textContent=dayPct(d); } }
+    const done=daySlice(d); if(done||d===state.day){ sunUI(); if(done){ panelNow(); if(state.sec==='uze'){ const pn=$('#pane'); if(pn) pn.innerHTML=panelUZE(); } } else if(state.sec==='sun'){ const h=document.getElementById('gSunH'), q=document.getElementById('gPct'); if(h) h.innerHTML=sunHead(); if(q) q.textContent=dayPct(d); } }
     dayT=setTimeout(tick,d===state.day?0:15); };
   dayT=setTimeout(tick,0); }
 // суми за добу для набору груп: повна доба і накопичено до години upto (кроки, що вже минули)
@@ -5459,7 +5467,8 @@ genPanelUpdate=function(){};
 const kn=v=>nf(v,0);
 sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) return; const S=ST.sums(), stg=state.lay.stg, x=stg==='1'?S.s1:stg==='2'?S.s2:S.all;
   const nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт', sun=(el.innerHTML.match(/<span class="sun">.*?<\/span>/)||[''])[0];
-  let day=''; if(state.sec==='sun'){ const E=dayE(state.day,stKeys(),state.hour);
+  let day=''; if(state.sec==='uze'){ const es=KK.map(([K])=>eK(K,state.day,stKeys())); day=es.every(Boolean)?`<span>4 × 1 205 кВт·год · від панелей за добу ${DAYS[state.day][0]} <b class="num">${fe(es.reduce((s_,e)=>s_+e.a,0))}</b> сер.</span>`:`<span>енергія за добу — рахую ${dayPct(state.day)} %</span>`; }
+  if(state.sec==='sun'){ const E=dayE(state.day,stKeys(),state.hour);
     day=E?`<span>за добу ${DAYS[state.day][0]} <b class="num">${fe(E.c)}</b> ясно · ${fe(E.a,E.c)} сер.</span><span>накопичено до ${hhmm(state.hour)} <b class="num">${fe(E.cN,E.c)}</b> ясно · ${fe(E.aN,E.c)} сер.</span>`
       :`<span>генерація за добу — рахую ${dayPct(state.day)} %</span>`; }
   el.innerHTML=`<span class="who ours">${nm}</span>${sun}${day}<span><b class="num">${nf(x.st)}</b> модулів · ${nf(x.kwp,0)} кВтп · за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; })(sunUI);
@@ -5467,8 +5476,11 @@ sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) retur
 hudCtx=(f=>function(){ f.apply(this,arguments); const m=$('#modes'); if(!m) return; const S=ST.sums(), stg=state.lay.stg;
   m.innerHTML=''; [['1',`Етап 1 · ${nf(S.s1.st)}`],['2',`Етап 2 · дах · ${nf(S.s2.st)}`],['all',`Весь об'єкт · ${nf(S.all.st)}`]].forEach(([v,t])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.setAttribute('aria-pressed',String(stg===v)); b.onclick=()=>ST.setStage(v); m.appendChild(b); });
   m.hidden=false; const bar=$('#l28bar'); if(bar) bar.hidden=true;
-  if(state.sec==='sun'){ const b=document.createElement('button'); b.type='button'; b.textContent='Стан модулів'; b.title='Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні'; b.setAttribute('aria-pressed',String(state.lay.stat!==false));
-    b.onclick=()=>{ state.lay.stat=state.lay.stat===false; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b); legendSun(); } })(hudCtx);
+  const T=SECTOG[state.sec]; if(T){ const [key,txt,ttl]=T, b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(state.lay[key]!==false));
+    b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b); }
+  if(state.sec==='sun') legendSun(); if(state.sec==='uze') legendUZE(); })(hudCtx);
+// одна кнопка на розділ (у «Об'єкті» — «Електрика», її ставить elec04.js)
+const SECTOG={sun:['stat','Стан модулів','Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні'],uze:['uAC','Лінії AC','Лінії AC контейнерів до ТП і СІП від АБК до ТП-5913']};
 // ---------- розділ «Сонце і генерація»: генерація за добу, накопичено до вибраного часу, стан модулів, аналітика
 const MOS=['весна (21.03)','літо (21.06)','осінь (23.09)','зима (21.12)'];
 const GN=[['roof','Дах цеху'],['fac','Фасади цеху'],['lan','Ліхтарі — модулі на склі'],['wh','Склад'],['ab','АБК']];
@@ -5543,6 +5555,46 @@ if(BS) ['K-3','K-1'].forEach(id=>{ const k=BS.K.find(x=>x.id===id); if(!k) retur
   const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-5913 · схід`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
   lb.scale.set(0.13,0.0325,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,4.9)); lb.renderOrder=18; K13L.add(lb); });
 setVis=(f=>function(){ f.apply(this,arguments); const on=state.proj==='ours'&&R28.ON(); if(on) K13.forEach(o=>o.visible=true); K13L.visible=on; SHV2.forEach(o=>o.visible=false); statusPaint(); })(setVis);
+// ---------- розділ «Накопичувачі»: 4 контейнери по 2 на ТП + АБК (базово — СІП до ТП-5913, опція — власний накопичувач); енергія від панелей у кожен за добу
+// підписи контейнерів — лише в «Накопичувачах» або зблизька (не висять над іншими будівлями)
+const LBL=()=>[...(G.stgESS?G.stgESS.children.filter(o=>o.isSprite):[]),...K13L.children];
+function lblVis(){ const all=state.sec==='uze'; LBL().forEach(sp=>{ sp.visible=all||camera.position.distanceTo(sp.position)<70; }); need=true; }
+if(typeof controls!=='undefined'&&controls.addEventListener) controls.addEventListener('change',lblVis);
+if(UZ.lbl&&UZ.lbl.parent) UZ.lbl.parent.remove(UZ.lbl);   // старі підписи 3 контейнерів (з К-2) — прибрати зовсім (цикл рендеру їх вмикає зблизька)
+setVis=(f=>function(){ f.apply(this,arguments); const U=state.sec==='uze', ac=state.lay.uAC!==false;
+  if(G.uze){ G.uze.visible=U&&ac&&state.proj==='ours'; ['trench','pit','dc','lbl'].forEach(k=>{ if(UZ[k]) UZ[k].visible=false; }); if(UZ.ac){ UZ.ac.visible=true; UZ.ac.traverse(o=>{ const u=o.userData&&o.userData.info; if(u&&typeof u==='object'&&/K-2/.test(u.t||'')) o.visible=false; }); } }
+  if(U&&A&&A.groups.elec) A.groups.elec.visible=ac&&state.proj==='ours'&&inStage('ab');
+  lblVis(); })(setVis);
+// кВтп щитів PV кожного контейнера по зонах (аналіз 04.11), зведені до кВтп розкладок; входи — по щиту на вхід DC/DC
+function kZones(){ const E=typeof ELEC04!=='undefined'?ELEC04:null; if(!E) return null; const S=ST.sums(), raw={}, tot={}, inp={};
+  E.boxes.forEach(b=>{ const r=raw[b.K]=raw[b.K]||{}; r[b.z]=(r[b.z]||0)+b.kwp; tot[b.z]=(tot[b.z]||0)+b.kwp; const q=inp[b.K]=inp[b.K]||{1:0,2:0}; q[b.st]++; });
+  const out={}; Object.entries(raw).forEach(([k,r])=>{ out[k]={z:{},inp:inp[k]}; Object.entries(r).forEach(([z,v])=>out[k].z[z]=S[z]&&tot[z]?v*S[z].kwp/tot[z]:v); }); return out; }
+function eK(K,day,keys){ const KZ=kZones(); if(!KZ||!KZ[K]||!DAYC[day]) return null; const S=ST.sums(); let c=0,a=0,kw=0;
+  Object.entries(KZ[K].z).forEach(([z,v])=>{ if(!keys.includes(z)) return; const e=dayE(day,[z],null); c+=v*e.c/S[z].kwp; a+=v*e.a/S[z].kwp; kw+=v; }); return {c,a,kw}; }
+function legendUZE(){ const l=$('#legend'); if(!l) return; l.hidden=false; l.classList.remove('min'); const sw=k=>`<i class="sw" style="background:#${new THREE.Color(KCOL[k]).getHexString()}"></i>`;
+  l.innerHTML=`<span class="t">Накопичувачі · по 2 на ТП</span><span>${sw('K-3')}К-3 ${sw('K-1')}К-1 — ТП-5913</span><span>${sw('K-4')}К-4 ${sw('K-5')}К-5 — ТП-6923</span><span>АБК → ТП-5913 по СІП</span>`; }
+panelUZE=function(){ dayRun(); const S=ST.sums(), stg=state.lay.stg, keys=stKeys(), d=state.day, KZ=kZones(), f0=v=>nf(v,0), f1=v=>nf(v,1);
+  const nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт', pend=`<span class="stg">рахую ${dayPct(d)} %…</span>`;
+  const zs=K=>Object.entries((KZ&&KZ[K]&&KZ[K].z)||{}).filter(([z])=>keys.includes(z)).map(([z,v])=>`${ZN[z]} ${f0(v)}`).join(', ')||'—';
+  const cards=KK.map(([K,tp,cam])=>{ const e=eK(K,d,keys), q=KZ&&KZ[K]?KZ[K].inp:{1:0,2:0}, ni=stg==='1'?q[1]:stg==='2'?q[2]:q[1]+q[2];
+    return `<button type="button" class="kpi" data-cam="${cam}"><span class="k">${K.replace('K','К')} · ${tp}</span><span class="v">${e?`${f0(e.a)} <small>кВт·год за добу</small>`:'…'}</span>
+      <span class="s">${e?(e.a>CAP?`${f0(e.a/CAP*100)} % ємності — понад ємність ≈${f0(e.a-CAP)}: цеху або в мережу`:`${f0(e.a/CAP*100)} % ємності від панелей`)+` · ясно ${f0(e.c)}`:pend}</span><span class="s">${ni} входів PV з 12 · ${e?f1(e.kw):'…'} кВтп: ${zs(K)}</span></button>`; }).join('');
+  const SE=[0,1,2,3];
+  const row=(K,tp)=>`<tr><td class="w">${K.replace('K','К')}<small>${tp}</small></td>${SE.map(i=>{ const e=eK(K,i,keys); return `<td${i===d?' class="cur"':''}>${e?`<b>${f0(e.a)}</b><small>${f0(e.a/CAP*100)} %</small>`:'…'}</td>`; }).join('')}</tr>`;
+  const sum=SE.map(i=>{ const es=KK.map(([K])=>eK(K,i,keys)); return es.every(Boolean)?es.reduce((s_,e)=>s_+e.a,0):null; });
+  const ab=inStage('ab'), abE=SE.map(i=>dayE(i,['ab'],null));
+  const tab=`<div class="blk wide"><h3>Від панелей у контейнери за добу, кВт·год · середня погода</h3><div class="tw"><table class="cmp an"><thead><tr><th>Контейнер</th>${SE.map(i=>`<th${i===d?' class="cur"':''}>${MOS[i]}</th>`).join('')}</tr></thead><tbody>
+    ${KK.map(([K,tp])=>row(K,tp)).join('')}<tr class="tot"><td class="w">Разом у 4 контейнери<small>ємність 4 × 1 205 = 4 820</small></td>${sum.map((v,i)=>`<td${i===d?' class="cur"':''}>${v!=null?`<b>${f0(v)}</b><small>${f0(v/(4*CAP)*100)} %</small>`:'…'}</td>`).join('')}</tr>
+    ${ab?`<tr><td class="w">АБК → ТП-5913<small>по СІП, до К-3 / К-1 або в мережу</small></td>${abE.map((e,i)=>`<td${i===d?' class="cur"':''}>${e?`<b>${f0(e.a)}</b><small>${f0(e.a/241*100)} % від 241</small>`:'…'}</td>`).join('')}</tr>`:''}</tbody></table></div>
+    <p class="src">Під числом — частка ємності АКБ, яку за добу дають панелі (для АБК — від 241 кВт·год варіанта з власним накопичувачем). Решту ємності контейнери беруть із мережі через PCS 500 кВт за графіком — його складемо після погодинних даних АСКОЕ від ДТЕК.</p></div>`;
+  const e1=dayE(d,['ab'],null), abk=ab?`<div class="blk wide"><h3>АБК — куди йде енергія панелей · ${MOS[d]}</h3><div class="kpis">
+    <div class="kpi cur"><span class="k">Базово · без окремого накопичувача</span><span class="v">${e1?`${f0(e1.a)} <small>кВт·год за добу</small>`:'…'}</span><span class="s">Deye SUN-100K → СІП-4 4×70 через проїзд → щит СЕС у ТП-5913; далі шини 0,4 кВ ТП-5913: заряд К-3 / К-1 або в мережу</span></div>
+    <div class="kpi"><span class="k">Варіант · власний накопичувач АБК</span><span class="v">120 <small>кВт</small> · 241 <small>кВт·год</small></span><span class="s">Golen LES-241L120-PS (гібрид) або -PSC (із зарядкою авто); панелі АБК — на MPPT гібрида${e1?`; за добу панелі заповнюють ≈${f0(e1.a/241*100)} %`:''}</span><span class="s">місце біля АБК — уточнюється</span></div></div></div>`:'';
+  return `<div class="ph"><span class="eyebrow ours">Накопичувачі · ${nm}</span><h2>4 × Golen LES-H20 · 2 000 кВт · 4 820 кВт·год</h2>
+  <p>По 2 контейнери на кожну ТП, ставляться в етапі 1. Кожен: PCS 500 кВт, АКБ 1 205 кВт·год, до 12 входів PV по 60 кВт (DC/DC). Енергія від панелей — ${MOS[d]}, для вибраного етапу; натисніть картку — камера перейде до контейнера.</p></div>
+  <div class="kpis">${cards}</div>${tab}${abk}
+  <p class="src" style="grid-column:1/-1">Енергія від панелей — розрахунок доби з тінню кожного модуля (розділ «Сонце і генерація»); розподіл по контейнерах — за кВтп щитів PV, підключених до кожного (аналіз електрики 04.11); без утрат перетворення в DC/DC і АКБ. Етап 1: К-3 і К-1 — фасади і склад, К-4 і К-5 — ліхтарі; етап 2 — дах цеху на всі чотири.</p>`; };
+document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.kpi[data-cam]'); if(b){ goCam(b.dataset.cam); const cams=$('#cams'); if(cams) cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.c===b.dataset.cam))); } });
 // ---------- натискання на модуль: підсумок його групи, етапу і всього об'єкта
 const STGN={ab:'етап 1',fac:'етап 1',lan:'етап 1',wh:'етап 1',roof:'етап 2'};
 function grpInfo(k){ const S=ST.sums(), Y=S[k], G=NOW&&NOW.g[k], E=k==='roof'?S.s2:S.s1, T=FP&&FP.T;
@@ -5571,7 +5623,7 @@ button.kpi{font:inherit;text-align:left;color:inherit;cursor:pointer}
 ul.open{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:flex;flex-direction:column;gap:3px}
 #modes .sep{flex:none;width:1px;align-self:stretch;margin:3px 4px;background:var(--line)}
 .legend .sw,.cmp .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.pane > .sunb{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 28px;align-items:start;min-width:0} .sunb > .src,.sunb > .wide{grid-column:1/-1} .cmp.gt{min-width:600px} .cmp.gt td.w small{display:inline;margin-left:6px}
+.pane > .sunb{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 28px;align-items:start;min-width:0} .sunb > .src,.sunb > .wide,.pane > .wide,.pane > .kpis{grid-column:1/-1} .cmp.gt{min-width:600px} .cmp.gt td.w small{display:inline;margin-left:6px}
 .tw{overflow-x:auto;max-width:100%} .cmp tr.cur td{background:var(--surface-2)}
 .cv{position:relative} .cv svg{display:block;width:100%;height:auto;touch-action:pan-y}
 .cv .gl{stroke:var(--line);stroke-width:1} .cv .ya,.cv .xa{font:10px var(--font);fill:var(--ink-3)} .cv .ya{text-anchor:end} .cv .xa{text-anchor:middle} .cv .nwt{text-anchor:start;fill:var(--ink-2)}
@@ -5665,10 +5717,11 @@ buildSets(); apply();
     PART[1].forEach(o=>o.visible=s!=='2'); PART[2].forEach(o=>o.visible=s!=='1'); need=true; };
   const hud4=hudCtx; hudCtx=function(){ hud4.apply(this,arguments); if(state.sec!=='pz'||!(R28&&R28.ON())) return; const m=$('#modes'); if(!m) return;
     const b=document.createElement('button'); b.type='button'; b.textContent='Електрика'; b.title='Щити PV, лінії до контейнерів, спуски (аналіз 04.11)'; b.setAttribute('aria-pressed',String(!!state.lay.e04));
-    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; m.insertBefore(b,m.firstChild);
+    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b);   // після етапів, як кнопка розділу шаблону
     const l=$('#legend'); if(l&&state.lay.e04){ const s=STG(), n=st=>E4.boxes.filter(x=>x.st===st).length;
       l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
   window.__twin.elec04={g,PART,E4};
+  if(window.__twin.clean) apply();   // чиста збірка: перший apply() був до цього модуля — кнопка «Електрика» і її шар з'являються одразу
   } }
 
 })();

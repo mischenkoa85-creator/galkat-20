@@ -51,8 +51,9 @@
     PART[1].forEach(o=>o.visible=s!=='2'); PART[2].forEach(o=>o.visible=s!=='1'); need=true; };
   const hud4=hudCtx; hudCtx=function(){ hud4.apply(this,arguments); if(state.sec!=='pz'||!(R28&&R28.ON())) return; const m=$('#modes'); if(!m) return;
     const b=document.createElement('button'); b.type='button'; b.textContent='Електрика'; b.title='Щити PV, лінії до контейнерів, спуски (аналіз 04.11)'; b.setAttribute('aria-pressed',String(!!state.lay.e04));
-    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; m.insertBefore(b,m.firstChild);
+    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b);   // після етапів, як кнопка розділу шаблону
     const l=$('#legend'); if(l&&state.lay.e04){ const s=STG(), n=st=>E4.boxes.filter(x=>x.st===st).length;
       l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
   window.__twin.elec04={g,PART,E4};
+  if(window.__twin.clean) apply();   // чиста збірка: перший apply() був до цього модуля — кнопка «Електрика» і її шар з'являються одразу
   } }

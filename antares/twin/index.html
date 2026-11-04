@@ -4767,7 +4767,7 @@ window.__twin.v3={DG3,LIVE,CYL,sync}; apply();
 const LM=2.384, DM=1.303, KS=['1','2'];
 const VN={'1':'В1 · з проходами','2':'В2 · максимальний'}, VL={'1':'варіант 1 — з проходами і відступами','2':'варіант 2 — максимальний, без проходів'};
 if(state.lay.r28===undefined) state.lay.r28='1';
-const ON=()=>state.proj==='ours'&&!!state.lay.r28&&(state.sec==='pz'||(state.sec==='sun'&&!!window.__twin.clean));   // у чистій збірці (antares/obj) — і в «Сонці»
+const ON=()=>state.proj==='ours'&&!!state.lay.r28&&(state.sec==='pz'||((state.sec==='sun'||state.sec==='uze')&&!!window.__twin.clean));   // у чистій збірці (antares/obj) — і в «Сонці», і в «Накопичувачах»
 const G28=grp('r28',G.ours), GC=grp('r28c',G28);
 const ZAX=new V3(0,0,1), Pv=new V3(), Sv=new V3(), Qv=new Q(), Mv=new M4();
 // бокс на грані покрівлі від xa до xb (як modM у roofv2.js): lift — над покрівлею, th — товщина, ly — вздовж будівлі
@@ -5373,10 +5373,11 @@ window.__twin.stages={sums,setStage,A}; apply();
     PART[1].forEach(o=>o.visible=s!=='2'); PART[2].forEach(o=>o.visible=s!=='1'); need=true; };
   const hud4=hudCtx; hudCtx=function(){ hud4.apply(this,arguments); if(state.sec!=='pz'||!(R28&&R28.ON())) return; const m=$('#modes'); if(!m) return;
     const b=document.createElement('button'); b.type='button'; b.textContent='Електрика'; b.title='Щити PV, лінії до контейнерів, спуски (аналіз 04.11)'; b.setAttribute('aria-pressed',String(!!state.lay.e04));
-    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; m.insertBefore(b,m.firstChild);
+    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b);   // після етапів, як кнопка розділу шаблону
     const l=$('#legend'); if(l&&state.lay.e04){ const s=STG(), n=st=>E4.boxes.filter(x=>x.st===st).length;
       l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
   window.__twin.elec04={g,PART,E4};
+  if(window.__twin.clean) apply();   // чиста збірка: перший apply() був до цього модуля — кнопка «Електрика» і її шар з'являються одразу
   } }
 
 })();
