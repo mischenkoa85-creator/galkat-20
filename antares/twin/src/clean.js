@@ -10,7 +10,7 @@ state.proj='ours'; if(!['pz','sun'].includes(state.sec)) state.sec='pz';
 Object.assign(state.lay,{r28:'1',l28:true,l28v:'v2',l28s:2,fac25:true,rad:false,sunPlain:false,sunYear:false});
 // ---------- інтерфейс: без Вінниці, невідповідностей, фото; два розділи
 const hide=el=>{ if(el) el.style.display='none'; };
-hide($('#proj')); hide($('#misChip')); hide($('#fotoChip'));
+{ const pj=$('#proj'); if(pj) pj.remove(); }   // перемикача проєктів у чистій збірці немає взагалі (власник 04.11: «забути Вінницю») hide($('#misChip')); hide($('#fotoChip'));
 ['ridge','wh','node'].forEach(c=>hide($(`#cams button[data-c="${c}"]`)));
 { const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small>'; document.title='Антарес · весь об\'єкт'; }
 document.querySelectorAll('#tabs button').forEach(b=>{ if(!['pz','sun'].includes(b.dataset.s)) hide(b); else if(b.dataset.s==='pz') b.textContent='Об\'єкт'; });
