@@ -40,7 +40,7 @@ button{cursor:pointer}
 .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;flex:none}
 .seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;color:var(--ink-2);font-size:13px;white-space:nowrap}
 .seg button[aria-pressed="true"]{color:var(--bg);background:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.14)}
-.seg button[data-p="rp"][aria-pressed="true"]{background:var(--rp)} .seg button[data-p="ours"][aria-pressed="true"]{background:var(--ours)}
+#stgseg button[aria-pressed="true"]{background:var(--ours)} #fotoChip,#misChip{display:none!important}
 /* 3D */
 .view{position:relative;flex:1 1 0;min-height:120px;background:var(--sky);overflow:hidden}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -198,10 +198,11 @@ table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:
 </style>
 <div class="app">
   <header class="bar">
-    <h1>Антарес · 3D-двійник<small>проєкт РП і наш проєкт</small></h1>
-    <div class="seg" id="proj" role="group" aria-label="Проєкт">
-      <button type="button" data-p="rp" aria-pressed="false" title="проєкт РП, РП 2025/12-07">РП</button>
-      <button type="button" data-p="ours" aria-pressed="true" title="Наш проєкт, E-Systems">Наш</button>
+    <h1>Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small></h1>
+    <div class="seg" id="stgseg" role="group" aria-label="Етап">
+      <button type="button" data-stg="1" aria-pressed="false" title="Етап 1: АБК, фасади, ліхтарі, склад, 4 накопичувачі">Етап 1</button>
+      <button type="button" data-stg="2" aria-pressed="false" title="Етап 2: дах цеху після мембрани">Етап 2</button>
+      <button type="button" data-stg="all" aria-pressed="true" title="Етапи 1 і 2 разом — весь об'єкт">Разом</button>
     </div>
   </header>
   <section class="view" id="view" aria-label="3D-модель">
@@ -209,7 +210,7 @@ table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:
     <div class="hudwrap" id="hudwrap">
       <div class="hudrow">
         <div class="pill" id="cams" role="group" aria-label="Вид"></div>
-        <button type="button" class="hbtn mischip" id="misChip" title="Невідповідності проєкт РП" aria-label="Невідповідності проєкт РП">⚠&#xFE0E;<span id="misN"></span></button>
+        <button type="button" class="hbtn mischip" id="misChip" hidden aria-hidden="true">⚠&#xFE0E;<span id="misN"></span></button>
         <button type="button" class="hbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати режими і легенду" aria-label="Сховати режими і легенду">▴</button>
       </div>
       <div class="ctx" id="ctx">
@@ -2206,7 +2207,7 @@ function buildOurs(i){ const m=OM[i], N=xNew('ours',i,0.3), y0=m.Y-1.2, y1=m.Y+1
   CL.forEach(k=>{ const z=OD.cl[k][2]; xPart(lCl,BOX,xm('al'),xHide(N,OUR.cl,k),z?{t:'Притиск Z33 (крайній)',d:'На крайньому профілі або кінці лаги, болт M8 у паз лаги'}:{t:'Притиск середній',d:'Між рамами сусідніх модулів, болт M8 з гайкою з пружиною в паз лаги'}); });
   xPart(lMod,BOX,XMAT.modP,xHide(N,ourMods,i),{t:'Модуль ZNSHINE ZXN8-BD132-730, 730 Вт',d:'2384 × 1303 × 33, паралельно покрівлі на двох лагах, низ рами на 104 мм над покрівлею'});
   const za=roofZ(m.Xa), zb=roofZ(m.Xb);
-  N.title='Наш · модуль на двох лагах'; N.sub=`ухил покрівлі під модулем ${nf(Math.abs(Math.atan2(zb-za,m.Xb-m.Xa))/D2R,1)}° · модуль за ухилом даху · лаги стягнуті шпильками крізь муфти гільз`;
+  N.title='Модуль на двох лагах'; N.sub=`ухил покрівлі під модулем ${nf(Math.abs(Math.atan2(zb-za,m.Xb-m.Xa))/D2R,1)}° · модуль за ухилом даху · лаги стягнуті шпильками крізь муфти гільз`;
   N.c=W((m.Xa+m.Xb)/2,m.Y,(za+zb)/2+0.1); return N; }
 
 // решта кріплення на час розбору — напівпрозора, щоб деталі вузла читалися
@@ -5524,13 +5525,13 @@ sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) retur
   el.innerHTML=`<span class="who ours">${nm}</span>${sun}${day}<span><b class="num">${nf(x.st)}</b> модулів · ${nf(x.kwp,0)} кВтп · за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; })(sunUI);
 // ---------- над моделлю: лише етапи; легенда — один рядок
 hudCtx=(f=>function(){ f.apply(this,arguments); const m=$('#modes'); if(!m) return; const S=ST.sums(), stg=state.lay.stg;
-  m.innerHTML=''; [['1',`Етап 1 · ${nf(S.s1.st)}`],['2',`Етап 2 · дах · ${nf(S.s2.st)}`],['all',`Весь об'єкт · ${nf(S.all.st)}`]].forEach(([v,t])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.setAttribute('aria-pressed',String(stg===v)); b.onclick=()=>ST.setStage(v); m.appendChild(b); });
+  m.innerHTML=''; document.querySelectorAll('#stgseg button').forEach(b=>{ const v=b.dataset.stg, x=v==='1'?S.s1:v==='2'?S.s2:S.all; b.setAttribute('aria-pressed',String(stg===v)); b.title=`${b.title.split(' · ')[0]} · ${nf(x.st)} модулів`; b.onclick=()=>ST.setStage(v); });   // етапи — у шапці, де був перемикач проєктів (власник 04.11, 22:49)
   m.hidden=false; const bar=$('#l28bar'); if(bar) bar.hidden=true;
-  if(state.sec==='sun'&&!state.lay.rad){ const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp);
+  if(state.sec==='sun'&&!state.lay.rad){
     [['stat','Стан модулів','Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні',()=>state.lay.stat!==false,()=>{ state.lay.stat=state.lay.stat===false; }]].forEach(([k,txt,ttl,on,fn])=>{
       const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(on())); b.onclick=()=>{ fn(); apply(); save(); }; m.appendChild(b); }); }
   const T=SECTOG[state.sec]; if(T){ const [key,txt,ttl]=T, b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(state.lay[key]!==false));
-    b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b); }
+    b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; m.appendChild(b); }
   if(state.sec==='sun') legendSun(); if(state.sec==='uze') legendUZE(); })(hudCtx);
 // одна кнопка на розділ (у «Об'єкті» — «Електрика», її ставить elec04.js)
 const SECTOG={uze:['uAC','Лінії AC','Лінії AC контейнерів до ТП і СІП від АБК до ТП-5913']};
@@ -5918,7 +5919,7 @@ buildSets(); apply();
     PART[1].forEach(o=>o.visible=s!=='2'); PART[2].forEach(o=>o.visible=s!=='1'); need=true; };
   const hud4=hudCtx; hudCtx=function(){ hud4.apply(this,arguments); if(state.sec!=='pz'||!(R28&&R28.ON())) return; const m=$('#modes'); if(!m) return;
     const b=document.createElement('button'); b.type='button'; b.textContent='Електрика'; b.title='Щити PV, лінії до контейнерів, спуски (аналіз 04.11)'; b.setAttribute('aria-pressed',String(!!state.lay.e04));
-    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b);   // після етапів, як кнопка розділу шаблону
+    b.onclick=()=>{ state.lay.e04=!state.lay.e04; apply(); save(); }; if(m.querySelector('button')){ const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); } m.appendChild(b); m.hidden=false;   // після етапів, як кнопка розділу шаблону
     const l=$('#legend'); if(l&&state.lay.e04){ const s=STG(), n=st=>E4.boxes.filter(x=>x.st===st).length;
       l.insertAdjacentHTML('beforeend',`<span class="e4">Електрика: щитів ${s==='2'?n(2):s==='1'?n(1):n(1)+n(2)} · ${['K-3','K-1','K-4','K-5'].filter(k=>E4.boxes.some(x=>x.K===k&&(s==='all'||String(x.st)===s))).map(k=>`<i class="sw" style="background:#${new THREE.Color(KC[k]).getHexString()}"></i>${k}`).join(' ')} · лінії Al 120</span>`); } };
   window.__twin.elec04={g,PART,E4};
@@ -6093,7 +6094,6 @@ const gsum=z=>{ const L=STR.filter(s=>s.z===z), bx=Object.values(BX).filter(b=>b
 const SUM=Object.fromEntries(GRP.map(([z])=>[z,gsum(z)]));
 const chk=Object.values(BX).filter(b=>b.ns!=null&&b.ss.length!==b.ns).map(b=>`${b.id}: ${b.ss.length} з ${b.ns}`);
 // ---------- «Накопичувачі»: як під'єднано по етапах (власник 04.11, 18:04: етап 1 — усе PV на одну пару контейнерів, друга пара — лише мережа; етап 2 — дах)
-const V1={s1:45868+35781,s2:97863+43005,l1:3.1,l2:9.0}, V2={s1:47695+36309,s2:98134+43066,l1:3.5,l2:9.2};   // calc/ep04: bom_v1 / bom_v2 — матеріали + роботи PV до ШВ за етап, $; втрати в лініях, МВт·год/рік
 const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B=E4w.E4.boxes, var2=(E4w.E4.var||'1')==='2';
   const cnt=(K,st)=>{ const L=B.filter(b=>b.K===K&&b.st===st); return {n:L.length,ns:L.reduce((a,b)=>a+b.ns,0),kw:L.reduce((a,b)=>a+b.kwp,0),z:[...new Set(L.map(b=>({fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах'})[b.z]))].join(', ')}; };
   const rows=['K-3','K-1','K-4','K-5'].map(K=>{ const a=cnt(K,1), c=cnt(K,2);
@@ -6102,12 +6102,7 @@ const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B
   return html+`<div class="blk wide"><h3>Як під'єднано — по етапах</h3><div class="tw"><table class="cmp an"><thead><tr><th>Контейнер</th><th>Етап 1</th><th>Етап 2</th><th>Входи PV</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="src"><b>AC</b> — кожен контейнер (PCS 500 кВт) окремою лінією до РУ-0,4 кВ своєї ТП: ВВГнг 3 × (6 × 1×120) + N 4 × 1×95 + PE 2 × 1×95 за вимогою Golen, автомат 800 А на початку лінії; К-3, К-1 — до ТП-5913, К-4, К-5 — вводом у північну стіну ТП-6923. <b>DC</b> — від щитів PV лінії Al до шафи вводу PV біля контейнера (перехід на мідь 1×50, ПЗІП T2) і далі на входи DC/DC по 60 кВт.
   ${var2?`Етап 1: усі панелі етапу 1 (фасади, склад, ліхтарі) — на К-3 / К-1 біля ТП-5913; К-4 / К-5 біля ТП-6923 — без панелей, працюють від мережі (заряд у дешеві години, розряд у пікові). Етап 2: дах — захід на К-4 / К-5, схід на вільні входи К-3 / К-1; лоток спуску до ТП-6923 будується в етапі 2.`:''}</p>
-  <table class="cmp an"><thead><tr><th>Порівняння</th><th>Етап 1 на обидві ТП</th><th>Етап 1 на ТП-5913</th></tr></thead><tbody>
-  <tr><td class="w">Матеріали і роботи PV до ШВ, етап 1<span class="stg">кріплення, кабелі, щити, лінії, лотки, блискавкозахист; без модулів і контейнерів</span></td><td>${f$(V1.s1)}</td><td><b>${f$(V2.s1)}</b><small>+${f$(V2.s1-V1.s1)}</small></td></tr>
-  <tr><td class="w">Те саме, етап 2</td><td>${f$(V1.s2)}</td><td><b>${f$(V2.s2)}</b><small>+${f$(V2.s2-V1.s2)}</small></td></tr>
-  <tr><td class="w">Втрати в лініях Al, етап 1 / 2<span class="stg">МВт·год за рік</span></td><td>${nf1(V1.l1)} / ${nf1(V1.l2)}</td><td>${nf1(V2.l1)} / ${nf1(V2.l2)}</td></tr>
-  <tr><td class="w">Лінії ліхтарів Л1–Л3<span class="stg">Al, м</span></td><td>86 / 98 / 117 → К-4 / К-5</td><td>203 (Al 185) / 157 / 144 → К-3 / К-1 / К-3</td></tr></tbody></table>
-  <p class="src">Різниця — довші лінії трьох ліхтарів через прохід на півночі даху до спуску на сході; натомість у етапі 1 не потрібні траса до ТП-6923, лоток на її дах і місток над приямком. Для роботи К-4 / К-5 від мережі ще потрібні: дозволена потужність заряду від ДТЕК і запас трансформатора ТП-6923, тариф (зонний або ціни РДН) і погодинне споживання цеху з АСКОЕ — від них графік заряду / розряду і ефект.</p></div>`; };
+  <p class="src">Для роботи К-4 / К-5 від мережі в етапі 1 ще потрібні: дозволена потужність заряду від ДТЕК і запас трансформатора ТП-6923, тариф (зонний або ціни РДН) і погодинне споживання цеху з АСКОЕ — від них графік заряду / розряду і ефект.</p></div>`; };
 window.__twin.elecwa={g,g2,STR,BX,SUM,jumps,chk,paint,TN:TNh,toneConf,confZ};
 // ---------- видимість: кнопка «Електрика» (state.lay.e04) у «Об'єкті», режим етапів
 const onW=()=>!!state.lay.e04&&state.sec==='pz'&&state.proj==='ours'&&!!(R28w&&R28w.ON());
@@ -6138,7 +6133,7 @@ const ppW=panelPZ; panelPZ=function(){ const html=ppW.apply(this,arguments); if(
   <tr><td class="w">Кабель DC 1×6<span class="stg">«+» / «−» / перемички</span></td><td>${nf(AB.dc.plus,0)} / ${nf(AB.dc.minus,0)} / ${nf(AB.dc.jump,0)} м · втрати ${nf2(AB.dc.du)} %</td></tr>
   <tr><td class="w">Лотки 100×50<span class="stg">дах АБК, стіни</span></td><td>${nf1(AB.tray)} м</td></tr>
   <tr><td class="w">AC ${nf1(AB.iac)} А<span class="stg">${vn}</span></td><td>${state.lay.abkV==='2'?'—':`СІП-4 4×70 ${nf1(v.L)} м · ΔU ${nf2(v.du)} % · ≈${nf(v.e,0)} кВт·год/рік`}</td></tr></tbody></table>
-  <p class="src">Стрінги даху, ліхтарів і фасадів — calc/ep04/strings_all.py (розкладка двійника → щити розрахунку 04.11); склад — робочий варіант Б і calc/ep04/wh_abk.py; АБК — abk/abk_dbn.json (модель K1, ДБН 28.10).</p></div>`; };
+  <p class="src">Стрінги даху, ліхтарів і фасадів — calc/ep04/strings_all.py (розкладка двійника → щити розрахунку 04.11); склад — розкладка стрінгів складу і calc/ep04/wh_abk.py; АБК — abk/abk_dbn.json (модель K1, ДБН 28.10).</p></div>`; };
 apply();
 } }
 

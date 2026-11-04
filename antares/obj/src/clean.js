@@ -155,13 +155,13 @@ sunUI=(f=>function(){ f.apply(this,arguments); const el=$('#now'); if(!el) retur
   el.innerHTML=`<span class="who ours">${nm}</span>${sun}${day}<span><b class="num">${nf(x.st)}</b> модулів · ${nf(x.kwp,0)} кВтп · за рік <b class="num">≈${nf(x.mwh,0)} МВт·год</b></span>`; })(sunUI);
 // ---------- над моделлю: лише етапи; легенда — один рядок
 hudCtx=(f=>function(){ f.apply(this,arguments); const m=$('#modes'); if(!m) return; const S=ST.sums(), stg=state.lay.stg;
-  m.innerHTML=''; [['1',`Етап 1 · ${nf(S.s1.st)}`],['2',`Етап 2 · дах · ${nf(S.s2.st)}`],['all',`Весь об'єкт · ${nf(S.all.st)}`]].forEach(([v,t])=>{ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.setAttribute('aria-pressed',String(stg===v)); b.onclick=()=>ST.setStage(v); m.appendChild(b); });
+  m.innerHTML=''; document.querySelectorAll('#stgseg button').forEach(b=>{ const v=b.dataset.stg, x=v==='1'?S.s1:v==='2'?S.s2:S.all; b.setAttribute('aria-pressed',String(stg===v)); b.title=`${b.title.split(' · ')[0]} · ${nf(x.st)} модулів`; b.onclick=()=>ST.setStage(v); });   // етапи — у шапці, де був перемикач проєктів (власник 04.11, 22:49)
   m.hidden=false; const bar=$('#l28bar'); if(bar) bar.hidden=true;
-  if(state.sec==='sun'&&!state.lay.rad){ const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp);
+  if(state.sec==='sun'&&!state.lay.rad){
     [['stat','Стан модулів','Колір модуля — його стан на вибраний час: на сонці, частково в тіні, у тіні',()=>state.lay.stat!==false,()=>{ state.lay.stat=state.lay.stat===false; }]].forEach(([k,txt,ttl,on,fn])=>{
       const b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(on())); b.onclick=()=>{ fn(); apply(); save(); }; m.appendChild(b); }); }
   const T=SECTOG[state.sec]; if(T){ const [key,txt,ttl]=T, b=document.createElement('button'); b.type='button'; b.textContent=txt; b.title=ttl; b.setAttribute('aria-pressed',String(state.lay[key]!==false));
-    b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; const sp=document.createElement('span'); sp.className='sep'; sp.setAttribute('aria-hidden','true'); m.appendChild(sp); m.appendChild(b); }
+    b.onclick=()=>{ state.lay[key]=state.lay[key]===false; apply(); save(); }; m.appendChild(b); }
   if(state.sec==='sun') legendSun(); if(state.sec==='uze') legendUZE(); })(hudCtx);
 // одна кнопка на розділ (у «Об'єкті» — «Електрика», її ставить elec04.js)
 const SECTOG={uze:['uAC','Лінії AC','Лінії AC контейнерів до ТП і СІП від АБК до ТП-5913']};

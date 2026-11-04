@@ -35,7 +35,7 @@ button{cursor:pointer}
 .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px;flex:none}
 .seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;color:var(--ink-2);font-size:13px;white-space:nowrap}
 .seg button[aria-pressed="true"]{color:var(--bg);background:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.14)}
-.seg button[data-p="rp"][aria-pressed="true"]{background:var(--rp)} .seg button[data-p="ours"][aria-pressed="true"]{background:var(--ours)}
+#stgseg button[aria-pressed="true"]{background:var(--ours)} #fotoChip,#misChip{display:none!important}
 /* 3D */
 .view{position:relative;flex:1 1 0;min-height:120px;background:var(--sky);overflow:hidden}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -193,10 +193,11 @@ table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:
 </style>
 <div class="app">
   <header class="bar">
-    <h1>Антарес · 3D-двійник<small>проєкт РП і наш проєкт</small></h1>
-    <div class="seg" id="proj" role="group" aria-label="Проєкт">
-      <button type="button" data-p="rp" aria-pressed="false" title="проєкт РП, РП 2025/12-07">РП</button>
-      <button type="button" data-p="ours" aria-pressed="true" title="Наш проєкт, E-Systems">Наш</button>
+    <h1>Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small></h1>
+    <div class="seg" id="stgseg" role="group" aria-label="Етап">
+      <button type="button" data-stg="1" aria-pressed="false" title="Етап 1: АБК, фасади, ліхтарі, склад, 4 накопичувачі">Етап 1</button>
+      <button type="button" data-stg="2" aria-pressed="false" title="Етап 2: дах цеху після мембрани">Етап 2</button>
+      <button type="button" data-stg="all" aria-pressed="true" title="Етапи 1 і 2 разом — весь об'єкт">Разом</button>
     </div>
   </header>
   <section class="view" id="view" aria-label="3D-модель">
@@ -204,7 +205,7 @@ table.cmp.ep tbody tr{cursor:pointer} table.cmp.ep tbody tr:hover td{background:
     <div class="hudwrap" id="hudwrap">
       <div class="hudrow">
         <div class="pill" id="cams" role="group" aria-label="Вид"></div>
-        <button type="button" class="hbtn mischip" id="misChip" title="Невідповідності проєкт РП" aria-label="Невідповідності проєкт РП">⚠&#xFE0E;<span id="misN"></span></button>
+        <button type="button" class="hbtn mischip" id="misChip" hidden aria-hidden="true">⚠&#xFE0E;<span id="misN"></span></button>
         <button type="button" class="hbtn" id="ctxtoggle" aria-expanded="true" aria-controls="ctx" title="Сховати режими і легенду" aria-label="Сховати режими і легенду">▴</button>
       </div>
       <div class="ctx" id="ctx">

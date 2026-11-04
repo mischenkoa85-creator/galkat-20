@@ -166,7 +166,6 @@ const gsum=z=>{ const L=STR.filter(s=>s.z===z), bx=Object.values(BX).filter(b=>b
 const SUM=Object.fromEntries(GRP.map(([z])=>[z,gsum(z)]));
 const chk=Object.values(BX).filter(b=>b.ns!=null&&b.ss.length!==b.ns).map(b=>`${b.id}: ${b.ss.length} з ${b.ns}`);
 // ---------- «Накопичувачі»: як під'єднано по етапах (власник 04.11, 18:04: етап 1 — усе PV на одну пару контейнерів, друга пара — лише мережа; етап 2 — дах)
-const V1={s1:45868+35781,s2:97863+43005,l1:3.1,l2:9.0}, V2={s1:47695+36309,s2:98134+43066,l1:3.5,l2:9.2};   // calc/ep04: bom_v1 / bom_v2 — матеріали + роботи PV до ШВ за етап, $; втрати в лініях, МВт·год/рік
 const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B=E4w.E4.boxes, var2=(E4w.E4.var||'1')==='2';
   const cnt=(K,st)=>{ const L=B.filter(b=>b.K===K&&b.st===st); return {n:L.length,ns:L.reduce((a,b)=>a+b.ns,0),kw:L.reduce((a,b)=>a+b.kwp,0),z:[...new Set(L.map(b=>({fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах'})[b.z]))].join(', ')}; };
   const rows=['K-3','K-1','K-4','K-5'].map(K=>{ const a=cnt(K,1), c=cnt(K,2);
@@ -175,12 +174,7 @@ const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B
   return html+`<div class="blk wide"><h3>Як під'єднано — по етапах</h3><div class="tw"><table class="cmp an"><thead><tr><th>Контейнер</th><th>Етап 1</th><th>Етап 2</th><th>Входи PV</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="src"><b>AC</b> — кожен контейнер (PCS 500 кВт) окремою лінією до РУ-0,4 кВ своєї ТП: ВВГнг 3 × (6 × 1×120) + N 4 × 1×95 + PE 2 × 1×95 за вимогою Golen, автомат 800 А на початку лінії; К-3, К-1 — до ТП-5913, К-4, К-5 — вводом у північну стіну ТП-6923. <b>DC</b> — від щитів PV лінії Al до шафи вводу PV біля контейнера (перехід на мідь 1×50, ПЗІП T2) і далі на входи DC/DC по 60 кВт.
   ${var2?`Етап 1: усі панелі етапу 1 (фасади, склад, ліхтарі) — на К-3 / К-1 біля ТП-5913; К-4 / К-5 біля ТП-6923 — без панелей, працюють від мережі (заряд у дешеві години, розряд у пікові). Етап 2: дах — захід на К-4 / К-5, схід на вільні входи К-3 / К-1; лоток спуску до ТП-6923 будується в етапі 2.`:''}</p>
-  <table class="cmp an"><thead><tr><th>Порівняння</th><th>Етап 1 на обидві ТП</th><th>Етап 1 на ТП-5913</th></tr></thead><tbody>
-  <tr><td class="w">Матеріали і роботи PV до ШВ, етап 1<span class="stg">кріплення, кабелі, щити, лінії, лотки, блискавкозахист; без модулів і контейнерів</span></td><td>${f$(V1.s1)}</td><td><b>${f$(V2.s1)}</b><small>+${f$(V2.s1-V1.s1)}</small></td></tr>
-  <tr><td class="w">Те саме, етап 2</td><td>${f$(V1.s2)}</td><td><b>${f$(V2.s2)}</b><small>+${f$(V2.s2-V1.s2)}</small></td></tr>
-  <tr><td class="w">Втрати в лініях Al, етап 1 / 2<span class="stg">МВт·год за рік</span></td><td>${nf1(V1.l1)} / ${nf1(V1.l2)}</td><td>${nf1(V2.l1)} / ${nf1(V2.l2)}</td></tr>
-  <tr><td class="w">Лінії ліхтарів Л1–Л3<span class="stg">Al, м</span></td><td>86 / 98 / 117 → К-4 / К-5</td><td>203 (Al 185) / 157 / 144 → К-3 / К-1 / К-3</td></tr></tbody></table>
-  <p class="src">Різниця — довші лінії трьох ліхтарів через прохід на півночі даху до спуску на сході; натомість у етапі 1 не потрібні траса до ТП-6923, лоток на її дах і місток над приямком. Для роботи К-4 / К-5 від мережі ще потрібні: дозволена потужність заряду від ДТЕК і запас трансформатора ТП-6923, тариф (зонний або ціни РДН) і погодинне споживання цеху з АСКОЕ — від них графік заряду / розряду і ефект.</p></div>`; };
+  <p class="src">Для роботи К-4 / К-5 від мережі в етапі 1 ще потрібні: дозволена потужність заряду від ДТЕК і запас трансформатора ТП-6923, тариф (зонний або ціни РДН) і погодинне споживання цеху з АСКОЕ — від них графік заряду / розряду і ефект.</p></div>`; };
 window.__twin.elecwa={g,g2,STR,BX,SUM,jumps,chk,paint,TN:TNh,toneConf,confZ};
 // ---------- видимість: кнопка «Електрика» (state.lay.e04) у «Об'єкті», режим етапів
 const onW=()=>!!state.lay.e04&&state.sec==='pz'&&state.proj==='ours'&&!!(R28w&&R28w.ON());
@@ -211,6 +205,6 @@ const ppW=panelPZ; panelPZ=function(){ const html=ppW.apply(this,arguments); if(
   <tr><td class="w">Кабель DC 1×6<span class="stg">«+» / «−» / перемички</span></td><td>${nf(AB.dc.plus,0)} / ${nf(AB.dc.minus,0)} / ${nf(AB.dc.jump,0)} м · втрати ${nf2(AB.dc.du)} %</td></tr>
   <tr><td class="w">Лотки 100×50<span class="stg">дах АБК, стіни</span></td><td>${nf1(AB.tray)} м</td></tr>
   <tr><td class="w">AC ${nf1(AB.iac)} А<span class="stg">${vn}</span></td><td>${state.lay.abkV==='2'?'—':`СІП-4 4×70 ${nf1(v.L)} м · ΔU ${nf2(v.du)} % · ≈${nf(v.e,0)} кВт·год/рік`}</td></tr></tbody></table>
-  <p class="src">Стрінги даху, ліхтарів і фасадів — calc/ep04/strings_all.py (розкладка двійника → щити розрахунку 04.11); склад — робочий варіант Б і calc/ep04/wh_abk.py; АБК — abk/abk_dbn.json (модель K1, ДБН 28.10).</p></div>`; };
+  <p class="src">Стрінги даху, ліхтарів і фасадів — calc/ep04/strings_all.py (розкладка двійника → щити розрахунку 04.11); склад — розкладка стрінгів складу і calc/ep04/wh_abk.py; АБК — abk/abk_dbn.json (модель K1, ДБН 28.10).</p></div>`; };
 apply();
 } }
