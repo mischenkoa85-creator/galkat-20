@@ -103,7 +103,9 @@ const route={
     const n=Math.max(1,Math.ceil(Math.abs(b.X-X))); for(let j=1;j<=n;j++){ const x=X+(b.X-X)*j/n; o.push(W(x,b.Y,rzW(x)+ho)); } o.push(BT(b)); return o; },
   lan(s,b){ const i=s.Q.reduce((a,q,j)=>Math.abs(q[1]-b.Y)<Math.abs(s.Q[a][1]-b.Y)?j:a,0), [X,Y,h]=s.Q[i]; return [W(X,Y,h+0.07),W(X,b.Y,h+0.07),W(b.X,b.Y,h+0.07),BT(b)]; },
   fac(s,b){ const FR=FPw.FR, fb=b.f==='S'?'S':'E', ZC=0.27, i=s.F.reduce((a,f,j)=>Math.abs(f[1]-b.s)+Math.abs(f[2]-3.8)<Math.abs(s.F[a][1]-b.s)+Math.abs(s.F[a][2]-3.8)?j:a,0), [f,sc,hc,can]=s.F[i], F=FR[f];
-    const p0=can?F.P(sc,hc-0.3,ZC):F.P(sc,hc,ZC); return [p0,F.P(sc,3.8,ZC),FR[fb].P(b.s,3.8,ZC),BT(b)]; },
+    const p0=can?F.P(sc,hc-0.3,ZC):F.P(sc,hc,ZC);
+    if(b.roof){ const top=f==='S'?rzW(sc)+1.0:rzW(96.4)+0.8; return [p0,F.P(sc,top,ZC),W(f==='S'?sc:96.5,f==='S'?-0.3:sc,top+0.25),BT(b)]; }   // 05.11: щит на даху — угору за модулями і через парапет
+    return [p0,F.P(sc,3.8,ZC),FR[fb].P(b.s,3.8,ZC),BT(b)]; },
   wh(s,b){ const B=w=>[w.x,-w.z,w.y], i=s.P.reduce((a,p,j)=>Math.abs(p.x-b.pos.x)<Math.abs(s.P[a].x-b.pos.x)?j:a,0), [X,Y,h]=B(s.P[i]);
     // по рядах модулів цього стовпця до північного краю даху складу (висота — за модулями), далі краєм до щита і вниз по стіні
     const col=S.wh.g.map(g=>g.qc).filter(q=>Math.abs(q[0]-X)<0.8&&q[1]>=Y-0.05).sort((a,c)=>a[1]-c[1]), n=col.length?col[col.length-1]:[X,Y,h], Ye=n[1]+0.75, he=n[2]+0.08;
@@ -143,7 +145,7 @@ const pl=(n,a,b,c)=>{ const d=n%10, h=n%100; return d===1&&h!==11?a:d>=2&&d<=4&&
 Object.values(BX).forEach(b=>{ if(!b.pos||!b.ss.length) return; const n=b.ss.length, kw=b.ss.reduce((a,s)=>a+s.mem.length,0)*0.73;
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex(`${b.z==='abk'?'Інвертор АБК':b.id} → ${b.z==='abk'?'ТП-5913':KN(b.K)}`,`${n} ${strW(n)} · ${nf1(kw)} кВтп`,HUE[b.K]),depthWrite:false,transparent:true}));
   const sc=b.z==='abk'?1.5:1.35, ar=sp.material.map.userData.ar||3.7; sp.scale.set(0.67*sc*ar,0.67*sc,1); sp.renderOrder=20;
-  const dz=b.z==='fac'?-1.5:b.z==='wh'?1.4:b.z==='abk'?3.4:1.65; sp.position.copy(b.pos).add(new V3(0,dz,0)); if(b.z==='fac'){ const out=b.f==='S'?new V3(0,0,0.55):new V3(0.55,0,0); sp.position.add(out); }
+  const dz=b.z==='fac'&&!b.roof?-1.5:b.z==='wh'?1.4:b.z==='abk'?3.4:1.65; sp.position.copy(b.pos).add(new V3(0,dz,0)); if(b.z==='fac'&&!b.roof){ const out=b.f==='S'?new V3(0,0,0.55):new V3(0.55,0,0); sp.position.add(out); }
   sp.userData.info={t:`${b.z==='abk'?'Інвертор АБК Deye SUN-100K-G03':b.id+' · щит PV 7/1'} → ${b.z==='abk'?'ТП-5913 (варіант 1)':KN(b.K)+' ('+TPN[b.K]+')'}`,d:`${n} ${strW(n)}: ${b.ss.map(s=>s.id).join(', ')}. ${nf1(kw)} кВтп.${b.L?` Лінія Al 2 × 1×${b.S} мм², ${nf1(b.L)} м, ΔU ${nf2(b.du)} %.`:''}`};
   PICK.push({o:sp,when:()=>sp.parent&&sp.parent.visible}); (b.st===2?g2:g).add(sp); });
 // ---------- підказки модулів у режимі «Електрика»: стрінг → щит → контейнер

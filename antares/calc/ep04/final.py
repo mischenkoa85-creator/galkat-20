@@ -58,23 +58,66 @@ def add_path(b, desc, stg):
         k = (min(u, v), max(u, v)); seg[k][0 if stg == 1 else 1] += 1
 for r in rows:
     if r['z'] in ('roof', 'lan'): add_path(r, DE if r.get('side', 'N') == 'E' else DN, r['st'])
+    elif r['z'] == 'fac' and r.get('roof'): add_path(r, DE, r['st'])
 def tray_w(n):   # ліній (по 2 жили Al 120 ≈ Ø19)
     for w, cap in (('100×50', 3), ('200×50', 6), ('300×100', 18), ('400×100', 24), ('600×100', 36)):
         if n <= cap: return w
     return '600×100'
 T = collections.defaultdict(lambda: collections.Counter())
+# 05.11: спосіб кріплення лотка — на парапеті (кронштейни: смуги Пд, Пн і схід) або на траверсах на блоках (захід, проходи)
+def on_par(u, v): return (abs(u[1] - v[1]) < 1e-6 and abs(u[1] - YS) < 1e-6) or (abs(u[1] - v[1]) < 1e-6 and abs(u[1] - YN) < 1e-6) or (abs(u[0] - v[0]) < 1e-6 and abs(u[0] - XS_[-1]) < 1e-6)
+MNT = {1: collections.Counter(), 2: collections.Counter()}   # м лотка: 'par' / 'blk'
+SEGS = []
 for (u, v), (n1, n2, _) in seg.items():
-    l = abs(u[0] - v[0]) + abs(u[1] - v[1])
-    if n1: T[1][tray_w(n1 + n2)] += l          # етап 1: одразу під кінцеву кількість ліній
-    elif n2: T[2][tray_w(n2)] += l
+    l = abs(u[0] - v[0]) + abs(u[1] - v[1]); st = 1 if n1 else 2; w = tray_w(n1 + n2) if n1 else tray_w(n2)
+    T[st][w] += l; MNT[st]['par' if on_par(u, v) else 'blk'] += l      # етап 1: одразу під кінцеву кількість ліній
+    SEGS.append({'a': list(u), 'b': list(v), 'n1': n1, 'n2': n2, 'w': w, 'st': st, 'mnt': 'par' if on_par(u, v) else 'blk'})
+# переходи через лоток на ходових смугах і проходах (перехідний місток): лоток на блоках, що перетинає зону впоперек або перекриває її вихід
+ZONES = [z for z in D['rules'].get('zones', [])] if isinstance(D['rules'], dict) and D['rules'].get('zones') else None
+def walk_zones():
+    out = []
+    PER = D['rules']['perimeter']; RI = (-0.13, 96.49, -0.25, 96.34)
+    out.append(('Пд', 'y', RI[2], RI[2] + 2.54)); out.append(('Пн', 'y', 93.88, RI[3])); out.append(('Зх', 'x', RI[0], 2.185)); out.append(('Сх', 'x', 93.785, RI[1]))
+    for p in D['rules']['paths_y']: out.append(('Сх–Зх', 'y', p['yc'] - 1.255, p['yc'] + 1.255))
+    for p in D['rules']['paths_x']: out.append(('Пн–Пд', 'x', {7: 35.74, 10: 53.35}[p['valley']], {7: 37.78, 10: 56.11}[p['valley']]))
+    return out
+WZ = walk_zones(); CROSS = []
+for sg in SEGS:
+    if sg['mnt'] == 'par': continue
+    (x0, y0), (x1, y1) = sg['a'], sg['b']
+    for nm, ax, lo, hi in WZ:
+        if ax == 'y' and abs(x0 - x1) < 1e-6 and min(y0, y1) < lo + 0.3 and max(y0, y1) > hi - 0.3:
+            CROSS.append((nm, round(x0, 2), round((lo + hi) / 2, 2), sg['st']))          # вертикальний лоток упоперек горизонтальної смуги
+        if ax == 'x' and abs(y0 - y1) < 1e-6 and min(x0, x1) < lo + 0.3 and max(x0, x1) > hi - 0.3:
+            CROSS.append((nm, round((lo + hi) / 2, 2), round(y0, 2), sg['st']))          # горизонтальний лоток упоперек вертикальної смуги / проходу
+# короткі вертикальні відрізки між лотком на блоках і лотком на парапеті (захід ↔ Пд/Пн, проходи ↔ Пд/Пн) — теж через ходову смугу
+_cr = {}
+for nm, x, y, st in CROSS:
+    k = (nm, x, y); _cr[k] = min(st, _cr.get(k, 9))
+CROSS = sorted((k[0], k[1], k[2], v) for k, v in _cr.items())
+# щити на парапеті (смуги Пд, Пн): стрінги з краю поля — коротким лотком через смугу, з переходом; щити в проходах Сх–Зх — стрінги з північного поля так само
+NBX_CROSS = {1: 0, 2: 0}
+for r in rows:
+    if r['z'] in ('roof', 'lan') or (r['z'] == 'fac' and r.get('roof')):
+        if r['z'] == 'roof' and (abs(r['Y'] - YS) < 1e-6 or abs(r['Y'] - YN) < 1e-6 or abs(r['Y'] - Y1) < 1e-6 or abs(r['Y'] - Y2) < 1e-6): NBX_CROSS[r['st']] += 1
+print('переходи через лотки:', len(CROSS), [c for c in CROSS], 'щити з переходом стрінгів:', NBX_CROSS)
 # підводи від щитів до коридору і стрінгові 1×6 — у лотку 100×50 біля щита (≈6 м на щит)
 T[1]['100×50'] += 6 * len([r for r in rows if r['z'] == 'lan']); T[2]['100×50'] += 6 * len([r for r in rows if r['z'] == 'roof'])
 # спуски і ділянка: ТП-6923 (стіна цеху → дах ТП → місток на берму) під кінцеву кількість ліній; схід — як у Б (600×100 14,7 м + 3,9 м)
-nN = len([r for r in rows if r['K'] in ('K-4', 'K-5')]); nE = len([r for r in rows if r['K'] in ('K-3', 'K-1') and r['z'] in ('roof', 'lan')])
+nN = len([r for r in rows if r['K'] in ('K-4', 'K-5')]); nE = len([r for r in rows if r['K'] in ('K-3', 'K-1') and (r['z'] in ('roof', 'lan') or r.get('roof'))])
+nE1 = len([r for r in rows if r['K'] == 'K-1' and (r['z'] in ('roof', 'lan') or r.get('roof'))])
 n1N = len([r for r in rows if r['K'] in ('K-4', 'K-5') and r['st'] == 1])
-T[1 if n1N else 2][tray_w(nN)] += 26.0; T[1][tray_w(nE)] += 18.6   # спуск ПнЗх — в етапі 1 лише якщо туди йде щось з етапу 1
-# фасади: південний (≈ від крайнього щита до кута) + східний до K-3 / K-1; склад — як у Б
-T[1]['200×50'] += 96.64 - min(b['s'] for b in FB if b['f'] == 'S') ; T[1]['300×100'] += 52.0; T[1]['100×50'] += 48.9; T[1]['200×50'] += 20.0
+# спуск ПнЗх (X 11,95): стіна цеху → дах ТП-6923 → місток над приямком → берма → ШВ К-4 (захід) / К-5 (схід) — під кінцеву кількість ліній; в етапі 1 — лише якщо туди йде щось з етапу 1
+T[1 if n1N else 2][tray_w(nN)] += 28.0
+# спуск Сх (Y 53,9): через парапет і по фасаду до ШВ К-3 (Y 53,3); гілка К-1 — по фасаду на 3,5 м до ШВ К-1 (Y 62,7)
+# щити східного фасаду (Y > 34,6, на 3,0 м): лоток на 3,5 м уздовж фасаду до ШВ К-1; від Y 53,9 до К-1 — спільний з гілкою спуску; склад — як у Б
+FE = [b for b in FB if not b.get('roof')]; yK1 = SHV['K-1'][1]
+FEs = [b for b in FE if b['s'] < DE[1]]; FEn = [b for b in FE if b['s'] >= DE[1]]
+L_fe = sum(DE[1] - b['s'] for b in FEs) + sum(abs(b['s'] - yK1) for b in FEn)
+T[1][tray_w(nE)] += 17.0; T[1][tray_w(nE1 + len(FEs))] += (yK1 - DE[1]) + 2.0
+T[1]['100×50'] += L_fe; T[1]['100×50'] += 48.9; T[1]['200×50'] += 20.0
+MNT[1]['fac'] = 17.0 + (yK1 - DE[1]) + 2.0 + L_fe
 for k in (1, 2): print('лотки етап', k, {w: round(l, 1) for w, l in sorted(T[k].items())})
-json.dump({'var': VAR, 'rows': rows, 'T': {k: dict(v) for k, v in T.items()}, 'E_line': E_line, 'inp': dict(inp), 'kwp': dict(kwp)}, open('final.json' if VAR == os.environ.get('WORK', '2') else f'final_v{VAR}.json', 'w'), ensure_ascii=False, default=float)
+json.dump({'var': VAR, 'rows': rows, 'T': {k: dict(v) for k, v in T.items()}, 'E_line': E_line, 'inp': dict(inp), 'kwp': dict(kwp),
+           'segs': SEGS, 'mnt': {k: dict(v) for k, v in MNT.items()}, 'cross': CROSS, 'nbx_cross': NBX_CROSS, 'shv': SHV, 'DE': DE, 'DN': DN}, open('final.json' if VAR == os.environ.get('WORK', '2') else f'final_v{VAR}.json', 'w'), ensure_ascii=False, default=float)
 for r in sorted(rows, key=lambda r: (r['st'], r['K'], -r['L'])): print(r['st'], r['z'], r.get('id') or '', r.get('f', ''), r['X'] if 'X' in r else r.get('s', ''), r['Y'] if 'Y' in r else '', r['ns'], r['K'], round(r['L'], 1), r['S'], round(r['du'], 2))

@@ -23,9 +23,22 @@ for m in D['wx']:
         TAU += m['nd'] * (p * G * G + (1 - p) * (c * G) ** 2) / 1e6 * dt
 TAU_F = {'roof': TAU, 'lan': 0.80 * TAU, 'fac': 0.60 * TAU, 'wh': 0.95 * TAU}   # фасади вертикально і скло 41–46° — нижчі піки (оцінка)
 # ---------------- коридори даху (план X, Y)
-YS, Y1, Y2, YN = 0.9, 32.395, 63.757, 95.4
-XS_ = [0.8, 18.0, 36.73, 54.85, 72.0, 95.75]
-PEN = {18.0: 1.25, 72.0: 1.25}                         # уздовж ендов без проходу — лоток на опорах, обхід лівневок (штраф)
+# 05.11.2026 (перевірка проходів на моделі): лотки не посередині проходів, а біля краю — так, щоб лишалась потрібна ширина
+#   смуга Пд і Пн — лоток і щити на парапеті (кронштейни, без блоків на ходовій смузі); схід — на парапеті (край поля зайнятий трубами Д36, Д57);
+#   захід — на блоках біля краю поля; проходи Пн–Пд — біля східного краю проходу; Сх–Зх — біля південного краю (щит не затіняє модулі; власник 05.11:
+#   «біля краю поля»); уздовж ендов X 18 і X 72 лотків немає (власник 05.11: лінії К-4 — у західну смугу)
+YS, Y1, Y2, YN = -0.17, 31.34, 62.70, 96.26
+# X 18,7 — уздовж ендови X 18 між ліхтарями Л1 і Л2: проходи Сх–Зх тут з обох боків перекриті ліхтарями, іншого виходу з цієї ділянки немає;
+# лоток на підставках біля східного краю ендови (вісь стоку X 18,0 і лівневка ЛВ-2 лишаються вільними), лише від Y1 на північ
+XS_ = [1.985, 18.7, 37.58, 55.91, 96.31]
+PEN = {}
+XRANGE = {18.7: (31.34, 96.26)}
+PIPES = [(p[1], p[2], p[3]) for p in D.get('pipes', [])]   # труби даху: X, Y, діаметр
+def pipe_hit(x0, y0, x1, y1, half=0.15):
+    for px, py, d in PIPES:
+        r = d / 2 + 0.05 + half
+        if min(x0, x1) - r <= px <= max(x0, x1) + r and min(y0, y1) - r <= py <= max(y0, y1) + r: return True
+    return False
 LAN = [(f['id'], f['xc'], f['y0'], f['y1'], f['hw']) for f in D['frames']]
 def blocked(y, xa, xb):
     for _, xc, y0, y1, hw in LAN:
@@ -39,10 +52,12 @@ def graph(extra):
     for y in (YS, Y1, Y2, YN):
         row = sorted(n for n in N if abs(n[1] - y) < 1e-6)
         for a, b in zip(row, row[1:]):
-            if not blocked(y, a[0], b[0]): d = b[0] - a[0]; adj[a].append((b, d)); adj[b].append((a, d))
+            if not blocked(y, a[0], b[0]) and not pipe_hit(a[0], y, b[0], y): d = b[0] - a[0]; adj[a].append((b, d)); adj[b].append((a, d))
     for x in XS_:
         col = sorted((n for n in N if abs(n[0] - x) < 1e-6), key=lambda n: n[1])
         for a, b in zip(col, col[1:]):
+            if pipe_hit(x, a[1], x, b[1]): continue
+            if x in XRANGE and (min(a[1], b[1]) < XRANGE[x][0] - 0.01 or max(a[1], b[1]) > XRANGE[x][1] + 0.01): continue
             d = (b[1] - a[1]) * PEN.get(x, 1.0); adj[a].append((b, d)); adj[b].append((a, d))
     return adj
 def dijk(adj, s):
@@ -57,9 +72,13 @@ def path(prev, s, t):
     p = [t]
     while p[-1] != s: p.append(prev[p[-1]])
     return p[::-1]
-DE, DN = (95.75, Y2), (10.0, YN)
-nodes |= {DE, DN, (10.0, YS)}
-OFF = {'E': {'K-3': 24.44, 'K-1': 18.19}, 'N': {'K-4': 30.0, 'K-5': 26.0}}   # спуск і земля до ШВ, м (E — Том 8; N — через дах ТП-6923 і місток на берму, оцінка)
+# спуски — у простінках між вікнами (05.11): схід Y 53,9 — проміжок у модулях фасаду (10,3 / 12,7 м) і в козирку, навпроти К-3; північ X 11,95
+DE, DN = (96.31, 53.9), (11.95, YN)
+nodes |= {DE, DN}
+# спуск і земля до ШВ, м: схід — з парапету +16,5 до ШВ на стіні навпроти торця К-3 (Y 53,3) і, по фасаду на 3,5 м, К-1 (Y 62,7);
+# північ — стіна цеху → дах ТП-6923 → місток над приямком → берма: ШВ К-4 біля західного торця, К-5 — біля східного (не в проміжку між контейнерами)
+OFF = {'E': {'K-3': 17.0, 'K-1': 25.0}, 'N': {'K-4': 32.0, 'K-5': 28.1}}
+SHV = {'K-3': (96.89, 53.3), 'K-1': (96.89, 62.7), 'K-4': (0.6, 110.9), 'K-5': (15.66, 110.9)}
 # ---------------- щити даху В1 (етап 2): стрінги стовпчиками вздовж Y; кінці — на проходах / смугах
 R = D['roof']; ss = collections.defaultdict(list)
 for m in R:
@@ -116,6 +135,9 @@ for g in boxes:
 import os
 if os.environ.get('MERGED') and os.path.exists('rb_merged.json'):
     RB = json.load(open('rb_merged.json'))['RB']
+    # rb_merged.json — розподіл стрінгів 04.11 (лінії Y 0,9 / 32,395 / 63,757 / 95,4); 05.11 лотки біля краю — ті самі щити, нові лінії
+    _MY = {0.9: YS, 32.395: Y1, 63.757: Y2, 95.4: YN}
+    for b in RB: b['Y'] = _MY.get(b['Y'], b['Y'])
 # ---------------- ліхтарі (етап 1): щит біля ліхтаря на проході Y2, з боку, що має вихід
 FR = D['frame']; lst = collections.defaultdict(lambda: collections.Counter()); lkwh = collections.Counter()
 for m in FR:
@@ -141,11 +163,13 @@ for f, lst_ in fac_groups.items():
         if not g: continue
         s = sum(t[0] for t in g) / len(g)
         FB.append({'id': None, 'f': f, 's': round(s, 1), 'ns': len(g), 'kwh': sum(t[2] for t in g), 'z': 'fac', 'st': 1})
-def fac_len(b, K):
-    ysh = {'K-3': 51.83, 'K-1': 61.16}[K]
-    if b['f'] == 'S':   # південний фасад: уздовж фасаду на схід, далі по східному фасаду над ТП-5913 на північ
-        return (96.64 - b['s']) + ysh + 0.5 + 6.0 + 2 * 3.0
-    return abs(ysh - b['s']) + 1.5 + 10.0 + 2 * 3.0     # східний фасад: s — це Y; спуск з ≈10 м
+# 05.11 (власник): щити південного фасаду і щит східного фасаду за прибудовою ТП-5913 (Y < 34,6) — на даху біля парапету; стрінги — угору за модулями
+# (зазор 0,16 м), лінії — разом з лініями даху до спуску; на фасаді лотка немає (5 воріт, тамбур, вікно, прибудова ТП-5913 на куті)
+for b in FB:
+    if b['f'] == 'S': b.update(roof=True, X=b['s'], Y=YS)
+    elif b['f'] == 'E' and b['s'] < 34.6: b.update(roof=True, X=XS_[-1], Y=b['s'])
+def fac_len(b, K):   # щити на східному фасаді (Y > 34,6): лоток на 3,5 м уздовж фасаду до ШВ на стіні
+    return abs(SHV[K][1] - b['s']) + 1.5 + 2.0 + 2 * 3.0
 # ---------------- склад (етап 1): лінії варіанта Б (152–172 м до K-2/K-1) → до K-3/K-1
 WB = [{'id': b['n'], 'L0': b['L'], 'ns': b['ns'], 'z': 'wh', 'st': 1, 'K0': b['K']} for b in D['ep']['boxes'] if b['zone'] == 'склад']
 import os as _os
@@ -172,7 +196,8 @@ def eval_all(assign_roof, rule='npv', lan_to=None):
     # етап 1
     for b in FB:
         K = 'K-3' if b['f'] == 'S' else 'K-1'
-        L = SLACK(fac_len(b, K)); r = best(L, b['ns'], TAU_F['fac'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
+        L = SLACK(route_len(b, DE)[0] + OFF['E'][K]) if b.get('roof') else SLACK(fac_len(b, K))
+        r = best(L, b['ns'], TAU_F['fac'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
     for b in WB:
         L = b['L0'] - (12.0 if b['K0'] == 'K-2' else 0); K = 'K-3' if b['K0'] == 'K-2' else 'K-1'
         if b['id'] in WHN: L, K = WHN[b['id']]['L'], WHN[b['id']]['K']      # 04.11: траса до нових місць К-3 / К-1 (wh_abk.py)
