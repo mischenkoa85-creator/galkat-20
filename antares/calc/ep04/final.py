@@ -133,6 +133,8 @@ T[1]['100×50'] += L_fe
 # 05.11: склад і АБК (abk_wh.py) — лотки стрінгів складу по краю / гребеню і північному скату, спуски по стінах до щитів, лоток ліній АБК на нижньому даху і спуск;
 # раніше тут стояли лотки складу варіанта Б (48,9 + 20 м: щити на скаті, трос через проїзд)
 QW = json.load(open('wh_abk.json', encoding='utf-8'))['q']; T[1]['100×50'] += QW['tray_prof'] + QW['tray_wall'] + QW['tray_roofA']
+# 05.11, 23:20 (власник): повітряні переходи замість траншеї — лоток по фасаду цеху на 5,0 м над ТП-5913, під карнизом складу, спуски до ШВ (abk_wh.py, MODE=air)
+if QW.get('mode') == 'air': T[1]['200×50'] += QW['L_fac2'] * 1.05; T[1]['100×50'] += QW['tray_air'] - QW['L_fac2'] * 1.05; MNT[1]['fac'] += QW['L_fac']
 MNT[1]['fac'] = 17.0 + (yK1 - DE[1]) + 2.0 + L_fe
 for k in (1, 2): print('лотки етап', k, {w: round(l, 1) for w, l in sorted(T[k].items())})
 json.dump({'var': VAR, 'rows': rows, 'T': {k: dict(v) for k, v in T.items()}, 'E_line': E_line, 'inp': dict(inp), 'kwp': dict(kwp),

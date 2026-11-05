@@ -28,6 +28,15 @@ D2R = math.pi / 180; T11, T17, T22 = math.tan(11 * D2R), math.tan(17 * D2R), mat
 XT, YC, XA = 107.6, 36.0, 98.4      # уздовж західної стіни АБК (0,7 м від стіни); перехід на захід на Y 36,0 (північніше ТП-5913); траншея AC контейнерів на X 98,4
 YW = -5.9                           # уздовж північної стіни складу C1 / C2 (0,6 м від стіни)
 DEP = 0.7                           # глибина труб
+MODE = os.environ.get('MODE', 'air')  # 05.11, 23:20 (власник): «навіщо копати — пустимо повітряну лінію» → 'air'; 'trench' — попередній варіант для порівняння
+# повітряний варіант: склад — лоток під карнизом складу → стійка на куті C1 → трос через проїзд → південна стіна цеху → лоток на 5,0 м по східному фасаду над ТП-5913 → ШВ;
+# АБК — лоток по західній стіні на 10,0 м (між рядами вікон, як траса СІП варіанта 3) → кут → трос через двір південніше К-3 → той самий лоток по фасаду → ШВ
+HR, HF, XF = 6.6, 5.0, 96.64 + 0.15  # висота кріплення троса (≥ 6 м над проїздом із провисом 0,3 м), лоток по фасаду цеху, його вісь
+POST = (98.3, -6.35)                 # стійка троса на північно-західному куті C1 (карниз 5,0 м → 6,6 м)
+XSW = 95.6                           # кріплення троса на південній стіні цеху (західніше кута і прибудови ТП-5913)
+YAB = 47.5                           # кріплення троса АБК на східній стіні цеху: південніше майданчика К-3 (Y 49,4), модулі фасаду тут від 10,3 м
+XAW, HAW, YAN = 108.15, 10.0, 44.6   # лоток ліній АБК по західній стіні: X, висота, до північного кута
+HE_T = 4.8                           # лоток під карнизом складу
 def plen(P): return sum(math.dist(P[i], P[i + 1]) for i in range(len(P) - 1))
 def best(L, ns, tau):
     out = []
@@ -69,7 +78,20 @@ def end_len(j, xp, wall):
         return up + along + down + 0.6
     sl = 22 if part(x) == 'C1' else 17; sl2 = 22 if part(xp) == 'C1' else 17
     up = (-15.5 - y) / math.cos(sl * D2R); along = abs(x - xp); down = 9.0 / math.cos(sl2 * D2R) + (HE - BOXH[1]); return up + along + down + 0.6
+def air_tail(K, from_pt):            # від точки на фасадному лотку цеху до ШВ
+    sx, sy = SHV[K]
+    return [(XF, sy - 0.7, HF), (XF, sy - 0.7, 2.0), (sx + 0.06, sy - 0.2, 1.6)]
 def line_pts_wh(xp, wall, K):
+    if MODE == 'air':
+        if wall == 'AB':
+            y0 = yN(xp) + 0.15
+            P = [(xp, y0, BOXH[1]), (xp, y0, HE_T)]
+            for (x0, yy0), (x1, yy1) in zip(NAB, NAB[1:]):
+                if x1 > xp + 1e-6 and x1 <= 97.95: P.append((x1, yy1 + 0.15, HE_T))
+            P += [(97.95, -12.35, HE_T), (97.95, -6.65, HE_T), (POST[0], POST[1], HE_T)]
+        else:
+            P = [(xp, -6.35, BOXH[1]), (xp, -6.35, HE_T), (POST[0], POST[1], HE_T)]
+        return P + [(POST[0], POST[1], HR), (XSW, -0.65, HR), (XSW, -0.65, HF), (XF, -0.65, HF)] + air_tail(K, None)
     if wall == 'AB':
         y0 = yN(xp) + 0.15
         P = [(xp, y0, BOXH[0]), (xp, y0, 0.0), (xp, y0 + 0.6, -DEP)]
@@ -83,6 +105,9 @@ def line_pts_wh(xp, wall, K):
     P += [(XT, YW, -DEP), (XT, YC, -DEP)]
     return P + to_shv(K)[1:]
 def trench_own(P):                   # до вузла (XT, YW)
+    if MODE == 'air':                # повітря: лоток уздовж стіни складу до стійки
+        k = next(i for i, p in enumerate(P) if abs(p[0] - POST[0]) < 1e-6 and abs(p[1] - POST[1]) < 1e-6)
+        return plen([q for q in P[1:k + 1]]) - (HE_T - BOXH[1])
     k = next(i for i, p in enumerate(P) if abs(p[0] - XT) < 1e-6 and abs(p[1] - YW) < 1e-6)
     return plen([q for q in P[2:k + 1]])
 BXW = {23: ('ЩС-С1', 'AB', 'K-3'), 24: ('ЩС-С2', 'C', 'K-1'), 25: ('ЩС-С3', 'C', 'K-1')}
@@ -98,7 +123,7 @@ def box_cost(b, xp):
 def opt_ab():
     best_ = None
     for xp in [x / 2 for x in range(int(54.5 * 2), int(97.5 * 2) + 1)]:
-        c, iv, P = box_cost(23, xp); c += trench_own(P) * CTR
+        c, iv, P = box_cost(23, xp); c += trench_own(P) * (CT if MODE == 'air' else CTR)
         if best_ is None or c < best_[0]: best_ = (c, xp)
     return best_[1]
 def opt_c():                          # ЩС-С2 і ЩС-С3 разом: спільний лоток по гребеню (об'єднання), спільна траншея вздовж стіни, щити не ближче 1,0 м
@@ -110,8 +135,9 @@ def opt_c():                          # ЩС-С2 і ЩС-С3 разом: спі�
             if abs(x2 - x3) < 1.0: continue
             c3, i3, _ = C3_[x3]
             ridge = (i2[1] - i2[0]) + (i3[1] - i3[0]) - max(0.0, min(i2[1], i3[1]) - max(i2[0], i3[0]))
-            tr = max(abs(x2 - XT), abs(x3 - XT)) if (x2 - XT) * (x3 - XT) > 0 else abs(x2 - XT) + abs(x3 - XT)
-            c = c2 + c3 + ridge * CT + tr * CTR
+            XN = POST[0] if MODE == 'air' else XT
+            tr = max(abs(x2 - XN), abs(x3 - XN)) if (x2 - XN) * (x3 - XN) > 0 else abs(x2 - XN) + abs(x3 - XN)
+            c = c2 + c3 + ridge * CT + tr * (CT if MODE == 'air' else CTR)
             if best_ is None or c < best_[0]: best_ = (c, x2, x3)
     return best_[1], best_[2]
 XB = {23: opt_ab()}; XB[24], XB[25] = opt_c()
@@ -149,6 +175,10 @@ def abk_pts(bi, K):
     b = BX[bi]
     roof = [(b['x'], b['y'] + 0.12, b['z0']), (b['x'], NODE[1], ZR + 0.1), (NODE[0], NODE[1], ZR + 0.1), (NODE[0], YD - 0.25, ZR + 0.1), (XP, YD - 0.25, ZR + 0.1)]
     par = [(XP, YD - 0.25, 10.0 + 0.5 + 0.2), (108.3 - 0.15, YD - 0.25, 10.0 + 0.5 + 0.2)]          # через парапет (0,5 м) і на стіну
+    if MODE == 'air':
+        wall = [(XAW, YD - 0.25, HAW), (XAW, YAN, HAW), (XAW, YAN, HR)]
+        P = roof + par + wall + [(XF, YAB, HR), (XF, YAB, HF)] + air_tail(K, None)
+        return P, roof + par + wall
     wall = [(108.3 - 0.15, YD - 0.25, 0.0), (XT, YD - 0.25, -DEP)]
     P = roof + par + wall + [(XT, YC, -DEP)] + to_shv(K)[1:]
     return P, roof + par + [wall[0]]
@@ -163,7 +193,7 @@ for bi, K in (() if NOABK else ((0, 'K-3'), (1, 'K-1'))):
                    **{k: round(v, 3) if isinstance(v, float) else v for k, v in r.items()}))
 # лоток ліній АБК: від щитів до парапету (на даху на опорах з блоком через 1,5 м), перехід через парапет, спуск по стіні (кронштейни через 1,0 м)
 L_abk_roof = plen([(BX[0]['x'], NODE[1]), (NODE[0], NODE[1]), (NODE[0], YD - 0.25), (XP, YD - 0.25)]) + 1.0
-L_abk_wall = 10.0 + 0.5 + 0.2
+L_abk_wall = (0.7 + (YAN - YD + 0.25) + (HAW - HR)) if MODE == 'air' else 10.0 + 0.5 + 0.2
 if NOABK: L_abk_roof = L_abk_wall = 0.0
 # ================= траншея: ділянки з кількістю ліній (нова і спільна з траншеєю AC)
 seg = collections.Counter(); shared = collections.Counter()
@@ -190,6 +220,17 @@ def part_seg(S):                     # елементарні ділянки (я
     for u, v, n in O: out.append(dict(a=list(u), b=list(v), n=n, L=round(math.dist(u, v), 2)))
     return out
 TS = part_seg(seg)
+ROPES, FAC = [], []
+if MODE == 'air':
+    rp = collections.Counter(); fs = collections.Counter()
+    for o in WH + AB:
+        P = o['pts']
+        for a, b in zip(P, P[1:]):
+            if abs(a[2] - HR) < 1e-6 and abs(b[2] - HR) < 1e-6 and math.dist(a[:2], b[:2]) > 3: rp[(tuple(a), tuple(b))] += 1
+            if abs(a[2] - HF) < 1e-6 and abs(b[2] - HF) < 1e-6: fs[tuple(sorted((tuple(round(v, 2) for v in a[:2]), tuple(round(v, 2) for v in b[:2]))))] += 1
+    for (a, b), n in rp.items(): ROPES.append(dict(a=list(a), b=list(b), n=n, L=round(math.dist(a[:2], b[:2]), 2), who='склад' if a[1] < 0 else 'АБК'))
+    FAC = part_seg(fs)
+    TS = []
 SH = []
 ys = sorted({y for k in shared for y in k})
 for a, b in zip(ys, ys[1:]):
@@ -197,7 +238,14 @@ for a, b in zip(ys, ys[1:]):
     if n: SH.append(dict(a=[XA, a], b=[XA, b], n=n, L=round(b - a, 2)))
 T_new = sum(s['L'] for s in TS); T_pipe = sum(s['L'] * s['n'] for s in TS) + sum(s['L'] * s['n'] for s in SH)
 # ================= кількості для кошторису (етап 1)
-q = dict(
+L_fac = sum(f['L'] for f in FAC); L_fac2 = sum(f['L'] for f in FAC if f['n'] > 3)
+L_eave = sum(trench_own(w['pts']) for w in WH) if MODE == 'air' else 0.0
+q_air = dict(mode=MODE, ropes=ROPES, fac=FAC, L_fac=round(L_fac, 1), L_fac2=round(L_fac2, 1), L_eave=round(L_eave, 1),
+             tray_air=round((L_fac + 2 * 3.0 + 1.6 + 1.6 + L_eave) * 1.05, 1) if MODE == 'air' else 0.0,   # лоток по фасаду, спуски до ШВ, з троса на стіну, під карнизом складу
+             brk_air=math.ceil(L_fac + 2 * 3.0 + 3.2 + L_eave) + 4 if MODE == 'air' else 0,
+             hang=math.ceil(sum(r_['L'] for r_ in ROPES) / 0.5) + 2 * len(ROPES), post=1 if MODE == 'air' else 0, node=2 * len(ROPES),
+             lift_air=(3 if NOABK else 5) if MODE == 'air' else 0)
+q = dict(**q_air,
     tray_prof=round(sum(w['tray_m']['edge'] + w['tray_m']['slope'] for w in WH) * 1.05, 1),         # лоток 100×50 на профнастилі складу (край / гребінь, північний скат)
     tray_wall=round((sum(w['tray_m']['wall'] for w in WH) + L_abk_wall) * 1.05, 1),               # вертикальні лотки на стінах (склад, АБК)
     tray_roofA=round(L_abk_roof * 1.05, 1),                                                     # нижній дах АБК, на опорах з блоком
@@ -206,18 +254,21 @@ q = dict(
     blk_abk=math.ceil(L_abk_roof / 1.5),
     trench=round(T_new, 1), pipe=round(T_pipe * 1.03, 1), shared=round(sum(s['L'] for s in SH), 1),
     exc=round(T_new * 0.4 * 0.8, 1), sand=round(T_new * 0.4 * 0.3, 1), back=round(T_new * 0.4 * 0.5, 1), spoil=round(T_new * 0.4 * 0.3, 1), tape=round(T_new + sum(s['L'] for s in SH), 1),
-    lift=1 if NOABK else 2, par_cross=0 if NOABK else 1, wall_pass=2, nabk=len(AB),
+    lift=(1 if NOABK else 2) if MODE == 'trench' else 0, par_cross=0 if NOABK else 1, wall_pass=2, nabk=len(AB),
     str_wh=round(sum(w['str_m'] for w in WH), 1), str_wh_old=round(sum(w['str_old'] for w in WH), 1),
     str_abk=round(AD['dc']['plus'] + AD['dc']['minus'] + AD['dc']['jump'], 1), str_abk_old=973.2)
-OUT = dict(wh=WH, abk=AB, trench=TS, shared=SH, q=q, consts=dict(XT=XT, YC=YC, XA=XA, YW=YW, DEP=DEP),
-           note='Траншея — за обстеженням ділянки: підземні мережі ТП-5913 у проїзді між ТП і АБК, покриття проїзду; місця щитів складу — з урахуванням воріт і дверей.')
+if MODE == 'air': SH = []; T_new = T_pipe = 0.0; q.update(trench=0.0, pipe=0.0, shared=0.0, exc=0.0, sand=0.0, back=0.0, spoil=0.0, tape=0.0)
+OUT = dict(wh=WH, abk=AB, trench=TS, shared=SH, ropes=ROPES, fac=FAC, mode=MODE, q=q, consts=dict(XT=XT, YC=YC, XA=XA, YW=YW, DEP=DEP, HR=HR, HF=HF, XF=XF, POST=POST, XSW=XSW, YAB=YAB, XAW=XAW, HAW=HAW, YAN=YAN),
+           note=('Повітряні переходи на тросі: висота кріплення 6,6 м, провис ≤ 0,3 м — над проїздом ≥ 6 м; кабель Al з УФ-стійкою оболонкою; точки кріплення на стінах — погодити на місці.' if MODE == 'air' else 'Траншея — за обстеженням ділянки: підземні мережі ТП-5913 у проїзді між ТП і АБК, покриття проїзду; місця щитів складу — з урахуванням воріт і дверей.'))
 json.dump(OUT, open(os.path.join(H, 'wh_abk.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-if not NOABK:                        # дані двійника: траси складу і АБК (ELECWA) і модель АБК на 12 стрінгів по 11 зі щитами (ABK_DC — замість dbn у ABK_DATA)
+if not NOABK and not os.environ.get('NOTWIN'):   # дані двійника: траси складу і АБК (ELECWA) і модель АБК на 12 стрінгів по 11 зі щитами (ABK_DC — замість dbn у ABK_DATA)
     open(os.path.join(R, 'obj/src/elecwadata.js'), 'w', encoding='utf-8').write('const ELECWA=' + json.dumps(OUT, ensure_ascii=False, separators=(',', ':')) + ';')
     open(os.path.join(R, 'obj/src/abkdcdata.js'), 'w', encoding='utf-8').write('// АБК без інвертора: 12 стрінгів по 11, щити ЩА-1 / ЩА-2 → К-3 / К-1 (calc/v3/abk_dc.py)\nconst ABK_DC=' + json.dumps(AD, ensure_ascii=False, separators=(',', ':')) + ';')
 if __name__ == '__main__':
     for w in WH: print(w['id'], w['wall'], 'X', w['X'], 'Y', w['Y'], w['K'], 'L', w['L'], 'S', w['S'], 'du', round(w['du'], 2), 'стрінги 1×6', w['str_m'], '(було', w['str_old'], ') лотки', w['tray_m'], 'траншея своя', w['trench_own'])
     for a in AB: print(a['id'], a['K'], 'стрінги', a['strings'], a['faces'], a['kwp'], 'кВтп', a['mwh'], 'МВт·год', 'L', a['L'], 'S', a['S'], 'du', round(a['du'], 2))
-    print('траншея нова', round(T_new, 1), 'м; спільна з AC', q['shared'], 'м; труби ПНД Ø63', q['pipe'], 'м'); print('q', q)
+    print('режим', MODE, 'траншея нова', round(T_new, 1), 'м; спільна з AC', q['shared'], 'м; труби ПНД Ø63', q['pipe'], 'м'); print('q', {k: v for k, v in q.items() if k not in ('ropes', 'fac')})
+    for r_ in ROPES: print('  трос', r_)
+    for f_ in FAC: print('  фасад', f_)
     for s in TS: print('  ', s)
     for s in SH: print('  AC', s)
