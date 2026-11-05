@@ -119,7 +119,8 @@ const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k
   PICK.push({o:im,when:()=>DG.visible&&im.count>0}); });
 const visUp=o=>{ for(let x=o;x;x=x.parent) if(x.visible===false) return false; return true; };
 let SEL='', lastP=new V3(1e9,0,0), EX=0;   // розбір на елементи: зсув деталей уздовж нормалі модуля, м (Конструкція → Розбір)
-const EXO={blk:0.12,blk2:0.12,mat2:0,lbolt:0.62,lag:0.42,xprof:0.42,ang:0.42,sleeve:0.26,sleeveE:0.26,cpl:0.26,rod:0.26,jam:0.26,mcl:0.85,zcl:0.85,mrail:0.25,scr:0.35};
+// розбір: шари знизу вгору — мат, блок, шпилька з муфтами і гільзами, лага, болти, (модуль — прозорий), притиски
+const EXO={blk:0.10,blk2:0.10,mat2:0,sleeve:0.22,sleeveE:0.22,cpl:0.22,rod:0.22,jam:0.22,lag:0.38,xprof:0.38,ang:0.38,lbolt:0.46,mcl:0.66,zcl:0.66,mrail:0.20,scr:0.30};
 function upd(force){ if(!force&&camera.position.distanceTo(lastP)<0.3) return; lastP.copy(camera.position);
   const L_=[]; MODS.forEach((m,i)=>{ const d=camera.position.distanceTo(m.c); if(d<RD) L_.push([d,i]); }); L_.sort((p,q)=>p[0]-q[0]);
   const pick=L_.filter(([d,i])=>visUp(MODS[i].im)).slice(0,NM).map(x=>x[1]), key=pick.join(','); if(!force&&key===SEL) return; SEL=key;
@@ -137,6 +138,10 @@ const pz0=panelPZ; panelPZ=function(){ const h=pz0.apply(this,arguments), f=(v,k
   ${ks.map(k=>`<tr><td class="w">${NAME[k]}</td>${G.map(([g])=>`<td>${BOM[g].q[k]?f(BOM[g].q[k],k):'—'}</td>`).join('')}</tr>`).join('')}
   <tr class="tot"><td class="w">Маса кріплення з баластом, т</td>${kg.map(v=>`<td>${nf(v/1000,1)}</td>`).join('')}</tr></tbody></table></div>
   <p class="src">Підраховано по кожному модулю моделі з його сусідами (стик, край ряду). Деталі видно зблизька — підведіть камеру до модулів. Фасади — вузли «Кубики фасаду», АБК — модель АБК. Рейки ліхтарів (41×41, 2 на схил) — у моделі ліхтаря; на що їх спирати, ще не вирішено.</p></div>`; };
-window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; upd(true); }};
+// модулі даху на час розбору — прозорі, щоб було видно деталі під ними
+const GH=new Map(); function ghost(on){ const ims=[...new Set(MODS.filter(m=>m.grp!=='lan').map(m=>m.im))];
+  ims.forEach(im=>{ const ms=Array.isArray(im.material)?im.material:[im.material]; ms.forEach(mt=>{ if(on&&!GH.has(mt)){ GH.set(mt,[mt.transparent,mt.opacity,mt.depthWrite]); mt.transparent=true; mt.opacity=0.22; mt.depthWrite=false; mt.needsUpdate=true; }
+    if(!on&&GH.has(mt)){ const [a_,o_,d_]=GH.get(mt); mt.transparent=a_; mt.opacity=o_; mt.depthWrite=d_; mt.needsUpdate=true; GH.delete(mt); } }); }); need=true; }
+window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; ghost(f>0); upd(true); }};
 upd(true);
 } }

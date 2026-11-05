@@ -35,11 +35,15 @@ function step5(d){ const i=MENU.findIndex(([k])=>k===M5.s); go(MENU[(i+d+MENU.le
 const LAST={}; MENU.forEach(([k,,subs])=>LAST[k]=subs[0][0]);
 function go(s,sub){ if(sub===undefined) sub=LAST[s]||MENU.find(([k])=>k===s)[2][0][0]; M5.s=s; M5.sub=sub; LAST[s]=sub;
   const {sub:sb}=cur(), o=sb[2]; Object.assign(state.lay,L0,o.lay||{}); if(o.sec==='uze') state.lay.uAC=true; state.sec=o.sec; if(state.sheet==='peek') sheetSet('half');
-  apply(); if(o.cam==='near') camNear(); else if(o.cam&&VIEWS[o.cam]) goCam(o.cam); if(o.pane==='roz') explode(); }
+  apply(); if(o.pane==='roz'&&state.lay.stg==='1') camFac(); else if(o.cam==='near') camNear(); else if(o.cam&&VIEWS[o.cam]) goCam(o.cam); if(o.pane==='roz') explode(); }
 // ---------- камера до модуля зблизька (кріплення видно ближче 16 м)
 function camNear(){ if(!RN) return; const st=state.lay.stg, g=st==='1'?'wh':'roof', ms=RN.MODS.filter(m=>m.grp===g&&m.nb.mv&&m.nb.pu&&!m.nb.mu); const m=ms[Math.floor(ms.length*0.35)]||RN.MODS[0];
   const p=m.c.clone().addScaledVector(m.w,1.3).addScaledVector(m.v,-1.9).addScaledVector(m.u,-2.4), t=m.c.clone().addScaledVector(m.u,-1.1); goTo({p:p.toArray(),c:t.toArray()}); }
-let exT=null; function explode(){ if(!RN||!RN.setEx) return; const t0=performance.now(); cancelAnimationFrame(exT); const st=()=>{ const f=Math.min(1,(performance.now()-t0)/1400); RN.setEx(f*f*(3-2*f)); if(f<1) exT=requestAnimationFrame(st); }; setTimeout(()=>{ exT=requestAnimationFrame(st); },900); }
+let exT=null; const FN=()=>T_.facnode;
+function setExAll(f){ if(RN&&RN.setEx) RN.setEx(state.lay.stg==='1'?0:f); const fn=FN(); if(fn&&fn.setEx) fn.setEx(state.lay.stg==='2'?0:f); }
+function explode(){ const t0=performance.now(); cancelAnimationFrame(exT); const st=()=>{ const f=Math.min(1,(performance.now()-t0)/1400); setExAll(f*f*(3-2*f)); if(f<1) exT=requestAnimationFrame(st); }; setTimeout(()=>{ exT=requestAnimationFrame(st); },900); }
+function camFac(){ const fn=FN(); if(!fn) return; const md=fn.MODS.filter(x=>x.n==='kozyrok')[10]||fn.MODS[0], e=md.T.elements, Z=new V3(e[8],e[9],e[10]), X=new V3(e[0],e[1],e[2]), o=new V3(e[12],e[13],e[14]);
+  goTo({p:o.clone().addScaledVector(Z,3.4).addScaledVector(X,2.2).add(new V3(0,-1.6,0)).toArray(),c:[o.x,o.y-0.4,o.z]}); }
 // ---------- власні панелі
 const stgN=()=>state.lay.stg==='1'?'Етап 1':state.lay.stg==='2'?'Етап 2 · дах цеху':'Весь об\'єкт';
 const needB=(t,list)=>`<div class="blk wide"><div class="need"><b>${t}</b>${list?`<ul class="open" style="margin-top:6px">${list.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div></div>`;
@@ -76,7 +80,7 @@ function pBal(){ const q=(BOM.roof||{q:{}}).q, b=(q.blk||0)+(q.blk2||0), m=(q.ma
   <div class="kpi"><span class="k">Модулі даху</span><span class="v">${f1(mods/1000)} <small>т</small></span><span class="s">${nf(S.roof.n)} × 36,5 кг</span></div>
   <div class="kpi"><span class="k">Навантаження на поле</span><span class="v">${f0((kgB+lag+mods)/F)} <small>кг/м²</small></span><span class="s">на ${nf(F)} м² поля розкладки</span></div></div>
   ${needB('Потрібно для перевірки покрівлі:',['несуча здатність покриття цеху (обстеження) — порівняти з навантаженням вище','додаткові блоки по краях поля — кількість з розрахунку вітру за ДБН на поточну розкладку'])}`; }
-function pRoz(){ return head('Конструкція · розбір на елементи','Вузол даху цеху — розібрано','Камера підлітає до краю ряду, деталі розходяться вгору шарами: мат і блок, гільза з муфтою і шпилька, лага, болти, притиски над модулем. Інший підрозділ — вузол збирається назад.')+`<div class="blk wide">${bomRows(['mat','blk','lbolt','lag','sleeve','cpl','rod','jam','mcl','zcl','xprof','ang'])}</div>`; }
+function pRoz(){ return head('Конструкція · розбір на елементи',state.lay.stg==='1'?'Вузол фасаду — розібрано':'Вузол даху цеху — розібрано',state.lay.stg==='1'?'Етап 1 — фасад: модулі стають прозорими, деталі відходять від стіни шарами — анкери, кронштейни, консолі й підкоси козирка, рейки, притиски, трос безпеки. Етап 2 або «Разом» — вузол даху.':'Модулі стають прозорими, деталі розходяться вгору шарами: мат, блок, шпилька M10 з муфтами і гільзами, лага, болти, притиски. Етап 1 — вузол фасаду. Інший підрозділ — вузол збирається назад.')+`<div class="blk wide">${bomRows(['mat','blk','lbolt','lag','sleeve','cpl','rod','jam','mcl','zcl','xprof','ang'])}</div>`; }
 function pBz(){ return head('Електрика · блискавкозахист','Блискавкозахист без щогл','Рішення власника 25.10: без щогл, найдешевший практичний варіант — зрівнювання потенціалів конструкцій СЕС, PE до заземлення ТП; контейнери — свій контур заземлення (у «Контейнерах»).')+needB('Потрібно: перерахувати том 7 «БЗ» під поточну розкладку (дах В1, фасади, ліхтарі, склад, АБК) і показати провідники в моделі.'); }
 function pObl(){ if(!E) return needB('Потрібно: розрахунок економіки.'); const v=E.var[state.lay.ekoM||'lim'], x=state.lay.stg==='1'?v.plan:v.max;
   return head('Гроші · обладнання',`${stgN()==='Етап 2 · дах цеху'?'Весь об\'єкт':stgN()}: ${usd(x.cap.razom)}`,'Капвитрати під ключ, як у розрахунку економіки: СЕС — за кошторисом 26.10 на кВтп, контейнер — під ключ, EMS — окремо.')+
@@ -160,7 +164,7 @@ function bindP(p){ p.querySelectorAll('[data-kut]').forEach(b=>b.onclick=()=>{ s
   const bu=p.querySelector('#budU'); if(bu) bu.onchange=()=>{ state.lay.budU=Math.max(50000,+bu.value||0); render5(); }; save(); }
 const ap0=apply; apply=function(){ const o=cur().sub[2];
   if(state.sec!==o.sec){ const hit=MENU.flatMap(([s,,subs])=>subs.map(x=>[s,x])).find(([,x])=>x[2].sec===state.sec); if(hit){ M5.s=hit[0]; M5.sub=hit[1][0]; } }   // перехід з коду двійника (напр. картка контейнера)
-  if(RN&&RN.setEx&&cur().sub[2].pane!=='roz') RN.setEx(0);
+  if(cur().sub[2].pane!=='roz') setExAll(0);
   const r=ap0.apply(this,arguments); render5(); return r; };
 window.__twin.apply=apply; window.__twin.menu5={MENU,go,cur};
 go(M5.s,M5.sub);

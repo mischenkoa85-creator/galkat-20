@@ -34,9 +34,13 @@ function upd(force){ const vis=FG.visible&&FG.parent&&FG.parent.visible!==false;
   if(vis){ const L=[]; MODS.forEach((md,i)=>{ const d=camera.position.distanceTo(md.c); if(d<RD) L.push([d,i]); }); L.sort((a,b)=>a[0]-b[0]); L.slice(0,NM).forEach(([d,i])=>want.add(i)); }
   SEL.forEach(i=>{ if(!want.has(i)) hideSimple(MODS[i],false); }); want.forEach(i=>{ if(!SEL.has(i)) hideSimple(MODS[i],true); }); SEL=want;
   const per={vert_alb:[],vert_kn:[],kozyrok:[]}; want.forEach(i=>per[MODS[i].n].push(MODS[i]));
-  Object.entries(NG).forEach(([n,cls])=>{ const L=per[n]; Object.values(cls).forEach(im=>{ L.forEach((md,j)=>im.setMatrixAt(j,md.T)); im.count=L.length; im.instanceMatrix.needsUpdate=true; }); });
+  Object.entries(NG).forEach(([n,cls])=>{ const L=per[n]; Object.entries(cls).forEach(([c,im])=>{ L.forEach((md,j)=>im.setMatrixAt(j,EXF>0?md.T.clone().multiply(new THREE.Matrix4().makeTranslation(0,0,(FXO[c]||0)*EXF)):md.T)); im.count=L.length; im.instanceMatrix.needsUpdate=true; }); });
   need=true; }
 controls.addEventListener('change',()=>upd(false)); setInterval(()=>upd(false),500);
 const svN=setVis; setVis=function(){ svN.apply(this,arguments); upd(true); };
-window.__twin.facnode={MODS,NG,upd,get SEL(){ return SEL; }};
+// розбір: від стіни назовні — анкери, кронштейни, консолі й підкоси, рейки, притиски, трос; модулі фасаду прозорі
+let EXF=0; const FXO={ss:0.08,resin:0,st:0.25,zn:0.45,cu:0.45,al:0.75,rope:0.95}, FGH=new Map();
+function fghost(on){ [FP.pvL,FP.pvP,FP.pc].filter(Boolean).forEach(im=>{ const mt=im.material; if(on&&!FGH.has(mt)){ FGH.set(mt,[mt.transparent,mt.opacity,mt.depthWrite]); mt.transparent=true; mt.opacity=0.22; mt.depthWrite=false; mt.needsUpdate=true; }
+  if(!on&&FGH.has(mt)){ const [a_,o_,d_]=FGH.get(mt); mt.transparent=a_; mt.opacity=o_; mt.depthWrite=d_; mt.needsUpdate=true; FGH.delete(mt); } }); }
+window.__twin.facnode={MODS,NG,upd,get SEL(){ return SEL; },setEx:f=>{ if(Math.abs(f-EXF)<1e-4) return; EXF=f; fghost(f>0); upd(true); }};
 } }

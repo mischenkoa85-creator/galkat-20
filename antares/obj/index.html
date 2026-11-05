@@ -4494,11 +4494,15 @@ function upd(force){ const vis=FG.visible&&FG.parent&&FG.parent.visible!==false;
   if(vis){ const L=[]; MODS.forEach((md,i)=>{ const d=camera.position.distanceTo(md.c); if(d<RD) L.push([d,i]); }); L.sort((a,b)=>a[0]-b[0]); L.slice(0,NM).forEach(([d,i])=>want.add(i)); }
   SEL.forEach(i=>{ if(!want.has(i)) hideSimple(MODS[i],false); }); want.forEach(i=>{ if(!SEL.has(i)) hideSimple(MODS[i],true); }); SEL=want;
   const per={vert_alb:[],vert_kn:[],kozyrok:[]}; want.forEach(i=>per[MODS[i].n].push(MODS[i]));
-  Object.entries(NG).forEach(([n,cls])=>{ const L=per[n]; Object.values(cls).forEach(im=>{ L.forEach((md,j)=>im.setMatrixAt(j,md.T)); im.count=L.length; im.instanceMatrix.needsUpdate=true; }); });
+  Object.entries(NG).forEach(([n,cls])=>{ const L=per[n]; Object.entries(cls).forEach(([c,im])=>{ L.forEach((md,j)=>im.setMatrixAt(j,EXF>0?md.T.clone().multiply(new THREE.Matrix4().makeTranslation(0,0,(FXO[c]||0)*EXF)):md.T)); im.count=L.length; im.instanceMatrix.needsUpdate=true; }); });
   need=true; }
 controls.addEventListener('change',()=>upd(false)); setInterval(()=>upd(false),500);
 const svN=setVis; setVis=function(){ svN.apply(this,arguments); upd(true); };
-window.__twin.facnode={MODS,NG,upd,get SEL(){ return SEL; }};
+// розбір: від стіни назовні — анкери, кронштейни, консолі й підкоси, рейки, притиски, трос; модулі фасаду прозорі
+let EXF=0; const FXO={ss:0.08,resin:0,st:0.25,zn:0.45,cu:0.45,al:0.75,rope:0.95}, FGH=new Map();
+function fghost(on){ [FP.pvL,FP.pvP,FP.pc].filter(Boolean).forEach(im=>{ const mt=im.material; if(on&&!FGH.has(mt)){ FGH.set(mt,[mt.transparent,mt.opacity,mt.depthWrite]); mt.transparent=true; mt.opacity=0.22; mt.depthWrite=false; mt.needsUpdate=true; }
+  if(!on&&FGH.has(mt)){ const [a_,o_,d_]=FGH.get(mt); mt.transparent=a_; mt.opacity=o_; mt.depthWrite=d_; mt.needsUpdate=true; FGH.delete(mt); } }); }
+window.__twin.facnode={MODS,NG,upd,get SEL(){ return SEL; },setEx:f=>{ if(Math.abs(f-EXF)<1e-4) return; EXF=f; fghost(f>0); upd(true); }};
 } }
 
 // ================= Дах цеху за розрізом 1-1 (27.10.2026) і модулі на ліхтарях — src/roofv2.js, дані ROOFV2 (calc/v2/twin_v2_export.py)
@@ -6267,7 +6271,8 @@ const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k
   PICK.push({o:im,when:()=>DG.visible&&im.count>0}); });
 const visUp=o=>{ for(let x=o;x;x=x.parent) if(x.visible===false) return false; return true; };
 let SEL='', lastP=new V3(1e9,0,0), EX=0;   // розбір на елементи: зсув деталей уздовж нормалі модуля, м (Конструкція → Розбір)
-const EXO={blk:0.12,blk2:0.12,mat2:0,lbolt:0.62,lag:0.42,xprof:0.42,ang:0.42,sleeve:0.26,sleeveE:0.26,cpl:0.26,rod:0.26,jam:0.26,mcl:0.85,zcl:0.85,mrail:0.25,scr:0.35};
+// розбір: шари знизу вгору — мат, блок, шпилька з муфтами і гільзами, лага, болти, (модуль — прозорий), притиски
+const EXO={blk:0.10,blk2:0.10,mat2:0,sleeve:0.22,sleeveE:0.22,cpl:0.22,rod:0.22,jam:0.22,lag:0.38,xprof:0.38,ang:0.38,lbolt:0.46,mcl:0.66,zcl:0.66,mrail:0.20,scr:0.30};
 function upd(force){ if(!force&&camera.position.distanceTo(lastP)<0.3) return; lastP.copy(camera.position);
   const L_=[]; MODS.forEach((m,i)=>{ const d=camera.position.distanceTo(m.c); if(d<RD) L_.push([d,i]); }); L_.sort((p,q)=>p[0]-q[0]);
   const pick=L_.filter(([d,i])=>visUp(MODS[i].im)).slice(0,NM).map(x=>x[1]), key=pick.join(','); if(!force&&key===SEL) return; SEL=key;
@@ -6285,7 +6290,11 @@ const pz0=panelPZ; panelPZ=function(){ const h=pz0.apply(this,arguments), f=(v,k
   ${ks.map(k=>`<tr><td class="w">${NAME[k]}</td>${G.map(([g])=>`<td>${BOM[g].q[k]?f(BOM[g].q[k],k):'—'}</td>`).join('')}</tr>`).join('')}
   <tr class="tot"><td class="w">Маса кріплення з баластом, т</td>${kg.map(v=>`<td>${nf(v/1000,1)}</td>`).join('')}</tr></tbody></table></div>
   <p class="src">Підраховано по кожному модулю моделі з його сусідами (стик, край ряду). Деталі видно зблизька — підведіть камеру до модулів. Фасади — вузли «Кубики фасаду», АБК — модель АБК. Рейки ліхтарів (41×41, 2 на схил) — у моделі ліхтаря; на що їх спирати, ще не вирішено.</p></div>`; };
-window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; upd(true); }};
+// модулі даху на час розбору — прозорі, щоб було видно деталі під ними
+const GH=new Map(); function ghost(on){ const ims=[...new Set(MODS.filter(m=>m.grp!=='lan').map(m=>m.im))];
+  ims.forEach(im=>{ const ms=Array.isArray(im.material)?im.material:[im.material]; ms.forEach(mt=>{ if(on&&!GH.has(mt)){ GH.set(mt,[mt.transparent,mt.opacity,mt.depthWrite]); mt.transparent=true; mt.opacity=0.22; mt.depthWrite=false; mt.needsUpdate=true; }
+    if(!on&&GH.has(mt)){ const [a_,o_,d_]=GH.get(mt); mt.transparent=a_; mt.opacity=o_; mt.depthWrite=d_; mt.needsUpdate=true; GH.delete(mt); } }); }); need=true; }
+window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; ghost(f>0); upd(true); }};
 upd(true);
 } }
 
@@ -6589,11 +6598,15 @@ function step5(d){ const i=MENU.findIndex(([k])=>k===M5.s); go(MENU[(i+d+MENU.le
 const LAST={}; MENU.forEach(([k,,subs])=>LAST[k]=subs[0][0]);
 function go(s,sub){ if(sub===undefined) sub=LAST[s]||MENU.find(([k])=>k===s)[2][0][0]; M5.s=s; M5.sub=sub; LAST[s]=sub;
   const {sub:sb}=cur(), o=sb[2]; Object.assign(state.lay,L0,o.lay||{}); if(o.sec==='uze') state.lay.uAC=true; state.sec=o.sec; if(state.sheet==='peek') sheetSet('half');
-  apply(); if(o.cam==='near') camNear(); else if(o.cam&&VIEWS[o.cam]) goCam(o.cam); if(o.pane==='roz') explode(); }
+  apply(); if(o.pane==='roz'&&state.lay.stg==='1') camFac(); else if(o.cam==='near') camNear(); else if(o.cam&&VIEWS[o.cam]) goCam(o.cam); if(o.pane==='roz') explode(); }
 // ---------- камера до модуля зблизька (кріплення видно ближче 16 м)
 function camNear(){ if(!RN) return; const st=state.lay.stg, g=st==='1'?'wh':'roof', ms=RN.MODS.filter(m=>m.grp===g&&m.nb.mv&&m.nb.pu&&!m.nb.mu); const m=ms[Math.floor(ms.length*0.35)]||RN.MODS[0];
   const p=m.c.clone().addScaledVector(m.w,1.3).addScaledVector(m.v,-1.9).addScaledVector(m.u,-2.4), t=m.c.clone().addScaledVector(m.u,-1.1); goTo({p:p.toArray(),c:t.toArray()}); }
-let exT=null; function explode(){ if(!RN||!RN.setEx) return; const t0=performance.now(); cancelAnimationFrame(exT); const st=()=>{ const f=Math.min(1,(performance.now()-t0)/1400); RN.setEx(f*f*(3-2*f)); if(f<1) exT=requestAnimationFrame(st); }; setTimeout(()=>{ exT=requestAnimationFrame(st); },900); }
+let exT=null; const FN=()=>T_.facnode;
+function setExAll(f){ if(RN&&RN.setEx) RN.setEx(state.lay.stg==='1'?0:f); const fn=FN(); if(fn&&fn.setEx) fn.setEx(state.lay.stg==='2'?0:f); }
+function explode(){ const t0=performance.now(); cancelAnimationFrame(exT); const st=()=>{ const f=Math.min(1,(performance.now()-t0)/1400); setExAll(f*f*(3-2*f)); if(f<1) exT=requestAnimationFrame(st); }; setTimeout(()=>{ exT=requestAnimationFrame(st); },900); }
+function camFac(){ const fn=FN(); if(!fn) return; const md=fn.MODS.filter(x=>x.n==='kozyrok')[10]||fn.MODS[0], e=md.T.elements, Z=new V3(e[8],e[9],e[10]), X=new V3(e[0],e[1],e[2]), o=new V3(e[12],e[13],e[14]);
+  goTo({p:o.clone().addScaledVector(Z,3.4).addScaledVector(X,2.2).add(new V3(0,-1.6,0)).toArray(),c:[o.x,o.y-0.4,o.z]}); }
 // ---------- власні панелі
 const stgN=()=>state.lay.stg==='1'?'Етап 1':state.lay.stg==='2'?'Етап 2 · дах цеху':'Весь об\'єкт';
 const needB=(t,list)=>`<div class="blk wide"><div class="need"><b>${t}</b>${list?`<ul class="open" style="margin-top:6px">${list.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div></div>`;
@@ -6630,7 +6643,7 @@ function pBal(){ const q=(BOM.roof||{q:{}}).q, b=(q.blk||0)+(q.blk2||0), m=(q.ma
   <div class="kpi"><span class="k">Модулі даху</span><span class="v">${f1(mods/1000)} <small>т</small></span><span class="s">${nf(S.roof.n)} × 36,5 кг</span></div>
   <div class="kpi"><span class="k">Навантаження на поле</span><span class="v">${f0((kgB+lag+mods)/F)} <small>кг/м²</small></span><span class="s">на ${nf(F)} м² поля розкладки</span></div></div>
   ${needB('Потрібно для перевірки покрівлі:',['несуча здатність покриття цеху (обстеження) — порівняти з навантаженням вище','додаткові блоки по краях поля — кількість з розрахунку вітру за ДБН на поточну розкладку'])}`; }
-function pRoz(){ return head('Конструкція · розбір на елементи','Вузол даху цеху — розібрано','Камера підлітає до краю ряду, деталі розходяться вгору шарами: мат і блок, гільза з муфтою і шпилька, лага, болти, притиски над модулем. Інший підрозділ — вузол збирається назад.')+`<div class="blk wide">${bomRows(['mat','blk','lbolt','lag','sleeve','cpl','rod','jam','mcl','zcl','xprof','ang'])}</div>`; }
+function pRoz(){ return head('Конструкція · розбір на елементи',state.lay.stg==='1'?'Вузол фасаду — розібрано':'Вузол даху цеху — розібрано',state.lay.stg==='1'?'Етап 1 — фасад: модулі стають прозорими, деталі відходять від стіни шарами — анкери, кронштейни, консолі й підкоси козирка, рейки, притиски, трос безпеки. Етап 2 або «Разом» — вузол даху.':'Модулі стають прозорими, деталі розходяться вгору шарами: мат, блок, шпилька M10 з муфтами і гільзами, лага, болти, притиски. Етап 1 — вузол фасаду. Інший підрозділ — вузол збирається назад.')+`<div class="blk wide">${bomRows(['mat','blk','lbolt','lag','sleeve','cpl','rod','jam','mcl','zcl','xprof','ang'])}</div>`; }
 function pBz(){ return head('Електрика · блискавкозахист','Блискавкозахист без щогл','Рішення власника 25.10: без щогл, найдешевший практичний варіант — зрівнювання потенціалів конструкцій СЕС, PE до заземлення ТП; контейнери — свій контур заземлення (у «Контейнерах»).')+needB('Потрібно: перерахувати том 7 «БЗ» під поточну розкладку (дах В1, фасади, ліхтарі, склад, АБК) і показати провідники в моделі.'); }
 function pObl(){ if(!E) return needB('Потрібно: розрахунок економіки.'); const v=E.var[state.lay.ekoM||'lim'], x=state.lay.stg==='1'?v.plan:v.max;
   return head('Гроші · обладнання',`${stgN()==='Етап 2 · дах цеху'?'Весь об\'єкт':stgN()}: ${usd(x.cap.razom)}`,'Капвитрати під ключ, як у розрахунку економіки: СЕС — за кошторисом 26.10 на кВтп, контейнер — під ключ, EMS — окремо.')+
@@ -6714,7 +6727,7 @@ function bindP(p){ p.querySelectorAll('[data-kut]').forEach(b=>b.onclick=()=>{ s
   const bu=p.querySelector('#budU'); if(bu) bu.onchange=()=>{ state.lay.budU=Math.max(50000,+bu.value||0); render5(); }; save(); }
 const ap0=apply; apply=function(){ const o=cur().sub[2];
   if(state.sec!==o.sec){ const hit=MENU.flatMap(([s,,subs])=>subs.map(x=>[s,x])).find(([,x])=>x[2].sec===state.sec); if(hit){ M5.s=hit[0]; M5.sub=hit[1][0]; } }   // перехід з коду двійника (напр. картка контейнера)
-  if(RN&&RN.setEx&&cur().sub[2].pane!=='roz') RN.setEx(0);
+  if(cur().sub[2].pane!=='roz') setExAll(0);
   const r=ap0.apply(this,arguments); render5(); return r; };
 window.__twin.apply=apply; window.__twin.menu5={MENU,go,cur};
 go(M5.s,M5.sub);
