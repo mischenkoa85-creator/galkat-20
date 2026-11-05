@@ -111,12 +111,13 @@ const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k
     return {t:NAME[k],d:`На всьому об'єкті з моделі: ${k==='lag'||k==='xprof'?nf(tot,1)+' м':nf(Math.round(tot))+' шт.'}${kg?` · ${nf(kg,kg<0.1?3:2)} кг за штуку`:''}. ${k==='mrail'||k==='scr'?'Склад: розрахунок 26.10 на 176 модулів.':k==='mcl'||k==='zcl'?'Дах цеху — 3 точки на довгий бік; склад і ліхтарі — 2 точки в зоні 540 мм від торців.':'Дах цеху: «Лага 0°», арка 18 м (elements-ses).'} Деталі показуються зблизька, для найближчих модулів.`}; };
   PICK.push({o:im,when:()=>DG.visible&&im.count>0}); });
 const visUp=o=>{ for(let x=o;x;x=x.parent) if(x.visible===false) return false; return true; };
-let SEL='', lastP=new V3(1e9,0,0);
+let SEL='', lastP=new V3(1e9,0,0), EX=0;   // розбір на елементи: зсув деталей уздовж нормалі модуля, м (Конструкція → Розбір)
+const EXO={blk:0.12,lbolt:0.62,lag:0.42,xprof:0.42,ang:0.42,sleeve:0.26,sleeveE:0.26,cpl:0.26,rod:0.26,jam:0.26,mcl:0.85,zcl:0.85,mrail:0.25,scr:0.35};
 function upd(force){ if(!force&&camera.position.distanceTo(lastP)<0.3) return; lastP.copy(camera.position);
   const L_=[]; MODS.forEach((m,i)=>{ const d=camera.position.distanceTo(m.c); if(d<RD) L_.push([d,i]); }); L_.sort((p,q)=>p[0]-q[0]);
   const pick=L_.filter(([d,i])=>visUp(MODS[i].im)).slice(0,NM).map(x=>x[1]), key=pick.join(','); if(!force&&key===SEL) return; SEL=key;
   const per={}; Object.keys(IMS).forEach(k=>per[k]=0); const W_=new THREE.Matrix4();
-  pick.forEach(i=>{ const m=MODS[i]; REC[m.grp](m).forEach(([k,M])=>{ const im=IMS[k]; if(per[k]>=im.instanceMatrix.count) return; W_.multiplyMatrices(m.T,M); im.setMatrixAt(per[k]++,W_); }); });
+  pick.forEach(i=>{ const m=MODS[i]; REC[m.grp](m).forEach(([k,M])=>{ const im=IMS[k]; if(per[k]>=im.instanceMatrix.count) return; W_.multiplyMatrices(m.T,M); if(EX>0&&EXO[k]) W_.premultiply(new THREE.Matrix4().makeTranslation(m.w.x*EXO[k]*EX,m.w.y*EXO[k]*EX,m.w.z*EXO[k]*EX)); im.setMatrixAt(per[k]++,W_); }); });
   Object.entries(IMS).forEach(([k,im])=>{ im.count=per[k]; im.instanceMatrix.needsUpdate=true; }); need=true; }
 controls.addEventListener('change',()=>upd(false)); setInterval(()=>upd(false),400);
 const sv0=setVis; setVis=function(){ sv0.apply(this,arguments); upd(true); };
@@ -129,6 +130,6 @@ const pz0=panelPZ; panelPZ=function(){ const h=pz0.apply(this,arguments), f=(v,k
   ${ks.map(k=>`<tr><td class="w">${NAME[k]}</td>${G.map(([g])=>`<td>${BOM[g].q[k]?f(BOM[g].q[k],k):'—'}</td>`).join('')}</tr>`).join('')}
   <tr class="tot"><td class="w">Маса кріплення з баластом, т</td>${kg.map(v=>`<td>${nf(v/1000,1)}</td>`).join('')}</tr></tbody></table></div>
   <p class="src">Підраховано по кожному модулю моделі з його сусідами (стик, край ряду). Деталі видно зблизька — підведіть камеру до модулів. Фасади — вузли «Кубики фасаду», АБК — модель АБК. Рейки ліхтарів (41×41, 2 на схил) — у моделі ліхтаря; на що їх спирати, ще не вирішено.</p></div>`; };
-window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m)};
+window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; upd(true); }};
 upd(true);
 } }
