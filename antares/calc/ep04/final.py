@@ -59,6 +59,20 @@ def add_path(b, desc, stg):
 for r in rows:
     if r['z'] in ('roof', 'lan'): add_path(r, DE if r.get('side', 'N') == 'E' else DN, r['st'])
     elif r['z'] == 'fac' and r.get('roof'): add_path(r, DE, r['st'])
+# 05.11: відрізки різних трас, що йдуть одним коридором, мають різні вузли (місця щитів) і перекриваються — лоток рахуємо по елементарних
+# ділянках між усіма вузлами коридору, з сумою ліній (раніше перекриття рахувались двічі)
+def partition(sg):
+    Hh = collections.defaultdict(list); Vv = collections.defaultdict(list); out = {}
+    for (u, v), (n1, n2, _) in sg.items():
+        if abs(u[1] - v[1]) < 1e-6: Hh[round(u[1], 4)].append((min(u[0], v[0]), max(u[0], v[0]), n1, n2))
+        else: Vv[round(u[0], 4)].append((min(u[1], v[1]), max(u[1], v[1]), n1, n2))
+    for c, L, hor in [(c, L, True) for c, L in Hh.items()] + [(c, L, False) for c, L in Vv.items()]:
+        ps = sorted({round(p, 4) for a, b, _, _ in L for p in (a, b)})
+        for a, b in zip(ps, ps[1:]):
+            m1 = sum(t[2] for t in L if t[0] <= a + 1e-6 and t[1] >= b - 1e-6); m2 = sum(t[3] for t in L if t[0] <= a + 1e-6 and t[1] >= b - 1e-6)
+            if m1 + m2: out[((a, c), (b, c)) if hor else ((c, a), (c, b))] = [m1, m2, set()]
+    return out
+seg = partition(seg)
 def tray_w(n):   # ліній (по 2 жили Al 120 ≈ Ø19)
     for w, cap in (('100×50', 3), ('200×50', 6), ('300×100', 18), ('400×100', 24), ('600×100', 36)):
         if n <= cap: return w
