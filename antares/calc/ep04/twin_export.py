@@ -20,6 +20,7 @@ for r in F['rows']:
         if r.get('roof'): b.update(roof=1, X=round(r['X'], 2), Y=round(r['Y'], 2))   # 05.11: щит на даху біля парапету
     elif r['z'] == 'wh': o = next(x for x in WA['wh'] if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'], wall=o['wall'])       # 05.11: на північній стіні складу
     elif r['z'] == 'abk': o = next(x for x in WA['abk'] if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'], z0=o['z0'])          # 05.11: ЩА-1 / ЩА-2 на стіні надбудови АБК
+    elif r['z'] == 'whn': o = next(x for x in WA['whn']['boxes'] if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'], wall='C')  # 06.11: ЩС-Пн1 / Пн2 — північні скати складу (опція)
     else: b.update(X=r['X'], Y=r['Y'])
     boxes.append(b)
     if r['z'] in ('roof', 'lan') or (r['z'] == 'fac' and r.get('roof')):
@@ -27,7 +28,7 @@ for r in F['rows']:
         dist, prev = dijk(graph([st]), st); pts = path(prev, st, DE if d == 'E' else DN)
         routes.append({'id': b['id'], 'st': r['st'], 'K': r['K'], 'pts': [[round(x, 2), round(y, 2)] for x, y in pts], 'd': d})
 order = {b['id']: k for k, b in enumerate(old)}; boxes.sort(key=lambda b: order.get(b['id'], 999))
-assert len({b['id'] for b in boxes}) == len(boxes) and len(boxes) - len([b for b in boxes if b['z'] == 'abk']) == len([b for b in old if b['z'] != 'abk']), 'щити не зійшлися з двійником'
+assert len({b['id'] for b in boxes}) == len(boxes) and len(boxes) - len([b for b in boxes if b['z'] in ('abk', 'whn')]) == len([b for b in old if b['z'] not in ('abk', 'whn')]), 'щити не зійшлися з двійником'
 E.update(boxes=boxes, routes=routes, T={str(k): v for k, v in F['T'].items()}, inp=F['inp'], kwp={k: round(v, 1) for k, v in F['kwp'].items()}, var=F.get('var', '1'),
          segs=[dict(a=[round(v, 3) for v in g['a']], b=[round(v, 3) for v in g['b']], n=g['n1'] + g['n2'], w=g['w'], st=g['st'], m=g['mnt']) for g in F['segs']],
          cross=F['cross'], shv={k: list(v) for k, v in F['shv'].items()}, DE=list(F['DE']), DN=list(F['DN']),

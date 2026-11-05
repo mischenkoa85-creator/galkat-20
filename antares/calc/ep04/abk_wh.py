@@ -72,6 +72,8 @@ def sAB(x):                          # довжина по краю A/B від X
         xe = min(x, x1); s += math.hypot(xe - x0, (y1 - y0) * (xe - x0) / (x1 - x0))
     return s
 BOXH = (1.0, 1.5)                    # низ і верх щита на стіні, м
+WHN = os.environ.get('WHN', '1') == '1'   # 06.11 (власник): «додавай варіант 2 до першого етапу … з можливістю прибрати» — модулі на північних скатах C1 / C2; WHN=0 — прибрати
+XG = 98.55                                 # WHN: спуск лотка з гребеня — на західному торці C1 (між краєм даху X 98,1 і першим стовпчиком модулів 98,76), щоб звільнити стовпчик X 103,4
 def end_len(j, xp, wall):
     """кабель від кінцевого модуля стрінга до щита на стіні: під модулями вгору по скату → лотком уздовж краю / гребеня → по північному скату → по стіні до щита"""
     x, y = WM[j]
@@ -79,7 +81,9 @@ def end_len(j, xp, wall):
         up = (yN(x) - y) / math.cos(11 * D2R); along = abs(sAB(x) - sAB(xp)); down = hN(xp) - BOXH[1]
         return up + along + down + 0.6
     sl = 22 if part(x) == 'C1' else 17; sl2 = 22 if part(xp) == 'C1' else 17
-    up = (-15.5 - y) / math.cos(sl * D2R); along = abs(x - xp); down = 9.0 / math.cos(sl2 * D2R) + (HE - BOXH[1]); return up + along + down + 0.6
+    if WHN: sl2 = 22                 # спуск на західному торці C1, далі під карнизом до щита
+    along = abs(x - XG) + abs(xp - XG) if WHN else abs(x - xp)
+    up = (-15.5 - y) / math.cos(sl * D2R); down = 9.0 / math.cos(sl2 * D2R) + (HE - BOXH[1]); return up + along + down + 0.6
 def air_tail(K, from_pt):            # від точки на фасадному лотку цеху до ШВ
     sx, sy = SHV[K]
     return [(XF, sy - 0.7, HF), (XF, sy - 0.7, 2.0), (sx + 0.06, sy - 0.2, 1.6)]
@@ -120,8 +124,9 @@ def box_cost(b, xp):
     P = line_pts_wh(xp, wall, K); L = SLACK(plen(P)); ln = 2 * L * PRICE[120] * K_IMP + 2 * L * 0.3 + plen(P) * 1.93
     xs = [WM[s['pe']][0] for s in ss] + [WM[s['me']][0] for s in ss]
     edge = (abs(sAB(max(xs + [xp])) - sAB(min(xs + [xp]))) if wall == 'AB' else 0.0)
-    fix = ((hN(xp) - BOXH[1]) if wall == 'AB' else (9.3 + HE - 0.1 - BOXH[1])) * CT
-    return sc * C16 + ln + fix + edge * CT, (min(xs + [xp]), max(xs + [xp])), P
+    fix = ((hN(xp) - BOXH[1]) if wall == 'AB' else (9.3 + HE - 0.1 - BOXH[1] + (abs(xp - XG) if WHN else 0.0))) * CT
+    xr = XG if (WHN and wall == 'C') else xp
+    return sc * C16 + ln + fix + edge * CT, (min(xs + [xr]), max(xs + [xr])), P
 def opt_ab():
     best_ = None
     for xp in [x / 2 for x in range(int(54.5 * 2), int(97.5 * 2) + 1)]:
@@ -129,7 +134,7 @@ def opt_ab():
         if best_ is None or c < best_[0]: best_ = (c, xp)
     return best_[1]
 def opt_c():                          # ЩС-С2 і ЩС-С3 разом: спільний лоток по гребеню (об'єднання), спільна траншея вздовж стіни, щити не ближче 1,0 м
-    cand = [x / 2 for x in range(int(98.8 * 2), int(154.4 * 2) + 1)]
+    cand = [x / 2 for x in range(int((99.5 if WHN else 98.8) * 2), int(154.4 * 2) + 1)]   # WHN: щити не ближче 1,4 м до кута C1 зі стійкою троса
     C2_ = {x: box_cost(24, x) for x in cand}; C3_ = {x: box_cost(25, x) for x in cand}; best_ = None
     for x2 in cand:
         c2, i2, _ = C2_[x2]
@@ -159,16 +164,70 @@ for b in (23, 24, 25):
         trays = dict(edge=[list(map(lambda v: round(v, 3), p)) for p in edge], wall=[[xp, round(yN(xp) + 0.12, 3), round(hN(xp), 2)], [xp, round(yN(xp) + 0.12, 3), BOXH[1]]])
         L_edge = plen(edge); L_slope = 0.0; L_wall = hN(xp) - BOXH[1]
     else:
-        x0, x1 = min(xs + [xp]), max(xs + [xp]); zr = lambda x: HE + 9 * (T22 if part(x) == 'C1' else T17)
+        xd = XG if WHN else xp          # спуск з гребеня: WHN — на західному торці C1, інакше — над щитом
+        x0, x1 = min(xs + [xd]), max(xs + [xd]); zr = lambda x: HE + 9 * (T22 if part(x) == 'C1' else T17)
         ridge = [(x0, -15.3, zr(x0) + 0.05), (x1, -15.3, zr(x1) + 0.05)]
-        slope = [(xp, -15.3, zr(xp) + 0.05), (xp, -6.7, HE + 0.12)]
-        trays = dict(ridge=[list(map(lambda v: round(v, 3), p)) for p in ridge], slope=[list(map(lambda v: round(v, 3), p)) for p in slope], wall=[[xp, -6.4, HE - 0.1], [xp, -6.4, BOXH[1]]])
-        L_edge = x1 - x0; L_slope = plen(slope); L_wall = HE - 0.1 - BOXH[1]
+        slope = [(xd, -15.3, zr(xd) + 0.05), (xd, -6.7, HE + 0.12)]
+        wl = ([[XG, -6.4, HE - 0.1]] if WHN else []) + [[xp, -6.4, HE - 0.1], [xp, -6.4, BOXH[1]]]
+        trays = dict(ridge=[list(map(lambda v: round(v, 3), p)) for p in ridge], slope=[list(map(lambda v: round(v, 3), p)) for p in slope], wall=wl)
+        L_edge = x1 - x0; L_slope = plen(slope); L_wall = HE - 0.1 - BOXH[1] + (abs(xp - XG) if WHN else 0.0)
     WH.append(dict(id=nm, b=b, K=K, wall=wall, ns=len(ss), kwp=round(len(ss) * 11 * 0.73, 2), X=xp, Y=round(yN(xp) + 0.2, 2) if wall == 'AB' else -6.3, h=BOXH,
                    pts=[[round(v, 3) for v in p] for p in P], Lr=round(Lr, 1), L=round(L, 1), trench_own=round(trench_own(P), 1),
                    str_m=round(sum(s['tot'] for s in sts), 1), str_old=round(sum(s['old'] for s in sts), 1), strings=sts, trays=trays,
                    tray_m=dict(edge=round(L_edge, 1), slope=round(L_slope, 1), wall=round(L_wall, 1)),
                    **{k: round(v, 3) if isinstance(v, float) else v for k, v in r.items()}))
+# ================= 06.11: північні скати складу C1 (22°) і C2 (17°) — варіант 2: 121 модуль, 11 стрінгів, щити ЩС-Пн1 / Пн2 → окремі входи MPPT К-1 / К-3
+WHNO = None
+if WHN:
+    _t = open(os.path.join(R, 'obj/src/raddata.js'), encoding='utf-8').read(); RAD = json.loads(_t[_t.index('=') + 1:].strip().rstrip(';'))
+    def _cell(k, x, y):
+        c = RAD['cells'][k]; i = int((x - c['s0']) // 1); j = int((y - c['t0']) // 1)
+        return c['e'][j * c['nx'] + i] if 0 <= i < c['nx'] and 0 <= j < c['ny'] else None
+    def _foot(k, x, y, tl):          # радіація за рік під модулем (книжково), середнє по клітинках 1 × 1 м
+        hy = 2.384 * math.cos(tl * D2R) / 2; v = [_cell(k, x + dx, y + dy) for dx in (-0.45, 0, 0.45) for dy in [(-hy + 0.2) + (2 * hy - 0.4) * t / 3 for t in range(4)]]
+        v = [q for q in v if q is not None]; return sum(v) / len(v)
+    TLT = {'A': 11, 'B': 11, 'C1': 22, 'C2': 17}
+    def _poa(x, y):                  # C2 у сітці радіації немає — як C1 з поправкою на кут (pvlib, Perez, Київ: Пд 17°/22° = 1 297 / 1 316, Пн 17°/22° = 1 006 / 948)
+        p = part(x)
+        if p in ('A', 'B'): return _foot('wh' + p, x, y, 11)
+        v = _foot('whC1', min(x, 146.0), y, 22)
+        return v if p == 'C1' else v * ((1297 / 1316) if y < -15.5 else (1006 / 948))
+    PRW = 1157 / (sum(_poa(x, y) for x, y in WM) / len(WM))     # 1 157 кВт·год/кВтп складу (26.10) ↔ радіація під модулями → коефіцієнт системи
+    NP = [(x, round(-31 - y, 3)) for x, y in WM if part(x) in ('C1', 'C2')]       # дзеркало рядів південного скату відносно гребеня Y −15,5
+    rows_ = [sorted([q for q in NP if abs(q[1] - yr) < 0.01]) for yr in sorted({q[1] for q in NP}, key=lambda v: -v)]
+    SS, left = [], []
+    for r_ in rows_:
+        k_ = len(r_) // 11; SS += [r_[i * 11:(i + 1) * 11] for i in range(k_)]; left += r_[k_ * 11:]
+    while len(left) >= 11:            # залишки з кінців рядів — стрінги через ряди (перемички), найслабші місця лишаються вільними
+        left.sort(key=lambda q: -_poa(*q)); SS.append(sorted(left[:11], key=lambda q: (q[1], q[0]))); left = left[11:]
+    SS.sort(key=lambda s_: sum(q[0] for q in s_) / len(s_))
+    xb0 = max(XB[24], XB[25]); NB = [('ЩС-Пн1', round(xb0 + 1.0, 2), 'K-1', SS[:6]), ('ЩС-Пн2', round(xb0 + 2.0, 2), 'K-3', SS[6:])]
+    def _end(q, xb):
+        x, y = q; tl = 22 if part(x) == 'C1' else 17
+        return abs(y + 15.5) / math.cos(tl * D2R) + abs(x - XG) + abs(xb - XG) + 9.0 / math.cos(22 * D2R) + (HE - BOXH[1]) + 0.6
+    WMOD, WSTR, WBOX = [], [], []; sid = 0
+    for bid, xb, K, ss in NB:
+        ids = []
+        for s_ in ss:
+            sid += 1; nm = f'СП-{sid:02d}'; ids.append(nm)
+            jm = sum(2.7 for a, b in zip(s_, s_[1:]) if abs(a[1] - b[1]) > 0.01) + sum(abs(a[0] - b[0]) - 1.34 for a, b in zip(s_, s_[1:]) if abs(a[1] - b[1]) < 0.01 and abs(a[0] - b[0]) > 1.5)
+            pl, mi = _end(s_[0], xb), _end(s_[-1], xb)
+            WSTR.append(dict(id=nm, box=bid, K=K, plus=round(pl, 1), minus=round(mi, 1), jm=round(jm, 1), tot=round(pl + mi + jm, 1), m=[len(WMOD) + i for i in range(len(s_))],
+                             ends=[list(s_[0]), list(s_[-1])]))
+            WMOD += [[q[0], q[1], part(q[0]), round(_poa(*q)), nm] for q in s_]
+        P = line_pts_wh(xb, 'C', K); Lr = plen(P); L = SLACK(Lr); r = best(L, len(ss), TAUF['wh'] * 0.55)
+        WBOX.append(dict(id=bid, z='whn', K=K, ns=len(ss), kwp=round(len(ss) * 11 * 0.73, 2), X=xb, Y=-6.3, z0=BOXH[0], h=BOXH, strings=ids,
+                         pts=[[round(v, 3) for v in p] for p in P], Lr=round(Lr, 1), L=round(L, 1),
+                         trays=dict(wall=[[xb, -6.4, HE - 0.1], [xb, -6.4, BOXH[1]]], line=[[xb, -6.35, BOXH[1]], [xb, -6.35, HE_T]]),
+                         **{k: round(v, 3) if isinstance(v, float) else v for k, v in r.items()}))
+    WMOD += [[q[0], q[1], part(q[0]), round(_poa(*q)), None] for q in left]       # вільні місця (без модуля)
+    ext = max(b_['X'] for b_ in WBOX) - xb0                                          # подовження лотків під карнизом (стрінги і лінії) до нових щитів
+    tr = sum(2 * (HE - 0.1 - BOXH[1]) for _ in WBOX) + 2 * ext
+    n_ = sum(len(s_['m']) for s_ in WSTR); kwp_ = n_ * 0.73
+    yld = sum(PRW * q[3] for q in WMOD if q[4]) / n_
+    WHNO = dict(on=True, XG=XG, n=n_, ns=len(WSTR), kwp=round(kwp_, 2), y=round(yld), mwh=round(kwp_ * yld / 1000, 1), PR=round(PRW, 3), free=len(left),
+                mods=WMOD, strings=WSTR, boxes=WBOX,
+                q=dict(str_m=round(sum(s_['tot'] for s_ in WSTR), 1), tray=round(tr, 1), brk=math.ceil(tr) + 2 * len(WBOX), pe=round(tr, 1), clamps=4, lift=1, kits=len(WSTR)))
 # ================= АБК
 TR = AD['trays']; BX = AD['inv']['boxes']; NODE = tuple(AD['inv']['node'])
 ZR = NODE[2]; XP = 108.3 + 0.5 + 0.05                        # внутрішня грань західного парапету нижнього блоку
@@ -211,6 +270,7 @@ def add_line(P):
         k = (tuple(round(v, 2) for v in a[:2]), tuple(round(v, 2) for v in b[:2])); k = tuple(sorted(k)); seg[k] += 1
 for w in WH: add_line(w['pts'])
 for a in AB: add_line(a['pts'])
+for a in (WHNO['boxes'] if WHNO else []): add_line(a['pts'])
 def part_seg(S):                     # елементарні ділянки (як final.partition): колінеарні відрізки → частини з сумою ліній
     Hh = collections.defaultdict(list); Vv = collections.defaultdict(list); O = []
     for (u, v), n in S.items():
@@ -230,7 +290,7 @@ ROPES, FAC = [], []
 if MODE == 'air':
     rp = collections.Counter(); fs = collections.Counter()
     RST = [(POST[0], POST[1], HR), (XAW, YAN, HR), (XAW, YD - 0.25, HA)]          # початки тросів: стійка складу; АБК 'wall'; АБК 'roof'
-    for o in WH + AB:
+    for o in WH + AB + (WHNO['boxes'] if WHNO else []):
         P = o['pts']
         for a, b in zip(P, P[1:]):
             if any(math.dist(a, r_) < 1e-6 for r_ in RST) and min(a[2], b[2]) >= 6 and math.dist(a[:2], b[:2]) > 3: rp[(tuple(a), tuple(b))] += 1
@@ -266,7 +326,7 @@ q = dict(**q_air,
     str_wh=round(sum(w['str_m'] for w in WH), 1), str_wh_old=round(sum(w['str_old'] for w in WH), 1),
     str_abk=round(AD['dc']['plus'] + AD['dc']['minus'] + AD['dc']['jump'], 1), str_abk_old=973.2)
 if MODE == 'air': SH = []; T_new = T_pipe = 0.0; q.update(trench=0.0, pipe=0.0, shared=0.0, exc=0.0, sand=0.0, back=0.0, spoil=0.0, tape=0.0)
-OUT = dict(wh=WH, abk=AB, trench=TS, shared=SH, ropes=ROPES, fac=FAC, mode=MODE, q=q, consts=dict(XT=XT, YC=YC, XA=XA, YW=YW, DEP=DEP, HR=HR, HF=HF, XF=XF, POST=POST, XSW=XSW, YAB=YAB, XAW=XAW, HAW=HAW, YAN=YAN, ABKR=ABKR, YR=YR, HA=HA, HS=HS, YD=YD),
+OUT = dict(wh=WH, abk=AB, whn=WHNO, trench=TS, shared=SH, ropes=ROPES, fac=FAC, mode=MODE, q=q, consts=dict(XT=XT, YC=YC, XA=XA, YW=YW, DEP=DEP, HR=HR, HF=HF, XF=XF, POST=POST, XSW=XSW, YAB=YAB, XAW=XAW, HAW=HAW, YAN=YAN, ABKR=ABKR, YR=YR, HA=HA, HS=HS, YD=YD),
            note=('Повітряні переходи на тросі: склад — кріплення 6,6 м, провис ≤ 0,3 м — над проїздом ≥ 6 м; АБК — з даху (10,0 м) прямо на фасад цеху (9,6 м) над прибудовою ТП-5913; кабель Al з УФ-стійкою оболонкою; точки кріплення на стінах — погодити на місці.' if MODE == 'air' else 'Траншея — за обстеженням ділянки: підземні мережі ТП-5913 у проїзді між ТП і АБК, покриття проїзду; місця щитів складу — з урахуванням воріт і дверей.'))
 json.dump(OUT, open(os.path.join(H, 'wh_abk.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 if not NOABK and not os.environ.get('NOTWIN'):   # дані двійника: траси складу і АБК (ELECWA) і модель АБК на 12 стрінгів по 11 зі щитами (ABK_DC — замість dbn у ABK_DATA)

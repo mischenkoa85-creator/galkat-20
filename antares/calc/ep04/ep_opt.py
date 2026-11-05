@@ -177,6 +177,9 @@ WHN = {w['id']: w for w in json.load(open('wh_abk.json', encoding='utf-8'))['wh'
 # 05.11 (власник): АБК без Deye — 2 щити ЩА-1 / ЩА-2 у найближчі контейнери К-3 / К-1 (траси і довжини — abk_wh.py)
 AB_ = [{'id': a['id'], 'z': 'abk', 'st': 1, 'ns': a['ns'], 'X': a['X'], 'Y': a['Y'], 'K0': a['K'], 'L0': a['L']}
        for a in json.load(open('wh_abk.json', encoding='utf-8')).get('abk', [])] if _os.path.exists('wh_abk.json') else []
+# 06.11 (власник): північні скати складу (опція етапу 1) — щити ЩС-Пн1 / Пн2, кожен на свій вхід MPPT К-1 / К-3; немає в wh_abk.json — немає й рядків
+AB_ += [{'id': a['id'], 'z': 'whn', 'st': 1, 'ns': a['ns'], 'X': a['X'], 'Y': a['Y'], 'K0': a['K'], 'L0': a['L']}
+        for a in ((json.load(open('wh_abk.json', encoding='utf-8')).get('whn') or {}).get('boxes', []) if _os.path.exists('wh_abk.json') else [])]
 # ---------------- економіка перерізу
 def line_cost(S, L): return 2 * L * PRICE[S] * K_IMP + 4 * LUG[S]
 def loss_kw(S, L, ns, mat='Al'): I = ns * IMP; Rl = 2 * RHO[mat] * L / S; return I * I * Rl / 1000

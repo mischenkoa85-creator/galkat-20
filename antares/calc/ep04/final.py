@@ -19,9 +19,9 @@ for r in rows:
             pk = loss_kw(S, r['L'], r['ns']); du = pk * 1000 / (r['ns'] * IMP) / VOP * 100
             if du <= 2.5: r.update(S=S, pk=pk, du=du, e=pk * TAU_F.get(r['z'], TAU), cab=line_cost(S, r['L'])); r['npv'] = r['e'] * TARIFF * PVF; break
 # VAR=2: ліхтарі між К-3 і К-1 — так, щоб кВтп етапу 1 на контейнерах були близькі (енергія від панелей за добу ≈ рівна); далі вони не переставляються
-FIX = ('fac', 'wh', 'abk', 'lan') if VAR == '2' else ('fac', 'wh', 'abk')
+FIX = ('fac', 'wh', 'abk', 'whn', 'lan') if VAR == '2' else ('fac', 'wh', 'abk', 'whn')
 if VAR == '2':
-    kw1 = {k: sum(r['ns'] for r in rows if r['K'] == k and r['z'] in ('fac', 'wh', 'abk')) for k in ('K-3', 'K-1')}
+    kw1 = {k: sum(r['ns'] for r in rows if r['K'] == k and r['z'] in ('fac', 'wh', 'abk', 'whn')) for k in ('K-3', 'K-1')}
     for r in sorted([r for r in rows if r['z'] == 'lan'], key=lambda r: -r['ns']):
         k = min(kw1, key=lambda k: kw1[k]); r['L'] += OFF['E'][k] - OFF['E'][r['K']]; r['K'] = k; kw1[k] += r['ns']
         pk = loss_kw(r['S'], r['L'], r['ns']); du = pk * 1000 / (r['ns'] * IMP) / VOP * 100

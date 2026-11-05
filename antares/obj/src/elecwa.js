@@ -35,6 +35,9 @@ EW.wh.forEach(w=>{ const info={t:`Лінія Al ${w.id} → ШВ ${KNw(w.K)} (Т
 // АБК: лоток ліній від щитів по нижньому даху на захід, через парапет і по західній стіні вниз (один лоток на дві лінії); лінії — як у складу
 if(EW.abk&&EW.abk.length){ const a0=EW.abk[0]; polyW(a0.tray.slice(1),0.1,0.05,trayMw,{t:'Лоток 100×50 ліній АБК → К-3 / К-1',d:EW.mode==='air'?(EW.consts.ABKR==='roof'?'Дві лінії Al від ЩА-1 і ЩА-2: по нижньому даху вздовж стіни основного блоку на захід (опори з блоком через 1,5 м), через західний парапет — і з кута АБК одразу тросом на фасад цеху.':'Дві лінії Al від ЩА-1 і ЩА-2: по нижньому даху вздовж стіни основного блоку на захід (опори з блоком через 1,5 м), через західний парапет, по західній стіні на 10 м (між рядами вікон) до північного кута і вниз до троса на 6,6 м.'):'Дві лінії Al від ЩА-1 і ЩА-2: по нижньому даху вздовж стіни основного блоку на захід (опори з блоком через 1,5 м), через західний парапет і по стіні вниз на кронштейнах до траншеї.'});
   EW.abk.forEach(o=>lineW(o,{t:`Лінія Al ${o.id} → ШВ ${KNw(o.K)} (ТП-5913) · АБК, етап 1`,d:`${o.ns} стрінгів по 11 (S${o.strings.join(', S')}), ${nf1(o.kwp)} кВтп, ≈${nf1(o.mwh)} МВт·год за рік. Al 2 × 1×${o.S} мм², ${nf1(o.L)} м, ΔU ${nf2(o.du)} % при STC. ${EW.mode==='air'?(EW.consts.ABKR==='roof'?`Від щита на стіні надбудови — лотком по нижньому даху, через західний парапет → з кута АБК тросом прямо на східний фасад цеху над прибудовою ТП-5913 → вниз до лотка 5,0 м → ШВ ${KNw(o.K)}.`:`Від щита на стіні надбудови — лотком по нижньому даху, через західний парапет, по західній стіні на 10 м до північного кута → тросом через двір південніше К-3 на стіну цеху → лотком на 5,0 м → ШВ ${KNw(o.K)}.`):`Від щита на стіні надбудови — лотком по нижньому даху і по західній стіні вниз → траншея вздовж західної стіни АБК → на захід через двір до траншеї AC → ШВ ${KNw(o.K)}.`}`})); }
+// 06.11: щити північних скатів складу (опція) — лінії Al і лотки на стіні
+if(EW.whn) EW.whn.boxes.forEach(o=>{ Object.values(o.trays||{}).forEach(pl=>polyW(pl,0.1,0.05,trayMw,{t:`Лоток 100×50 на стіні складу · ${o.id}`,d:'Спуск стрінгів північних скатів від лотка під карнизом до щита і підйом лінії Al до лотка ліній під карнизом; кронштейни через 1,0 м.'}));
+  lineW(o,{t:`Лінія Al ${o.id} → ШВ ${KNw(o.K)} (ТП-5913) · склад, північні скати, етап 1 (опція)`,d:`${o.ns} стрінгів по 11, ${nf1(o.kwp)} кВтп, окремий вхід MPPT. Al 2 × 1×${o.S} мм², ${nf1(o.L)} м, ΔU ${nf2(o.du)} % при STC. Від щита на стіні вгору → лотком під карнизом до стійки на куті C1 → тросом через проїзд → лотком на 5,0 м по фасаду цеху → ШВ ${KNw(o.K)}.`}); });
 // повітряні переходи (05.11, 23:20 — власник: «навіщо копати, пустимо повітряну лінію»): трос, стійка, лотки по стінах і фасаду цеху на 5,0 м
 if(EW.mode==='air'){ const CS=EW.consts, ropeM=new THREE.MeshStandardMaterial({color:lin('#5b6770'),roughness:0.4,metalness:0.6}), seen=new Set();
   const isRope=isRopeW, ABR=CS.ABKR==='roof';
@@ -86,6 +89,9 @@ if(FPw){ const FS={}, put=(t,im,i,sc,hc,f,can)=>{ const o=FS[t]||(FS[t]={id:FNAM
 const WHx={}; if(EPw&&EP&&EP.whi){ let n=0; EPw.strings.forEach(s=>{ if(s.r) return; const b=EPw.boxes[s.b]; if(!b||!BX[b.n]) return;
     const mem=s.m.map(j=>EP.whi[j]).filter(Boolean).map(([w,k])=>[WHI[w].im,k]);
     addS({id:'СК-'+String(++n).padStart(2,'0'),src:s.id,z:'wh',box:b.n,mem,P:mem.map(([im,k])=>{ im.getMatrixAt(k,_m4); _m4.decompose(_p,_q,_s); return _p.clone(); })}); }); }
+// склад, північні скати C1 / C2 (опція етапу 1, 06.11): 11 стрінгів по 11 → ЩС-Пн1 / Пн2 → окремі входи MPPT К-1 / К-3
+if(typeof WHNI!=='undefined'&&EW.whn) EW.whn.strings.forEach(s=>{ const mem=s.m.map(j=>WHNI[j]).filter(Boolean).map(([w,k])=>[WHI[w].im,k]);
+  addS({id:s.id,src:s.id,z:'wh',box:s.box,mem,P:mem.map(([im,k])=>{ im.getMatrixAt(k,_m4); _m4.decompose(_p,_q,_s); return _p.clone(); })}); });
 // АБК (етап 1): 12 стрінгів по 11 → щити ЩА-1 / ЩА-2 → К-3 / К-1 (05.11, без інвертора)
 if(Aw&&Aw.MODS){ const by={}, SBX={}; Aw.MODS.forEach(r=>{ if(r.mesh&&r.k) (by[r.k]=by[r.k]||[]).push(r.mesh); }); ((Aw.DB&&Aw.DB.strings)||[]).forEach(s=>SBX[s.k]='ЩА-'+s.mppt);   // 05.11: стрінг → щит ЩА-1 / ЩА-2
   Object.keys(by).map(Number).sort((a,b)=>a-b).forEach(k=>addS({id:'АБК-'+String(k).padStart(2,'0'),src:'S'+k,k,z:'abk',box:SBX[k]||'ЩА-1',mem:by[k],P:by[k].map(m=>m.getWorldPosition(new V3()))})); }
@@ -129,8 +135,11 @@ const route={
     // 05.11: під модулями вгору по скату до верхнього краю (A, B) або гребеня (C1, C2) → лотком до щита → по північному скату і стіні вниз
     const col=S.wh.g.map(g=>g.qc).filter(q=>Math.abs(q[0]-X)<0.8&&q[1]>=Y-0.05).sort((a,c)=>a[1]-c[1]), n=col.length?col[col.length-1]:[X,Y,h];
     const o=[W(X,Y,h+0.08)]; col.forEach(q=>{ if(q[1]>Y+0.05) o.push(W(X,q[1],q[2]+0.08)); });
+    if(!w&&b.z==='whn'&&EW.whn){ const XG=EW.whn.XG, zr=x=>5+9*(x<146.1?0.4040:0.3057)+0.12; return [W(X,Y,h+0.08),W(X,-15.7,zr(X)),W(XG,-15.7,zr(XG)),W(XG,-6.7,5.17),W(XG,-6.4,4.9),W(b.X,-6.4,4.9),BT(b)]; }   // північні скати: угору до гребеня → торець → під карнизом
     if(!w) { o.push(W(X,n[1]+0.75,n[2]+0.08),BT(b)); return o; }
-    if(w.wall==='C'){ const zr=x=>5+9*(x<146.1?0.4040:0.3057)+0.12; o.push(W(X,-15.3,zr(X)),W(w.X,-15.3,zr(w.X)),W(w.X,-6.7,5.17),W(w.X,-6.4,4.9),BT(b)); return o; }
+    if(w.wall==='C'){ const zr=x=>5+9*(x<146.1?0.4040:0.3057)+0.12, XG=EW.whn&&EW.whn.XG;
+      if(XG){ o.push(W(X,-15.3,zr(X)),W(XG,-15.3,zr(XG)),W(XG,-6.7,5.17),W(XG,-6.4,4.9),W(w.X,-6.4,4.9),BT(b)); return o; }   // 06.11: спуск з гребеня на західному торці C1
+      o.push(W(X,-15.3,zr(X)),W(w.X,-15.3,zr(w.X)),W(w.X,-6.7,5.17),W(w.X,-6.4,4.9),BT(b)); return o; }
     const E=w.trays.edge, x0=Math.min(X,w.X), x1=Math.max(X,w.X), mid=E.filter(p=>p[0]>x0+0.05&&p[0]<x1-0.05).sort((p,q)=>X<w.X?p[0]-q[0]:q[0]-p[0]);
     o.push(W(X,n[1]+0.75,n[2]+0.1)); mid.forEach(p=>o.push(W(p[0],p[1],p[2]))); o.push(W(w.X,w.trays.wall[0][1],w.trays.wall[0][2]),BT(b)); return o; } };
 const WHB={}; EW.wh.forEach(w=>WHB[w.id]=w);
@@ -193,7 +202,7 @@ const SUM=Object.fromEntries(GRP.map(([z])=>[z,gsum(z)]));
 const chk=Object.values(BX).filter(b=>b.ns!=null&&b.ss.length!==b.ns).map(b=>`${b.id}: ${b.ss.length} з ${b.ns}`);
 // ---------- «Накопичувачі»: як під'єднано по етапах (власник 04.11, 18:04: етап 1 — усе PV на одну пару контейнерів, друга пара — лише мережа; етап 2 — дах)
 const puW=panelUZE; panelUZE=function(){ const html=puW.apply(this,arguments), B=E4w.E4.boxes, var2=(E4w.E4.var||'1')==='2';
-  const cnt=(K,st)=>{ const L=B.filter(b=>b.K===K&&b.st===st); return {n:L.length,ns:L.reduce((a,b)=>a+b.ns,0),kw:L.reduce((a,b)=>a+b.kwp,0),z:[...new Set(L.map(b=>({fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах',abk:'АБК'})[b.z]))].join(', ')}; };
+  const cnt=(K,st)=>{ const L=B.filter(b=>b.K===K&&b.st===st); return {n:L.length,ns:L.reduce((a,b)=>a+b.ns,0),kw:L.reduce((a,b)=>a+b.kwp,0),z:[...new Set(L.map(b=>({fac:'фасади',wh:'склад',whn:'склад',lan:'ліхтарі',roof:'дах',abk:'АБК'})[b.z]))].join(', ')}; };
   const rows=['K-3','K-1','K-4','K-5'].map(K=>{ const a=cnt(K,1), c=cnt(K,2);
     return `<tr><td class="w"><i class="sw" style="background:${HUE[K]}"></i>${KN(K)}<span class="stg">${TPN[K]}</span></td><td style="white-space:normal">${a.n?`${a.n} ${shW(a.n)} · ${a.ns} ${strW(a.ns)} · ${nf1(a.kw)} кВтп<small>${a.z}</small>`:'без панелей — лише мережа<small>заряд і розряд (активний споживач)</small>'}</td><td style="white-space:normal">${c.n?`+${c.n} ${shW(c.n)} · ${c.ns} ${strW(c.ns)} · ${nf1(c.kw)} кВтп<small>дах</small>`:'—'}</td><td>${a.n+c.n} з 12</td></tr>`; }).join('');
   const f$=v=>nf(v,0)+' $';
@@ -224,7 +233,7 @@ const hudW=hudCtx; hudCtx=function(){ hudW.apply(this,arguments); const m=$('#mo
 // ---------- панель «Об'єкт»: стрінги → щити → контейнери
 // ---------- «Електрика → Шафи (Al → Cu)»: шафи вводу PV біля контейнерів (06.11)
 const shvB=()=>{ const m5=state.lay.m5||{}; if(m5.s!=='el'||m5.sub!=='shv'||typeof ELEC04==='undefined') return ''; const st=state.lay.stg, B=ELEC04.boxes.filter(b=>st==='all'||String(b.st)===st);
-  const KS=['K-3','K-1','K-4','K-5'], far=b=>b.z==='wh'||b.z==='abk', TP={'K-3':'ТП-5913','K-1':'ТП-5913','K-4':'ТП-6923','K-5':'ТП-6923'};
+  const KS=['K-3','K-1','K-4','K-5'], far=b=>b.z==='wh'||b.z==='abk'||b.z==='whn', TP={'K-3':'ТП-5913','K-1':'ТП-5913','K-4':'ТП-6923','K-5':'ТП-6923'};
   const rows=KS.map(K=>{ const L=B.filter(b=>b.K===K), n1=L.filter(b=>b.st===1).length, n2=L.filter(b=>b.st===2).length, f3=L.filter(far).length, s185=L.filter(b=>b.S===185).length;
     return `<tr><td class="w"><i class="sw" style="background:${HUE[K]}"></i> ШВ ${KN(K)}<span class="stg">${TP[K]}</span></td><td>${n1||'—'}</td><td>${n2||'—'}</td><td>${L.length} з 12</td><td>${L.length-f3||'—'}</td><td>${f3||'—'}</td><td>${L.length?(L.length-s185)+' × 120'+(s185?' · '+s185+' × 185':''):'—'}</td></tr>`; }).join('');
   return `<div class="blk wide"><h3>Шафи вводу PV біля контейнерів (Al → Cu)</h3><div class="tw"><table class="cmp an"><thead><tr><th>Шафа</th><th>Ліній, етап 1</th><th>Ліній, етап 2</th><th>Входів DC/DC</th><th>ПЗІП F2</th><th>ПЗІП F3</th><th>Лінії Al, мм²</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -248,6 +257,7 @@ const ppW=panelPZ; panelPZ=function(){ const html=ppW.apply(this,arguments); if(
   <tr><td class="w">АБК: кабель 1×6<span class="stg">«+» / «−» / перемички</span></td><td>${AD.dc?`${nf(AD.dc.plus,0)} / ${nf(AD.dc.minus,0)} / ${nf(AD.dc.jump,0)} м`:'—'} · лотки стрінгів ${nf1(AD.tray_len||0)} м</td></tr>
   <tr><td class="w">Склад: щити<span class="stg">на північній стіні, низ на 1,0 м</span></td><td>${EW.wh.map(w=>`${w.id} → ${KN(w.K)}: ${w.ns} стрінгів, Al ${nf1(w.L)} м, ΔU ${nf2(w.du)} %`).join('<br>')}</td></tr>
   <tr><td class="w">Склад: кабель 1×6 і лотки<span class="stg">край / гребінь, північний скат, стіна</span></td><td>${nf(Q.str_wh||0,0)} м · лотки ${nf1(EW.wh.reduce((a,w)=>a+w.tray_m.edge+w.tray_m.slope+w.tray_m.wall,0))} м</td></tr>
+  ${EW.whn?`<tr><td class="w">Склад, північні скати — опція етапу 1<span class="stg">C1 22° і C2 17°; спуск з гребеня — на західному торці; кожен щит — свій вхід MPPT</span></td><td>${EW.whn.n} модулів · ${EW.whn.ns} стрінгів · ${nf1(EW.whn.kwp)} кВтп · ≈${nf1(EW.whn.mwh)} МВт·год за рік (≈${nf(EW.whn.y,0)} кВт·год/кВтп)<br>${EW.whn.boxes.map(o=>`${o.id} → ${KN(o.K)}: ${o.ns} стрінгів, Al ${nf1(o.L)} м, ΔU ${nf2(o.du)} %`).join('<br>')}<br>кабель 1×6 ${nf(EW.whn.q.str_m,0)} м${typeof WHNP!=='undefined'&&WHNP?`<br><b>${nf(Math.round(WHNP.cost.net))} $</b> без ПДВ (з модулями, кріпленням, щитами, лініями, роботами і 18 %) · окупність ${nf(WHNP.eco['9.0'].payback,1)}–${nf(WHNP.eco['8.0'].payback,1)} року при 9–8 грн/кВт·год`:''}</td></tr>`:''}
   ${EW.mode==='air'?`<tr><td class="w">Повітряні переходи<span class="stg">трос Ø6: склад — 6,6 м${EW.consts.ABKR==='roof'?', АБК — з даху 10,0 / 9,6 м':''}</span></td><td>${(EW.ropes||[]).map(r=>`${r.who}: ${nf1(r.L)} м, ${r.n} лін.`).join(' · ')} · лоток по фасаду цеху на 5,0 м ${nf1(Q.L_fac||0)} м</td></tr>`:`<tr><td class="w">Траншея 0,4 × 0,8 м<span class="stg">проїзд між ТП-5913 і АБК, уздовж складу</span></td><td>нова ${nf1(TRN)} м · у траншеї AC ${nf1(Q.shared||0)} м · труби ПНД Ø63 ${nf(Q.pipe||0,0)} м</td></tr>`}</tbody></table>
   <p class="src">Стрінги даху, ліхтарів і фасадів — calc/ep04/strings_all.py (розкладка двійника → щити розрахунку 04.11); склад — розкладка стрінгів складу і calc/ep04/abk_wh.py; АБК — calc/v3/abk_dc.py (модель K1, ДБН; 12 стрінгів по 11 у К-3 / К-1).</p></div>`; return shvB()+EL_+html; };   // 06.11: у «Електриці» спершу електрика, потім загальні дані
 apply();

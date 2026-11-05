@@ -125,11 +125,14 @@ MAT.rod=std(0xc0392b,{metalness:0.4,roughness:0.45}); MAT.rodP=std(0xe0782b,{met
 MAT.pvLr=MAT.pvL.clone(); MAT.pvPo=MAT.pvP.clone(); MAT.conM=MAT.znD.clone();
 const WHM=DATA.rp.mods.filter(m=>m[1]<=-1).map(m=>({X:m[0],Y:m[1],land:m[2],part:m[0]<73.5?'A':m[0]<98.1?'B':m[0]<146.1?'C1':'C2'}));
 const WHI=[];
+// 06.11 (власник): північні скати C1 / C2 — опція етапу 1 (calc/ep04/abk_wh.py, WHN; WHN=0 — немає в даних і немає в моделі)
+const WHN_=typeof ELECWA!=='undefined'&&ELECWA.whn?ELECWA.whn:null, WHNI=[];
+if(WHN_) WHN_.mods.forEach((q,i)=>{ if(q[4]) WHM.push({X:q[0],Y:q[1],land:false,part:q[2],whn:i}); });
 { const land=WHM.filter(m=>m.land), port=WHM.filter(m=>!m.land);
   [[land,MAT.pvL],[port,MAT.pvP]].forEach(([list,mat])=>{ const im=inst(BOX,mat,list.length,G.site); WHI.push({im,n:list.length}); list.forEach((m,i)=>im.setColorAt(i,white));
-    list.forEach((m,i)=>{ const sgn=(m.part==='C1'||m.part==='C2')&&m.Y>-15.5?-1:1; _q.setFromAxisAngle(XA,sgn*SLOPE[m.part]*D2R);
+    list.forEach((m,i)=>{ if(m.whn!==undefined) WHNI[m.whn]=[WHI.length-1,i]; const sgn=(m.part==='C1'||m.part==='C2')&&m.Y>-15.5?-1:1; _q.setFromAxisAngle(XA,sgn*SLOPE[m.part]*D2R);
       _M.compose(W(m.X,m.Y,WHF[m.part](m.X,m.Y)+0.08),_q,m.land?_s.set(2.384,0.035,1.303):_s.set(1.303,0.035,2.384)); im.setMatrixAt(i,_M); });
-    im.userData.info=()=>({t:'Склад: модуль на міні-рейках',d:'180 модулів на скатах профнастилу, однаково в обох проєктах (ЕТР арк. 2)'}); PICK.push({o:im}); }); }
+    im.userData.info=()=>({t:'Склад: модуль на міні-рейках',d:`Південні скати — 176 модулів (16 стрінгів)${WHN_?`; північні скати C1 / C2 — ${WHN_.n} (${WHN_.ns} стрінгів, ≈${nf(WHN_.y,0)} кВт·год/кВтп, опція етапу 1)`:''}; міні-рейки на профнастилі.`}); PICK.push({o:im}); }); }
 
 // ---------- кріплення проєкт РП: трикутник за кресленням АБ арк. 6 (база 1 400, пояс 1 160, стійка ≈345), мм у осях GLB → локальні метри
 function b64(s,Ty){ const bin=atob(s), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return new Ty(u.buffer); }

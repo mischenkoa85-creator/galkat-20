@@ -284,7 +284,7 @@ setVis=(f=>function(){ f.apply(this,arguments); const U=state.sec==='uze', ac=st
   lblVis(); })(setVis);
 // кВтп щитів PV кожного контейнера по зонах (аналіз 04.11), зведені до кВтп розкладок; входи — по щиту на вхід DC/DC
 function kZones(){ const E=typeof ELEC04!=='undefined'?ELEC04:null; if(!E) return null; const S=ST.sums(), raw={}, tot={}, inp={};
-  E.boxes.forEach(b=>{ const z=b.z==='abk'?'ab':b.z, r=raw[b.K]=raw[b.K]||{}; r[z]=(r[z]||0)+b.kwp; tot[z]=(tot[z]||0)+b.kwp; const q=inp[b.K]=inp[b.K]||{1:0,2:0}; q[b.st]++; });
+  E.boxes.forEach(b=>{ const z=b.z==='abk'?'ab':b.z==='whn'?'wh':b.z, r=raw[b.K]=raw[b.K]||{}; r[z]=(r[z]||0)+b.kwp; tot[z]=(tot[z]||0)+b.kwp; const q=inp[b.K]=inp[b.K]||{1:0,2:0}; q[b.st]++; });
   const out={}; Object.entries(raw).forEach(([k,r])=>{ out[k]={z:{},inp:inp[k]}; Object.entries(r).forEach(([z,v])=>out[k].z[z]=S[z]&&tot[z]?v*S[z].kwp/tot[z]:v); }); return out; }
 function eK(K,day,keys,upto=null){ const KZ=kZones(); if(!KZ||!KZ[K]||!DAYC[day]) return null; const S=ST.sums(); let c=0,a=0,kw=0,cN=0,aN=0;
   Object.entries(KZ[K].z).forEach(([z,v])=>{ if(!keys.includes(z)) return; const e=dayE(day,[z],upto); c+=v*e.c/S[z].kwp; a+=v*e.a/S[z].kwp; cN+=v*e.cN/S[z].kwp; aN+=v*e.aN/S[z].kwp; kw+=v; }); return {c,a,kw,cN,aN}; }
@@ -318,7 +318,7 @@ const STGN={ab:'етап 1',fac:'етап 1',lan:'етап 1',wh:'етап 1',ro
 function grpInfo(k){ const S=ST.sums(), Y=S[k], G=NOW&&NOW.g[k], E=k==='roof'?S.s2:S.s1, T=FP&&FP.T;
   const e=dayE(state.day,[k],state.hour), sn=G&&G.on&&NOW.alt>0?` Зараз о ${hhmm(state.hour)}: на сонці ${nf(G.cnt[0])}, частково в тіні ${nf(G.cnt[1])}, у тіні ${nf(G.cnt[2])} з ${nf(G.n)}.`:G&&G.on?` Зараз (${hhmm(state.hour)}) ніч — модулі не працюють.`:'';
   const now=(e?` За добу ${DAYS[state.day][0]} (${SEASN[state.day].toLowerCase()}): ${fe(e.c)} ясно · ${fe(e.a,e.c)} сер. погода (${nf(e.a/Y.kwp,2)} кВт·год/кВтп); накопичено до ${hhmm(state.hour)} — ${fe(e.cN,e.c)} ясно · ${fe(e.aN,e.c)} сер.`:'')+sn;
-  const det=k==='fac'&&T?` Південь — ${T.S.n} вертикально; схід — козирок 25° ${T.Ec.n} + вертикально ${T.Ev.n}.`:k==='lan'?' 4 ліхтарі без демонтажу, модулі поверх скління (≈41°).':k==='roof'?' Дах В1 на новій мембрані, без місць на ліхтарях.':k==='ab'?' Дах, надбудова і стіни АБК за ДБН, інвертор Deye 100 кВт.':' Модулі на скатах профнастилу.';
+  const det=k==='fac'&&T?` Південь — ${T.S.n} вертикально; схід — козирок 25° ${T.Ec.n} + вертикально ${T.Ev.n}.`:k==='lan'?' 4 ліхтарі без демонтажу, модулі поверх скління (≈41°).':k==='roof'?' Дах В1 на новій мембрані, без місць на ліхтарях.':k==='ab'?' Дах, надбудова і стіни АБК за ДБН, 12 стрінгів по 11 → ЩА-1 / ЩА-2 → К-3 / К-1.':((typeof ELECWA!=='undefined'&&ELECWA.whn)&&k==='wh'?` Південні скати — 176 модулів; північні C1 / C2 — ${ELECWA.whn.n} (${ELECWA.whn.ns} стрінгів, ≈${nf(ELECWA.whn.y,0)} кВт·год/кВтп, опція етапу 1).`:' Модулі на скатах профнастилу.');
   return {t:`${NAMES[k]} · ${STGN[k]}`, d:`${nf(Y.st)} модулів${Y.lit?` (+${Y.lit} на освітлення)`:''} · ${nf(Y.kwp,1)} кВтп · за рік ≈${nf(Y.mwh,1)} МВт·год.${det}${now} ${k==='roof'?'Етап 2':'Етап 1'} разом: ${nf(E.st)} модулів · ${nf(E.kwp,0)} кВтп · ≈${nf(E.mwh,0)} МВт·год. Весь об'єкт: ${nf(S.all.st)} модулів · ${nf(S.all.kwp,0)} кВтп · ≈${nf(S.all.mwh,0)} МВт·год за рік.`}; }
 { const set=(o,k)=>{ if(o) o.userData.info=()=>grpInfo(k); };
   const V=R28.VG['1']; if(V) V.children.forEach(o=>{ if(o.userData.part==='roof') set(o,'roof'); });
@@ -353,7 +353,7 @@ ul.open{margin:0;padding-left:18px;color:var(--ink-2);font-size:12.5px;display:f
 .cb{display:flex;width:90px;height:8px;border-radius:3px;overflow:hidden;gap:1px;margin-left:auto} .cb i{display:block;height:100%}
 .lg .ln{width:16px;height:2px;border-radius:1px} .lg .ln.c{background:var(--accent)} .lg .ln.a{background:var(--sun)} .lg .ar{width:12px;height:10px;border-radius:2px;background:var(--accent);opacity:.25}`; document.head.appendChild(st); }
 panelPZ=function(){ const S=ST.sums(), stg=state.lay.stg, f1=v=>nf(v,1), f0=v=>nf(v,0), sy=x=>x.kwp?f0(x.mwh*1000/x.kwp):'—';
-  const G=[['roof','Дах цеху','2'],['fac','Фасади цеху','1'],['lan','Ліхтарі — модулі на склі','1'],['wh','Склад','1'],['ab','АБК','1']], mx=Math.max(...G.map(([k])=>S[k].mwh));
+  const G=[['roof','Дах цеху','2'],['fac','Фасади цеху','1'],['lan','Ліхтарі — модулі на склі','1'],['wh',(typeof ELECWA!=='undefined'&&ELECWA.whn)?`Склад · з опцією «північні скати» +${ELECWA.whn.n}`:'Склад','1'],['ab','АБК','1']], mx=Math.max(...G.map(([k])=>S[k].mwh));
   const tile=(v,k,big,sub,line)=>`<button type="button" class="kpi${stg===v?' cur':''}" data-stg="${v}"><span class="k">${k}</span><span class="v">${big}</span><span class="s">${sub}</span>${line?`<span class="s">${line}</span>`:''}</button>`;
   const rows=G.map(([k,n,e])=>{ const x=S[k]; return `<tr><td class="w">${n}<span class="stg">етап ${e} · ${sy(x)} кВт·год/кВтп</span></td><td>${nf(x.st)}${x.lit?`<small>+${x.lit} осв.</small>`:''}</td><td>${f1(x.kwp)}</td><td>${f1(x.mwh)}<span class="gb" style="width:${Math.max(3,Math.round(56*x.mwh/mx))}px"></span></td><td>${f0(x.mwh/S.all.mwh*100)} %</td></tr>`; }).join('');
   return `<div class="ph"><span class="eyebrow ours">Весь об'єкт · АБК і цех</span><h2>${f0(S.all.kwp)} кВтп · ≈${f0(S.all.mwh)} МВт·год за рік</h2>

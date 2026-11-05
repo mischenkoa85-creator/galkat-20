@@ -26,7 +26,8 @@ const STG=()=>state.lay.stg, ON=()=>state.proj==='ours'&&!!(R28&&R28.ON());
 const in1=()=>STG()!=='2', in2=()=>STG()!=='1';
 // ---------- підсумки етапів
 const MP=0.73;
-const WH={n:176,mwh:148.7};   // склад, наше рішення: 176 модулів (16 стрінгів), 148,7 МВт·год — економічний ефект 26.10 (модель 25.10, пропорційно від 180)
+const WHN0=typeof ELECWA!=='undefined'&&ELECWA.whn?ELECWA.whn:null;   // 06.11: + північні скати (опція етапу 1)
+const WH={n:176+(WHN0?WHN0.n:0),mwh:148.7+(WHN0?WHN0.mwh:0)};   // склад, наше рішення: 176 модулів (16 стрінгів), 148,7 МВт·год — економічний ефект 26.10 (модель 25.10, пропорційно від 180)
 function sums(){ const k=state.lay.r28&&R28.D.V[state.lay.r28]?state.lay.r28:'1', V=R28.D.V[k];
   const fr=V.frame, frS=fr.filter(m=>m[5]>=0), frMWh=V.sum.frame.mwh;
   const roof={n:V.sum.all-fr.length, st:V.sum.st.n-frS.length, lit:V.sum.lit.n-(fr.length-frS.length), mwh:V.sum.st.mwh-frMWh};
