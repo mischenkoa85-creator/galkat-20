@@ -45,7 +45,12 @@ const G_={
   mrail:box(1,0.06,0.04,0,-0.03,0),                                                       // міні-рейка 380 (масштаб X), заповнює висоту до профнастилу
   scr:mrg([-0.15,-0.09,-0.03,0.03,0.09,0.15].map(u=>hex(0.008,0.006,'y',u,-0.0005,0.012))),   // 6 саморізів 5,5×25 EPDM на рейку (голівки)
 };
+G_.blk2=G_.blk; G_.mat2=G_.mat;
 // ---------- модулі: рамка з екземпляра (світ ← модуль), сусіди
+// зона покрівлі для вітру (EN 1991-1-4, плоский дах, як calc/ep04/wind2.py): F — кути, G — край поля, H — смуга, I — середина
+const KWZ=typeof KOSH!=='undefined'?KOSH.wind:null;
+function zoneOf(c){ if(!KWZ) return 'I'; const X=c.x, Y=-c.z, dx=Math.min(X+0.15,96.64-X), dy=Math.min(Y+0.5,96.59-Y), d=Math.min(dx,dy);
+  if(d<KWZ.s10) return (dx<dy?Math.min(Y+0.5,96.59-Y):Math.min(X+0.15,96.64-X))<KWZ.s4?'F':'G'; return d<KWZ.e/2?'H':'I'; }
 const MODS=[], _M=new THREE.Matrix4(), _p=new V3(), _q=new Q(), _s=new V3(), ex=new V3(), ey=new V3(), ez=new V3();
 function addFrom(im,grp,skip){ if(!im||!im.isInstancedMesh) return; im.updateWorldMatrix(true,false);
   if(!im.geometry.boundingBox) im.geometry.computeBoundingBox(); const bs=im.geometry.boundingBox.getSize(new V3()), bc=im.geometry.boundingBox.getCenter(new V3());
@@ -53,7 +58,7 @@ function addFrom(im,grp,skip){ if(!im||!im.isInstancedMesh) return; im.updateWor
     const ax=[new V3(1,0,0).applyQuaternion(_q),new V3(0,1,0).applyQuaternion(_q),new V3(0,0,1).applyQuaternion(_q)], sc=[_s.x*bs.x,_s.y*bs.y,_s.z*bs.z];
     const o=[0,1,2].sort((p,q)=>sc[p]-sc[q]); let w=ax[o[0]].clone(), u=ax[o[2]].clone(); if(w.y<0) w.negate(); const v=new V3().crossVectors(u,w).normalize(); u.crossVectors(w,v).normalize();
     const c=_p.clone().addScaledVector(w,-sc[o[0]]/2), T=new THREE.Matrix4().makeBasis(u,w,v).setPosition(c);
-    MODS.push({grp,im,i,c,u,v,w,T,nb:{}}); } }
+    MODS.push({grp,im,i,c,u,v,w,T,nb:{},zone:grp==='roof'?zoneOf(c):null}); } }
 // дах: усі модулі розкладки В1 (у стрінгах і на освітлення)
 const RV=R28.VG['1']; if(RV) RV.children.filter(o=>o.userData.part==='roof').forEach(o=>addFrom(o,'roof'));
 // склад: без 4 місць, яких не ставимо
@@ -76,12 +81,14 @@ function roofParts(m){ const o=[], nb=m.nb, lines=[-LV].concat(nb.pv?[]:[LV]);
   lines.forEach(z=>{ o.push(['lag',Sx(Tm((u0+u1)/2,0,z),u1-u0)]);
     [-0.617,0.583].forEach(u=>{ o.push(['blk',Tm(u,0,z)],['mat',Tm(u,0,z)],['lbolt',Tm(u,0,z)]); });
     o.push([nb.pu?'sleeve':'sleeveE',Tm(ur,0,z)],['cpl',Tm(ur,0,z)]);
-    if(!nb.mu) o.push(['blk',Tm(-L/2+0.03,0,z)],['mat',Tm(-L/2+0.03,0,z)],['ang',Tm(-L/2+0.075,0,z+(z<0?0.024:-0.024))]);
-    if(!nb.pu) o.push(['blk',Tm(L/2-0.03,0,z)],['mat',Tm(L/2-0.03,0,z)],['ang',Tm(L/2-0.075,0,z+(z<0?0.024:-0.024))]); });
+    if(!nb.mu) o.push(['ang',Tm(-L/2+0.075,0,z+(z<0?0.024:-0.024))]);
+    if(!nb.pu) o.push(['ang',Tm(L/2-0.075,0,z+(z<0?0.024:-0.024))]);
+    // додатковий баласт — лише по краю поля (зони F і G, рішення 04.11 / 05.11): G — подвоєно (+4 на модуль), F — +8; у середині даху й біля проходів, ліхтарів, труб, рами кондиціонерів — без додаткового
+    if(z===-LV&&(m.zone==='F'||m.zone==='G')) [-0.617,0.583].forEach(u=>(m.zone==='F'?[[0.31,0],[-0.31,0],[0,0.31],[0,-0.31]]:[[0.31,0],[-0.31,0]]).forEach(([du,dz])=>o.push(['blk2',Tm(u+du,0,z+dz)],['mat2',Tm(u+du,0,z+dz)]))); });
   o.push(['rod',Sz(Tm(ur,-0.0515,0),1.299)]); [-1,1].forEach(sg=>[0.031,0.043].forEach(k=>o.push(['jam',Tm(ur,-0.0515,sg*(LV-k))])));
   ZC.forEach(u=>{ if(nb.mv) o.push(['mcl',Tm(u,0,-LV)]); else o.push(['zcl',Tm(u,0,-WD/2-0.012)]); if(!nb.pv) o.push(['zcl',Tm(u,0,WD/2+0.012).multiply(RY(Math.PI))]); });
   [[nb.mu,-1],[nb.pu,1]].forEach(([has,sg])=>{ if(has) return; const ue=sg*(L/2+0.012);
-    o.push(['xprof',Sz(Tm(ue,0,0),PV)]); [-LV+0.30,-LV+0.60].forEach(z=>o.push(['blk',Tm(ue,0,z)]));
+    o.push(['xprof',Sz(Tm(ue,0,0),PV)]);
     [-0.33,0.33].forEach(z=>o.push(['zcl',Tm(sg*(L/2+0.012),0,z).multiply(RY(sg>0?-Math.PI/2:Math.PI/2))])); });
   return o; }
 const FALL=new V3();
@@ -97,22 +104,22 @@ function lanParts(m){ const o=[], nb=m.nb;
   return o; }
 const REC={roof:roofParts,wh:whParts,lan:lanParts};
 // ---------- кількості по всій моделі (специфікація з моделі)
-const NAME={lag:'Лага 41×41×1,5, м',xprof:'Крайній профіль 41×41×1,5, м',blk:'Блок 300×300×60 з муфтою',mat:'Мат 320×320×3',lbolt:'Болт M8×20 + шайба DIN 9021 (лага — блок)',
+const NAME={blk2:'Додатковий блок з матом — край поля (зони F, G)',mat2:'Мат під додатковий блок',lag:'Лага 41×41×1,5, м',xprof:'Крайній профіль 41×41×1,5, м',blk:'Блок 300×300×60 з муфтою',mat:'Мат 320×320×3',lbolt:'Болт M8×20 + шайба DIN 9021 (лага — блок)',
   sleeve:'Гільза П 45,5×35×2, 200 мм, 2 болти M8',sleeveE:'Гільза П 45,5×35×2, 100 мм на торці, 1 болт M8',cpl:'Муфта M10×50 (приварена до гільзи)',rod:'Шпилька M10, 1 299 мм, права / ліва різьба',jam:'Контргайка M10',
   mcl:'Середній притиск з болтом M8×60 і гайкою з пружиною',zcl:'Крайній притиск Z33 з болтом M8',ang:'Кутник 150×150×6',mrail:'Міні-рейка 380 мм (аналог AR2-MR13-380)',scr:'Саморіз 5,5×25 EPDM, комплект 6 шт. на рейку'};
-const KG={blk:12.98,mat:0.338,sleeve:0.36,sleeveE:0.18,cpl:0.08,rod:0.62,jam:0.006,mcl:0.07,zcl:0.06,ang:1.36,mrail:0.25,lbolt:0.02};
+const KG={blk:12.98,mat:0.338,blk2:12.98,mat2:0.338,sleeve:0.36,sleeveE:0.18,cpl:0.08,rod:0.62,jam:0.006,mcl:0.07,zcl:0.06,ang:1.36,mrail:0.25,lbolt:0.02};
 const BOM={}; MODS.forEach(m=>{ const B=BOM[m.grp]||(BOM[m.grp]={n:0,q:{}}); B.n++; REC[m.grp](m).forEach(([k,M])=>{ const e=M.elements;
   const len=k==='lag'?Math.hypot(e[0],e[1],e[2]):k==='xprof'?Math.hypot(e[8],e[9],e[10]):1; B.q[k]=(B.q[k]||0)+len; }); });
 // ---------- сітки деталей (екземпляри на найближчі модулі)
 const DG=new THREE.Group(); DG.name='roofnode'; scene.add(DG);
-const MATK={lag:'zn',xprof:'zn',blk:'bl',mat:'mt',lbolt:'hw',sleeve:'sl',sleeveE:'sl',cpl:'cp',rod:'rod',jam:'hw',mcl:'al',zcl:'al',ang:'zn',mrail:'al',scr:'hw'};
+const MATK={blk2:'bl',mat2:'mt',lag:'zn',xprof:'zn',blk:'bl',mat:'mt',lbolt:'hw',sleeve:'sl',sleeveE:'sl',cpl:'cp',rod:'rod',jam:'hw',mcl:'al',zcl:'al',ang:'zn',mrail:'al',scr:'hw'};
 const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k],M_[MATK[k]],NM*16); im.count=0; im.frustumCulled=false; im.castShadow=false; im.receiveShadow=true; DG.add(im); IMS[k]=im;
   im.userData.info=()=>{ const tot=Object.values(BOM).reduce((s_,B)=>s_+(B.q[k]||0),0), kg=KG[k];
     return {t:NAME[k],d:`На всьому об'єкті з моделі: ${k==='lag'||k==='xprof'?nf(tot,1)+' м':nf(Math.round(tot))+' шт.'}${kg?` · ${nf(kg,kg<0.1?3:2)} кг за штуку`:''}. ${k==='mrail'||k==='scr'?'Склад: розрахунок 26.10 на 176 модулів.':k==='mcl'||k==='zcl'?'Дах цеху — 3 точки на довгий бік; склад і ліхтарі — 2 точки в зоні 540 мм від торців.':'Дах цеху: «Лага 0°», арка 18 м (elements-ses).'} Деталі показуються зблизька, для найближчих модулів.`}; };
   PICK.push({o:im,when:()=>DG.visible&&im.count>0}); });
 const visUp=o=>{ for(let x=o;x;x=x.parent) if(x.visible===false) return false; return true; };
 let SEL='', lastP=new V3(1e9,0,0), EX=0;   // розбір на елементи: зсув деталей уздовж нормалі модуля, м (Конструкція → Розбір)
-const EXO={blk:0.12,lbolt:0.62,lag:0.42,xprof:0.42,ang:0.42,sleeve:0.26,sleeveE:0.26,cpl:0.26,rod:0.26,jam:0.26,mcl:0.85,zcl:0.85,mrail:0.25,scr:0.35};
+const EXO={blk:0.12,blk2:0.12,mat2:0,lbolt:0.62,lag:0.42,xprof:0.42,ang:0.42,sleeve:0.26,sleeveE:0.26,cpl:0.26,rod:0.26,jam:0.26,mcl:0.85,zcl:0.85,mrail:0.25,scr:0.35};
 function upd(force){ if(!force&&camera.position.distanceTo(lastP)<0.3) return; lastP.copy(camera.position);
   const L_=[]; MODS.forEach((m,i)=>{ const d=camera.position.distanceTo(m.c); if(d<RD) L_.push([d,i]); }); L_.sort((p,q)=>p[0]-q[0]);
   const pick=L_.filter(([d,i])=>visUp(MODS[i].im)).slice(0,NM).map(x=>x[1]), key=pick.join(','); if(!force&&key===SEL) return; SEL=key;
