@@ -4,7 +4,7 @@
 cd "$(dirname "$0")" && python3 - <<'PY'
 r = lambda f: open('src/' + f, encoding='utf-8').read()
 app = r('app.js'); cut = app.rstrip().rfind('})();')
-mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'facnode.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js', 'elec04.js', 'elecwa.js', 'roofnode.js', 'bessdet.js', 'eko.js']
+mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'facnode.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js', 'elec04.js', 'elecwa.js', 'roofnode.js', 'bessdet.js', 'eko.js', 'mont.js']
 app = app[:cut] + '\n'.join(r(f) for f in mods) + '\n' + app[cut:]
 data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js', 'elec04data.js', 'facnodedata.js', 'elecwadata.js', 'elecstrdata.js', 'ekodata.js')
 rd = lambda f: 'const FOTO={"g":{},"p":[]};' if f == 'foto.js' else r(f)   # фото обстеження в 3D-моделі не використовуємо (власник 04.11, 14:37) — порожні дані

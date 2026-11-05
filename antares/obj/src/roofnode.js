@@ -129,6 +129,6 @@ const pz0=panelPZ; panelPZ=function(){ const h=pz0.apply(this,arguments), f=(v,k
   ${ks.map(k=>`<tr><td class="w">${NAME[k]}</td>${G.map(([g])=>`<td>${BOM[g].q[k]?f(BOM[g].q[k],k):'—'}</td>`).join('')}</tr>`).join('')}
   <tr class="tot"><td class="w">Маса кріплення з баластом, т</td>${kg.map(v=>`<td>${nf(v/1000,1)}</td>`).join('')}</tr></tbody></table></div>
   <p class="src">Підраховано по кожному модулю моделі з його сусідами (стик, край ряду). Деталі видно зблизька — підведіть камеру до модулів. Фасади — вузли «Кубики фасаду», АБК — модель АБК. Рейки ліхтарів (41×41, 2 на схил) — у моделі ліхтаря; на що їх спирати, ще не вирішено.</p></div>`; };
-window.__twin.roofnode={MODS,BOM,IMS,upd,G_};
+window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m)};
 upd(true);
 } }
