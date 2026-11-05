@@ -9,7 +9,7 @@ window.__twin.clean=true;
 // ---------- стан: лише наш об'єкт, дах В1, ліхтарі без демонтажу (модулі на склі), фасади
 // ---------- ШАБЛОН: види і розділи (порядок і назви — лише тут)
 VIEWS.over={t:'Огляд',p:[178,92,58],c:[62,4,-46]};   // з південного сходу: АБК, ТП-5913, К-3 / К-1, південний і східний фасади, дах
-const TPL={ views:[['over','Огляд'],['top','Зверху'],['ess','ТП-5913'],['ess2','ТП-6923'],['lan28','Ліхтар'],['abk','АБК']],
+const TPL={ views:[['over','Огляд'],['top','Зверху'],['ess','ТП-5913'],['ess2','ТП-6923'],['facv','Фасади'],['lan28','Ліхтар'],['wh','Склад'],['abk','АБК']],
   secs:[['pz','Об\'єкт'],['sun','Сонце і генерація'],['uze','Накопичувачі']] };
 state.proj='ours'; if(!TPL.secs.some(([k])=>k===state.sec)) state.sec='pz';
 const CAP=1205, KK=[['K-3','ТП-5913','ess'],['K-1','ТП-5913','ess'],['K-4','ТП-6923','ess2'],['K-5','ТП-6923','ess2']], ZN={fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах',ab:'АБК'};
@@ -19,6 +19,12 @@ const hide=el=>{ if(el) el.style.display='none'; };
 { const fc=$('#fotoChip'); if(fc&&fc.getAttribute('aria-pressed')==='true') fc.click(); }   // фото обстеження вимкнути, потім сховати
 { const pj=$('#proj'); if(pj) pj.remove(); }   // перемикача проєктів у чистій збірці немає взагалі (власник 04.11: «забути РП»)
 { const st=document.createElement('style'); st.textContent='#misChip,#fotoChip,#proj{display:none!important}'; document.head.appendChild(st); }   // без фото і без невідповідностей
+// 06.11 (власник): види «Фасади» (південний і східний фасад цеху) і «Склад» (дах складу з модулями); на телефоні (портрет) камера далі
+{ const far=(c,d,k)=>c.map((v,i)=>v+d[i]*(innerWidth<innerHeight?k:1));
+  VIEWS.wh={t:'Склад',c:[104,1,14],get p(){ return far(this.c,[2,47,76],2.0); }};
+  VIEWS.facv={t:'Фасади',c:[52,9,-5],get p(){ return far(this.c,[73,19,65],1.7); }};
+  const cams=$('#cams'); if(cams&&!cams.querySelector('button[data-c="facv"]')){ const b=document.createElement('button'); b.type='button'; b.dataset.c='facv'; b.textContent='Фасади'; b.setAttribute('aria-pressed','false');
+    b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('facv'); }; cams.appendChild(b); } }
 { const cams=$('#cams'); if(cams){ const bs=[...cams.querySelectorAll('button')]; bs.forEach(b=>hide(b));
   TPL.views.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.c===k); if(!b) return; b.textContent=t; b.style.display=''; cams.appendChild(b); const dsc=VIEWS[k]&&Object.getOwnPropertyDescriptor(VIEWS[k],'t'); if(dsc&&!dsc.get) VIEWS[k].t=t; }); } }
 { const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small>'; document.title='Антарес · весь об\'єкт'; }
