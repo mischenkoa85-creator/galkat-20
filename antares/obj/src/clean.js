@@ -12,7 +12,7 @@ VIEWS.over={t:'Огляд',p:[178,92,58],c:[62,4,-46]};   // з південно
 const TPL={ views:[['over','Огляд'],['top','Зверху'],['ess','ТП-5913'],['ess2','ТП-6923'],['lan28','Ліхтар'],['abk','АБК']],
   secs:[['pz','Об\'єкт'],['sun','Сонце і генерація'],['uze','Накопичувачі']] };
 state.proj='ours'; if(!TPL.secs.some(([k])=>k===state.sec)) state.sec='pz';
-const CAP=1205, KK=[['K-3','ТП-5913','ess'],['K-1','ТП-5913','ess'],['K-4','ТП-6923','ess2'],['K-5','ТП-6923','ess2']], ZN={fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах'};
+const CAP=1205, KK=[['K-3','ТП-5913','ess'],['K-1','ТП-5913','ess'],['K-4','ТП-6923','ess2'],['K-5','ТП-6923','ess2']], ZN={fac:'фасади',wh:'склад',lan:'ліхтарі',roof:'дах',ab:'АБК'};
 Object.assign(state.lay,{r28:'1',l28:true,l28v:'v2',l28s:2,fac25:true,rad:false,sunPlain:false,sunYear:false});
 // ---------- інтерфейс: без РП, невідповідностей, фото; два розділи
 const hide=el=>{ if(el) el.style.display='none'; };
@@ -238,7 +238,7 @@ if(BS) ['K-3','K-1'].forEach(id=>{ const k=BS.K.find(x=>x.id===id); if(!k) retur
   const pl=box(WW+2,0.04,LL+2,UZM.plat,cx,0.02,-cy,K13N); pl.castShadow=false; const sl=box(WW+1,0.25,LL+1,MAT.slab,cx,0.175,-cy,K13N);
   sl.userData.info={t:`Фундамент Фп-1 · ${id}`,d:'Плита 3 438 × 7 058 × 250, C20/25 F100 W4, 2 сітки Ø12 A500C крок 200, верх +0,300; ЩПС 350; 4 закладні МН-1; майданчик обслуговування навколо. Розвернуто паралельно фасаду (04.11).'}; PICK.push({o:sl,when:()=>K13N.visible});
   const c=golenH20({id,box:[cx-LL/2,cx+LL/2,cy-WW/2,cy+WW/2],lines:0,kwp:0,ac_len:0}); c.rotation.y=Math.PI/2; K13N.add(c); const body=c.children[0];
-  body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — усі панелі етапу 1: фасади, склад і ліхтарі (14 щитів, 82 стрінги, 658,5 кВтп); етап 2 — ще 10 щитів сходу даху. Біля східного фасаду на рівній ділянці, паралельно будівлі: довгою стороною вздовж стіни, 3,0 м від неї, двері на схід; лінія AC — до ТП-5913.`};
+  body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — усі панелі етапу 1: фасади, склад, ліхтарі і АБК (16 щитів, 94 стрінги, 754,8 кВтп); етап 2 — ще 8 щитів сходу даху. Біля східного фасаду на рівній ділянці, паралельно будівлі: довгою стороною вздовж стіни, 3,0 м від неї, двері на схід; лінія AC — до ТП-5913.`};
   PICK.push({o:body,when:()=>K13N.visible}); });
 const K13L=grp('k13lbl',G.ours);
 if(BS) ['K-3','K-1'].forEach(id=>{ const k=BS.K.find(x=>x.id===id); if(!k||!K13P[id]) return; const cx=K13P[id].cx, cy=K13P[id].cy;
@@ -249,7 +249,7 @@ setVis=(f=>function(){ f.apply(this,arguments); const on=state.proj==='ours'&&R2
 // підписи контейнерів — лише в «Накопичувачах» або зблизька (не висять над іншими будівлями)
 // ---------- АБК: 3 варіанти (власник 04.11, 13:42): 1 — СІП-4 4×70 до щита СЕС у ТП-5913 (модель АБК, 28.10); 2 — власний накопичувач АБК, без СІП до ТП;
 // 3 — СІП до контейнерів К-3 / К-1 (траса умовна, пунктиром: дах АБК → західний фасад → підвіс через проїзд → у землі до К-3 / К-1; точку підключення — уточнити в Golen)
-const ABV=()=>['1','2','3'].includes(state.lay.abkV)?state.lay.abkV:'1';
+const ABV=()=>'0';   // 05.11 (власник): АБК без інвертора — у К-3 / К-1 через 2 щити PV (варіанти 1–3 з СІП і власним накопичувачем знято)
 if(A&&A.root) A.root.updateMatrixWorld(true);
 const ACX=A&&A.TAGS?[...new Set([...(A.TAGS.ac||[]),...(A.TAGS.shch||[])])]:[], _bb3=new THREE.Box3(), _cc3=new V3();
 const ACR=ACX.filter(o=>{ _bb3.setFromObject(o); if(_bb3.isEmpty()) return false; _bb3.getCenter(_cc3); return _cc3.x>=108.2; });   // дах АБК (інвертор → західний парапет) — спільне для 1 і 3
@@ -278,12 +278,12 @@ setVis=(f=>function(){ f.apply(this,arguments); const U=state.sec==='uze', ac=st
   lblVis(); })(setVis);
 // кВтп щитів PV кожного контейнера по зонах (аналіз 04.11), зведені до кВтп розкладок; входи — по щиту на вхід DC/DC
 function kZones(){ const E=typeof ELEC04!=='undefined'?ELEC04:null; if(!E) return null; const S=ST.sums(), raw={}, tot={}, inp={};
-  E.boxes.forEach(b=>{ const r=raw[b.K]=raw[b.K]||{}; r[b.z]=(r[b.z]||0)+b.kwp; tot[b.z]=(tot[b.z]||0)+b.kwp; const q=inp[b.K]=inp[b.K]||{1:0,2:0}; q[b.st]++; });
+  E.boxes.forEach(b=>{ const z=b.z==='abk'?'ab':b.z, r=raw[b.K]=raw[b.K]||{}; r[z]=(r[z]||0)+b.kwp; tot[z]=(tot[z]||0)+b.kwp; const q=inp[b.K]=inp[b.K]||{1:0,2:0}; q[b.st]++; });
   const out={}; Object.entries(raw).forEach(([k,r])=>{ out[k]={z:{},inp:inp[k]}; Object.entries(r).forEach(([z,v])=>out[k].z[z]=S[z]&&tot[z]?v*S[z].kwp/tot[z]:v); }); return out; }
 function eK(K,day,keys,upto=null){ const KZ=kZones(); if(!KZ||!KZ[K]||!DAYC[day]) return null; const S=ST.sums(); let c=0,a=0,kw=0,cN=0,aN=0;
   Object.entries(KZ[K].z).forEach(([z,v])=>{ if(!keys.includes(z)) return; const e=dayE(day,[z],upto); c+=v*e.c/S[z].kwp; a+=v*e.a/S[z].kwp; cN+=v*e.cN/S[z].kwp; aN+=v*e.aN/S[z].kwp; kw+=v; }); return {c,a,kw,cN,aN}; }
 function legendUZE(){ const l=$('#legend'); if(!l) return; l.hidden=false; l.classList.remove('min'); const sw=k=>`<i class="sw" style="background:#${new THREE.Color(KCOL[k]).getHexString()}"></i>`;
-  l.innerHTML=`<span class="t">Накопичувачі · по 2 на ТП</span><span>${sw('K-3')}К-3 ${sw('K-1')}К-1 — ТП-5913</span><span>${sw('K-4')}К-4 ${sw('K-5')}К-5 — ТП-6923</span><span>${({'1':'АБК → ТП-5913 по СІП','2':'АБК — свій накопичувач','3':'АБК → К-3 / К-1 по СІП (умовно)'})[ABV()]}</span>`; }
+  l.innerHTML=`<span class="t">Накопичувачі · по 2 на ТП</span><span>${sw('K-3')}К-3 ${sw('K-1')}К-1 — ТП-5913</span><span>${sw('K-4')}К-4 ${sw('K-5')}К-5 — ТП-6923</span><span>АБК → К-3 / К-1: 2 щити PV, лінії Al у траншеї</span>`; }
 panelUZE=function(){ dayRun(); const S=ST.sums(), stg=state.lay.stg, keys=stKeys(), d=state.day, KZ=kZones(), f0=v=>nf(v,0), f1=v=>nf(v,1);
   const nm=stg==='1'?'Етап 1':stg==='2'?'Етап 2 · дах':'Весь об\'єкт', pend=`<span class="stg">рахую ${dayPct(d)} %…</span>`;
   const zs=K=>Object.entries((KZ&&KZ[K]&&KZ[K].z)||{}).filter(([z])=>keys.includes(z)).map(([z,v])=>`${ZN[z]} ${f0(v)}`).join(', ')||'—';
@@ -297,17 +297,11 @@ panelUZE=function(){ dayRun(); const S=ST.sums(), stg=state.lay.stg, keys=stKeys
   const ab=inStage('ab'), abE=SE.map(i=>dayE(i,['ab'],null));
   const tab=`<div class="blk wide"><h3>Від панелей у контейнери за добу, кВт·год · середня погода</h3><div class="tw"><table class="cmp an"><thead><tr><th>Контейнер</th>${SE.map(i=>`<th${i===d?' class="cur"':''}>${MOS[i]}</th>`).join('')}</tr></thead><tbody>
     ${KK.map(([K,tp])=>row(K,tp)).join('')}<tr class="tot"><td class="w">Разом у 4 контейнери<small>ємність 4 × 1 205 = 4 820</small></td>${sum.map((v,i)=>`<td${i===d?' class="cur"':''}>${v!=null?`<b>${f0(v)}</b><small>${f0(v/(4*CAP)*100)} %</small>`:'…'}</td>`).join('')}</tr>
-    ${ab?(()=>{ const v=ABV(), nmA={'1':['АБК → ТП-5913 · вар. 1','по СІП на шини 0,4 кВ ТП-5913: заряд К-3 / К-1 або мережа'],'2':['АБК → свій накопичувач · вар. 2','під числом — % від 241 кВт·год'],'3':['АБК → К-3 / К-1 · вар. 3','по СІП прямо в контейнери (траса умовна)']}[v];
-      const r1=`<tr><td class="w">${nmA[0]}<small>${nmA[1]}</small></td>${abE.map((e,i)=>`<td${i===d?' class="cur"':''}>${e?`<b>${f0(e.a)}</b>${v==='2'?`<small>${f0(e.a/241*100)} %</small>`:''}`:'…'}</td>`).join('')}</tr>`;
-      const r2=v==='2'?'':`<tr class="tot"><td class="w">Разом з АБК<small>частка від 4 820</small></td>${sum.map((s_,i)=>{ const e=abE[i]; return `<td${i===d?' class="cur"':''}>${s_!=null&&e?`<b>${f0(s_+e.a)}</b><small>${f0((s_+e.a)/(4*CAP)*100)} %</small>`:'…'}</td>`; }).join('')}</tr>`;
-      return r1+r2; })():''}</tbody></table></div>
+    </tbody></table></div>
     <p class="src">Під числом — частка ємності АКБ, яку за добу дають панелі (для АБК у варіанті 2 — від 241 кВт·год власного накопичувача). Решту ємності контейнери беруть із мережі через PCS 500 кВт за графіком — його складемо після погодинних даних АСКОЕ від ДТЕК.</p></div>`;
   const e1=dayE(d,['ab'],null), v=ABV(), ev=e1?`${f0(e1.a)} <small>кВт·год за добу</small>`:'…';
   const vc=(k,ttl,val,l1,l2)=>`<button type="button" class="kpi${v===k?' cur':''}" data-abkv="${k}" aria-pressed="${v===k}"><span class="k">${ttl}</span><span class="v">${val}</span><span class="s">${l1}</span>${l2?`<span class="s">${l2}</span>`:''}</button>`;
-  const abk=ab?`<div class="blk wide"><h3>АБК — 3 варіанти · ${MOS[d]} · натисніть, щоб показати в моделі</h3><div class="kpis">
-    ${vc('1','1 · СІП до ТП-5913',ev,'Deye SUN-100K → СІП-4 4×70, підвіс 8,1 м через проїзд → щит СЕС у ТП-5913 → шини 0,4 кВ: заряд К-3 / К-1 їхніми лініями AC або мережа','окремого накопичувача немає (модель АБК, 28.10)')}
-    ${vc('2','2 · Власний накопичувач АБК','120 <small>кВт</small> · 241 <small>кВт·год</small>',`Golen LES-241L120-PS (гібрид) або -PSC (із зарядкою авто); панелі АБК — на MPPT гібрида, СІП до ТП не потрібен${e1?`; за добу панелі заповнюють ≈${f0(e1.a/241*100)} %`:''}`,'місце біля АБК — уточнюється')}
-    ${vc('3','3 · СІП до контейнерів К-3 / К-1',ev,`той самий провід з даху АБК — західним фасадом і підвісом через проїзд до К-3 / К-1, ≈${f0(V3L)} м (траса умовна); енергія АБК — прямо в контейнери`,'точку підключення в контейнері — уточнити в Golen')}</div></div>`:'';
+  const abk=ab?`<div class="blk wide"><h3>АБК → К-3 / К-1 · ${MOS[d]}</h3><div class="kpis"><button type="button" class="kpi cur"><span class="k">АБК · 132 модулі, 96,4 кВтп</span><span class="v">${ev}</span><span class="s">без інвертора (рішення 05.11): 12 стрінгів по 11 → щити ЩА-1 / ЩА-2 на стіні надбудови → лінії Al у траншеї вздовж АБК → ШВ К-3 і К-1</span><span class="s">енергія АБК уже в числах К-3 / К-1 вище</span></button></div></div>`:'';
   return `<div class="ph"><span class="eyebrow ours">Накопичувачі · ${nm}</span><h2>4 × Golen LES-H20 · 2 000 кВт · 4 820 кВт·год</h2>
   <p>По 2 контейнери на кожну ТП, ставляться в етапі 1. Кожен: PCS 500 кВт, АКБ 1 205 кВт·год, до 12 входів PV по 60 кВт (DC/DC). Енергія від панелей — ${MOS[d]}, для вибраного етапу; натисніть картку — камера перейде до контейнера.</p></div>
   <div class="kpis">${cards}</div>${tab}${abk}
@@ -366,10 +360,10 @@ panelPZ=function(){ const S=ST.sums(), stg=state.lay.stg, f1=v=>nf(v,1), f0=v=>n
   <tr class="tot"><td class="w">Разом<span class="stg">${sy(S.all)} кВт·год/кВтп</span></td><td>${nf(S.all.st)}</td><td>${f1(S.all.kwp)}</td><td>${f1(S.all.mwh)}</td><td>100 %</td></tr></tbody></table>
   <p class="src">Модулі ZNSHINE 730 Вт; у стрінгах по 11, модулі «осв.» не складають стрінг і живлять освітлення цеху. МВт·год — розрахунки розкладок: АБК — ДБН 28.10 (на виході інвертора), фасади — 27.10, ліхтарі — 28.10 на склі, склад — 26.10, дах — 28.10 В1 (ще без тіні від ліхтарів, що лишаються).</p></div>
   <div class="blk"><h3>Накопичувачі</h3><table class="cmp an"><thead><tr><th>Де і що</th><th>кВт</th><th>кВт·год</th></tr></thead><tbody>
-  <tr><td class="w">ТП-5913 · К-3, К-1<span class="stg">LES-H20 на МС-3, МС-1 біля східного фасаду; етап 1 — усі панелі етапу 1: фасади, склад і ліхтарі (14 щитів, 658,5 кВтп); етап 2 — ще 10 щитів сходу даху</span></td><td>1 000</td><td>2 410</td></tr>
-  <tr><td class="w">ТП-6923 · К-4, К-5<span class="stg">LES-H20 з півночі від ТП-6923, на бермі +1,8 м за приямком (за позначкою 04.11); етап 1 — без панелей, лише мережа: заряд і розряд (активний споживач); етап 2 — захід даху (18 щитів)</span></td><td>1 000</td><td>2 410</td></tr>
+  <tr><td class="w">ТП-5913 · К-3, К-1<span class="stg">LES-H20 на МС-3, МС-1 біля східного фасаду; етап 1 — усі панелі етапу 1: фасади, склад, ліхтарі і АБК (16 щитів, 754,8 кВтп); етап 2 — ще 8 щитів сходу даху</span></td><td>1 000</td><td>2 410</td></tr>
+  <tr><td class="w">ТП-6923 · К-4, К-5<span class="stg">LES-H20 з півночі від ТП-6923, на бермі +1,8 м за приямком (за позначкою 04.11); етап 1 — без панелей, лише мережа: заряд і розряд (активний споживач); етап 2 — захід даху (20 щитів)</span></td><td>1 000</td><td>2 410</td></tr>
   <tr class="tot"><td class="w">Цех · 4 контейнери</td><td>2 000</td><td>4 820</td></tr>
-  <tr><td class="w">АБК · 3 варіанти<span class="stg">1 — СІП до ТП-5913 (без накопичувача); 2 — власний LES-241L120-PS / -PSC, місце уточнюється; 3 — СІП до К-3 / К-1. Деталі — розділ «Накопичувачі»</span></td><td>${ABV()==='2'?'120':'—'}</td><td>${ABV()==='2'?'241':'—'}</td></tr></tbody></table>
+  <tr><td class="w">АБК<span class="stg">без інвертора і без власного накопичувача — 2 щити PV у К-3 / К-1 (рішення 05.11)</span></td><td>—</td><td>—</td></tr></tbody></table>
   <p class="src">Ємність остаточно — за погодинними даними АСКОЕ від ДТЕК (запит надіслано через ТОВ МК «АНТАРЕС»).</p></div>
   <div class="blk"><h3>Що ще відкрито</h3><ul class="open"><li>Тінь від ліхтарів, що лишаються, на модулі даху етапу 2 — річну генерацію перерахувати.</li><li>К-4, К-5 з півночі від ТП-6923 на бермі +1,8 м: огородження по краю стінки, під’їзд крана (з проїзду чи з в’їзду на півночі), паркан не міряно; відстані до ТП, жалюзі й шафи з пропаном — перевірити.</li><li>АБК: вибрати варіант 1 / 2 / 3; для 2 — модель (із зарядкою чи без) і місце біля АБК; для 3 — точка підключення в контейнері (Golen) і траса СІП.</li><li>Розподіл стрінгів даху між парами контейнерів.</li><li>Ємність накопичувачів — після даних ДТЕК.</li></ul></div>`; };
 document.addEventListener('click',e=>{ const b=e.target&&e.target.closest&&e.target.closest('.kpi[data-stg]'); if(b) ST.setStage(b.dataset.stg); });
@@ -382,7 +376,7 @@ scene.traverse(o=>{ const u=o.userData&&o.userData.info; if(!u) return; if(typeo
 // ---------- старі підказки: без В2 і без старого нашого рішення з 3 контейнерами
 scene.traverse(o=>{ const u=o.userData&&o.userData.info; if(u&&typeof u==='object'&&typeof u.d==='string'&&/\(В2\)/.test(u.d)) u.d=u.d.replace(/\s*або\s*[\d,]+\s*м\s*\(В2\)/g,''); });
 if(BS) ESS.forEach(o=>{ if(!o.isGroup||!o.children.length) return; const body=o.children[0], u=body.userData&&body.userData.info; if(!u||typeof u!=='object'||!/^K-[13] /.test(u.t||'')) return; const id=u.t.slice(0,3);
-  body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — усі панелі етапу 1: фасади, склад і ліхтарі (14 щитів, 82 стрінги, 658,5 кВтп); етап 2 — ще 10 щитів сходу даху. Майданчик ${id==='K-3'?'МС-3':'МС-1'} біля східного фасаду, торець PCS — 3,0 м від стіни.`}; });
+  body.userData.info={t:`${id} · Golen LES-H20-1205W500C-PS · ТП-5913`,d:`АКБ 1 205 кВт·год, PCS 500 кВт, 12 входів PV по 60 кВт. Пара К-3 + К-1: етап 1 — усі панелі етапу 1: фасади, склад, ліхтарі і АБК (16 щитів, 94 стрінги, 754,8 кВтп); етап 2 — ще 8 щитів сходу даху. Майданчик ${id==='K-3'?'МС-3':'МС-1'} біля східного фасаду, торець PCS — 3,0 м від стіни.`}; });
 // ---------- старт
 // ---------- «Сонце і генерація» → «Радіація за рік» (власник 04.11, 14:37): колір поверхні за сонцем на м² за рік. Дах і фасади цеху, склад — RADD (rad.js, 26.10);
 // АБК — рахується тут: клітинки 1 × 1 м на дахах і стінах АБК (промені на будівлю АБК), сонце за 12 характерних днів місяців Meteonorm (10 хв), тінь від АБК, цеху,

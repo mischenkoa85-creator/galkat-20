@@ -6,10 +6,10 @@ import os
 VAR = os.environ.get('VAR', '2')
 if VAR == '1':
     lan_to = {'ЩЛ-4': 'E'}
-    capE = 24 - (len(FB) + len(WB) + 1); capN = 24 - (len(LB) - 1)
+    capE = 24 - (len(FB) + len(WB) + 1 + len(AB_)); capN = 24 - (len(LB) - 1)
 else:
     lan_to = {b['id']: 'E' for b in LB}
-    capE = 24 - (len(FB) + len(WB) + len(LB)); capN = 24
+    capE = 24 - (len(FB) + len(WB) + len(LB) + len(AB_)); capN = 24
 a = assign_opt(capE, capN)
 rows = eval_all(a, 'npv', lan_to=lan_to)
 # du ≤ 2,5 %: якщо більше — наступний переріз
@@ -19,9 +19,9 @@ for r in rows:
             pk = loss_kw(S, r['L'], r['ns']); du = pk * 1000 / (r['ns'] * IMP) / VOP * 100
             if du <= 2.5: r.update(S=S, pk=pk, du=du, e=pk * TAU_F.get(r['z'], TAU), cab=line_cost(S, r['L'])); r['npv'] = r['e'] * TARIFF * PVF; break
 # VAR=2: ліхтарі між К-3 і К-1 — так, щоб кВтп етапу 1 на контейнерах були близькі (енергія від панелей за добу ≈ рівна); далі вони не переставляються
-FIX = ('fac', 'wh', 'lan') if VAR == '2' else ('fac', 'wh')
+FIX = ('fac', 'wh', 'abk', 'lan') if VAR == '2' else ('fac', 'wh', 'abk')
 if VAR == '2':
-    kw1 = {k: sum(r['ns'] for r in rows if r['K'] == k and r['z'] in ('fac', 'wh')) for k in ('K-3', 'K-1')}
+    kw1 = {k: sum(r['ns'] for r in rows if r['K'] == k and r['z'] in ('fac', 'wh', 'abk')) for k in ('K-3', 'K-1')}
     for r in sorted([r for r in rows if r['z'] == 'lan'], key=lambda r: -r['ns']):
         k = min(kw1, key=lambda k: kw1[k]); r['L'] += OFF['E'][k] - OFF['E'][r['K']]; r['K'] = k; kw1[k] += r['ns']
         pk = loss_kw(r['S'], r['L'], r['ns']); du = pk * 1000 / (r['ns'] * IMP) / VOP * 100
@@ -129,7 +129,10 @@ FE = [b for b in FB if not b.get('roof')]; yK1 = SHV['K-1'][1]
 FEs = [b for b in FE if b['s'] < DE[1]]; FEn = [b for b in FE if b['s'] >= DE[1]]
 L_fe = sum(DE[1] - b['s'] for b in FEs) + sum(abs(b['s'] - yK1) for b in FEn)
 T[1][tray_w(nE)] += 17.0; T[1][tray_w(nE1 + len(FEs))] += (yK1 - DE[1]) + 2.0
-T[1]['100×50'] += L_fe; T[1]['100×50'] += 48.9; T[1]['200×50'] += 20.0
+T[1]['100×50'] += L_fe
+# 05.11: склад і АБК (abk_wh.py) — лотки стрінгів складу по краю / гребеню і північному скату, спуски по стінах до щитів, лоток ліній АБК на нижньому даху і спуск;
+# раніше тут стояли лотки складу варіанта Б (48,9 + 20 м: щити на скаті, трос через проїзд)
+QW = json.load(open('wh_abk.json', encoding='utf-8'))['q']; T[1]['100×50'] += QW['tray_prof'] + QW['tray_wall'] + QW['tray_roofA']
 MNT[1]['fac'] = 17.0 + (yK1 - DE[1]) + 2.0 + L_fe
 for k in (1, 2): print('лотки етап', k, {w: round(l, 1) for w, l in sorted(T[k].items())})
 json.dump({'var': VAR, 'rows': rows, 'T': {k: dict(v) for k, v in T.items()}, 'E_line': E_line, 'inp': dict(inp), 'kwp': dict(kwp),

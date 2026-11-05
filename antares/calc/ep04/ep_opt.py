@@ -21,7 +21,7 @@ for m in D['wx']:
         G = s[1]; p = m['p']; c = m['c']
         E_h += m['nd'] * (p * G + (1 - p) * c * G) / 1000 * dt
         TAU += m['nd'] * (p * G * G + (1 - p) * (c * G) ** 2) / 1e6 * dt
-TAU_F = {'roof': TAU, 'lan': 0.80 * TAU, 'fac': 0.60 * TAU, 'wh': 0.95 * TAU}   # фасади вертикально і скло 41–46° — нижчі піки (оцінка)
+TAU_F = {'roof': TAU, 'lan': 0.80 * TAU, 'fac': 0.60 * TAU, 'wh': 0.95 * TAU, 'abk': 0.95 * TAU}   # фасади вертикально і скло 41–46° — нижчі піки (оцінка)
 # ---------------- коридори даху (план X, Y)
 # 05.11.2026 (перевірка проходів на моделі): лотки не посередині проходів, а біля краю — так, щоб лишалась потрібна ширина
 #   смуга Пд і Пн — лоток і щити на парапеті (кронштейни, без блоків на ходовій смузі); схід — на парапеті (край поля зайнятий трубами Д36, Д57);
@@ -174,6 +174,9 @@ def fac_len(b, K):   # щити на східному фасаді (Y > 34,6): �
 WB = [{'id': b['n'], 'L0': b['L'], 'ns': b['ns'], 'z': 'wh', 'st': 1, 'K0': b['K']} for b in D['ep']['boxes'] if b['zone'] == 'склад']
 import os as _os
 WHN = {w['id']: w for w in json.load(open('wh_abk.json', encoding='utf-8'))['wh']} if _os.path.exists('wh_abk.json') else {}
+# 05.11 (власник): АБК без Deye — 2 щити ЩА-1 / ЩА-2 у найближчі контейнери К-3 / К-1 (траси і довжини — abk_wh.py)
+AB_ = [{'id': a['id'], 'z': 'abk', 'st': 1, 'ns': a['ns'], 'X': a['X'], 'Y': a['Y'], 'K0': a['K'], 'L0': a['L']}
+       for a in json.load(open('wh_abk.json', encoding='utf-8')).get('abk', [])] if _os.path.exists('wh_abk.json') else []
 # ---------------- економіка перерізу
 def line_cost(S, L): return 2 * L * PRICE[S] * K_IMP + 4 * LUG[S]
 def loss_kw(S, L, ns, mat='Al'): I = ns * IMP; Rl = 2 * RHO[mat] * L / S; return I * I * Rl / 1000
@@ -202,6 +205,8 @@ def eval_all(assign_roof, rule='npv', lan_to=None):
         L = b['L0'] - (12.0 if b['K0'] == 'K-2' else 0); K = 'K-3' if b['K0'] == 'K-2' else 'K-1'
         if b['id'] in WHN: L, K = WHN[b['id']]['L'], WHN[b['id']]['K']      # 04.11: траса до нових місць К-3 / К-1 (wh_abk.py)
         r = best(L, b['ns'], TAU_F['wh'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
+    for b in AB_:
+        L, K = b['L0'], b['K0']; r = best(L, b['ns'], TAU_F['abk'], rule); rows.append(dict(b, K=K, L=L, S=r[1], pk=r[2], du=r[3], e=r[4], cab=r[5], npv=r[6]))
     for b in LB:
         side_ = (lan_to or {}).get(b['id'], 'N')
         rl, _ = route_len(b, DN if side_ == 'N' else DE)

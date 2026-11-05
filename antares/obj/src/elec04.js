@@ -82,7 +82,10 @@
         if(y0!==null){ const xs=x+0.6; bar(b.st,trayM,W(xs,y0,rz(xs)+0.10),W(xs,y1,rz(xs)+0.10),0.1,0.05,SZ); bar(b.st,lidM,W(xs,y0,rz(xs)+0.10),W(xs,y1,rz(xs)+0.10),0.12,0.006,SZ,0.05);
           step(xs,(y0+y1)/2,'x',b.st,{t:`Стрінги до ${b.id} через ходову смугу · етап ${b.st}`,d:`Короткий лоток 100×50 з кришкою від краю поля до щита (${nf(Math.abs(y1-y0),1)} м) і місток над ним, щоб смуга лишалась прохідною.`}); } } }
     else if(b.z==='fac'){ o=new THREE.Mesh(BB,boxM); o.rotation.y=Math.PI/2; o.position.set(96.64+0.2,3.0,-b.s); g.add(o); PART[1].push(o); cap(o,b,1); ex='На східному фасаді на 3,0 м (тут немає воріт і вікон).'; }
-    else { o=new THREE.Mesh(BB,boxM); o.position.copy(W(b.X,b.Y,1.2)); g.add(o); PART[1].push(o); ex='На північній стіні складу.'; }
+    else if(b.z==='abk'){ o=new THREE.Mesh(BB,boxM); o.position.copy(W(b.X,b.Y+0.1,(b.z0||10.55)+0.45)); g.add(o); PART[1].push(o); cap(o,b,1);
+      ex='На північній стіні надбудови АБК над нижнім дахом (+10,55), там, де сходяться лотки стрінгів. Лінія — лотком по нижньому даху на захід, через західний парапет, по стіні вниз і в траншеї вздовж АБК до ШВ.'; }
+    else { o=new THREE.Mesh(BB,boxM); o.position.copy(W(b.X,b.Y,1.45)); g.add(o); PART[1].push(o); cap(o,b,1);
+      ex=`На північній стіні складу, низ на 1,0 м — обслуговування з проїзду. Стрінги — під модулями вгору до ${b.wall==='AB'?'верхнього краю скату':'гребеня'}, лотком до щита і по стіні вниз. Лінія — у траншеї вздовж складу і через проїзд між ТП-5913 і АБК до ШВ.`; }
     tagBox(o,b,ex); });
   // ---------- спуски, лотки по фасаду, ШВ
   const sh=E4.shv, [ex,ey]=E4.DE, [nx,ny]=E4.DN, nE=E4.boxes.filter(b=>(b.K==='K-3'||b.K==='K-1')&&(b.z==='roof'||b.z==='lan'||b.roof)).length,

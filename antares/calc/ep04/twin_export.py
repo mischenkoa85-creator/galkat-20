@@ -7,7 +7,7 @@ from ep_opt import graph, dijk, path, DE, DN
 H = os.path.dirname(os.path.abspath(__file__))
 F = json.load(open(os.path.join(H, 'final.json')))
 p = os.path.join(H, '../../obj/src/elec04data.js'); s = open(p, encoding='utf-8').read(); i = s.find('{'); j = s.rfind('}') + 1; E = json.loads(s[i:j])
-old = E['boxes']
+old = E['boxes']; WA = json.load(open(os.path.join(H, 'wh_abk.json'), encoding='utf-8'))
 def oid(r):
     if r.get('id'): return r['id']
     if r['z'] == 'fac': return min((b for b in old if b['z'] == 'fac' and b['f'] == r['f']), key=lambda b: abs(b['s'] - r['s']))['id']
@@ -18,7 +18,8 @@ for r in F['rows']:
     if r['z'] == 'fac':
         b.update(f=r['f'], s=r['s'])
         if r.get('roof'): b.update(roof=1, X=round(r['X'], 2), Y=round(r['Y'], 2))   # 05.11: щит на даху біля парапету
-    elif r['z'] == 'wh': o = next(x for x in old if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'])
+    elif r['z'] == 'wh': o = next(x for x in WA['wh'] if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'], wall=o['wall'])       # 05.11: на північній стіні складу
+    elif r['z'] == 'abk': o = next(x for x in WA['abk'] if x['id'] == b['id']); b.update(X=o['X'], Y=o['Y'], z0=o['z0'])          # 05.11: ЩА-1 / ЩА-2 на стіні надбудови АБК
     else: b.update(X=r['X'], Y=r['Y'])
     boxes.append(b)
     if r['z'] in ('roof', 'lan') or (r['z'] == 'fac' and r.get('roof')):
@@ -26,7 +27,7 @@ for r in F['rows']:
         dist, prev = dijk(graph([st]), st); pts = path(prev, st, DE if d == 'E' else DN)
         routes.append({'id': b['id'], 'st': r['st'], 'K': r['K'], 'pts': [[round(x, 2), round(y, 2)] for x, y in pts], 'd': d})
 order = {b['id']: k for k, b in enumerate(old)}; boxes.sort(key=lambda b: order.get(b['id'], 999))
-assert len({b['id'] for b in boxes}) == len(boxes) == len(old), 'щити не зійшлися з двійником'
+assert len({b['id'] for b in boxes}) == len(boxes) and len(boxes) - len([b for b in boxes if b['z'] == 'abk']) == len([b for b in old if b['z'] != 'abk']), 'щити не зійшлися з двійником'
 E.update(boxes=boxes, routes=routes, T={str(k): v for k, v in F['T'].items()}, inp=F['inp'], kwp={k: round(v, 1) for k, v in F['kwp'].items()}, var=F.get('var', '1'),
          segs=[dict(a=[round(v, 3) for v in g['a']], b=[round(v, 3) for v in g['b']], n=g['n1'] + g['n2'], w=g['w'], st=g['st'], m=g['mnt']) for g in F['segs']],
          cross=F['cross'], shv={k: list(v) for k, v in F['shv'].items()}, DE=list(F['DE']), DN=list(F['DN']),

@@ -6,6 +6,7 @@
 АБК: стрінги і лотки — abk/abk_dbn.json (Deye SUN-100K-G03, 11 стрінгів по 12); AC — СІП-4 4×70 за варіантами 1 і 3.
 → wh_abk.json і ../../obj/src/elecwadata.js (const ELECWA)."""
 import json, math, os
+raise SystemExit('wh_abk.py застарів 05.11: склад і АБК → abk_wh.py (щити на стінах, траншея через проїзд між ТП-5913 і АБК, АБК без Deye)')
 H = os.path.dirname(os.path.abspath(__file__))
 E = json.load(open(os.path.join(H, 'final.json'))) if os.path.exists(os.path.join(H, 'final.json')) else None
 s = open(os.path.join(H, '../../obj/src/elec04data.js'), encoding='utf-8').read(); E4 = json.loads(s[s.find('{'):s.rfind('}') + 1])
