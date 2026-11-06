@@ -4,7 +4,8 @@
   D=2026-03-21,2026-06-21,2026-09-23,2025-12-21
   python3 -m ses_uze.kalkuliator obiekty/antares --stsenarii "spozhyvannia_kwh_rik=1100000|3000000|5000000" --doby $D
   python3 -m ses_uze.kalkuliator obiekty/antares --stsenarii "spozhyvannia_kwh_rik=1100000|3000000|5000000" --doby $D \\
-      --zamist pv_ryad_fail=ryady_etap1.json --zamist ses_kwp=746.8 --zamist uze_n=0,4 --kod antares_etap1
+      --zamist pv_ryad_fail=ryady_etap1.json --zamist ses_kwp=746.8 --zamist uze_n=0,4 --zamist capex_ses_usd_kwp=339 --kod antares_etap1
+  (СЕС під ключ на кВтп — кошторис моделі 06.11, obiekty/antares/ses_price.py: етап 1 — 339, весь об'єкт — 313)
 Тут:  python3 kalk_twin.py [шлях до ses-uze-modul]  →  ../../obj/src/kalkdata.js
 """
 import json
