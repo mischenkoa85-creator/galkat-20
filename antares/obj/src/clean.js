@@ -140,7 +140,7 @@ function statusPaint(){ if(statOn()&&!NOW) compute(); if(!statOn()||!NOW){ if(!p
   painted=true; need=true; }
 function stCounts(){ const c=[0,0,0]; let n=0; if(NOW) GK.forEach(k=>{ const G=NOW.g[k]; if(!G.on) return; n+=G.n; G.cnt.forEach((v,i)=>c[i]+=v); }); return {c,n}; }
 function legendSun(){ const l=$('#legend'); if(!l||state.sec!=='sun') return; l.hidden=false; l.classList.remove('min');
-  if(state.lay.rad){ l.innerHTML=`<span class="t">Сонце за рік, кВт·год/м²</span>`+RCc.map((c,i)=>`<span><i class="sw" style="background:${c}"></i>${RADD.cln[i]}</span>`).join('')+(ABR.done?'':`<span>АБК — рахую ${ABR.pct} %</span>`); return; }
+  if(state.lay.rad){ l.innerHTML=`<span class="t">Сонце за рік, кВт·год/м²</span>`+RCc.map((c,i)=>`<span><i class="sw" style="background:${c}"></i>${RADD.cln[i]}</span>`).join('')+(ABR.done?'':`<span>АБК${EVOFF?' і козирок':''} — рахую ${ABR.pct} %</span>`); return; }
   if(state.lay.stat===false){ l.innerHTML=`<span class="t">Тіні — справжні, від сонця на вибраний час</span><span>▶ — день по 10 хв</span>`; return; }
   const C=stCounts(), sw=i=>`<i class="sw" style="background:${STC[i]}"></i>`;
   l.innerHTML=`<span class="t">Стан модулів о ${hhmm(state.hour)}</span>`+(!NOW||!(NOW.alt>0)?`<span>${sw(3)}ніч — не працюють усі ${nf(C.n)}</span>`
@@ -390,6 +390,12 @@ if(BS) ESS.forEach(o=>{ if(!o.isGroup||!o.children.length) return; const body=o.
 const RCc=['#f7a062','#ea7428','#cf550c','#a94006','#7f2f04','#561f02'], RCL2=RCc.map(c=>lin(c)), clsR=e=>RADD.cl.reduce((k,t)=>k+(e>=t?1:0),0);
 const ABR={cells:null,done:false,pct:0,job:null,im:null,st:null,k:1}, RGA=grp('radABK'); RGA.visible=false;
 const ABN={roof:'Дах АБК',S:'Стіни АБК, південь',E:'Стіни АБК, схід',W:'Стіни АБК, захід',N:'Стіни АБК, північ'};
+// 06.11 (власник): на сході — лише козирок 25°, тож у «Радіації» замість стіни сходу — козирок; АБК і козирок — готовим розрахунком (radxdata.js, tools/radx_export.js),
+// щоб на телефоні не рахувати; ?radcalc=1 — рахувати в браузері заново
+const EVOFF=typeof FACPV!=='undefined'&&FACPV.tot&&FACPV.tot.Ev&&!FACPV.tot.Ev.n, RX=typeof RADX!=='undefined'&&RADX&&!/radcalc/.test(location.search)?RADX:null;
+const KZ_A=2.384*1.303, KZ_T=25*Math.PI/180;
+function kozCells(){ if(!FP||!FP.C) return []; const n=new V3(Math.sin(KZ_T),Math.cos(KZ_T),0);   // центр модуля козирка: 0,59 м від стіни, 0,275 м нижче верху
+  return FP.C.map((m,i)=>({p:FP.FR[m[0]].P(m[3],m[2]-1.303*Math.sin(KZ_T)/2,1.303*Math.cos(KZ_T)/2),n:n.clone(),k:'koz',mi:i})); }
 function abkCells(){ const rc=new THREE.Raycaster(), tg=[]; A.root.updateMatrixWorld(true); A.groups.bld.traverse(o=>{ if(o.isMesh&&o.visible!==false) tg.push(o); });
   const out=[], nW=new V3(), mN=new THREE.Matrix3();
   const shoot=(o,d,ok,k)=>{ rc.set(o,d); rc.far=60; const h=rc.intersectObjects(tg,false)[0]; if(!h||!h.face) return; mN.getNormalMatrix(h.object.matrixWorld); nW.copy(h.face.normal).applyMatrix3(mN).normalize(); if(nW.dot(d)>0) nW.negate();
@@ -403,9 +409,10 @@ function abkBoxes(){ const zm=(a,b)=>{ let z=0; for(let x=a;x<=b+1e-6;x+=0.25) z
   for(let x=56.64;x<96.64-1e-6;x+=2) sh.push([x,x+2,-0.5,96.59,0,zm(x,x+2)]);   // цех — смугами по 2 м зі сходу (арки), щоб тінь на захід АБК не завищувати
   return [...ABKB,...sh,...TPB,...OBX]; }
 const HEM=(()=>{ const a=[], N=48, ga=Math.PI*(3-Math.sqrt(5)); for(let i=0;i<N;i++){ const z=1-(i+0.5)/N, r=Math.sqrt(1-z*z), t=ga*i; a.push([r*Math.cos(t),r*Math.sin(t),z]); } return a; })();
-function abkPrep(){ const C=abkCells(), BX=abkBoxes();
+function abkPrep(){ const C=abkCells().concat(kozCells()), BX=abkBoxes(), PAR=[96.34,96.64,-0.5,96.59,0,(typeof FACPV!=='undefined'&&FACPV.ze)||16.5];   // парапет сходу — над козирком
+  if(RX&&RX.n===C.length){ ABR.cells=C.map((c,i)=>({c,P:[c.p.x,-c.p.z,c.p.y],E:RX.e[i],E0:RX.e0[i]})); ABR.pre=true; ABR.m=WX.mo.length; return; }
   ABR.cells=C.map(c=>{ const P=[c.p.x,-c.p.z,c.p.y], n=[c.n.x,-c.n.z,c.n.y], o=P.map((v,i)=>v+n[i]*0.08);
-    const bx=BX.filter(b=>!(P[0]>b[0]-0.3&&P[0]<b[1]+0.3&&P[1]>b[2]-0.3&&P[1]<b[3]+0.3&&P[2]>b[4]-0.3&&P[2]<b[5]+0.3));
+    const bx=BX.filter(b=>!(P[0]>b[0]-0.3&&P[0]<b[1]+0.3&&P[1]>b[2]-0.3&&P[1]<b[3]+0.3&&P[2]>b[4]-0.3&&P[2]<b[5]+0.3)).concat(c.k==='koz'?[PAR]:[]);
     // відкрите небо: напрямки півсфери над площиною модуля, що дивляться в небо (z > 0), вага — косинус
     const t1=Math.abs(n[2])<0.9?[0,0,1]:[1,0,0], u=[n[1]*t1[2]-n[2]*t1[1],n[2]*t1[0]-n[0]*t1[2],n[0]*t1[1]-n[1]*t1[0]], ul=Math.hypot(...u), U=u.map(v=>v/ul), V=[n[1]*U[2]-n[2]*U[1],n[2]*U[0]-n[0]*U[2],n[0]*U[1]-n[1]*U[0]];
     let sa=0,sb=0; HEM.forEach(h=>{ const d=[0,1,2].map(i=>U[i]*h[0]+V[i]*h[1]+n[i]*h[2]); if(d[2]<=0) return; sa+=h[2]; if(!bx.some(b=>rayBox(o,d,b))) sb+=h[2]; });
@@ -422,16 +429,21 @@ function abkStep(){ const t0=performance.now(), MO=WX.mo, C=ABR.cells;
   ABR.pct=Math.round(ABR.m/MO.length*100); return ABR.m>=MO.length; }
 function abkGhi(){ let e=0; WX.mo.forEach(W_=>W_.st.forEach(st=>{ const G=st[4], D=st[6], Dn=st[5], ext=st[7], Ai=ext>0?Dn/ext:0, cz=Math.max(st[3],0.01), Go=W_.c*G, bm=Dn*Math.max(0,st[3])+D*Ai*Math.max(0,st[3])/cz;
   e+=W_.nd*DT*(W_.p*(bm+D*(1-Ai))+(1-W_.p)*Go); })); return e/1000; }
-function abkBuild(){ const C=ABR.cells, k=RADD.ghi/abkGhi(); ABR.k=k; C.forEach(q=>{ q.E=q.e/1000*k; q.E0=q.e0/1000*k; });
+function abkBuild(){ const CA=ABR.cells; if(!ABR.pre){ const k=RADD.ghi/abkGhi(); ABR.k=k; CA.forEach(q=>{ q.E=q.e/1000*k; q.E0=q.e0/1000*k; }); }
+  const C=CA.filter(q=>q.c.k!=='koz'), CK=CA.filter(q=>q.c.k==='koz');
+  if(CK.length&&FP&&FP.pc){ const km=new THREE.InstancedMesh(FP.pc.geometry,new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}),CK.length), Mk=new M4(); km.frustumCulled=false;
+    CK.forEach((q,i)=>{ FP.pc.getMatrixAt(q.c.mi,Mk); km.setMatrixAt(i,Mk); km.setColorAt(i,RCL2[clsR(q.E)]); }); km.instanceMatrix.needsUpdate=true; km.instanceColor.needsUpdate=true; RGA.add(km);
+    km.userData.info=i=>{ const q=CK[i]; return {t:`Козирок сходу 25° · модуль Y ${nf(q.P[1],1)} м`,d:`${nf(q.E,0)} кВт·год/м² за рік на площину модуля — ${nf(q.E/RADD.ghi*100,0)} % від горизонтальної площини без тіні (${nf(RADD.ghi,0)}). Тінь і закрите небо (цех і парапет за спиною) забирають ${nf((1-q.E/Math.max(1,q.E0))*100,0)} %.`}; };
+    PICK.push({o:km,when:()=>RGA.visible}); }
   const PL=new THREE.PlaneGeometry(1,1), mt=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
   const im=new THREE.InstancedMesh(PL,mt,C.length), Mx=new M4(), qq=new THREE.Quaternion(), Z=new V3(0,0,1), sc=new V3(0.97,0.97,1); im.frustumCulled=false;
   C.forEach((q,i)=>{ qq.setFromUnitVectors(Z,q.c.n); Mx.compose(q.c.p.clone().addScaledVector(q.c.n,0.06),qq,sc); im.setMatrixAt(i,Mx); im.setColorAt(i,RCL2[clsR(q.E)]); });
   im.instanceMatrix.needsUpdate=true; im.instanceColor.needsUpdate=true; RGA.add(im); ABR.im=im;
   im.userData.info=i=>{ const q=C[i]; return {t:`${ABN[q.c.k]} · X ${nf(q.P[0],1)}, Y ${nf(q.P[1],1)}, висота ${nf(q.P[2],1)} м`,d:`${nf(q.E,0)} кВт·год/м² за рік — ${nf(q.E/RADD.ghi*100,0)} % від горизонтальної площини без тіні (${nf(RADD.ghi,0)}). Тінь і закрите небо забирають ${nf((1-q.E/Math.max(1,q.E0))*100,0)} %.`}; };
   PICK.push({o:im,when:()=>RGA.visible});
-  const st={}; C.forEach(q=>{ const s_=st[q.c.k]=st[q.c.k]||{area:0,sum:0,sum0:0,min:1e9,max:0,cls:[0,0,0,0,0,0]}; s_.area++; s_.sum+=q.E; s_.sum0+=q.E0; s_.min=Math.min(s_.min,q.E); s_.max=Math.max(s_.max,q.E); s_.cls[clsR(q.E)]++; });
-  Object.values(st).forEach(s_=>{ s_.mean=s_.sum/s_.area; s_.shade=(1-s_.sum/s_.sum0)*100; }); ABR.st=st; ABR.done=true; }
-function abkRun(){ if(ABR.done||ABR.job||!A) return; if(!ABR.cells) abkPrep();
+  const st={}; CA.forEach(q=>{ const s_=st[q.c.k]=st[q.c.k]||{area:0,sum:0,sum0:0,min:1e9,max:0,cls:[0,0,0,0,0,0]}; s_.area++; s_.sum+=q.E; s_.sum0+=q.E0; s_.min=Math.min(s_.min,q.E); s_.max=Math.max(s_.max,q.E); s_.cls[clsR(q.E)]++; });
+  Object.values(st).forEach(s_=>{ s_.mean=s_.sum/s_.area; s_.shade=(1-s_.sum/s_.sum0)*100; }); if(st.koz){ st.koz.n=st.koz.area; st.koz.area=st.koz.n*KZ_A; } ABR.st=st; ABR.done=true; }
+function abkRun(){ if(ABR.done||ABR.job||!A) return; if(!ABR.cells) abkPrep(); if(ABR.pre){ abkBuild(); return; }
   const tick=()=>{ ABR.job=null; const done=abkStep(); if(done){ abkBuild(); setVis(); legendSun(); panelNow(); need=true; return; } legendSun(); ABR.job=setTimeout(tick,0); }; ABR.job=setTimeout(tick,0); }
 const radOn2=()=>!!state.lay.rad&&state.proj==='ours'&&state.sec!=='mis';   // шар «Радіація» — у будь-якому розділі (власник 04.11, 23:05)
 setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGA.visible=on&&ABR.done; if(!on) return; abkRun();
@@ -439,15 +451,16 @@ setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGA.visible=o
   L28.LG28.forEach(q=>{ Object.values(q.v2m||{}).forEach(g=>g.visible=false); Object.values(q.v2r||{}).forEach(g=>g.visible=false); });
   Object.values(R28.VG||{}).forEach(g=>g.children.forEach(o=>{ if(o.userData.part==='roof') o.visible=false; }));
   if(A) ['arch','low','wall','nad','mount','safety','elec','str','lps'].forEach(k=>{ if(A.groups[k]) A.groups[k].visible=false; });
-  if(G.rad) G.rad.visible=true; need=true; })(setVis);
+  if(G.rad) G.rad.visible=true; const RGx=window.__twin.rad&&window.__twin.rad.RG; if(EVOFF&&RGx&&RGx.children[3]) RGx.children[3].visible=false; need=true; })(setVis);
 // блок у панелі «Сонця»
 function radBlock(){ const S=RADD.st, f0=v=>nf(v,0), RN={roof:'Дах цеху',whA:'Склад A, 11° на пд',whB:'Склад B, 11° на пд',whC1:'Склад C1, 2 схили 22°',S:'Фасад цеху, південь',E:'Фасад цеху, схід',N:'Фасад цеху, північ'};
   const bar=c=>`<span class="cb">${c.map((v,i)=>v?`<i style="background:${RCc[i]};flex:${v}"></i>`:'').join('')}</span>`;
   const row=(n,s_)=>`<tr><td class="w">${n}</td><td>${f0(s_.area)}</td><td><b>${f0(s_.mean)}</b></td><td>${f0(s_.max)}</td><td>${f0(s_.mean/RADD.ghi*100)} %</td><td>${nf(s_.shade,1)} %</td><td>${bar(s_.cls)}</td></tr>`;
   const ab=ABR.done?['roof','S','E','W','N'].filter(k=>ABR.st[k]).map(k=>row(ABN[k],ABR.st[k])).join(''):`<tr><td class="w">АБК</td><td colspan="6">рахую ${ABR.pct} %…</td></tr>`;
+  const kz=!EVOFF?'':ABR.done&&ABR.st.koz?row('Козирок сходу 25° (на площину модулів)',ABR.st.koz):`<tr><td class="w">Козирок сходу 25°</td><td colspan="6">рахую ${ABR.pct} %…</td></tr>`;
   return `<div class="blk wide"><h3>Сонце за рік на кожен м² поверхні, кВт·год/м²</h3><div class="tw"><table class="cmp an"><thead><tr><th>Поверхня</th><th>Площа, м²</th><th>Середнє</th><th>Макс.</th><th>Від горизонталі</th><th>Тінь і закрите небо</th><th>Розподіл</th></tr></thead><tbody>
-    ${['roof','whA','whB','whC1','S','E','N'].map(k=>row(RN[k],S[k])).join('')}${ab}</tbody></table></div>
-    <p class="src">Горизонтальна площина без тіні — ${f0(RADD.ghi)} кВт·год/м² за рік (Meteonorm 8.1). Колір поверхні в моделі — та сама шкала; модулі в цьому шарі сховано. Дах, фасади цеху і склад — розрахунок 26.10 (клітинки 0,5–1 м); АБК — тут, клітинки 1 × 1 м на дахах і стінах, 12 характерних днів місяців по 10 хв, тінь від АБК, цеху, ТП і будівель поруч.</p></div>`; }
+    ${['roof','whA','whB','whC1','S'].map(k=>row(RN[k],S[k])).join('')}${EVOFF?kz:row(RN.E,S.E)}${row(RN.N,S.N)}${ab}</tbody></table></div>
+    <p class="src">Горизонтальна площина без тіні — ${f0(RADD.ghi)} кВт·год/м² за рік (Meteonorm 8.1). Колір поверхні в моделі — та сама шкала; модулі в цьому шарі сховано. Дах, фасади цеху і склад — розрахунок 26.10 (клітинки 0,5–1 м); АБК — клітинки 1 × 1 м на дахах і стінах${EVOFF?', козирок сходу — центр кожного модуля на площині 25°':''}: 12 характерних днів місяців по 10 хв, тінь від АБК, цеху${EVOFF?' (і парапету над козирком)':''}, ТП і будівель поруч.${EVOFF?' На стіні сходу модулів немає — у цьому шарі її не показуємо.':''}</p></div>`; }
 { const v=VIEWS.over; camera.position.set(...v.p); controls.target.set(...v.c); controls.update(); need=true; }   // старт — «Огляд» з південного сходу
 // ---------- шар «Радіація» (власник 04.11, 18:04 і 23:05: «сонячна радіація — окремий шар, перемикаємо»): поверхні кольором за кВт·год/м² за рік, над поверхнями — середнє;
 // у «Сонці і генерації» з цим шаром панель показує радіацію по поверхнях
@@ -462,22 +475,26 @@ const radLbl=(name,mean,pos,size)=>{ const sp=radTag(name,`≈${nf(mean,0)} кВ
   sp.userData.info={t:`${name}: сонце за рік`,d:`У середньому ${nf(mean,0)} кВт·год/м² за рік — ${nf(mean/RADD.ghi*100,0)} % від горизонтальної площини без тіні (${nf(RADD.ghi,0)}). Колір клітинок — шкала в легенді; натисніть клітинку — її значення.`};
   PICK.push({o:sp,when:()=>RGL.visible}); RGL.add(sp); };
 { const RGx=window.__twin.rad&&window.__twin.rad.RG, K=['roof','S','N','E','whA','whB','whC1'], NM={roof:'Дах цеху',S:'Фасад цеху, південь',N:'Фасад цеху, північ',E:'Фасад цеху, схід',whA:'Склад A',whB:'Склад B',whC1:'Склад C1'};
-  if(RGx) RGx.children.forEach((im,i)=>{ const k=K[i], S_=RADD.st[k]; if(!S_||!im.isInstancedMesh) return; const c=new V3(), p=new V3(), M_=new M4(); let n=0;
+  if(RGx) RGx.children.forEach((im,i)=>{ const k=K[i], S_=RADD.st[k]; if(!S_||!im.isInstancedMesh||(k==='E'&&EVOFF)) return; const c=new V3(), p=new V3(), M_=new M4(); let n=0;
     for(let j=0;j<im.count;j++){ im.getMatrixAt(j,M_); p.setFromMatrixPosition(M_); c.add(p); n++; } c.divideScalar(Math.max(1,n));
     const off=k==='roof'?new V3(0,4,0):k==='S'?new V3(0,1,4):k==='N'?new V3(0,1,-4):k==='E'?new V3(4,1,0):new V3(0,2.5,0);
     radLbl(NM[k],S_.mean,c.add(off),k==='roof'?3.2:k.startsWith('wh')?1.7:2.4); }); }
 function radLblABK(){ if(rglABK||!ABR.done||!ABR.st) return; const r=ABR.cells.filter(q=>q.c.k==='roof'); if(!r.length) return; const c=new V3(); r.forEach(q=>c.add(q.c.p)); c.divideScalar(r.length).add(new V3(0,3,0));
-  radLbl('Дах АБК',ABR.st.roof.mean,c,2.2); rglABK=true; }
+  radLbl('Дах АБК',ABR.st.roof.mean,c,2.2); const kz=ABR.cells.filter(q=>q.c.k==='koz');
+  if(kz.length&&ABR.st.koz){ const c2=new V3(); kz.forEach(q=>c2.add(q.c.p)); c2.divideScalar(kz.length).add(new V3(4,1,0)); radLbl('Козирок сходу 25°',ABR.st.koz.mean,c2,2.4); } rglABK=true; }
 // панель вкладки
 function radStatsAll(){ const S=RADD.st, wh=['whA','whB','whC1'].map(k=>S[k]).filter(Boolean), wa=wh.reduce((a,x)=>a+x.area,0), wm=wa?wh.reduce((a,x)=>a+x.mean*x.area,0)/wa:0; return {roof:S.roof.mean,S:S.S.mean,E:S.E.mean,N:S.N.mean,wh:wm}; }
-function radTabPanel(){ const T=radStatsAll(), f0=v=>nf(v,0), tile=(k,v,sub)=>`<div class="kpi"><span class="k">${k}</span><span class="v">${f0(v)} <small>кВт·год/м²</small></span><span class="s">${sub}</span></div>`;
-  const ab=ABR.done&&ABR.st&&ABR.st.roof?tile('Дах АБК',ABR.st.roof.mean,`${f0(ABR.st.roof.mean/RADD.ghi*100)} % від горизонталі`):`<div class="kpi"><span class="k">АБК</span><span class="v">…</span><span class="s">рахую ${ABR.pct} %</span></div>`;
+const radTile=(k,v,sub)=>`<div class="kpi"><span class="k">${k}</span><span class="v">${nf(v,0)} <small>кВт·год/м²</small></span><span class="s">${sub}</span></div>`, radWait=k=>`<div class="kpi"><span class="k">${k}</span><span class="v">…</span><span class="s">рахую ${ABR.pct} %</span></div>`;
+function radKpis(){ const T=radStatsAll(), f0=v=>nf(v,0), tile=radTile, pc=v=>`${f0(v/RADD.ghi*100)} %`, K=ABR.done&&ABR.st;
+  const east=!EVOFF?tile('Фасад, схід',T.E,`${pc(T.E)} · вертикально`):K&&K.koz?tile('Козирок, схід',K.koz.mean,`${pc(K.koz.mean)} · 25°, ${nf(K.koz.n)} ${K.koz.n%10===1&&K.koz.n%100!==11?'модуль':[2,3,4].includes(K.koz.n%10)&&![12,13,14].includes(K.koz.n%100)?'модулі':'модулів'}`):radWait('Козирок, схід');
+  const ab=K&&K.roof?tile('Дах АБК',K.roof.mean,`${pc(K.roof.mean)} від горизонталі`):radWait('Дах АБК');
+  return `${tile('Дах цеху',T.roof,`${pc(T.roof)} від горизонталі`)}${tile('Фасад, південь',T.S,`${pc(T.S)} · вертикально`)}${east}${tile('Склад',T.wh,`середнє A, B, C1 за площею`)}${ab}${tile('Горизонталь без тіні',RADD.ghi,'Meteonorm 8.1, Київ — 100 %')}`; }
+function radTabPanel(){
   return `<div class="ph"><span class="eyebrow ours">Радіація за рік · кВт·год/м²</span><h2>Скільки сонця отримує кожен м² поверхні за рік</h2>
-  <p>Колір поверхні — сонце за рік з тінню (ліхтарі, парапети, сусідні будівлі) і закритим небом; модулі в цьому шарі сховано. Над поверхнями — середнє; натисніть клітинку — її значення.</p></div>
-  <div class="kpis">${tile('Дах цеху',T.roof,`${f0(T.roof/RADD.ghi*100)} % від горизонталі`)}${tile('Фасад, південь',T.S,`${f0(T.S/RADD.ghi*100)} % · вертикально`)}${tile('Фасад, схід',T.E,`${f0(T.E/RADD.ghi*100)} % · вертикально${typeof FACPV!=='undefined'&&FACPV.tot.Ev&&!FACPV.tot.Ev.n?' · модулів на стіні немає, лише козирок':''}`)}${tile('Склад',T.wh,`середнє A, B, C1 за площею`)}${ab}
-  ${tile('Горизонталь без тіні',RADD.ghi,'Meteonorm 8.1, Київ — 100 %')}</div><div id="gRadBody" class="sunb">${radBlock()}</div>`; }
+  <p>Колір поверхні — сонце за рік з тінню (ліхтарі, парапети, сусідні будівлі) і закритим небом; модулі в цьому шарі сховано (козирок сходу — кольором за сонцем на площину модулів). Над поверхнями — середнє; натисніть клітинку — її значення.</p></div>
+  <div class="kpis" id="gRadK">${radKpis()}</div><div id="gRadBody" class="sunb">${radBlock()}</div>`; }
 const psR=panelSun; panelSun=function(){ return isRad()?radTabPanel():psR.apply(this,arguments); };
-const pnR=panelNow; panelNow=function(){ if(isRad()){ radLblABK(); const el=document.getElementById('gRadBody'); if(el) el.innerHTML=radBlock(); return; } return pnR.apply(this,arguments); };
+const pnR=panelNow; panelNow=function(){ if(isRad()){ radLblABK(); const el=document.getElementById('gRadBody'); if(el) el.innerHTML=radBlock(); const ek=document.getElementById('gRadK'); if(ek) ek.innerHTML=radKpis(); return; } return pnR.apply(this,arguments); };
 setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGL.visible=on; if(on) radLblABK(); })(setVis);
 function legendLayer(){ if(state.sec==='sun'||state.sec==='mis') return; const l=$('#legend'); if(!l) return; const sw=c=>`<i class="sw" style="background:${c}"></i>`;
   if(state.lay.rad){ l.hidden=false; l.insertAdjacentHTML('beforeend',`<span class="e4">Сонце за рік, кВт·год/м²: ${RCc.map((c,i)=>sw(c)+RADD.cln[i]).join(' ')}</span>`); }
