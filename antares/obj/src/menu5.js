@@ -14,7 +14,7 @@ const MENU=[
  ['kon','Конструкція',[['kr','Кріплення',{sec:'pz',pane:'kr',cam:'near'}],['bal','Баласт і вага',{sec:'pz',pane:'bal'}],['roz','Розбір на елементи',{sec:'pz',pane:'roz',cam:'near'}],['nav','Навантаження',{sec:'pz',pane:'nav',cam:'top'}],['obs','Обстеження',{sec:'pz',pane:'obs',need:1}]]],
  ['el','Електрика',[['str','Стрінги',{sec:'pz',lay:{str:true}}],['shch','Щити PV',{sec:'pz',lay:{e04:true},pane:'shch'}],['lin','Лінії і лотки',{sec:'pz',lay:{e04:true},cam:'top',pane:'lin'}],
    ['shv','Шафи (Al → Cu)',{sec:'pz',lay:{e04:true},cam:'ess'}],['kont','Контейнери',{sec:'uze'}],['bz','Блискавкозахист',{sec:'pz',pane:'bz'}]]],
- ['gr','Гроші',[['ok','Окупність',{sec:'eko'}],['obl','Обладнання',{sec:'pz',pane:'obl'}],['kn','Конструкція',{sec:'pz',pane:'kn'}],['mn','Монтаж',{sec:'pz',pane:'mn'}],
+ ['gr','Гроші',[['ok','Окупність',{sec:'eko'}],['arb','Арбітраж',{sec:'pz',pane:'arb'}],['obl','Обладнання',{sec:'pz',pane:'obl'}],['kn','Конструкція',{sec:'pz',pane:'kn'}],['mn','Монтаж',{sec:'pz',pane:'mn'}],
    ['ksh','Кошторис',{sec:'pz',pane:'ksh'}],['sp','Специфікація',{sec:'pz',pane:'sp'}],['bud','Під бюджет',{sec:'pz',pane:'bud'}]]]];
 const M5=state.lay.m5&&MENU.some(([k])=>k===state.lay.m5.s)?state.lay.m5:(state.lay.m5={s:'obj',sub:'tu'});
 const cur=()=>{ const S_=MENU.find(([k])=>k===M5.s)||MENU[0], sub=S_[2].find(([k])=>k===M5.sub)||S_[2][0]; return {S:S_,sub}; };
@@ -31,14 +31,15 @@ const cur=()=>{ const S_=MENU.find(([k])=>k===M5.s)||MENU[0], sub=S_[2].find(([k
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767} }
 :root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767}
 .m5p .gch{position:relative;min-height:230px;touch-action:pan-y} .m5p .gch svg,.m5p .gmc svg{display:block;overflow:visible} .m5p .glg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2)} .m5p .glg span{display:inline-flex;align-items:center;gap:5px} .m5p .glg b{color:var(--ink);font-weight:600}
-.m5p .gg{stroke:var(--line);stroke-width:1} .m5p .ga{fill:var(--ink-3);font-size:10.5px;font-family:var(--font)} .m5p .gv{fill:var(--ink);font-size:11px;font-weight:650;font-family:var(--font)} .m5p .gb{stroke:var(--surface);stroke-width:1.5}
+.m5p .gg{stroke:var(--line);stroke-width:1} .m5p .ga{fill:var(--ink-3);font-size:10.5px;font-family:var(--font)} .m5p .gv{fill:var(--ink);font-size:11px;font-weight:650;font-family:var(--font)} .m5p .gsb{stroke:var(--surface);stroke-width:1.5}
 .m5p .gt{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.5} .m5p .gx{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3} .m5p .ga2{opacity:.18} .m5p .gl{fill:none;stroke-width:2} .m5p .gd{stroke:var(--surface);stroke-width:2}
 .m5p .gtip{position:absolute;z-index:3;background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:6px 9px;font-size:12px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:2px;min-width:180px}
 .m5p .gtip span{display:flex;align-items:center;gap:6px;color:var(--ink-2)} .m5p .gtip em{margin-left:auto;font-style:normal;color:var(--ink);font-variant-numeric:tabular-nums;padding-left:10px} .m5p .gtip .tt{border-top:1px solid var(--line);padding-top:3px;margin-top:2px;color:var(--ink);font-weight:600}
 .m5p .gms{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px} .m5p .gm{border:1px solid var(--line);border-radius:10px;padding:8px 10px 6px;background:var(--surface);min-width:0}
 .m5p .gmh{display:flex;gap:7px;align-items:flex-start;font-size:13px;font-weight:600;color:var(--ink)} .m5p .gmh .sw{margin-top:3px} .m5p .gmh small{display:block;font-weight:400;color:var(--ink-3);font-size:11px}
 .m5p .gmv{font-size:12px;color:var(--ink-2);margin:2px 0 0} .m5p .gmv b{font-size:18px;color:var(--ink)} .m5p .gms2{font-size:11px;color:var(--ink-3)}
-.m5p .bzw svg{display:block} .m5p .bzw .bzv{display:none;max-width:420px} @media (max-width:700px){ .m5p .bzw .bzh{display:none} .m5p .bzw .bzv{display:block} } .m5p .bzb{fill:var(--surface);stroke:var(--line-2);stroke-width:1.2} .m5p .bzb.k{stroke:var(--ink-3)} .m5p .bzb.g{fill:var(--surface-2)} .m5p .bzt{fill:var(--ink);font-size:13px;font-weight:650;font-family:var(--font)}
+.m5p .law{font-size:13px;color:var(--ink-2);line-height:1.45;border-left:3px solid var(--s1);padding:4px 0 4px 10px} .m5p .law b{color:var(--ink)} .m5p .law a{color:var(--s1);white-space:nowrap} .m5p .law small{display:block;color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.m5p .gx0{stroke:var(--ink-3);stroke-width:1} .m5p .bzw svg{display:block} .m5p .bzw .bzv{display:none;max-width:420px} @media (max-width:700px){ .m5p .bzw .bzh{display:none} .m5p .bzw .bzv{display:block} } .m5p .bzb{fill:var(--surface);stroke:var(--line-2);stroke-width:1.2} .m5p .bzb.k{stroke:var(--ink-3)} .m5p .bzb.g{fill:var(--surface-2)} .m5p .bzt{fill:var(--ink);font-size:13px;font-weight:650;font-family:var(--font)}
 .m5p .bzs{fill:var(--ink-2);font-size:11.5px;font-family:var(--font)} .m5p .bzl{stroke:var(--ink-2);stroke-width:1.5} .m5p .bzl.d{stroke-dasharray:4 3} .m5p .bzm{fill:var(--ink-2)} .m5p .es{font-size:10.5px;color:var(--ink-3);margin-left:4px}
 .m5p .kb{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px} .m5p .kb button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;font:inherit;font-size:12.5px;color:var(--ink)}
 .m5p .kb button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)} .m5p input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:8px;width:160px;background:var(--surface);color:var(--ink)}`; document.head.appendChild(st);
@@ -235,7 +236,7 @@ function drawStack(el,G){ const W=Math.max(300,el.clientWidth), ph=W<560, H=ph?2
   let s=`<svg width="${W}" height="${H}" role="img" aria-label="Генерація по місяцях, МВт·год">`;
   tk.forEach(v=>{ s+=`<line x1="${l}" x2="${W-r}" y1="${fw(Y(v))}" y2="${fw(Y(v))}" class="gg"/><text x="${l-6}" y="${fw(Y(v)+4)}" class="ga" text-anchor="end">${nf(v,top<10?1:0)}</text>`; });
   G.forEach((g,k)=>{ const up=monoSeg(xs,cum[k].map(Y)), lo=monoSeg(xs,(k?cum[k-1]:tot.map(()=>0)).map(Y));
-    s+=`<path d="M${fw(xs[0])},${fw(Y(cum[k][0]))}${segF(up)}L${fw(xs[11])},${fw(Y(k?cum[k-1][11]:0))}${segR(lo)}Z" fill="${g.c}" class="gb"/>`; });
+    s+=`<path d="M${fw(xs[0])},${fw(Y(cum[k][0]))}${segF(up)}L${fw(xs[11])},${fw(Y(k?cum[k-1][11]:0))}${segR(lo)}Z" fill="${g.c}" class="gsb"/>`; });
   const T=monoSeg(xs,tot.map(Y)); s+=`<path d="M${fw(xs[0])},${fw(Y(tot[0]))}${segF(T)}" class="gt"/>`;
   MON.forEach((mn,m)=>{ if(!ph||m%2===0) s+=`<text x="${fw(X(m))}" y="${H-6}" class="ga" text-anchor="middle">${mn}</text>`; });
   const pk=tot.indexOf(Math.max(...tot)); s+=`<text x="${fw(X(pk))}" y="${fw(Y(tot[pk])-6)}" class="gv" text-anchor="middle">${mwhF(tot[pk])}</text>`;
@@ -256,7 +257,7 @@ function drawMini(el,g){ const W=Math.max(180,el.clientWidth), H=92, l=6, r=6, t
   ${[0,5,11].map(m=>`<text x="${fw(X(m))}" y="${H-3}" class="ga" text-anchor="middle">${MON[m]}</text>`).join('')}</svg>`; }
 function drawGen(root){ const G=genMo().filter(g=>state.lay.stg==='all'||g.st===state.lay.stg); const st=root.querySelector('[data-gch]'); if(st) drawStack(st,G);
   root.querySelectorAll('[data-gm]').forEach(el=>{ const g=G.find(x=>x.k===el.dataset.gm); if(g) drawMini(el,g); }); }
-let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ const p=$('#pane'); if(p&&p.querySelector('[data-gch]')) drawGen(p); },200); });
+let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ const p=$('#pane'); if(p&&p.querySelector('[data-gch]')) drawGen(p); const ab=p&&p.querySelector('[data-arb]'); if(ab&&E&&E.law) arbDay(ab,E.law,E.law.varianty[state.lay.stg==='1'?'plan':'max'],state.lay.arbD||ARBD[state.day]||'lito',state.lay.arbM||'pilga'); },200); });
 function genBlocks(){ const G=genMo().filter(g=>state.lay.stg==='all'||g.st===state.lay.stg); if(!G.length) return ''; const T=G.reduce((a,g)=>a+g.tot,0), tm=MON.map((_,m)=>G.reduce((a,g)=>a+g.mo[m],0));
   const pk=tm.indexOf(Math.max(...tm)), dec=tm[11];
   return `<div class="blk wide"><h3>Генерація по місяцях — ${G.length>1?'кожна група своїм кольором':G[0].n}, МВт·год</h3>
@@ -340,7 +341,38 @@ function pBz2(){ if(!ELD_) return head('Електрика · блискавко
   <div class="blk wide"><h3>Позиції кошторису і ціни</h3></div>${koshTbl(g=>/Блискавко/.test(g))}`; }
 function pLin(){ const old=pLinChk(), m=old.match(/^<div class="ph"[^>]*><span[^>]*>[^<]*<\/span><h2>([\s\S]*?)<\/h2>(?:<p>([\s\S]*?)<\/p>)?<\/div>/), rest=m?old.slice(m[0].length):old;
   return head('Електрика · лінії і лотки',`${stgN()}: лотки і кабелі — алюміній, мідь`,'Лотки — по місцях, ширинах і опорах; кабелі — по марках, перерізах і метражу за кошторисом. Нижче — як лотки стоять у проходах даху цеху.')+linDetail()+(m?`<div class="blk wide"><h3>Проходи на даху цеху: ${m[1].replace(/^./,c=>c.toLowerCase())}</h3>${m[2]?`<p class="src">${m[2]}</p>`:''}</div>`:'')+rest; }
-const PANES={shch:pShch,lin:pLin,kut:pKut,nav:pNav,obs:pObs,rik:pRik,flow:()=>head('Сонце і генерація · потоки енергії','Потоки енергії')+needB('Потрібно: погодинне споживання з АСКОЕ за 12–36 місяців по трьох точках обліку — тоді показуємо, куди йде енергія щогодини: цех, накопичувачі, мережа.'),
+// ---------- Гроші → арбітраж: пільга ч. 10 ст. 58-1 (ses_uze/pilga_58_1.py), лаконічно: закон, перемикач, варіанти, доба
+const ARBD=['vesna','lito','osin','zyma'], ARBN={vesna:'весна, 21.03',lito:'літо, 21.06',osin:'осінь, 23.09',zyma:'зима, 21.12'};
+function arbDay(el,L,v,dk,rm){ const D=L.dni[dk], F=v[rm].dni[dk]; if(!D||!F) return; const W=Math.max(300,el.clientWidth), l=46, r=8, bw=(W-l-r)/24, X=h=>l+(h+0.5)*bw;
+  const pH=96, eH=170, pt=12, gap=22, ph=W<560, rdn=D.rdn, pmx=niceTop(Math.max(...rdn)*1.05), Yp=v_=>pt+(1-v_/pmx)*(pH-pt-14);
+  const up=F.bl.map((x,h)=>x+F.bx[h]), dn=F.gb.map((x,h)=>x+F.pb[h]), em=niceTop(Math.max(...up,...dn,1)*1.08), e0=pH+gap+eH/2, Ye=v_=>e0-v_/em*(eH/2-8);
+  const S=[['gb','--s1','заряд з мережі',-1],['pb','--s3','заряд від СЕС',-1],['bl','--s7','розряд у цех',1],['bx','--s2','розряд у мережу',1]];
+  let s=`<svg width="${W}" height="${pH+gap+eH+20}" role="img" aria-label="Доба арбітражу">`;
+  [0,0.5,1].forEach(f=>{ const y=Yp(f*pmx); s+=`<line x1="${l}" x2="${W-r}" y1="${fw(y)}" y2="${fw(y)}" class="gg"/><text x="${l-5}" y="${fw(y+4)}" class="ga" text-anchor="end">${nf(f*pmx/1000,f*pmx<10000&&f?1:0)}</text>`; });
+  s+=`<text x="${l}" y="9" class="ga">РДН, тис. грн/МВт·год</text><path d="M${rdn.map((p,h)=>`${fw(X(h))},${fw(Yp(p))}`).join('L')}" class="gt" style="opacity:1;stroke-width:2"/>`;
+  const hmx=rdn.indexOf(Math.max(...rdn)), hmn=rdn.indexOf(Math.min(...rdn)); s+=`<text x="${fw(X(hmx))}" y="${fw(Yp(rdn[hmx])-5)}" class="gv" text-anchor="middle">${nf(rdn[hmx])}</text><text x="${fw(X(hmn))}" y="${fw(Yp(rdn[hmn])+13)}" class="ga" text-anchor="middle">${nf(rdn[hmn])}</text>`;
+  [-1,0,1].forEach(f=>{ const y=Ye(f*em); s+=`<line x1="${l}" x2="${W-r}" y1="${fw(y)}" y2="${fw(y)}" class="${f?'gg':'gx0'}"/><text x="${l-5}" y="${fw(y+4)}" class="ga" text-anchor="end">${nf(Math.abs(f*em)/1000,1)}</text>`; });
+  s+=`<text x="${l}" y="${pH+gap-6}" class="ga">МВт·год: вгору — розряд, вниз — заряд</text>`;
+  for(let h=0;h<24;h++){ let yu=0, yd=0; const x0=X(h)-bw*0.38, w=bw*0.76;
+    S.forEach(([k,c,,sg])=>{ const v_=F[k][h]; if(v_<1) return; if(sg>0){ s+=`<rect x="${fw(x0)}" y="${fw(Ye(yu+v_))}" width="${fw(w)}" height="${fw(Ye(yu)-Ye(yu+v_))}" fill="var(${c})" class="gsb"/>`; yu+=v_; } else { s+=`<rect x="${fw(x0)}" y="${fw(Ye(-yd))}" width="${fw(w)}" height="${fw(Ye(-yd-v_)-Ye(-yd))}" fill="var(${c})" class="gsb"/>`; yd+=v_; } }); }
+  [0,6,12,18,23].forEach(h=>{ s+=`<text x="${fw(X(h))}" y="${pH+gap+eH+14}" class="ga" text-anchor="middle">${h}:00</text>`; });
+  el.innerHTML=s+'</svg>'; }
+function pArb(){ const L=E&&E.law; if(!L) return needB('Потрібно: розрахунок арбітражу з пільгою (ses-uze-modul: python3 -m ses_uze.pilga_58_1).');
+  const rm=state.lay.arbM||'pilga', vk=state.lay.stg==='1'?'plan':'max', v=L.varianty[vk], x=v[rm], o=v[rm==='pilga'?'povna':'pilga'], Pp=L.prypushchennia, dk=state.lay.arbD||ARBD[state.day]||'lito', D=L.dni[dk], F=x.dni[dk];
+  const ksd=a=>nf(Math.round(a/1000)), dd=(a,b)=>{ const d=a-b; return Math.abs(d)<500?'':`<small>${d>0?'+':'−'}${ksd(Math.abs(d))} ${rm==='pilga'?'від пільги':'без пільги'}</small>`; };
+  const sold=F.bx.reduce((a,b)=>a+b,0), bought=F.gb.reduce((a,b)=>a+b,0), avg=(q,p)=>{ const s_=q.reduce((a,b)=>a+b,0); return s_?q.reduce((a,b,h)=>a+b*p[h],0)/s_:0; };
+  return head('Гроші · арбітраж',`${v.nazva}: ${usd(x.efekt)} на рік · окупність ${nf(x.okupnist,1)} року`,`Накопичувачі купують у дешеві години і продають у дорогі; видача до ${nf(Pp.vydacha_kw)} кВт, ціни РДН ${L.period.map(d=>d.split('-').reverse().join('.')).join(' – ')}.`)+
+  `<div class="blk wide"><div class="law"><b>Ч. 10 ст. 58-1</b> Закону «Про ринок електричної енергії» (ред. ${L.zakon.redaktsiia}): ${L.zakon.sut.replace(/^./,c=>c.toLowerCase())} <a href="${L.zakon.url}" target="_blank" rel="noopener">Текст закону ↗</a><small>${L.zakon.perevirka}.</small></div>
+  <div class="kb" role="group" aria-label="Передача і розподіл на заряд накопичувачів">${[['povna','Платимо повністю'],['pilga','За ч. 10 ст. 58-1']].map(([k,t])=>`<button type="button" data-arbm="${k}" aria-pressed="${k===rm}">${t}</button>`).join('')}</div>
+  <div class="tw"><table class="cmp an"><thead><tr><th>Варіант</th><th>Ефект, тис. $/рік</th><th>Окупність, років</th><th>NPV, тис. $</th><th>IRR</th><th>Передача і розподіл на заряд, тис. $</th></tr></thead><tbody>
+  ${['plan','max','bess'].map(k=>{ const q=L.varianty[k], a=q[rm], b=q[rm==='pilga'?'povna':'pilga']; return `<tr class="${k===vk?'cur':''}"><td class="w">${q.nazva}<small>${q.pv_kwp?nf(q.pv_kwp,0)+' кВтп + ':''}${q.n_bess} контейнери</small></td><td>${ksd(a.efekt)}${dd(a.efekt,b.efekt)}</td><td>${a.okupnist?nf(a.okupnist,1):'—'}</td><td>${ksd(a.npv)}</td><td>${a.irr!=null?nf(a.irr,1)+' %':'—'}</td><td>${ksd(a.plata)}</td></tr>`; }).join('')}</tbody></table></div></div>
+  <div class="blk wide"><h3>Доба арбітражу · ${v.nazva.toLowerCase()}</h3><div class="kb" role="group" aria-label="Доба">${ARBD.map(k=>`<button type="button" data-arbd="${k}" aria-pressed="${k===dk}">${ARBN[k]}</button>`).join('')}</div>
+  <div class="glg">${[['--s1','заряд з мережі'],['--s3','заряд від СЕС'],['--s7','розряд у цех'],['--s2','розряд у мережу']].map(([c,t])=>`<span><i class="sw" style="background:var(${c})"></i>${t}</span>`).join('')}<span><i class="sw" style="background:var(--ink)"></i>ціна РДН</span></div>
+  <div class="gch" data-arb="1" style="min-height:300px"></div>
+  <p class="src">${D?`${D.data.split('-').reverse().join('.')}: ${bought>50?`з мережі ${nf(bought/1000,1)} МВт·год по ${nf(avg(F.gb,D.rdn))} грн/МВт·год (РДН)`:`з мережі не заряджали — ${nf(F.pb.reduce((a,b)=>a+b,0)/1000,1)} МВт·год від СЕС`}, у мережу ${nf(sold/1000,1)} МВт·год по ${nf(avg(F.bx,D.rdn))}. `:''}За рік: розряд ${nf(x.mwh.bl+x.mwh.bx,0)} МВт·год, з них у мережу ${nf(x.mwh.bx,0)}; заряд з мережі ${nf(x.mwh.gb,0)}, від СЕС ${nf(x.mwh.pb,0)}.</p></div>
+  <div class="blk wide"><p class="src"><b>Враховано:</b> споживання ${nf(Pp.spozhyvannia_mwh)} МВт·год на рік — рівномірно ≈${nf(Pp.spozhyvannia_kw)} кВт щогодини (погодинних даних немає); накопичувачі ${Pp.uze}, корисно ${nf(Pp.korysno_kwh)} кВт·год (розряд до ${nf(Pp.dod*100)} %), ККД циклу ${nf(Pp.rte*100)} %, ${nf(Pp.tsykly)} цикл на добу; передача і розподіл — у середньому ${nf(Pp.peredacha_rozpodil_uah_mwh)} грн/МВт·год; ціни відомі наперед — верхня межа керування (EMS).</p>
+  ${needB('Потрібно:',['ТУ на видачу 2 МВт','статус активного споживача і окремий облік накопичувачів (ч. 5 ст. 58-1)','дозвіл ДТЕК на заряд з мережі і договірна потужність','договір продажу за РДН — комісія трейдера не врахована'])}</div>`; }
+const PANES={arb:pArb,shch:pShch,lin:pLin,kut:pKut,nav:pNav,obs:pObs,rik:pRik,flow:()=>head('Сонце і генерація · потоки енергії','Потоки енергії')+needB('Потрібно: погодинне споживання з АСКОЕ за 12–36 місяців по трьох точках обліку — тоді показуємо, куди йде енергія щогодини: цех, накопичувачі, мережа.'),
   kr:pKr,bal:pBal,roz:pRoz,bz:pBz2,
   obl:pObl,kn:()=>head('Гроші · конструкція','Кріплення і баласт — кошторис 04.11','')+koshTbl(g=>/Кріплення|Баласт/.test(g)),mn:pMn,ksh:()=>head('Гроші · кошторис',`${stgN()}: СЕС до PCS по позиціях`,'')+(typeof WHNP!=='undefined'&&WHNP&&state.lay.stg!=='2'?`<div class="blk wide"><p class="src"><b>У т. ч. опція етапу 1 «склад, північні скати»</b> — ${WHNP.n} модулів, ${nf(WHNP.kwp,1)} кВтп, ≈${nf(WHNP.mwh,1)} МВт·год за рік: повна ціна <b>${nf(Math.round(WHNP.cost.net))} $</b> без ПДВ (${nf(Math.round(WHNP.cost.vat))} $ з ПДВ). У таблиці нижче — її частина «СЕС до PCS» (група «Склад, північні скати» + щити, лінії, ПЗІП F3, лотки фасаду і перестановка 2 щитів даху на К-4 / К-5 в етапі 2, разом ${nf(Math.round(WHNP.cost.bom_cn+WHNP.cost.bom_ua))} $); модулі ${nf(Math.round(WHNP.cost.mods))} $, роботи ${nf(Math.round(WHNP.cost.works))} $ — у «Обладнанні» і «Монтажі». Прибрати опцію — перемикач WHN у розрахунку (calc/ep04).</p></div>`:'')+koshTbl(),sp:pSp,bud:pBud};
 const tuBlock=()=>`<div class="blk wide"><h3>Технічні умови і вихідні дані</h3><table class="cmp an"><tbody>
@@ -357,7 +389,10 @@ function render5(){ const {S:S_,sub}=cur();
 function bindP(p){ p.querySelectorAll('[data-kut]').forEach(b=>b.onclick=()=>{ state.lay.kutR=b.dataset.kut; render5(); });
   p.querySelectorAll('[data-kutf]').forEach(b=>b.onclick=()=>{ state.lay.kutF=b.dataset.kutf; render5(); });
   p.querySelectorAll('[data-budg]').forEach(b=>b.onclick=()=>{ state.lay.budG=b.dataset.budg; render5(); });
-  if(p.querySelector('[data-gch],[data-gm]')) requestAnimationFrame(()=>drawGen(p));
+  if(p.querySelector('[data-gch],[data-gm]')&&!p.querySelector('[data-arb]')) requestAnimationFrame(()=>drawGen(p));
+  const ab=p.querySelector('[data-arb]'); if(ab&&E&&E.law){ const vk=state.lay.stg==='1'?'plan':'max'; requestAnimationFrame(()=>arbDay(ab,E.law,E.law.varianty[vk],state.lay.arbD||ARBD[state.day]||'lito',state.lay.arbM||'pilga')); }
+  p.querySelectorAll('[data-arbm]').forEach(b=>b.onclick=()=>{ state.lay.arbM=b.dataset.arbm; render5(); });
+  p.querySelectorAll('[data-arbd]').forEach(b=>b.onclick=()=>{ state.lay.arbD=b.dataset.arbd; render5(); });
   p.querySelectorAll('[data-rn]').forEach(b=>b.onclick=()=>{ if(RN&&RN.node) RN.node(); });
   const bu=p.querySelector('#budU'); if(bu) bu.onchange=()=>{ state.lay.budU=Math.max(50000,+bu.value||0); render5(); }; save(); }
 const ap0=apply; apply=function(){ const o=cur().sub[2];

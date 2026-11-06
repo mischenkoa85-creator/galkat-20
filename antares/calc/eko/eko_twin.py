@@ -42,6 +42,8 @@ dat = {
     'need': ['Погодинні дані АСКОЕ за 12–36 місяців по трьох точках обліку', 'Договір постачання і рахунки: тип ціни, надбавка, що входить у ціну',
              'Дозвіл ДТЕК на заряд УЗЕ з мережі і договірна потужність', 'ТУ на видачу або відповідь ОСР', 'Паспорт контейнера Golen: глибина розряду, ККД, ресурс'],
 }
+L58 = V / 'antares_58_1.json'   # арбітраж з пільгою ч. 10 ст. 58-1 (ses_uze/pilga_58_1.py)
+if L58.exists(): dat['law'] = json.loads(L58.read_text(encoding='utf-8'))
 out = Path(__file__).resolve().parents[2] / 'obj' / 'src' / 'ekodata.js'
 out.write_text('// Розділ «Економіка»: розрахунок ses-uze-modul ' + J['data'] + ' (calc/eko/eko_twin.py)\nconst EKO=' + json.dumps(dat, ensure_ascii=False, separators=(',', ':')) + ';\n', encoding='utf-8')
 print(out, out.stat().st_size, 'B;', {m: list(v) for m, v in var.items()})
