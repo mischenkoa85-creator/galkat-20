@@ -49,7 +49,7 @@ for x in fac:
     if t: x['tw'] = dict(kwh_kwp=t[0], h=t[1], mods=t[2])
 out = dict(date='05.11.2026', opt=dict(nahyl=opt['nahyl'], azymut=opt['azymut'], h=round(opt['h_rik'])), ghi=round(K.ghi_rik), field=round(FIELD),
            deg20=round(DEG, 2), roof=roof, fac=fac,
-           note='Дах: оцінка як для плаского поля площею розкладки В1; на арках (схили до 16°, ліхтарі, ендови) фактична розкладка під кутом менша. Фасади — один ряд без тіні від будівлі; «з двійника» — фактичні з тінню.')
+           note='Дах: розрахунок як для плаского поля площею розкладки В1; на арках (схили до 16°, ліхтарі, ендови) фактична розкладка під кутом менша. Фасади — один ряд без тіні від будівлі; «з двійника» — фактичні з тінню.')
 dst = Path(__file__).resolve().parents[2] / 'obj' / 'src' / 'kutdata.js'
 dst.write_text('// «Кут і розміщення»: calc/kut/kut_twin.py, ' + out['date'] + '\nconst KUT=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n', encoding='utf-8')
 for x in roof: print(f"{x['n']:38} {x['mods']:5} {x['kwp']:7} {x['kwh_kwp']:5} {x['mwh']:7} h{x['h']:5} {x['c_kwh']}")

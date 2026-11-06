@@ -53,7 +53,7 @@ if(BS){ const k2=BS.K.find(k=>k.id==='K-2'); if(k2){ const cx=(k2.box[0]+k2.box[
     const lb=new THREE.Sprite(new THREE.SpriteMaterial({map:labelTex([`${id} · ТП-6923 · з півночі`,'500 кВт · 1 205 кВт·год'],512,128,'#'+new THREE.Color(KCOL[id]).getHexString()),depthTest:false,transparent:true}));
     lb.scale.set(0.13,0.0325,1); lb.material.sizeAttenuation=false; lb.position.copy(W(cx,cy,HB+4.6)); lb.renderOrder=18; g.add(lb);
     const ac=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([W(xa,Y0+0.3,HB+0.36),W(xa,Y0-0.4,HB+0.08),W(xa,109.4,HB+0.08),W(xa,109.25,HB-0.05),W(xa,108.85,HB-0.3),W(xa,108.84,0.25),W(xa,108.6,0.08),W(xa,107.4,0.08),W(xa,107.18,0.4),W(xa,107.16,0.9)],false,'catmullrom',0.02),24,0.07,8,false),new THREE.MeshStandardMaterial({color:lin(0xc0392b),roughness:0.5}));
-    ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE). Траса умовна: по бермі, по підпірній стінці вниз на 1,8 м, по дну приямку, вводом у північну стіну ТП; де всередині щит 0,4 кВ — уточнити.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
+    ac.castShadow=false; g.add(ac); ac.userData.info={t:`Лінія AC ${id} — ТП-6923`,d:'Переріз — за вимогою Golen, як у ліній до ТП-5913 (ВВГнг 3 × (6 × 1×120) + N + PE). Траса: по бермі, по підпірній стінці вниз на 1,8 м, по дну приямку, вводом у північну стіну ТП; де всередині щит 0,4 кВ — уточнити.'}; PICK.push({o:ac}); PICK.push({o:body}); NK[id]=c; });
   NK.g=g; }
 // ---------- видимість
 const ABK_SEC={arch:1,low:1,wall:1,nad:1,xm:1,mount:s=>s!=='bz',elec:s=>s==='pz'||s==='ep'||s==='bud',str:s=>s==='ep',lps:s=>s==='bz',safety:s=>s==='pz'||s==='km'||s==='bud'};

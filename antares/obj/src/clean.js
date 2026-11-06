@@ -31,7 +31,7 @@ const hide=el=>{ if(el) el.style.display='none'; };
 { const camsSync=k=>{ const c=$('#cams'); if(c) c.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(!!k&&x.dataset.c===k))); };
   const g0=goCam; goCam=function(k){ camsSync(k); return g0.apply(this,arguments); };
   controls.addEventListener('start',()=>camsSync(null)); }
-{ const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small>'; document.title='Антарес · весь об\'єкт'; }
+{ const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи'+(window.__PUB===false?' · внутрішня версія':'')+'</small>'; document.title='Антарес · весь об\'єкт'; }
 { const tb=$('#tabs'), bs=[...tb.querySelectorAll('button')]; bs.forEach(b=>hide(b));
   TPL.secs.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.s===k); if(!b) return; b.textContent=t; b.style.display=''; b.disabled=false; b.classList.remove('mis'); tb.appendChild(b); }); }
 ONSECS.splice(0,ONSECS.length,...TPL.secs.map(([k])=>k));
