@@ -27,7 +27,7 @@ for v in J['varianty']:
 R = J['rekomendovano_z_vydacheiu']
 dat = {
     'date': J['data'], 'period': J['period'], 'rec': {'mode': next(k for k, t in MODES if t == R['rezhym']), 'kod': 'max'},
-    'modes': MODES, 'var': var,
+    'modes': MODES, 'var': var, 'cons': num('annual_consumption_mwh'),
     'sens': J['chutlyvist'], 'hist': J['istoriia'],
     'ass': [
         ['Споживання', f"{num('annual_consumption_mwh'):,.0f} МВт·год на рік зі слів власника — рівномірно {num('annual_consumption_mwh')*1000/8760:,.0f} кВт щогодини; погодинних даних і графіка роботи немає".replace(',', ' ')],
