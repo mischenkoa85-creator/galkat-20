@@ -45,7 +45,7 @@ const G_={
   mrail:box(1,0.06,0.04,0,-0.03,0),                                                       // міні-рейка 380 (масштаб X), заповнює висоту до профнастилу
   scr:mrg([-0.15,-0.09,-0.03,0.03,0.09,0.15].map(u=>hex(0.008,0.006,'y',u,-0.0005,0.012))),   // 6 саморізів 5,5×25 EPDM на рейку (голівки)
 };
-G_.blk2=G_.blk; G_.mat2=G_.mat;
+G_.blk2=G_.blk; G_.mat2=G_.mat; G_.blkN=G_.blk;
 // ---------- модулі: рамка з екземпляра (світ ← модуль), сусіди
 // зона покрівлі для вітру (EN 1991-1-4, плоский дах, як calc/ep04/wind2.py): F — кути, G — край поля, H — смуга, I — середина
 const KWZ=typeof KOSH!=='undefined'?KOSH.wind:null;
@@ -80,6 +80,9 @@ function roofParts(m){ const o=[], nb=m.nb, lines=[-LV].concat(nb.pv?[]:[LV]);
   const u0=nb.mu?-PU/2:-L/2, u1=nb.pu?PU/2:L/2, ur=nb.pu?PU/2-0.019:L/2-0.05;
   lines.forEach(z=>{ o.push(['lag',Sx(Tm((u0+u1)/2,0,z),u1-u0)]);
     [-0.617,0.583].forEach(u=>{ o.push(['blk',Tm(u,0,z)],['mat',Tm(u,0,z)],['lbolt',Tm(u,0,z)]); });
+    // кінці лаг на краю ряду: блок з матом, центр за 30 мм від торця лаги (кошторис 06.11: «під лаги і кінці лаг»)
+    if(!nb.mu) o.push(['blk',Tm(-L/2+0.03,0,z)],['mat',Tm(-L/2+0.03,0,z)],['lbolt',Tm(-L/2+0.03,0,z)]);
+    if(!nb.pu) o.push(['blk',Tm(L/2-0.03,0,z)],['mat',Tm(L/2-0.03,0,z)],['lbolt',Tm(L/2-0.03,0,z)]);
     o.push([nb.pu?'sleeve':'sleeveE',Tm(ur,0,z)],['cpl',Tm(ur,0,z)]);
     if(!nb.mu) o.push(['ang',Tm(-L/2+0.075,0,z+(z<0?0.024:-0.024))]);
     if(!nb.pu) o.push(['ang',Tm(L/2-0.075,0,z+(z<0?0.024:-0.024))]);
@@ -89,6 +92,7 @@ function roofParts(m){ const o=[], nb=m.nb, lines=[-LV].concat(nb.pv?[]:[LV]);
   ZC.forEach(u=>{ if(nb.mv) o.push(['mcl',Tm(u,0,-LV)]); else o.push(['zcl',Tm(u,0,-WD/2-0.012)]); if(!nb.pv) o.push(['zcl',Tm(u,0,WD/2+0.012).multiply(RY(Math.PI))]); });
   [[nb.mu,-1],[nb.pu,1]].forEach(([has,sg])=>{ if(has) return; const ue=sg*(L/2+0.012);
     o.push(['xprof',Sz(Tm(ue,0,0),PV)]);
+    [-1,1].forEach(sz=>o.push(['blkN',Tm(ue,0,sz*(LV-0.3))],['lbolt',Tm(ue,0,sz*(LV-0.3))]));   // 2 блоки без мата під крайнім профілем, за 300 мм від осей лаг — упритул до блоків кінців лаг
     [-0.33,0.33].forEach(z=>o.push(['zcl',Tm(sg*(L/2+0.012),0,z).multiply(RY(sg>0?-Math.PI/2:Math.PI/2))])); });
   return o; }
 const FALL=new V3();
@@ -104,15 +108,15 @@ function lanParts(m){ const o=[], nb=m.nb;
   return o; }
 const REC={roof:roofParts,wh:whParts,lan:lanParts};
 // ---------- кількості по всій моделі (специфікація з моделі)
-const NAME={blk2:'Додатковий блок з матом — край поля (зони F, G)',mat2:'Мат під додатковий блок',lag:'Лага 41×41×1,5, м',xprof:'Крайній профіль 41×41×1,5, м',blk:'Блок 300×300×60 з муфтою',mat:'Мат 320×320×3',lbolt:'Болт M8×20 + шайба DIN 9021 (лага — блок)',
+const NAME={blkN:'Блок з муфтою без мата — під крайній профіль',blk2:'Додатковий блок з матом — край поля (зони F, G)',mat2:'Мат під додатковий блок',lag:'Лага 41×41×1,5, м',xprof:'Крайній профіль 41×41×1,5, м',blk:'Блок 300×300×60 з муфтою',mat:'Мат 320×320×3',lbolt:'Болт M8×20 + шайба DIN 9021 (лага — блок)',
   sleeve:'Гільза П 45,5×35×2, 200 мм, 2 болти M8',sleeveE:'Гільза П 45,5×35×2, 100 мм на торці, 1 болт M8',cpl:'Муфта M10×50 (приварена до гільзи)',rod:'Шпилька M10, 1 299 мм, права / ліва різьба',jam:'Контргайка M10',
   mcl:'Середній притиск з болтом M8×60 і гайкою з пружиною',zcl:'Крайній притиск Z33 з болтом M8',ang:'Кутник 150×150×6',mrail:'Міні-рейка 380 мм (аналог AR2-MR13-380)',scr:'Саморіз 5,5×25 EPDM, комплект 6 шт. на рейку'};
-const KG={blk:12.98,mat:0.338,blk2:12.98,mat2:0.338,sleeve:0.36,sleeveE:0.18,cpl:0.08,rod:0.62,jam:0.006,mcl:0.07,zcl:0.06,ang:1.36,mrail:0.25,lbolt:0.02};
+const KG={blkN:12.98,blk:12.98,mat:0.338,blk2:12.98,mat2:0.338,sleeve:0.36,sleeveE:0.18,cpl:0.08,rod:0.62,jam:0.006,mcl:0.07,zcl:0.06,ang:1.36,mrail:0.25,lbolt:0.02};
 const BOM={}; MODS.forEach(m=>{ const B=BOM[m.grp]||(BOM[m.grp]={n:0,q:{}}); B.n++; REC[m.grp](m).forEach(([k,M])=>{ const e=M.elements;
   const len=k==='lag'?Math.hypot(e[0],e[1],e[2]):k==='xprof'?Math.hypot(e[8],e[9],e[10]):1; B.q[k]=(B.q[k]||0)+len; }); });
 // ---------- сітки деталей (екземпляри на найближчі модулі)
 const DG=new THREE.Group(); DG.name='roofnode'; scene.add(DG);
-const MATK={blk2:'bl',mat2:'mt',lag:'zn',xprof:'zn',blk:'bl',mat:'mt',lbolt:'hw',sleeve:'sl',sleeveE:'sl',cpl:'cp',rod:'rod',jam:'hw',mcl:'al',zcl:'al',ang:'zn',mrail:'al',scr:'hw'};
+const MATK={blkN:'bl',blk2:'bl',mat2:'mt',lag:'zn',xprof:'zn',blk:'bl',mat:'mt',lbolt:'hw',sleeve:'sl',sleeveE:'sl',cpl:'cp',rod:'rod',jam:'hw',mcl:'al',zcl:'al',ang:'zn',mrail:'al',scr:'hw'};
 const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k],M_[MATK[k]],NM*16); im.count=0; im.frustumCulled=false; im.castShadow=false; im.receiveShadow=true; DG.add(im); IMS[k]=im;
   im.userData.info=()=>{ const tot=Object.values(BOM).reduce((s_,B)=>s_+(B.q[k]||0),0), kg=KG[k];
     return {t:NAME[k],d:`На всьому об'єкті з моделі: ${k==='lag'||k==='xprof'?nf(tot,1)+' м':nf(Math.round(tot))+' шт.'}${kg?` · ${nf(kg,kg<0.1?3:2)} кг за штуку`:''}. ${k==='mrail'||k==='scr'?'Склад: розрахунок 26.10 на 176 модулів.':k==='mcl'||k==='zcl'?'Дах цеху — 3 точки на довгий бік; склад і ліхтарі — 2 точки в зоні 540 мм від торців.':'Дах цеху: «Лага 0°», арка 18 м (elements-ses).'} Деталі показуються зблизька, для найближчих модулів.`}; };
@@ -120,12 +124,12 @@ const IMS={}; Object.keys(G_).forEach(k=>{ const im=new THREE.InstancedMesh(G_[k
 const visUp=o=>{ for(let x=o;x;x=x.parent) if(x.visible===false) return false; return true; };
 let SEL='', lastP=new V3(1e9,0,0), EX=0;   // розбір на елементи: зсув деталей уздовж нормалі модуля, м (Конструкція → Розбір)
 // розбір: шари знизу вгору — мат, блок, шпилька з муфтами і гільзами, лага, болти, (модуль — прозорий), притиски
-const EXO={blk:0.10,blk2:0.10,mat2:0,sleeve:0.22,sleeveE:0.22,cpl:0.22,rod:0.22,jam:0.22,lag:0.38,xprof:0.38,ang:0.38,lbolt:0.46,mcl:0.66,zcl:0.66,mrail:0.20,scr:0.30};
+const EXO={blk:0.10,blk2:0.10,blkN:0.10,mat2:0,sleeve:0.22,sleeveE:0.22,cpl:0.22,rod:0.22,jam:0.22,lag:0.38,xprof:0.38,ang:0.38,lbolt:0.46,mcl:0.66,zcl:0.66,mrail:0.20,scr:0.30};
 function upd(force){ if(!force&&camera.position.distanceTo(lastP)<0.3) return; lastP.copy(camera.position);
   const L_=[]; MODS.forEach((m,i)=>{ const d=camera.position.distanceTo(m.c); if(d<RD) L_.push([d,i]); }); L_.sort((p,q)=>p[0]-q[0]);
   const pick=L_.filter(([d,i])=>visUp(MODS[i].im)).slice(0,NM).map(x=>x[1]), key=pick.join(','); if(!force&&key===SEL) return; SEL=key;
   const per={}; Object.keys(IMS).forEach(k=>per[k]=0); const W_=new THREE.Matrix4();
-  pick.forEach(i=>{ const m=MODS[i]; REC[m.grp](m).forEach(([k,M])=>{ const im=IMS[k]; if(per[k]>=im.instanceMatrix.count) return; W_.multiplyMatrices(m.T,M); if(EX>0&&EXO[k]) W_.premultiply(new THREE.Matrix4().makeTranslation(m.w.x*EXO[k]*EX,m.w.y*EXO[k]*EX,m.w.z*EXO[k]*EX)); im.setMatrixAt(per[k]++,W_); }); });
+  pick.forEach(i=>{ if(i===SKIP) return; const m=MODS[i]; REC[m.grp](m).forEach(([k,M])=>{ const im=IMS[k]; if(per[k]>=im.instanceMatrix.count) return; W_.multiplyMatrices(m.T,M); if(EX>0&&EXO[k]) W_.premultiply(new THREE.Matrix4().makeTranslation(m.w.x*EXO[k]*EX,m.w.y*EXO[k]*EX,m.w.z*EXO[k]*EX)); im.setMatrixAt(per[k]++,W_); }); });
   Object.entries(IMS).forEach(([k,im])=>{ im.count=per[k]; im.instanceMatrix.needsUpdate=true; }); need=true; }
 controls.addEventListener('change',()=>upd(false)); setInterval(()=>upd(false),400);
 const sv0=setVis; setVis=function(){ sv0.apply(this,arguments); upd(true); };
@@ -142,6 +146,45 @@ const pz0=panelPZ; panelPZ=function(){ const h=pz0.apply(this,arguments), f=(v,k
 const GH=new Map(); function ghost(on){ const ims=[...new Set(MODS.filter(m=>m.grp!=='lan').map(m=>m.im))];
   ims.forEach(im=>{ const ms=Array.isArray(im.material)?im.material:[im.material]; ms.forEach(mt=>{ if(on&&!GH.has(mt)){ GH.set(mt,[mt.transparent,mt.opacity,mt.depthWrite]); mt.transparent=true; mt.opacity=0.22; mt.depthWrite=false; mt.needsUpdate=true; }
     if(!on&&GH.has(mt)){ const [a_,o_,d_]=GH.get(mt); mt.transparent=a_; mt.opacity=o_; mt.depthWrite=d_; mt.needsUpdate=true; GH.delete(mt); } }); }); need=true; }
-window.__twin.roofnode={MODS,BOM,IMS,upd,G_,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; ghost(f>0); upd(true); }};
+// ---------- розбір одного модуля з підписами — як вузол 2025 (номери шарів, ‹ ›, «Підписи», «Зібрати», ×): Конструкція → Розбір на елементи, етап 2 / весь об'єкт
+// деталі — з того самого рецепта, що й специфікація з моделі; решта кріплення навколо — бліде; шари розходяться вздовж нормалі модуля
+let SKIP=-1; const MX={}, mxOf=k=>MX[k]||(MX[k]=M_[k].clone());
+const MODG=new THREE.BoxGeometry(L,TH,WD).translate(0,TH/2,0), MODM=std(lin(0x1f4f8a),{roughness:0.3,metalness:0.25,transparent:true,opacity:0.62,depthWrite:false,emissive:lin(0x0b2340)});
+const LAYS={roof:[[0,'Мат 320×320×3',['mat','mat2'],'Під кожен блок з муфтою, захищає мембрану.'],
+   [1,'Блок 300×300×60 з муфтою, 13 кг',['blk','blk2'],'2 на панель на кожній лазі через 1 200 мм (перший — за 575 від торця) і під кінцем лаги за 30 мм від торця; по краю поля (зони F, G) — додаткові.'],
+   [1,'Блок без мата під крайній профіль',['blkN'],'2 на крайній профіль, за 300 мм від осей лаг, упритул до блоків кінців лаг.'],
+   [2,'Шпилька M10 1 299 з контргайками',['rod','jam'],'Між муфтами гільз сусідніх лаг, права / ліва різьба — лаги стягнуті поперек схилу.'],
+   [3,'Гільза П 45,5×35×2 з муфтою M10×50',['sleeve','sleeveE','cpl'],'Знизу на лазі на стику модулів: 200 мм з 2 болтами M8, на торці ряду — 100 мм з 1 болтом.'],
+   [4,'Лага 41×41×1,5 пазом догори',['lag'],'Під кожним стиком довгих боків модулів; хлисти 4 800 / 2 400, стики — у гільзах.'],
+   [4,'Крайній профіль 41×41 і кутники',['xprof','ang'],'На краю ряду за 12 мм від рами, на 2 кутниках до лаг; Z33 — 2 на модуль.'],
+   [5,'Болт M8×20 + шайба DIN 9021',['lbolt'],'Крізь паз лаги або крайнього профілю в муфту блока.'],
+   [6,'Модуль ZNSHINE 730 Вт, 2 384 × 1 303',['MOD'],'Паралельно покрівлі на двох лагах, 36,5 кг.'],
+   [7,'Притиски: середні M8×60 і Z33',['mcl','zcl'],'3 точки на довгий бік (0,17 / 0,5 / 0,83 довжини); на краю — Z33.']],
+  wh:[[0,'Міні-рейка 380 мм',['mrail'],'Аналог AR2-MR13-380, під кожною точкою притиску, уздовж хвилі профнастилу.'],
+   [1,'Саморізи 5,5×25 EPDM',['scr'],'6 на рейку, у верхню полицю хвилі.'],
+   [2,'Модуль ZNSHINE 730 Вт, 2 384 × 1 303',['MOD'],'На 4 міні-рейках по довгих сторонах, 36,5 кг.'],
+   [3,'Притиски: середні і Z33',['mcl','zcl'],'2 точки на довгий бік, у зоні 540 мм від торців.']]};
+function dimDG(on){ Object.values(M_).forEach(mt=>{ mt.transparent=on; mt.opacity=on?0.16:1; mt.depthWrite=!on; mt.needsUpdate=true; }); need=true; }
+function nodeOf(mi){ const m=MODS[mi]; if(!m||!LAYS[m.grp]) return null; closeNode(true);
+  const N=xNew(state.proj,mi,m.grp==='roof'?0.22:0.3), rec=REC[m.grp](m), W_=new THREE.Matrix4(), cnt={};
+  rec.forEach(([k,M])=>{ cnt[k]=(cnt[k]||0)+(k==='lag'?Math.hypot(M.elements[0],M.elements[1],M.elements[2]):1); });
+  LAYS[m.grp].forEach(([Lv,name,keys,d])=>{ const has=keys.filter(k=>k==='MOD'||cnt[k]); if(!has.length) return;
+    const qt=has.map(k=>k==='MOD'?'1 шт':k==='lag'?nf(cnt[k],2)+' м':nf(cnt[k])).join(' + ')+(has.some(k=>k!=='MOD'&&k!=='lag')?' шт':'');
+    const ly=xLayer(N,Lv,name,qt); ly.ex=m.w.clone().multiplyScalar(Lv*N.step);
+    has.forEach(k=>{ if(k==='MOD'){ xHide(N,m.im,m.i); xPart(ly,MODG,MODM,m.T.clone(),{t:'Модуль ZNSHINE ZXN8-BD132-730, 730 Вт',d}); return; }
+      rec.forEach(([kk,M])=>{ if(kk!==k) return; W_.multiplyMatrices(m.T,M); xPart(ly,G_[k],mxOf(MATK[k]),W_.clone(),{t:NAME[k],d}); }); });
+    ly.d=d; });
+  SKIP=mi; upd(true); dimDG(true); ghost(true);   // модулі поля — прозорі, кріплення навколо — бліде: вузол читається
+  const edge=!(m.nb.mu&&m.nb.pu);
+  N.title=m.grp==='roof'?'Модуль на двох лагах':'Модуль на міні-рейках';
+  N.sub=m.grp==='roof'?`дах цеху · ${edge?'край ряду: крайній профіль, блоки під кінцями лаг':'у середині ряду'} · зона вітру ${m.zone}${m.zone==='F'||m.zone==='G'?' — додаткові блоки':''}`:'склад · профнастил · кріплення за розрахунком 26.10';
+  N.c=m.c.clone().addScaledVector(m.w,0.12); N.kind='rn';
+  // камера — збоку від довгого боку модуля (сусідні модулі прозорі), трохи з краю ряду і згори ≈30°: шари розходяться на екрані вгору
+  const su=!m.nb.mu?-1:!m.nb.pu?1:-1, dv=m.v.clone().multiplyScalar(-0.85).addScaledVector(m.u,0.35*su).addScaledVector(m.w,0.5); if(dv.y<0.32) dv.y=0.32; N.vdir=dv.normalize(); N.vd=xPhone()?6.6:4.7; N.top=xPhone()?0.5:1.15;   // ціль нижче середини вузла — низ не ховається під панеллю вузла
+  xShow(N,true); return N; }
+{ const cn0=closeNode; closeNode=function(){ const was=XN&&XN.kind==='rn'; const r=cn0.apply(this,arguments); if(was){ SKIP=-1; dimDG(false); ghost(false); upd(true); } return r; }; }
+// модуль для розбору за замовчуванням — на краю ряду (видно крайній профіль, кінці лаг), з сусідом по стику
+function nodeDefault(g){ g=g||'roof'; const ms=MODS.map((m,i)=>[m,i]).filter(([m])=>m.grp===g&&m.nb.mv&&m.nb.pu&&!m.nb.mu&&visUp(m.im)); const p=ms[Math.floor(ms.length*0.35)]; return p?nodeOf(p[1]):null; }
+window.__twin.roofnode={MODS,BOM,IMS,upd,G_,node:nodeDefault,nodeOf,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; ghost(f>0); upd(true); }};
 upd(true);
 } }
