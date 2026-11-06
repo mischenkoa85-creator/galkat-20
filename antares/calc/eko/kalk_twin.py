@@ -4,7 +4,7 @@
   D=2026-03-21,2026-06-21,2026-09-23,2025-12-21
   python3 -m ses_uze.kalkuliator obiekty/antares --stsenarii "spozhyvannia_kwh_rik=1100000|3000000|5000000" --doby $D
   python3 -m ses_uze.kalkuliator obiekty/antares --stsenarii "spozhyvannia_kwh_rik=1100000|3000000|5000000" --doby $D \\
-      --zamist pv_ryad_fail=ryady_etap1.json --zamist ses_kwp=843.2 --zamist uze_n=0,4 --kod antares_etap1
+      --zamist pv_ryad_fail=ryady_etap1.json --zamist ses_kwp=746.8 --zamist uze_n=0,4 --kod antares_etap1
 Тут:  python3 kalk_twin.py [шлях до ses-uze-modul]  →  ../../obj/src/kalkdata.js
 """
 import json
@@ -40,6 +40,7 @@ dat = {
                              'uze_kw', 'uze_kwh', 'uze_dod_pct', 'uze_kkd_pct', 'uze_tsykliv_doba', 'zyma_lito_pct', 'grafik', 'vydacha_stsenarii_kw', 'pilga_58_1',
                              'horyzont_rokiv', 'stavka_pct', 'ekspl_pct', 'degr_ses_pct', 'dogovirna_kw', 'servis_rik1_usd', 'servis_usd_rik')},
     'kwp': {'vse': VSE['stsenarii'][0]['varianty'][0]['ses_kwp'], 'e1': E1['stsenarii'][0]['varianty'][0]['ses_kwp']},
+    'gen': {k: round(sum(x['mwh'][q] for q in ('pl', 'pb', 'px', 'pc')), 1) for k, x in (('vse', VSE['stsenarii'][0]['varianty'][0]), ('e1', E1['stsenarii'][0]['varianty'][0]))},
     'pr': {k: P[k] for k in ('capex_uze_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'pilga_58_1')},
     'dzh': {**J0['dzherela'], 'sontse_e1': E1['stsenarii'][0]['dzherela']['sontse']},
     'doby': {d: {k: x[k] for k in ('rdn', 'kupivlia', 'prodazh')} for d, x in J0['doby'].items()},

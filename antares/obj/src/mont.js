@@ -1,6 +1,7 @@
 // ================= «Монтаж» — покроковий монтаж усього об'єкта (src/mont.js, ред. 2 — 05.11.2026)
 // Ред. 1 власник відхилив (05.11, 17:08): гальмує, камера смикається, послідовність неправильна. Ред. 2 — за режисерським сценарієм 26.10 і рішенням 05.11, 17:16:
-// • дах цеху — захватками: одна арка — одна захватка, від гребеня симетрично до ендов (шпильки M10 тягнуть лаги через гребінь), арки зі сходу на захід (кран біля ТП-5913);
+// • дах цеху — захватками: одна арка — одна захватка, від гребеня симетрично до ендов (шпильки M10 тягнуть лаги через гребінь), арки зі сходу на захід;
+//   автокран (06.11) переїжджає: арка 1 — зі сходу, 2–4 — з півночі, 5 — із заходу; контейнери — біля своєї ТП;
 //   у захватці: блоки з матами → лаги з кутниками і крайніми профілями → гільзи, муфти, шпильки → модулі (насуваються по лагах) і притиски;
 // • етап 1: плити і контейнери біля ТП-5913, потім ТП-6923, фасади, ліхтарі, склад, АБК; наприкінці — електрика;
 // • камера — режисер: один спокійний кадр на крок (для арки — з південного торця вздовж гребеня), переліт між кадрами; дотик — пауза; ніякого «стеження»;
@@ -34,12 +35,34 @@ const RT={}; { const W_=new THREE.Matrix4(), L_={};
   Object.entries(L_).forEach(([k,L])=>{ L.sort((p,q)=>p.key[0]-q.key[0]||p.key[1]-q.key[1]||p.key[2]-q.key[2]);
     const im=new THREE.InstancedMesh(SIMP[k][0],SIMP[k][1]==='pv'?modMat0:MM[SIMP[k][1]],L.length); L.forEach((x,i)=>im.setMatrixAt(i,x.M)); im.count=0; im.castShadow=k==='pv'; im.receiveShadow=true; im.frustumCulled=false; MG.add(im);
     const st={}; L.forEach((x,i)=>{ const a=x.key[0]; if(!st[a]) st[a]={s:i,n:0}; st[a].n++; }); RT[k]={im,N:L.length,st}; }); }
-// кран біля ТП-5913: щогла, стріла до поточної арки
-const CR=new THREE.Group(); CR.position.copy(W(101.5,44,0)); MG.add(CR);
-{ const m=new THREE.Mesh(new THREE.BoxGeometry(0.9,30,0.9),MM.crane); m.position.y=15; CR.add(m); }
-const BOOM=new THREE.Group(); BOOM.position.y=29.5; CR.add(BOOM); { const b=new THREE.Mesh(new THREE.BoxGeometry(46,0.7,0.7),MM.crane); b.position.x=-21; BOOM.add(b); }
-const HOOK=new THREE.Mesh(new THREE.BoxGeometry(0.04,1,0.04),MM.rod); BOOM.add(HOOK);
+// автокран на виносних опорах (власник 06.11: «нормальний кран, і він може подавати з різних сторін»): шасі 4 осі, поворотна частина з кабіною
+// і противагою, телескопічна стріла з 4 секцій, канат, гак; стоїть біля тієї сторони, з якої ближче до поточної роботи
+const CRN=new THREE.Group(); MG.add(CRN);
+const CRM={y:MM.crane,d:std(lin(0x3b4248),{roughness:0.6,metalness:0.4}),w:std(lin(0x1c1f22),{roughness:0.9}),g:std(lin(0xd6dadc),{roughness:0.5,metalness:0.3})};
+const cbx=(w,h,d,m,x,y,z,p)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); o.castShadow=true; (p||CRN).add(o); return o; };
+cbx(12.5,1.1,2.55,CRM.y,0,1.55,0); cbx(2.2,1.9,2.5,CRM.y,5.6,2.6,0); cbx(1.0,0.9,2.3,CRM.g,6.4,2.9,0);           // рама, кабіна шасі, скло
+[-4.6,-3.1,2.4,3.9].forEach(x=>[-1,1].forEach(sd=>{ const wl=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.62,0.55,16),CRM.w); wl.rotation.x=Math.PI/2; wl.position.set(x,0.62,sd*1.2); CRN.add(wl); }));
+[[-4.2,1],[-4.2,-1],[3.6,1],[3.6,-1]].forEach(([x,sd])=>{ cbx(0.35,0.35,3.6,CRM.d,x,1.2,sd*2.9); cbx(0.3,1.0,0.3,CRM.d,x,0.55,sd*4.5); cbx(0.9,0.12,0.9,CRM.d,x,0.06,sd*4.5); });   // виносні опори 7,2 м
+const TUR=new THREE.Group(); TUR.position.set(-1.6,2.1,0); CRN.add(TUR);                                          // поворотна частина
+{ const r=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,0.4,24),CRM.d); r.position.y=0.2; TUR.add(r); }
+cbx(4.6,1.2,2.4,CRM.y,-0.6,1.0,0,TUR); cbx(1.6,1.3,2.0,CRM.d,-2.6,1.2,0,TUR); cbx(1.4,1.5,0.9,CRM.y,0.9,1.4,1.05,TUR); cbx(1.1,0.8,0.05,CRM.g,1.2,1.6,1.51,TUR);   // платформа, противага, кабіна крана
+const BM=new THREE.Group(); BM.position.set(0.8,1.9,0); TUR.add(BM);                                                // стріла: шарнір над поворотною частиною
+const SEC=[0.95,0.8,0.66,0.53].map((t,i)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(1,t,t*0.85),i?CRM.y:CRM.y); o.castShadow=true; BM.add(o); return o; });
+const RP=new THREE.Mesh(new THREE.BoxGeometry(0.04,1,0.04),CRM.d); MG.add(RP);
+const HK=new THREE.Mesh(new THREE.BoxGeometry(0.45,0.7,0.35),CRM.d); MG.add(HK);
 const PAL=new THREE.Mesh(new THREE.BoxGeometry(1.2,1,0.8).translate(0,0.5,0),MM.pal); MG.add(PAL);
+// стоянки: X, Y (м), напрям шасі (0 — уздовж X, 1 — уздовж Y); орієнтовні — проїзди, мережі й межі ділянки уточнити на місці
+const CRP={east:{X:101.8,Y:42,ax:1,n:'зі сходу, між ТП-5913 і контейнерами'},nE:{X:63.3,Y:103.8,ax:0,n:'з півночі'},nC:{X:45.2,Y:103.8,ax:0,n:'з півночі'},
+  nW:{X:30.5,Y:104,ax:0,n:'з півночі, біля ТП-6923'},west:{X:-6.6,Y:48,ax:1,n:'із заходу'},tp6923:{X:24.5,Y:111.6,ax:1,n:'біля ТП-6923, зі сходу від контейнерів'}};
+const archSide=r=>r.no===1?'east':r.no===2?'nE':r.no===3?'nC':r.no===4?'nW':'west';
+function craneAt(k){ const p=CRP[k]; CRN.position.copy(W(p.X,p.Y,0)); CRN.rotation.y=p.ax?Math.PI/2:0; CRN.updateMatrixWorld(true); }
+function craneTo(tgt,hookY){ CRN.updateMatrixWorld(true); const inv=CRN.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const d0=new V3().subVectors(tgt,TUR.getWorldPosition(new V3())).applyQuaternion(inv); TUR.rotation.y=Math.atan2(-d0.z,d0.x); CRN.updateMatrixWorld(true);   // поворот на ціль
+  const piv=BM.getWorldPosition(new V3()), tip=new V3(tgt.x,Math.max(hookY+4.5,piv.y+5),tgt.z), dl=new V3().subVectors(tip,piv).applyQuaternion(inv);
+  const hz=Math.hypot(dl.x,dl.z), L=Math.hypot(hz,dl.y); BM.rotation.z=Math.atan2(dl.y,hz);                                   // підйом стріли
+  const e=Math.max(0,(L-11)/3); SEC.forEach((o,i)=>{ o.scale.x=11; o.position.x=i*e+5.5; });                              // 4 секції по 11 м, висунуті рівно
+  CRN.updateMatrixWorld(true); const tipW=new V3(L,0,0).applyMatrix4(BM.matrixWorld);
+  RP.position.set(tipW.x,(tipW.y+hookY+0.35)/2,tipW.z); RP.scale.y=Math.max(0.1,tipW.y-hookY-0.35); HK.position.set(tipW.x,hookY,tipW.z); }
 // ---------- цілі етапу 1 (екземпляри — лічильником, групи — опусканням згори)
 const lanM=[], lanR=[]; if(L28) L28.LG28.forEach(q=>{ if(q.v2m&&q.v2m['1']) q.v2m['1'].traverse(o=>{ if(o.isInstancedMesh) lanM.push(o); }); if(q.v2r&&q.v2r['1']) lanR.push(q.v2r['1']); });
 const CNT=[]; scene.traverse(o=>{ const u=o.userData&&o.userData.info; if(o.isMesh&&u&&typeof u==='object'&&/^K-[1345] · Golen/.test(u.t||'')&&o.parent&&!CNT.includes(o.parent)) CNT.push(o.parent); });
@@ -53,9 +76,9 @@ const nr=x=>Math.round(x), V_=(p,c)=>({p,c}), RZ=X=>roofZ(Math.min(96.5,Math.max
 const shotArch=r=>V_(W(r.m+9,-16,RZ(r.m)+15).toArray(),W(r.m,26,RZ(r.m)).toArray());
 const STEPS=[
  {e:1,n:'Плити Фп-1 біля ТП-5913',s:'slab',t:SLB.filter(o=>!at6923(o)).map(o=>Gd(o,0.6)),c:[['Плит Фп-1',2]],size:'7 058 × 3 438 × 250 мм, C20/25',kg:'бетон 6,19 м³ (≈14,9 т), арматура 514 кг',qty:'4 плити — по 2 біля кожної ТП; контур заземлення 29 м на плиту',cam:'ess',dur:5},
- {e:1,n:'Контейнери К-3, К-1 — краном',s:'cont',t:CNT.filter(o=>!at6923(o)).map(o=>Gd(o,7)),c:[['Контейнерів',2]],size:'6 058 × 2 438 × 2 896 мм · PCS 500 кВт · АКБ 1 205 кВт·год',kg:'≈20 т кожен',qty:'4 — К-3, К-1 біля ТП-5913; К-4, К-5 біля ТП-6923',price:'190 000 $ FOB Шанхай + доставка ≈15 000 $ за контейнер',cam:'ess',crane:'ess',dur:7},
- {e:1,n:'Плити і контейнери К-4, К-5 біля ТП-6923',t:SLB.filter(at6923).map(o=>Gd(o,0.6)).concat(CNT.filter(at6923).map(o=>Gd(o,7))),c:[['Контейнерів',2]],cam:'ess2',dur:7},
- {e:1,n:'Фасади: кронштейни, рейки, анкери',s:'fac',t:fpI,c:[['Деталей кріплення фасадів',fpI.reduce((s_,x)=>s_+x.N,0)]],size:'рейка 41×41×2,0 · кронштейн 60×180×5 · анкер M10',kg:'вузли — «Кубики фасаду»',qty:'на 429 модулів фасадів і козирка',cam:'over',dur:8},
+ {e:1,n:'Контейнери К-3, К-1 — краном',s:'cont',crane:'east',t:CNT.filter(o=>!at6923(o)).map(o=>Gd(o,7)),c:[['Контейнерів',2]],size:'6 058 × 2 438 × 2 896 мм · PCS 500 кВт · АКБ 1 205 кВт·год',kg:'≈20 т кожен',qty:'4 — К-3, К-1 біля ТП-5913; К-4, К-5 біля ТП-6923',price:'190 000 $ FOB Шанхай + доставка ≈15 000 $ за контейнер',cam:'ess',dur:7},
+ {e:1,n:'Плити і контейнери К-4, К-5 біля ТП-6923',crane:'tp6923',t:SLB.filter(at6923).map(o=>Gd(o,0.6)).concat(CNT.filter(at6923).map(o=>Gd(o,7))),c:[['Контейнерів',2]],cam:'ess2',dur:7},
+ {e:1,n:'Фасади: кронштейни, рейки, анкери',s:'fac',t:fpI,c:[['Деталей кріплення фасадів',fpI.reduce((s_,x)=>s_+x.N,0)]],size:'рейка 41×41×2,0 · кронштейн 60×180×5 · анкер M10',kg:'вузли — «Кубики фасаду»',qty:`на ${nf(S.fac.n)} модулів фасадів і козирка`,cam:'over',dur:8},
  {e:1,n:'Фасади: модулі',s:'mod',t:fpM,c:[['Модулів фасадів',S.fac.n]],size:'ZNSHINE ZXN8-BD132-730 · 2 384 × 1 303 × 33 мм',kg:'36,5 кг',qty:`${nf(S.fac.n)} модулів · ${nf(S.fac.kwp,1)} кВтп`,pw:true,cam:'over',dur:8},
  {e:1,n:'Ліхтарі: рейки 41×41',s:'lrail',t:lanR.map(o=>Gd(o,1.5)),c:[['Рейок, м',typeof LAN28!=='undefined'&&LAN28.q?nr(LAN28.q.RAIL):0]],size:'41×41, 2 на схил у зоні притисків',kg:'1,743 кг/м',qty:'на 4 ліхтарях; на що спирати — не вирішено',cam:'lan28',dur:5},
  {e:1,n:'Ліхтарі: модулі і притиски',t:lanM.map(I),c:[['Модулів на ліхтарях',S.lan.n],['Притисків',nr((BL.q.mcl||0)+(BL.q.zcl||0))]],cam:'lan28',dur:7},
@@ -67,7 +90,7 @@ const PI={blk:{size:'300 × 300 × 60 мм з муфтою; мат 320 × 320 ×
   rod:{size:'гільза П 45,5×35×2 · муфта M10×50 · шпилька M10 1 299 мм, права / ліва різьба',kg:'гільза 0,36 кг · шпилька 0,62 кг',qty:'шпилька між лагами на кожній панелі; через гребінь — пара схилів',c:k=>[['Шпильок',RT.rod.st[k].n],['Гільз',RT.sleeve.st[k].n+((RT.sleeveE.st[k]||{n:0}).n)]]},
   mod:{size:'ZNSHINE 730 Вт; середній притиск M8×60, Z33',kg:'36,5 кг',qty:`${nf(S.roof.n)} модулів даху · насуваються по лагах від проходу`,pw:true,c:k=>[['Модулів',RT.pv.st[k].n],['Притисків',RT.mcl.st[k].n+((RT.zcl.st[k]||{n:0}).n)]]}};
 ARCH.forEach(r=>PH.forEach(([ph,nm,keys],j)=>{ if(!RT.pv.st[r.no]) return; STEPS.push({e:2,arch:r,ph,n:`Дах цеху · арка ${r.no} з ${ARCH.length}: ${nm.charAt(0).toLowerCase()+nm.slice(1)}`,s:r.no===ARCH[0].no?ph:null,...PI[ph],c:PI[ph].c(r.no),
-  t:keys.filter(k=>RT[k]&&RT[k].st[r.no]).map(k=>({rt:RT[k],a:r.no})),shot:shotArch(r),crane:r,dur:ph==='mod'?7:5}); }));
+  t:keys.filter(k=>RT[k]&&RT[k].st[r.no]).map(k=>({rt:RT[k],a:r.no})),shot:shotArch(r),crane:archSide(r),dur:ph==='mod'?7:5}); }));
 STEPS.push({e:0,n:'Електрика: стрінги, щити PV, лінії до контейнерів',s:'box',t:ew,c:[['Стрінгів',259]],size:'щит PV 7/1 · 0,66 × 1,05 × 0,36 м',kg:'—',qty:'259 стрінгів по 11, щити PV → контейнери',cam:'over',dur:6});
 STEPS.forEach(s_=>{ s_.t=s_.t.filter(Boolean); });
 const SV=document.createElement('div'); SV.id='mtSample'; SV.innerHTML='<canvas></canvas><div class="mt-l"></div>'; SV.hidden=true;
@@ -106,9 +129,15 @@ function setT(x,f){ if(x.skip) return;
 function stepF(j){ return j<MT.i?1:j>MT.i?0:MT.done?1:MT.ph==='samp'?0:Math.min(1,MT.tp/STEPS[j].dur); }
 function paintAll(){ Object.values(RT).forEach(rt=>{ rt.im.count=0; }); STEPS.forEach((s_,j)=>{ const f=stepF(j); s_.t.forEach(x=>{ if(x.rt){ if(f>0){ const q=x.rt.st[x.a]; x.rt.im.count=Math.max(x.rt.im.count,q.s+Math.round(q.n*f)); } } else setT(x,f); }); }); renderer.shadowMap.needsUpdate=true; need=true; }
 function paintCur(){ const s_=STEPS[MT.i], f=stepF(MT.i); s_.t.forEach(x=>setT(x,f));
-  if(s_.arch){ const r=s_.arch, tgt=W(r.m,8+60*f,RZ(r.m)), d=new V3().subVectors(tgt,CR.position); BOOM.rotation.y=Math.atan2(d.z,-d.x); HOOK.position.set(-Math.min(42,Math.hypot(d.x,d.z)),-2,0);
-    PAL.visible=s_.ph==='blk'&&f<1; if(PAL.visible){ PAL.position.copy(W(r.m,4,RZ(r.m)+0.1)); PAL.scale.y=Math.max(0.05,1-f); } } else PAL.visible=false;
-  CR.visible=!!s_.crane; need=true; }
+  const ck=s_.crane; CRN.visible=RP.visible=HK.visible=!!ck; PAL.visible=false;
+  if(ck){ craneAt(ck);
+    if(s_.arch){ const r=s_.arch, sd=ck, sw=(f-0.5)*8;                                           // точка подачі — на арці біля краю з боку крана
+      const X=sd==='east'?r.b-6:sd==='west'?r.a+6:r.m+sw, Y=sd==='east'||sd==='west'?CRP[sd].Y+sw:90.6, z=RZ(X), lift=Math.abs(Math.sin(f*Math.PI*3));
+      PAL.visible=s_.ph==='blk'&&f<1; if(PAL.visible){ PAL.position.copy(W(X,Y,z+0.1)); PAL.scale.y=Math.max(0.05,1-f); }
+      craneTo(W(X,Y,z),z+1.6+6*lift); }
+    else { const tg=s_.t.map(x=>x.g).filter(o=>o&&CNT.includes(o)), k=Math.min(tg.length-1,Math.floor(f*tg.length)), o=tg[Math.max(0,k)];  // гак над контейнером, що опускається
+      if(o){ const p=wp(o); craneTo(new V3(p.x,p.y,p.z),p.y+3.4); } else craneTo(W(CRP[ck].X+12,CRP[ck].Y,2),6); } }
+  need=true; }
 // ---------- зразок і кадр кроку
 const camOf=s_=>s_.shot||(s_.cam&&VIEWS[s_.cam])||VIEWS.over;
 function go(j,keepPlay){ MT.i=Math.max(0,Math.min(STEPS.length-1,j)); const s_=STEPS[MT.i]; MT.ts=0; MT.tp=0; MT.done=false;

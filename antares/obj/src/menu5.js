@@ -215,7 +215,7 @@ function genMo(){ if(GMO) return GMO; const S=ST.sums(), FT=typeof FACPV!=='unde
   const fk=FT?S.fac.mwh*1000/FT.tot.all.kwh:0, whS=S.wh.mwh-(WN?WN.mwh:0), whSn=S.wh.n-(WN?WN.n:0);
   const L=[['roof','Дах цеху','2',RADD.mo.roof,S.roof.mwh,S.roof.kwp,'«Лага 0°» по арці, 0–16°'],
     ['facS','Фасад південь','1',FT?FT.mo.S:RADD.mo.S,FT?FT.tot.S.kwh*fk/1000:0,FT?FT.tot.S.kwp:0,'вертикально, азимут 184°'],
-    ['facE','Фасад схід','1',FT?FT.mo.Ev:RADD.mo.E,FT?FT.tot.Ev.kwh*fk/1000:0,FT?FT.tot.Ev.kwp:0,'вертикально, азимут 94°'],
+    ...(FT&&!FT.tot.Ev.n?[]:[['facE','Фасад схід','1',FT?FT.mo.Ev:RADD.mo.E,FT?FT.tot.Ev.kwh*fk/1000:0,FT?FT.tot.Ev.kwp:0,'вертикально, азимут 94°']]),   // 06.11: вертикальні модулі сходу прибрано
     ['koz','Козирок 25° на сході','1',FT?FT.mo.Ec:RADD.mo.E,FT?FT.tot.Ec.kwh*fk/1000:0,FT?FT.tot.Ec.kwp:0,'верхній ряд східного фасаду'],
     ['lan','Ліхтарі','1',moPOA(nrm(m=>m.grp==='lan')),S.lan.mwh,S.lan.kwp,'на склінні 41–46°, схід і захід'],
     ['wh','Склад, південні скати','1',moPOA(nrm(m=>m.grp==='wh'&&-m.w.z<=0.05)),whS,whSn*0.73,'11° і 22° на південь'],
