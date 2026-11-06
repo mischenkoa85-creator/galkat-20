@@ -14,7 +14,7 @@ const MENU=[
  ['kon','Конструкція',[['kr','Кріплення',{sec:'pz',pane:'kr',cam:'near'}],['bal','Баласт і вага',{sec:'pz',pane:'bal'}],['roz','Розбір на елементи',{sec:'pz',pane:'roz',cam:'near'}],['nav','Навантаження',{sec:'pz',pane:'nav',cam:'top'}],['obs','Обстеження',{sec:'pz',pane:'obs',need:1}]]],
  ['el','Електрика',[['str','Стрінги',{sec:'pz',lay:{str:true}}],['shch','Щити PV',{sec:'pz',lay:{e04:true},pane:'shch'}],['lin','Лінії і лотки',{sec:'pz',lay:{e04:true},cam:'top',pane:'lin'}],
    ['shv','Шафи (Al → Cu)',{sec:'pz',lay:{e04:true},cam:'ess'}],['kont','Контейнери',{sec:'uze'}],['bz','Блискавкозахист',{sec:'pz',pane:'bz'}]]],
- ['gr','Гроші',[['ok','Окупність',{sec:'eko'}],['arb','Арбітраж',{sec:'pz',pane:'arb'}],['obl','Обладнання',{sec:'pz',pane:'obl'}],['kn','Конструкція',{sec:'pz',pane:'kn'}],['mn','Монтаж',{sec:'pz',pane:'mn'}],
+ ['gr','Гроші',[['ok','Окупність',{sec:'eko'}],['arb','Арбітраж',{sec:'pz',pane:'arb'}],['sc','Сценарії',{sec:'pz',pane:'sc',cam:'ess'}],['obl','Обладнання',{sec:'pz',pane:'obl'}],['kn','Конструкція',{sec:'pz',pane:'kn'}],['mn','Монтаж',{sec:'pz',pane:'mn'}],
    ['ksh','Кошторис',{sec:'pz',pane:'ksh'}],['sp','Специфікація',{sec:'pz',pane:'sp'}],['bud','Під бюджет',{sec:'pz',pane:'bud'}]]]];
 const M5=state.lay.m5&&MENU.some(([k])=>k===state.lay.m5.s)?state.lay.m5:(state.lay.m5={s:'obj',sub:'tu'});
 const cur=()=>{ const S_=MENU.find(([k])=>k===M5.s)||MENU[0], sub=S_[2].find(([k])=>k===M5.sub)||S_[2][0]; return {S:S_,sub}; };
@@ -257,7 +257,7 @@ function drawMini(el,g){ const W=Math.max(180,el.clientWidth), H=92, l=6, r=6, t
   ${[0,5,11].map(m=>`<text x="${fw(X(m))}" y="${H-3}" class="ga" text-anchor="middle">${MON[m]}</text>`).join('')}</svg>`; }
 function drawGen(root){ const G=genMo().filter(g=>state.lay.stg==='all'||g.st===state.lay.stg); const st=root.querySelector('[data-gch]'); if(st) drawStack(st,G);
   root.querySelectorAll('[data-gm]').forEach(el=>{ const g=G.find(x=>x.k===el.dataset.gm); if(g) drawMini(el,g); }); }
-let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ const p=$('#pane'); if(p&&p.querySelector('[data-gch]')) drawGen(p); const ab=p&&p.querySelector('[data-arb]'); if(ab&&E&&E.law) arbDay(ab,E.law,E.law.varianty[state.lay.stg==='1'?'plan':'max'],state.lay.arbD||ARBD[state.day]||'lito',state.lay.arbM||'pilga'); },200); });
+let rzT=null; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ const p=$('#pane'); if(p&&p.querySelector('[data-gch]')) drawGen(p); if(p&&p.querySelector('[data-scch]')) scDraw(p); const ab=p&&p.querySelector('[data-arb]'); if(ab&&E&&E.law) arbDay(ab,E.law,E.law.varianty[state.lay.stg==='1'?'plan':'max'],state.lay.arbD||ARBD[state.day]||'lito',state.lay.arbM||'pilga'); },200); });
 function genBlocks(){ const G=genMo().filter(g=>state.lay.stg==='all'||g.st===state.lay.stg); if(!G.length) return ''; const T=G.reduce((a,g)=>a+g.tot,0), tm=MON.map((_,m)=>G.reduce((a,g)=>a+g.mo[m],0));
   const pk=tm.indexOf(Math.max(...tm)), dec=tm[11];
   return `<div class="blk wide"><h3>Генерація по місяцях — ${G.length>1?'кожна група своїм кольором':G[0].n}, МВт·год</h3>
@@ -372,7 +372,59 @@ function pArb(){ const L=E&&E.law; if(!L) return needB('Потрібно: роз
   <p class="src">${D?`${D.data.split('-').reverse().join('.')}: ${bought>50?`з мережі ${nf(bought/1000,1)} МВт·год по ${nf(avg(F.gb,D.rdn))} грн/МВт·год (РДН)`:`з мережі не заряджали — ${nf(F.pb.reduce((a,b)=>a+b,0)/1000,1)} МВт·год від СЕС`}, у мережу ${nf(sold/1000,1)} МВт·год по ${nf(avg(F.bx,D.rdn))}. `:''}За рік: розряд ${nf(x.mwh.bl+x.mwh.bx,0)} МВт·год, з них у мережу ${nf(x.mwh.bx,0)}; заряд з мережі ${nf(x.mwh.gb,0)}, від СЕС ${nf(x.mwh.pb,0)}.</p></div>
   <div class="blk wide"><p class="src"><b>Враховано:</b> споживання ${nf(Pp.spozhyvannia_mwh)} МВт·год на рік — рівномірно ≈${nf(Pp.spozhyvannia_kw)} кВт щогодини (погодинних даних немає); накопичувачі ${Pp.uze}, корисно ${nf(Pp.korysno_kwh)} кВт·год (розряд до ${nf(Pp.dod*100)} %), ККД циклу ${nf(Pp.rte*100)} %, ${nf(Pp.tsykly)} цикл на добу; передача і розподіл — у середньому ${nf(Pp.peredacha_rozpodil_uah_mwh)} грн/МВт·год; ціни відомі наперед — верхня межа керування (EMS).</p>
   ${needB('Потрібно:',['ТУ на видачу 2 МВт','статус активного споживача і окремий облік накопичувачів (ч. 5 ст. 58-1)','дозвіл ДТЕК на заряд з мережі і договірна потужність','договір продажу за РДН — комісія трейдера не врахована'])}</div>`; }
-const PANES={arb:pArb,shch:pShch,lin:pLin,kut:pKut,nav:pNav,obs:pObs,rik:pRik,flow:()=>head('Сонце і генерація · потоки енергії','Потоки енергії')+needB('Потрібно: погодинне споживання з АСКОЕ за 12–36 місяців по трьох точках обліку — тоді показуємо, куди йде енергія щогодини: цех, накопичувачі, мережа.'),
+// ---------- Гроші → сценарії: калькулятор ses-uze-modul (ses_uze.kalkuliator), споживання 1 100 / 3 000 / 5 000 МВт·год × 4 і 8 контейнерів, лише з пільгою ч. 10 ст. 58-1
+const KA=typeof KALK!=='undefined'?KALK:null, SCR=[['lim','Видача до 2 МВт'],['zero','Нульовий експорт']];
+const scSt=()=>{ const i=Math.min(Math.max(+(state.lay.scI??1),0),KA.sc.length-1), r=state.lay.scR||'lim'; return {i,r,S:KA.sc[i],V:n=>KA.sc[i].var.find(x=>x.n===n&&x.rezhym===r)}; };
+const okT=v=>v==null||v>KA.in.horyzont_rokiv?'не окупається':nf(v,1), kont=n=>n%10===1&&n%100!==11?'контейнер':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'контейнери':'контейнерів', SCRl={lim:'видача до 2 МВт',zero:'нульовий експорт'};
+function scDraw(p){ if(!KA) return; const {i,r}=scSt(), NS=[...new Set(KA.sc[0].var.map(x=>x.n))].sort((a,b)=>a-b), C={[NS[0]]:'--s1',[NS[1]]:'--s2'};
+  const a=p.querySelector('[data-scch="ok"]'); if(a){ const W=Math.max(280,a.clientWidth), l=W<480?82:110, rr=W<480?84:96, bh=13, g=12, H=KA.sc.length*(NS.length*(bh+3)+g)+18;
+    const vals=KA.sc.flatMap(s=>s.var.filter(x=>x.rezhym===r&&x.okupnist!=null&&x.okupnist<=KA.in.horyzont_rokiv).map(x=>x.okupnist)), top=niceTop(Math.max(4,...vals)*1.05), X=v=>l+v/top*(W-l-rr);
+    let s=`<svg width="${W}" height="${H}" role="img" aria-label="Окупність за споживанням">`; [0,0.5,1].forEach(f=>{ const x=X(f*top); s+=`<line x1="${fw(x)}" x2="${fw(x)}" y1="0" y2="${H-16}" class="gg"/><text x="${fw(x)}" y="${H-3}" class="ga" text-anchor="middle">${nf(f*top,f*top%1?1:0)}${f===1?' р.':''}</text>`; });
+    let y=2; KA.sc.forEach((sc,k)=>{ const y0=y; NS.forEach(n=>{ const x=sc.var.find(q=>q.n===n&&q.rezhym===r), ok=x&&x.okupnist!=null&&x.okupnist<=KA.in.horyzont_rokiv;
+        s+=ok?`<rect x="${l}" y="${fw(y)}" width="${fw(Math.max(2,X(x.okupnist)-l))}" height="${bh}" rx="3" fill="var(${C[n]})" class="gsb"><title>${nf(sc.mwh)} МВт·год, ${n} ${kont(n)}: ${nf(x.okupnist,1)} року</title></rect><text x="${fw(X(x.okupnist)+5)}" y="${fw(y+bh-2)}" class="gv">${nf(x.okupnist,1)}<tspan class="ga"> · ${n} конт.</tspan></text>`
+          :`<text x="${l+4}" y="${fw(y+bh-2)}" class="ga">${n} конт. — не окупається за ${KA.in.horyzont_rokiv} років</text>`; y+=bh+3; });
+      s+=`<text x="${l-8}" y="${fw((y0+y-3)/2+4)}" class="${k===i?'gv':'ga'}" text-anchor="end">${nf(sc.mwh)} МВт·год</text>`; y+=g; });
+    a.innerHTML=s+'</svg>'; }
+  const b=p.querySelector('[data-scch="c2"]'); if(b){ const S=KA.sc[i], W=Math.max(280,b.clientWidth), l=30, rr=6, H=150, pt=10, pb=20, MS=['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
+    const vs=NS.map(n=>S.var.find(q=>q.n===n&&q.rezhym===r)), top=niceTop(Math.max(5,...vs.flatMap(x=>x?x.dni_2_po_misiatsiakh:[0]))), gw=(W-l-rr)/12, bw=Math.min(14,(gw-6)/NS.length), Y=v=>pt+(1-v/top)*(H-pt-pb);
+    let s=`<svg width="${W}" height="${H}" role="img" aria-label="Діб з двома циклами по місяцях">`; [0,0.5,1].forEach(f=>{ const yy=Y(f*top); s+=`<line x1="${l}" x2="${W-rr}" y1="${fw(yy)}" y2="${fw(yy)}" class="${f?'gg':'gx0'}"/><text x="${l-5}" y="${fw(yy+4)}" class="ga" text-anchor="end">${nf(f*top)}</text>`; });
+    MS.forEach((m,k)=>{ const x0=l+k*gw+(gw-bw*NS.length)/2; vs.forEach((x,j)=>{ if(!x) return; const v=x.dni_2_po_misiatsiakh[k]; if(v>0) s+=`<rect x="${fw(x0+j*bw)}" y="${fw(Y(v))}" width="${fw(bw)}" height="${fw(Y(0)-Y(v))}" rx="2" fill="var(${C[x.n]})" class="gsb"><title>${m}: ${x.n} ${kont(x.n)} — ${v} діб з двома циклами</title></rect>`; });
+      s+=`<text x="${fw(l+(k+0.5)*gw)}" y="${H-5}" class="ga" text-anchor="middle">${W<420?m[0].toUpperCase():m}</text>`; });
+    b.innerHTML=s+'</svg>'; } }
+function pSc(){ if(!KA) return needB('Потрібно: розрахунок сценаріїв (ses-uze-modul: python3 -m ses_uze.kalkuliator obiekty/antares --stsenarii …, далі calc/eko/kalk_twin.py).');
+  const {i,r,S,V}=scSt(), I=KA.in, NS=[...new Set(S.var.map(x=>x.n))].sort((a,b)=>a-b), X=NS.map(V), best=X.reduce((a,b)=>b&&(!a||b.npv>a.npv)?b:a,null), C={[NS[0]]:'--s1',[NS[1]]:'--s2'};
+  const ksd=v=>nf(Math.round(v/1000)), mln=v=>(v<0?'−':'')+nf(Math.abs(v)/1e6,2), per=KA.period.map(d=>d.split('-').reverse().join('.')).join(' – '), kwh=I.uze_kwh*I.uze_dod_pct/100, law=E&&E.law&&E.law.zakon;
+  const row=(t,f,sm)=>`<tr><td class="w">${t}${sm?`<small>${sm}</small>`:''}</td>${X.map(x=>`<td>${x?f(x):'—'}</td>`).join('')}</tr>`;
+  const zam=x=>x.zamina_roky.length?x.zamina_roky.map(y=>`${y}-й рік`).join(', ')+`<small>${x.n} × ${nf(I.uze_zamina_usd)} $ = ${ksd(x.n*I.uze_zamina_usd)} тис. $</small>`:'—';
+  const hh=!best?'Сценарії':best.npv<0?`${nf(S.mwh)} МВт·год, ${SCRl[r]}: жоден варіант не окупається за ${I.horyzont_rokiv} років`:`${nf(S.mwh)} МВт·год, ${SCRl[r]}: краще ${best.n} ${kont(best.n)} — окупність ${okT(best.okupnist)} року, NPV ${mln(best.npv)} млн $`;
+  return head('Гроші · сценарії',hh,
+    `Уся СЕС ${nf(I.ses_kwp[0],0)} кВтп, ціни РДН ${per}, лише з пільгою ч. 10 ст. 58-1. Розрахунок на весь об'єкт — однаковий для всіх етапів.`)+
+  `<div class="blk wide"><div class="kb" role="group" aria-label="Споживання за рік">${KA.sc.map((s_,k)=>`<button type="button" data-sci="${k}" aria-pressed="${k===i}">${nf(s_.mwh)} МВт·год</button>`).join('')}</div>
+  <div class="kb" role="group" aria-label="Видача в мережу">${SCR.map(([k,t])=>`<button type="button" data-scr="${k}" aria-pressed="${k===r}">${t}</button>`).join('')}</div>
+  <div class="tw"><table class="cmp an"><thead><tr><th></th>${X.map(x=>`<th><i class="sw" style="background:var(${C[x.n]})"></i> ${x.n} ${kont(x.n)}${x===best&&best.npv>0?'<span class="best">більший NPV</span>':''}</th>`).join('')}</tr></thead><tbody>
+  ${row('Капвитрати, тис. $',x=>`${ksd(x.capex.razom)}<small>контейнери ${ksd(x.capex.uze)} · СЕС ${ksd(x.capex.ses)} · EMS ${ksd(x.capex.ems)}</small>`,'без ПДВ')}
+  ${row('Ефект за рік, тис. $',x=>`${ksd(x.efekt_usd)}<small>з нього СЕС ${ksd(x.efekt_ses_usd)}</small>`)}
+  ${row('Окупність, років',x=>okT(x.okupnist))}
+  ${row(`NPV за ${I.horyzont_rokiv} років, млн $`,x=>mln(x.npv),`ставка ${nf(I.stavka_pct)} %`)}
+  ${row('IRR',x=>x.irr!=null?nf(x.irr,1)+' %':'—')}
+  ${row('Циклів за рік',x=>nf(x.tsykly_rik),`до ${nf(I.uze_tsykliv_doba)} на добу`)}
+  ${row('Діб з двома циклами',x=>nf(x.dni['2']))}
+  ${row('Заміна батарей',zam,`${nf(I.uze_resurs_tsykliv)} циклів або ${nf(I.uze_strok_rokiv)} років — що раніше`)}
+  ${row('Розряд у мережу, МВт·год',x=>nf(x.mwh.bx))}
+  ${row('Сонце в мережу / обрізано, МВт·год',x=>`${nf(x.mwh.px)} / ${nf(x.mwh.pc)}`)}
+  ${row(`Додаткові ${NS[1]-NS[0]} ${kont(NS[1]-NS[0])} окупаються за, років`,x=>x.pryrist?okT(x.pryrist.okupnist):'—')}
+  </tbody></table></div></div>
+  <div class="blk wide"><h3>Окупність за споживанням · ${SCRl[r]}</h3><div class="glg">${NS.map(n=>`<span><i class="sw" style="background:var(${C[n]})"></i>${n} ${kont(n)}</span>`).join('')}</div><div class="gch" data-scch="ok" style="min-height:150px"></div></div>
+  <div class="blk wide"><h3>Діб з двома циклами по місяцях · ${nf(S.mwh)} МВт·год</h3><div class="glg">${X.map(x=>x?`<span><i class="sw" style="background:var(${C[x.n]})"></i>${x.n} ${kont(x.n)} — <b>${nf(x.dni['2'])}</b> діб за рік</span>`:'').join('')}</div><div class="gch" data-scch="c2" style="min-height:150px"></div>
+  <p class="src">Другий цикл за добу робиться лише тоді, коли спред перекриває втрати і знос батарей.</p></div>
+  <div class="blk wide"><div class="kpis"><div class="kpi"><span class="k">Контейнер під ключ</span><span class="v">${nf(I.capex_uze_usd)} <small>$</small></span><span class="s">${KA.pr.capex_uze_usd.replace(/^власник [\d.]+:\s*/,'').replace(/ %/g,'\u00a0%')}</span></div>
+  <div class="kpi"><span class="k">Знос батарей</span><span class="v">${nf(KA.znos,2)} <small>грн/кВт·год</small></span><span class="s">заміна ${nf(I.uze_zamina_usd)} $ / (${nf(I.uze_resurs_tsykliv)} циклів × ${nf(kwh,1)} кВт·год) × ${nf(I.kurs,2)} грн/$ / √${nf(I.uze_kkd_pct/100,2)}</span></div>
+  <div class="kpi"><span class="k">СЕС</span><span class="v">${nf(I.ses_kwp[0],0)} <small>кВтп</small></span><span class="s">${nf(I.capex_ses_usd_kwp)} $/кВтп — кошторис під ключ 26.10 (18 % + 4 % запасу)</span></div>
+  <div class="kpi"><span class="k">Споживання</span><span class="v">${nf(S.mwh)} <small>МВт·год</small></span><span class="s">у середньому ${nf(S.kw)} кВт; зимою на ${nf(I.zyma_lito_pct)} % більше, ніж улітку</span></div></div></div>
+  <div class="blk wide">${law?`<div class="law"><b>Ч. 10 ст. 58-1</b> Закону «Про ринок електричної енергії»: рахуємо лише з пільгою — передача і розподіл на заряд з мережі платяться тільки з різниці місячного відбору і відпуску накопичувачів. <a href="${law.url}" target="_blank" rel="noopener">Текст закону ↗</a><small>${law.perevirka}.</small></div>`:''}
+  <p class="src"><b>Враховано:</b> ціни РДН погодинно ${per} + передача, диспетчеризація і розподіл на дату кожної доби; сонце — генерація двійника; ${nf(I.uze_kw)} кВт / ${nf(I.uze_kwh)} кВт·год на контейнер, розряд до ${nf(I.uze_dod_pct)} %, ККД циклу ${nf(I.uze_kkd_pct)} %; ціни відомі наперед — верхня межа керування (EMS); видача 2 МВт — сценарій. Калькулятор ses-uze-modul, ${KA.date.split('-').reverse().join('.')}.</p>
+  ${needB('Потрібно:',['договірна потужність — зараз відбір не обмежено: 8 контейнерів заряджаються з мережі до 4 МВт','гарантія Golen: ресурс циклів і залишкова ємність (зараз умовні 6 000 циклів)','мідні лінії до ТП для кожного додаткового контейнера (≈27 тис. $ за кошторисом 26.10) — не враховано','місце для контейнерів 5–8 — у моделі розставлено 4','ТУ на видачу 2 МВт; статус активного споживача і окремий облік накопичувачів (ч. 5 ст. 58-1)'])}</div>`; }
+const PANES={arb:pArb,sc:pSc,shch:pShch,lin:pLin,kut:pKut,nav:pNav,obs:pObs,rik:pRik,flow:()=>head('Сонце і генерація · потоки енергії','Потоки енергії')+needB('Потрібно: погодинне споживання з АСКОЕ за 12–36 місяців по трьох точках обліку — тоді показуємо, куди йде енергія щогодини: цех, накопичувачі, мережа.'),
   kr:pKr,bal:pBal,roz:pRoz,bz:pBz2,
   obl:pObl,kn:()=>head('Гроші · конструкція','Кріплення і баласт — кошторис 04.11','')+koshTbl(g=>/Кріплення|Баласт/.test(g)),mn:pMn,ksh:()=>head('Гроші · кошторис',`${stgN()}: СЕС до PCS по позиціях`,'')+(typeof WHNP!=='undefined'&&WHNP&&state.lay.stg!=='2'?`<div class="blk wide"><p class="src"><b>У т. ч. опція етапу 1 «склад, північні скати»</b> — ${WHNP.n} модулів, ${nf(WHNP.kwp,1)} кВтп, ≈${nf(WHNP.mwh,1)} МВт·год за рік: повна ціна <b>${nf(Math.round(WHNP.cost.net))} $</b> без ПДВ (${nf(Math.round(WHNP.cost.vat))} $ з ПДВ). У таблиці нижче — її частина «СЕС до PCS» (група «Склад, північні скати» + щити, лінії, ПЗІП F3, лотки фасаду і перестановка 2 щитів даху на К-4 / К-5 в етапі 2, разом ${nf(Math.round(WHNP.cost.bom_cn+WHNP.cost.bom_ua))} $); модулі ${nf(Math.round(WHNP.cost.mods))} $, роботи ${nf(Math.round(WHNP.cost.works))} $ — у «Обладнанні» і «Монтажі». Прибрати опцію — перемикач WHN у розрахунку (calc/ep04).</p></div>`:'')+koshTbl(),sp:pSp,bud:pBud};
 const tuBlock=()=>`<div class="blk wide"><h3>Технічні умови і вихідні дані</h3><table class="cmp an"><tbody>
@@ -391,6 +443,9 @@ function bindP(p){ p.querySelectorAll('[data-kut]').forEach(b=>b.onclick=()=>{ s
   p.querySelectorAll('[data-budg]').forEach(b=>b.onclick=()=>{ state.lay.budG=b.dataset.budg; render5(); });
   if(p.querySelector('[data-gch],[data-gm]')&&!p.querySelector('[data-arb]')) requestAnimationFrame(()=>drawGen(p));
   const ab=p.querySelector('[data-arb]'); if(ab&&E&&E.law){ const vk=state.lay.stg==='1'?'plan':'max'; requestAnimationFrame(()=>arbDay(ab,E.law,E.law.varianty[vk],state.lay.arbD||ARBD[state.day]||'lito',state.lay.arbM||'pilga')); }
+  if(p.querySelector('[data-scch]')) requestAnimationFrame(()=>scDraw(p));
+  p.querySelectorAll('[data-sci]').forEach(b=>b.onclick=()=>{ state.lay.scI=+b.dataset.sci; render5(); });
+  p.querySelectorAll('[data-scr]').forEach(b=>b.onclick=()=>{ state.lay.scR=b.dataset.scr; render5(); });
   p.querySelectorAll('[data-arbm]').forEach(b=>b.onclick=()=>{ state.lay.arbM=b.dataset.arbm; render5(); });
   p.querySelectorAll('[data-arbd]').forEach(b=>b.onclick=()=>{ state.lay.arbD=b.dataset.arbd; render5(); });
   p.querySelectorAll('[data-rn]').forEach(b=>b.onclick=()=>{ if(RN&&RN.node) RN.node(); });
