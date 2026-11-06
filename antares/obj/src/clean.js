@@ -27,6 +27,10 @@ const hide=el=>{ if(el) el.style.display='none'; };
     b.onclick=()=>{ cams.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); goCam('facv'); }; cams.appendChild(b); } }
 { const cams=$('#cams'); if(cams){ const bs=[...cams.querySelectorAll('button')]; bs.forEach(b=>hide(b));
   TPL.views.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.c===k); if(!b) return; b.textContent=t; b.style.display=''; cams.appendChild(b); const dsc=VIEWS[k]&&Object.getOwnPropertyDescriptor(VIEWS[k],'t'); if(dsc&&!dsc.get) VIEWS[k].t=t; }); } }
+// 06.11: кнопка виду світиться лише, поки камера стоїть на цьому виді (раніше «Огляд» лишався вибраним після переходу камери з підрозділу)
+{ const camsSync=k=>{ const c=$('#cams'); if(c) c.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(!!k&&x.dataset.c===k))); };
+  const g0=goCam; goCam=function(k){ camsSync(k); return g0.apply(this,arguments); };
+  controls.addEventListener('start',()=>camsSync(null)); }
 { const h=document.querySelector('header h1'); if(h) h.innerHTML='Антарес · СЕС і накопичувачі<small>АБК і цех · два етапи</small>'; document.title='Антарес · весь об\'єкт'; }
 { const tb=$('#tabs'), bs=[...tb.querySelectorAll('button')]; bs.forEach(b=>hide(b));
   TPL.secs.forEach(([k,t])=>{ const b=bs.find(x=>x.dataset.s===k); if(!b) return; b.textContent=t; b.style.display=''; b.disabled=false; b.classList.remove('mis'); tb.appendChild(b); }); }

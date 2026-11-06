@@ -143,11 +143,12 @@ const camOf=s_=>s_.shot||(s_.cam&&VIEWS[s_.cam])||VIEWS.over;
 function go(j,keepPlay){ MT.i=Math.max(0,Math.min(STEPS.length-1,j)); const s_=STEPS[MT.i]; MT.ts=0; MT.tp=0; MT.done=false;
   MT.ph=s_.s&&!MT.seen.has(s_.s)?'samp':'play'; if(s_.s){ MT.seen.add(s_.s); setSample(s_.s); } SV.hidden=!s_.s&&!s_.size; SV.querySelector('canvas').style.display=s_.s?'':'none';
   const prev=STEPS[MT.i-1], v=camOf(s_); if(!prev||camOf(prev)!==v) goTo(v); paintAll(); paintCur(); ui(true); }
-function enter(){ if(MT.on) return; MT.on=true; MG.visible=true; roofIms.forEach(o=>o.visible=false);
+function enter(){ if(MT.on) return; MT.on=true; MG.visible=true; document.querySelectorAll('#cams button').forEach(x=>x.setAttribute('aria-pressed','false'));   // камера ролика — свої кадри roofIms.forEach(o=>o.visible=false);
   STEPS.forEach(s_=>s_.t.forEach(x=>{ x.skip=!x.force&&!x.rt&&!vis(x.g||x.im); })); const dg=RN.IMS.lag&&RN.IMS.lag.parent; if(dg) dg.visible=false;
   renderer.shadowMap.autoUpdate=false; MT.seen.clear(); MT.play=true; go(0); MT.last=performance.now(); requestAnimationFrame(tick); }
 function leave(){ if(!MT.on) return; MT.on=false; MT.play=false; MG.visible=false; SV.hidden=true; renderer.shadowMap.autoUpdate=true; const dg=RN.IMS.lag&&RN.IMS.lag.parent; if(dg) dg.visible=true;
-  STEPS.forEach(s_=>s_.t.forEach(x=>{ if(x.im){ x.im.count=x.N; x.im.instanceMatrix.needsUpdate=true; } else if(x.g) x.g.position.y=x.y0; })); roofIms.forEach(o=>o.visible=true); if(MT.stg0) state.lay.stg=MT.stg0; }
+  STEPS.forEach(s_=>s_.t.forEach(x=>{ if(x.skip) return; if(x.im){ x.im.count=x.N; x.im.instanceMatrix.needsUpdate=true; } else if(x.g){ x.g.position.y=x.y0; x.g.visible=true; } }));   // 06.11: після ролика контейнери і плити — знову видимі (раніше лишались схованими)
+  roofIms.forEach(o=>o.visible=true); if(MT.stg0) state.lay.stg=MT.stg0; }
 controls.addEventListener('start',()=>{ if(MT.on&&MT.play){ MT.play=false; ui(true); } });   // дотик до моделі — пауза, камера ваша
 function tick(now){ if(!MT.on) return; const dt=Math.min(0.1,(now-MT.last)/1000); MT.last=now;
   if(!SV.hidden&&!SV.classList.contains('min')){ SP.rotation.y+=dt*0.35; const cv=SV.querySelector('canvas'), w=SV.clientWidth-16, h=cv.clientHeight; if(SR._w!==w||SR._h!==h){ SR.setSize(w,h,false); SC.aspect=w/Math.max(1,h); SC.updateProjectionMatrix(); SR._w=w; SR._h=h; } SR.render(SS,SC); }

@@ -33,7 +33,7 @@ for r in rows:
     mods = int(FIELD * r['kwp_m2'] / (WP / 1000))
     roof.append(dict(k=key, n=('«Домик» схід–захід ' if sz else 'Ряди на південь ') + f'{nah}°' + (' — оптимум' if not sz and nah == round(opt['nahyl']) else ''),
                      d=f"крок рядів {r['krok_m']:.2f} м, заповнення {r['zapovnennia']*100:.0f} %", kut=f'{nah}°', mods=mods, kwh_kwp=round(r['kwh_kwp']), h=round(h),
-                     price=PRICE['tri15'] if key == 'pd15' else None, src='оцінка як для плаского поля (ses_uze.soniachne)'))
+                     price=PRICE['tri15'] if key == 'pd15' else None, src='як для плаского поля'))
 for x in roof:
     x['kwp'] = round(x['mods'] * WP / 1000, 1); x['mwh'] = round(x['kwp'] * x['kwh_kwp'] / 1000, 1)
     x['usd'] = round(x['kwp'] * x['price']) if x['price'] else None
