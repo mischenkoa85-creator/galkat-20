@@ -24,7 +24,8 @@ KEEP = ('ses_kwp', 'n', 'rezhym', 'pilga', 'capex', 'efekt_usd', 'efekt_ses_usd'
 def var(x):
     o = {k: x.get(k) for k in KEEP}
     o['mwh'] = x['mwh']
-    o['om'] = x['roky'][0][2]
+    o['om'] = x['roky'][1][2]                  # обслуговування з другого року
+    o['om1'] = x['roky'][0][2]                 # перший рік
     o['cum'] = [-x['capex']['razom']] + [r[5] for r in x['roky']]
     if x['n']:                                   # погодинні потоки характерних діб — лише для варіантів з накопичувачами
         o['doby'] = {d: {k: f[k] for k in ('gb', 'pb', 'bl', 'bx', 'px', 'pc', 'soc')} for d, f in x['doby'].items()}
@@ -37,7 +38,7 @@ dat = {
     'vidbytky': {'vse': [J['vidbytok'] for J in VSE['stsenarii']], 'e1': [J['vidbytok'] for J in E1['stsenarii']]},
     'in': {k: V[k] for k in ('ses_kwp', 'kurs', 'capex_ses_usd_kwp', 'capex_uze_usd', 'capex_ems_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'uze_strok_rokiv',
                              'uze_kw', 'uze_kwh', 'uze_dod_pct', 'uze_kkd_pct', 'uze_tsykliv_doba', 'zyma_lito_pct', 'grafik', 'vydacha_stsenarii_kw', 'pilga_58_1',
-                             'horyzont_rokiv', 'stavka_pct', 'ekspl_pct', 'degr_ses_pct', 'dogovirna_kw')},
+                             'horyzont_rokiv', 'stavka_pct', 'ekspl_pct', 'degr_ses_pct', 'dogovirna_kw', 'servis_rik1_usd', 'servis_usd_rik')},
     'kwp': {'vse': VSE['stsenarii'][0]['varianty'][0]['ses_kwp'], 'e1': E1['stsenarii'][0]['varianty'][0]['ses_kwp']},
     'pr': {k: P[k] for k in ('capex_uze_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'pilga_58_1')},
     'dzh': {**J0['dzherela'], 'sontse_e1': E1['stsenarii'][0]['dzherela']['sontse']},
