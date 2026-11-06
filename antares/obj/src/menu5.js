@@ -115,9 +115,9 @@ function pRoz(){ return head('Конструкція · розбір на еле
 function pBz(){ return head('Електрика · блискавкозахист','Блискавкозахист без щогл','Рішення власника 25.10: без щогл, найдешевший практичний варіант — зрівнювання потенціалів конструкцій СЕС, PE до заземлення ТП; контейнери — свій контур заземлення (у «Контейнерах»).')+needB('Потрібно: перерахувати том 7 «БЗ» під поточну розкладку (дах В1, фасади, ліхтарі, склад, АБК) і показати провідники в моделі.'); }
 function pObl(){ if(typeof KALK==='undefined') return needB('Потрібно: розрахунок калькулятора.'); const K_=KALK, I=K_.in, e1=state.lay.stg==='1', nV=[...new Set(K_.sc[0].vse.map(x=>x.n))].filter(n=>n).sort((a,b)=>a-b);
   const n=e1?4:(nV.includes(+state.lay.ekoN)?+state.lay.ekoN:nV[0]), x=(e1?K_.sc[0].e1:K_.sc[0].vse).find(q=>q.n===n&&q.rezhym==='lim'), kwp=e1?K_.kwp.e1:K_.kwp.vse;
-  return head('Гроші · обладнання',`${e1?'Етап 1':'Весь об\'єкт'} + ${n} ${n<5?'контейнери':'контейнерів'}: ${usd(x.capex.razom)}`,'Капвитрати під ключ, без ПДВ — як у розрахунку окупності: СЕС — за кошторисом 26.10 на кВтп, контейнер — під ключ, EMS — окремо.')+
+  return head('Гроші · обладнання',`${e1?'Етап 1':'Весь об\'єкт'} + ${n} ${n<5?'контейнери':'контейнерів'}: ${usd(x.capex.razom)}`,'Капвитрати під ключ, без ПДВ — як у розрахунку окупності: СЕС — за кошторисом 26.10 на кВтп, контейнер — під ключ, EMS і робот для очищення — окремо.')+
   `<div class="blk wide"><table class="cmp an"><tbody><tr><td class="w">СЕС, ${f1(kwp)} кВтп × ${nf(I.capex_ses_usd_kwp)} $/кВтп</td><td>${usd(x.capex.ses)}</td></tr><tr><td class="w">Накопичувачі, ${n} × Golen LES-H20-1205W500C-PS під ключ по ${usd(I.capex_uze_usd)}</td><td>${usd(x.capex.uze)}</td></tr>
-  <tr><td class="w">EMS (E-Systems)</td><td>${usd(x.capex.ems)}</td></tr><tr class="tot"><td class="w">Разом, без ПДВ</td><td>${usd(x.capex.razom)}</td></tr></tbody></table>
+  <tr><td class="w">EMS (E-Systems)</td><td>${usd(x.capex.ems)}</td></tr>${x.capex.inshe?`<tr><td class="w">Робот для очищення модулів WanLv WLS-7Pro, 1 шт., з доставкою і розмитненням</td><td>${usd(x.capex.inshe)}</td></tr>`:''}<tr class="tot"><td class="w">Разом, без ПДВ</td><td>${usd(x.capex.razom)}</td></tr></tbody></table>
   <p class="src">Контейнер під ключ ${usd(I.capex_uze_usd)} (${K_.pr.capex_uze_usd}). Мідні лінії до ТП для контейнерів понад 4 — не враховано.</p></div>`; }
 function pKn(){ const q=(BOM.roof||{q:{}}).q, w=(BOM.wh||{q:{}}).q, blk=(q.blk||0)*3, lag=(q.lag||0)*190/45.04;
   return head('Гроші · конструкція','Кріплення — кількості з моделі, ціни де відомі','Ціни: блок з муфтою і матом — 3 $ (рішення 26.10); лага 41×41 — 190 грн/м (зведення 23.10).')+
@@ -412,7 +412,7 @@ function pSc(){ if(!KA) return needB('Потрібно: розрахунок с�
   `<div class="blk wide"><div class="kb" role="group" aria-label="Споживання за рік">${KA.sc.map((s_,k)=>`<button type="button" data-sci="${k}" aria-pressed="${k===i}">${nf(s_.mwh)} МВт·год</button>`).join('')}</div>
   <div class="kb" role="group" aria-label="Видача в мережу">${SCR.map(([k,t])=>`<button type="button" data-scr="${k}" aria-pressed="${k===r}">${t}</button>`).join('')}</div>
   <div class="tw"><table class="cmp an"><thead><tr><th></th>${X.map(x=>`<th><i class="sw" style="background:var(${C[x.n]})"></i> ${x.n} ${kont(x.n)}${x===best&&best.npv>0?'<span class="best">більший NPV</span>':''}</th>`).join('')}</tr></thead><tbody>
-  ${row('Капвитрати, тис. $',x=>`${ksd(x.capex.razom)}<small>контейнери ${ksd(x.capex.uze)} · СЕС ${ksd(x.capex.ses)} · EMS ${ksd(x.capex.ems)}</small>`,'без ПДВ')}
+  ${row('Капвитрати, тис. $',x=>`${ksd(x.capex.razom)}<small>контейнери ${ksd(x.capex.uze)} · СЕС ${ksd(x.capex.ses)} · EMS ${ksd(x.capex.ems)}${x.capex.inshe?` · робот ${ksd(x.capex.inshe)}`:''}</small>`,'без ПДВ')}
   ${row('Ефект за рік, тис. $',x=>`${ksd(x.efekt_usd)}<small>з нього СЕС ${ksd(x.efekt_ses_usd)}</small>`)}
   ${row('Окупність, років',x=>okT(x.okupnist))}
   ${row(`NPV за ${I.horyzont_rokiv} років, млн $`,x=>mln(x.npv),`ставка ${nf(I.stavka_pct)} %`)}

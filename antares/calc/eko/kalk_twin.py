@@ -36,7 +36,7 @@ assert [J['spozhyvannia']['mwh'] for J in VSE['stsenarii']] == [J['spozhyvannia'
 dat = {
     'date': J0['data'], 'period': J0['period'], 'versiia': J0['versiia'], 'znos': J0['znos_uah_kwh'],
     'vidbytky': {'vse': [J['vidbytok'] for J in VSE['stsenarii']], 'e1': [J['vidbytok'] for J in E1['stsenarii']]},
-    'in': {k: V[k] for k in ('ses_kwp', 'kurs', 'capex_ses_usd_kwp', 'capex_uze_usd', 'capex_ems_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'uze_strok_rokiv',
+    'in': {k: V[k] for k in ('ses_kwp', 'kurs', 'capex_ses_usd_kwp', 'capex_uze_usd', 'capex_ems_usd', 'capex_inshe_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'uze_strok_rokiv',
                              'uze_kw', 'uze_kwh', 'uze_dod_pct', 'uze_kkd_pct', 'uze_tsykliv_doba', 'zyma_lito_pct', 'grafik', 'vydacha_stsenarii_kw', 'pilga_58_1',
                              'horyzont_rokiv', 'stavka_pct', 'ekspl_pct', 'degr_ses_pct', 'dogovirna_kw', 'servis_rik1_usd', 'servis_usd_rik')},
     'kwp': {'vse': VSE['stsenarii'][0]['varianty'][0]['ses_kwp'], 'e1': E1['stsenarii'][0]['varianty'][0]['ses_kwp']},
