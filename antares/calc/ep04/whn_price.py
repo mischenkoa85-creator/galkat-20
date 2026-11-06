@@ -42,7 +42,8 @@ out = dict(n=n, ns=W['ns'], kwp=kwp, y=W['y'], mwh=mwh, order=[o0, o1], cont_add
                      mech=round(mc, 1), com=round(com, 1), works=round(works, 1), c=round(c, 1), reserve=round(c * 0.04, 1), gen=round(0.18 * (c - works), 1), net=round(net, 1), vat=round(vat, 1)),
            eco=eco)   # 06.11: підсумок станції під ключ — у калькуляторі (424 $/кВтп × кВтп), не тут
 json.dump(out, open('whn_price.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-open(JS, 'w', encoding='utf-8').write('// Опція етапу 1 «склад, північні скати» — ціна і окупність (calc/ep04/whn_price.py)\nconst WHNP=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
+tw = dict({k: out[k] for k in ('n', 'ns', 'kwp', 'y', 'mwh', 'eco')}, cost={k: out['cost'][k] for k in ('mods', 'bom_cn', 'bom_ua', 'works', 'net', 'vat')})   # у двійнику — без складових націнки
+open(JS, 'w', encoding='utf-8').write('// Опція етапу 1 «склад, північні скати» — ціна і окупність (calc/ep04/whn_price.py)\nconst WHNP=' + json.dumps(tw, ensure_ascii=False, separators=(',', ':')) + ';\n')
 if __name__ == '__main__':
     print(f"опція: {n} модулів, {W['ns']} стрінгів, {kwp} кВтп, {W['y']} кВт·год/кВтп, {mwh} МВт·год; модулі в замовленні етапу 1 {o0} → {o1}, контейнерів +{cont}")
     print({k: round(v) for k, v in out['cost'].items()}); print(eco)

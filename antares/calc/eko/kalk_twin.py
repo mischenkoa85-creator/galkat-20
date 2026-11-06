@@ -41,7 +41,8 @@ dat = {
                              'horyzont_rokiv', 'stavka_pct', 'ekspl_pct', 'degr_ses_pct', 'dogovirna_kw', 'servis_rik1_usd', 'servis_usd_rik')},
     'kwp': {'vse': VSE['stsenarii'][0]['varianty'][0]['ses_kwp'], 'e1': E1['stsenarii'][0]['varianty'][0]['ses_kwp']},
     'gen': {k: round(sum(x['mwh'][q] for q in ('pl', 'pb', 'px', 'pc')), 1) for k, x in (('vse', VSE['stsenarii'][0]['varianty'][0]), ('e1', E1['stsenarii'][0]['varianty'][0]))},
-    'pr': {k: P[k] for k in ('capex_uze_usd', 'uze_zamina_usd', 'uze_resurs_tsykliv', 'pilga_58_1')},
+    # 06.11 (власник): у двійнику, який бачить замовник, — лише ціна контейнера під ключ, без складових ціни
+    'pr': {**{k: P[k] for k in ('uze_zamina_usd', 'uze_resurs_tsykliv', 'pilga_58_1')}, 'capex_uze_usd': 'обладнання, доставка, фундамент, без ПДВ'},
     'dzh': {**J0['dzherela'], 'sontse_e1': E1['stsenarii'][0]['dzherela']['sontse']},
     'doby': {d: {k: x[k] for k in ('rdn', 'kupivlia', 'prodazh')} for d, x in J0['doby'].items()},
     'sc': [{'mwh': J['spozhyvannia']['mwh'], 'kw': J['spozhyvannia']['kw_serednie'], 'kwm': J['spozhyvannia']['po_misiatsiakh_kw'],

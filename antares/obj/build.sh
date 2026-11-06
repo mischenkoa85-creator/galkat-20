@@ -8,7 +8,13 @@ mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'facnode.js',
 app = app[:cut] + '\n'.join(r(f) for f in mods) + '\n' + app[cut:]
 data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js', 'elec04data.js', 'facnodedata.js', 'elecwadata.js', 'elecstrdata.js', 'kutdata.js', 'koshdata.js', 'abkdcdata.js', 'whnprice.js', 'loads.js', 'eldet.js', 'kalkdata.js')
 rd = lambda f: 'const FOTO={"g":{},"p":[]};' if f == 'foto.js' else r(f)   # фото обстеження в 3D-моделі не використовуємо (власник 04.11, 14:37) — порожні дані
-body = r('tpl.html').replace('<script>/*DATA*/</script>', ''.join('<script>' + rd(f) + '</script>' for f in data) + ''.join('<script>' + open('../abk/dbn/' + f, encoding='utf-8').read() + '</script>' for f in ('abk_data.js', 'abk_model.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
+import json
+def abk(f):   # 06.11 (власник): двійник бачить замовник — кошторису АБК у сторінці немає (модель АБК його не показує)
+    s = open('../abk/dbn/' + f, encoding='utf-8').read()
+    if f != 'abk_data.js': return '\n'.join(l for l in s.split('\n') if not l.startswith('// рядок кошторису → позиція в моделі'))
+    i = s.index('{'); j = s.rstrip().rstrip(';').rindex('}') + 1; D = json.loads(s[i:j]); D['est'] = {'rows': []}
+    return s[:i] + json.dumps(D, ensure_ascii=False, separators=(',', ':')) + s[j:]
+body = r('tpl.html').replace('<script>/*DATA*/</script>', ''.join('<script>' + rd(f) + '</script>' for f in data) + ''.join('<script>' + abk(f) + '</script>' for f in ('abk_data.js', 'abk_model.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
 body = body.replace('<title>Антарес 3D-двійник</title>', "<title>Антарес · весь об'єкт</title>")
 head = '<!doctype html>\n<html lang="uk">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
 open('index.html', 'w', encoding='utf-8').write(head + body + '\n</html>\n')
