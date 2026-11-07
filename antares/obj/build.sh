@@ -9,7 +9,7 @@ r = lambda f: open('src/' + f, encoding='utf-8').read()
 app = r('app.js'); cut = app.rstrip().rfind('})();')
 mods = ['montage.js', 'obst.js', 'fasad.js', 'rad.js', 'facpv.js', 'facnode.js', 'roofv2.js', 'roofv3.js', 'roof28.js', 'lan28.js', 'stages.js', 'clean.js', 'elec04.js', 'elecwa.js', 'roofnode.js', 'bessdet.js', 'eko.js', 'mont.js', 'menu5.js', 'shchyt.js']
 app = app[:cut] + '\n'.join(r(f) for f in mods) + '\n' + app[cut:]
-data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js', 'elec04data.js', 'facnodedata.js', 'elecwadata.js', 'elecstrdata.js', 'kutdata.js', 'koshdata.js', 'abkdcdata.js', 'whnprice.js', 'loads.js', 'eldet.js', 'kalkdata.js', 'radxdata.js', 'shchytdata.js')
+data = ('data.js', 'tri.js', 'wx.js', 'year.js', 'bess.js', 'ep.js', 'foto.js', 'raddata.js', 'facpvdata.js', 'roofv2data.js', 'lanfdata.js', 'roof28data.js', 'lan28data.js', 'elec04data.js', 'facnodedata.js', 'elecwadata.js', 'elecstrdata.js', 'kutdata.js', 'koshdata.js', 'abkdcdata.js', 'whnprice.js', 'loads.js', 'eldet.js', 'kalkdata.js', 'radxdata.js', 'shchytdata.js', 'shvdata.js')
 def pub(f, s):   # 06.11 (власник): кошторис і специфікація — лише у внутрішній версії; у публічній — без позицій і цін, опція складу — лише під ключ
     if not PUB or f not in ('koshdata.js', 'whnprice.js', 'data.js', 'bess.js'): return s
     i = s.index('{'); j = s.rstrip().rstrip(';').rindex('}') + 1; D = json.loads(s[i:j])

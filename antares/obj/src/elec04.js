@@ -110,8 +110,9 @@
   const PVK={}; (typeof BS!=='undefined'&&BS?BS.K:[]).forEach(k=>{ if(k.pv) PVK[k.id]=k.pv[0]; }); PVK['K-4']=[4.2,111.6]; PVK['K-5']=[12.0,111.6];
   const dash=(a,b,mat,st)=>{ const L=a.distanceTo(b), n=Math.max(1,Math.round(L/0.7)), d=b.clone().sub(a).normalize(), sd=new V3(0,1,0).cross(d); if(sd.lengthSq()<1e-6) sd.set(0,0,1);
     for(let j=0;j<n;j+=2) bar(st,mat,a.clone().lerp(b,j/n),a.clone().lerp(b,Math.min(1,(j+1)/n)),0.06,0.06,sd.normalize()); };
-  Object.entries(sh).forEach(([k,p])=>{ const berm=k==='K-4'||k==='K-5', h0=berm?1.8:0, o=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.3,0.45),Mk(k));
-    if(berm) o.position.copy(W(p[0],p[1],h0+0.65)); else { o.rotation.y=Math.PI/2; o.position.copy(W(96.64+0.25,p[1],1.45)); }
+  Object.entries(sh).forEach(([k,p])=>{ const berm=k==='K-4'||k==='K-5', h0=berm?1.8:0, o=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.3),Mk(k));   // 07.11: ШВ 900 × 1200 × 300 (calc/ep04/shv_pv.py)
+    if(berm){ o.position.copy(W(p[0],p[1],h0+0.9)); [[-0.42,-0.12],[0.42,-0.12],[-0.42,0.12],[0.42,0.12]].forEach(([dx,dy])=>cub(1,brM,W(p[0]+dx,p[1]+dy,h0+0.15),new V3(1,0,0),new V3(0,1,0),new V3(0,0,1),0.041,0.3,0.041)); }   // цоколь 300 мм
+    else { o.rotation.y=Math.PI/2; o.position.copy(W(96.64+0.15,p[1],1.4)); }
     g.add(o); PART[1].push(o);
     o.userData.info={t:`ШВ ${k} — шафа вводу PV біля контейнера`,d:`${berm?'На бермі біля '+(k==='K-4'?'західного':'східного')+' торця контейнера.':'На стіні цеху навпроти торця контейнера: 3 м між стіною і контейнером на землі лишаються вільними (вільна зона Golen — погодити).'} Перехід Al → Cu 1×50 на 12 входів DC/DC, ПЗІП T2 на кожному вході, шина PE. Входів зайнято: ${E4.inp[k]} з 12, DC ${nf(E4.kwp[k])} кВтп. Cu 1×50 — у трубах ПНД Ø63 під майданчиком до вводів PV у дні контейнера.`};
     PICK.push({o,when:()=>g.visible});

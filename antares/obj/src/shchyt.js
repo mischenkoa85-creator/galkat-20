@@ -19,27 +19,16 @@ const strOf=id=>{ const B=EWm&&EWm.BX&&EWm.BX[id]; return B&&B.ss?B.ss.slice().s
 const BOXO=new Map(), BPOS={};
 E4m.g.updateMatrixWorld(true);
 E4m.g.traverse(o=>{ const inf=o.userData&&o.userData.info; if(!o.isMesh||!inf||typeof inf!=='object'||!inf.t||!/щит PV/.test(inf.t)) return; const id=inf.t.split(' ')[0]; if(!BXD[id]) return; BOXO.set(o,id); if(!BPOS[id]) BPOS[id]=o; });
-// ---------- підписи над щитами: номер, стрінги, вхід контейнера (лише в «Щити PV»)
-function tagTex(l1,l2,col){ const h=150, c=document.createElement('canvas'), x=c.getContext('2d'), F1='700 60px system-ui,sans-serif', F2='500 40px system-ui,sans-serif';
-  x.font=F1; let w=x.measureText(l1).width; x.font=F2; w=Math.ceil(Math.max(w,x.measureText(l2).width)+76); c.width=w; c.height=h;
-  x.fillStyle='rgba(255,255,255,0.97)'; x.fillRect(0,0,w,h); x.fillStyle=col; x.fillRect(0,0,26,h); x.strokeStyle=col; x.lineWidth=6; x.strokeRect(3,3,w-6,h-6);
-  x.fillStyle='#1d2a33'; x.font=F1; x.textBaseline='top'; x.fillText(l1,48,12); x.font=F2; x.fillStyle='#3f4a52'; x.fillText(l2,48,86);
-  const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.anisotropy=4; t.userData={ar:w/h}; return t; }
-function badgeTex(t,col){ const h=64, c=document.createElement('canvas'), x=c.getContext('2d'), F='700 40px system-ui,sans-serif'; x.font=F; const w=Math.ceil(x.measureText(t).width+44); c.width=w; c.height=h;
-  x.fillStyle='rgba(255,255,255,0.97)'; x.fillRect(0,0,w,h); x.fillStyle=col; x.fillRect(0,0,12,h); x.strokeStyle=col; x.lineWidth=4; x.strokeRect(2,2,w-4,h-4); x.fillStyle='#1d2a33'; x.font=F; x.textBaseline='middle'; x.fillText(t,24,h/2+2);
-  const tx=new THREE.CanvasTexture(c); tx.encoding=THREE.sRGBEncoding; tx.userData={ar:w/h}; return tx; }
-const TG={1:new THREE.Group(),2:new THREE.Group()}; Object.values(TG).forEach(g=>{ g.visible=false; g.name='shchTags'; scene.add(g); });
-const TAGS=[];
-Object.entries(BPOS).forEach(([id,o])=>{ const b=BXD[id], e=E4B[id]||{}, p=o.getWorldPosition(new V3());
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex(id,`${b.ns} ${strW(b.ns)} · ${KN(b.K)} вх. ${b.q}`,hx(KCOL[b.K]||0x52514e)),depthWrite:false,transparent:true}));
-  const ar=sp.material.map.userData.ar, hh=0.7; sp.scale.set(hh*ar,hh,1); sp.renderOrder=21; sp.userData.shb=id;
-  const below=e.z==='fac'&&!e.roof, wall=e.z==='wh'||e.z==='whn'||e.z==='abk'; sp.position.copy(p).add(new V3(0,below?-1.0:1.25,0)); if(below) sp.position.x+=0.5; if(wall) sp.position.z-=0.5;
-  (TG[b.st]||TG[1]).add(sp); TAGS.push(sp);
-  // здалеку — значок сталого розміру на екрані (≈22 px), щоб усі щити було видно й можна було перелічити; ближче 30 м — повний підпис
-  const bd=new THREE.Sprite(new THREE.SpriteMaterial({map:badgeTex(id,hx(KCOL[b.K]||0x52514e)),sizeAttenuation:false,depthWrite:false,transparent:true})); bd.position.copy(sp.position); bd.renderOrder=21; bd.userData.shb=id;
-  const ab=bd.material.map.userData.ar; bd.onBeforeRender=function(r,s_,cam){ const H=r.domElement.clientHeight||800, k=cam.projectionMatrix.elements[5]||2, sy=44/(k*H); this.scale.set(sy*ab,sy,1); this.updateMatrixWorld();
-    const d=cam.position.distanceTo(this.position), f=Math.min(1,Math.max(0,(d-26)/10)); this.material.opacity=f; sp.material.opacity=1-f; };
-  (TG[b.st]||TG[1]).add(bd); TAGS.push(bd); });
+// ---------- номер щита — табличка на самому щиті (власник 07.11, 06:15: «номерацію щитів зменш і зроби на самих щитах, щоб не вертілись»):
+// спереду, ззаду і зверху на кришці, кольорова смуга — контейнер; таблички — частина щита, видно там, де видно щити (Електрика)
+function plateTex(t,col){ const w=320, h=88, c=document.createElement('canvas'), x=c.getContext('2d'); c.width=w; c.height=h;
+  x.fillStyle='#ffffff'; x.fillRect(0,0,w,h); x.fillStyle=col; x.fillRect(0,0,22,h); x.strokeStyle='#1d2a33'; x.lineWidth=4; x.strokeRect(2,2,w-4,h-4);
+  let f=54; x.font=`700 ${f}px system-ui,sans-serif`; while(x.measureText(t).width>w-48&&f>20){ f-=2; x.font=`700 ${f}px system-ui,sans-serif`; } x.fillStyle='#1d2a33'; x.textBaseline='middle'; x.textAlign='center'; x.fillText(t,(w+22)/2,h/2+2);
+  const tx=new THREE.CanvasTexture(c); tx.encoding=THREE.sRGBEncoding; tx.anisotropy=4; return tx; }
+const PLG=new THREE.PlaneGeometry(0.3,0.0825);
+Object.entries(BPOS).forEach(([id,o])=>{ const b=BXD[id], m=new THREE.MeshBasicMaterial({map:plateTex(id,hx(KCOL[b.K]||0x52514e)),toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+  [[0,0.13,0.1012,0,0],[0,0.13,-0.1012,0,Math.PI],[0,0.302,0,-Math.PI/2,0]].forEach(([x,y,z,rx,ry])=>{ const pm=new THREE.Mesh(PLG,m); pm.position.set(x,y,z); pm.rotation.set(rx,ry,0); pm.userData.plate=1; o.add(pm); }); });
+const TG={1:new THREE.Group(),2:new THREE.Group()}, TAGS=[];   // плаваючих підписів більше немає
 // рамка вибраного щита
 const SEL=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:0x2a78d6,depthTest:false,transparent:true,opacity:0.95}));
 SEL.visible=false; SEL.renderOrder=22; scene.add(SEL);
@@ -55,7 +44,7 @@ WD.innerHTML=`<div class="sw-h"><div><b class="sw-t"></b><small class="sw-s"></s
 <div class="sw-v"><canvas></canvas><div class="sw-b"><button type="button" data-a="door" aria-pressed="true">Двері відчинені</button><button type="button" data-a="ex" aria-pressed="false">Розібрати</button><button type="button" data-a="fr">Спереду</button><button type="button" data-a="bot">Знизу</button></div><div class="sw-g">потягніть — обертати · колесо / два пальці — масштаб</div></div>
 <div class="sw-i"></div>`;
 ($('#view')||canvas.parentElement).appendChild(WD);
-{ const st=document.createElement('style'); st.textContent=`#shWin{position:absolute;right:12px;top:8px;z-index:7;width:460px;max-height:calc(100% - 16px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.16);overflow:hidden}
+{ const st=document.createElement('style'); st.textContent=`#shWin{position:absolute;right:12px;top:110px;z-index:7;width:460px;max-height:calc(100% - 118px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.16);overflow:hidden}
 #shWin[hidden]{display:none} #shWin .sw-h{display:flex;align-items:flex-start;gap:8px;padding:8px 8px 7px 12px;border-bottom:1px solid var(--line)} #shWin .sw-h>div{flex:1;min-width:0}
 #shWin .sw-t{display:block;font-size:14px;color:var(--ink)} #shWin .sw-s{display:block;font-size:11.5px;color:var(--ink-3);line-height:1.35;margin-top:1px}
 #shWin .sw-x{flex:none;width:34px;height:34px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;font-size:16px;line-height:1;color:var(--ink);cursor:pointer}
@@ -69,7 +58,7 @@ WD.innerHTML=`<div class="sw-h"><div><b class="sw-t"></b><small class="sw-s"></s
 #shWin table{width:100%;border-collapse:collapse;font-size:12px} #shWin td,#shWin th{padding:3px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} #shWin th{font-weight:600;color:var(--ink-3);font-size:11px}
 #shWin td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums} #shWin td.c{white-space:nowrap;color:var(--ink)} #shWin .ok{color:var(--ok,#2e8a57);font-weight:700} #shWin .fr{color:var(--ink-3)}
 .m5p button.shb{font:inherit;font-weight:650;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px} .m5p tr.on td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
-@media(max-width:700px){#shWin{left:8px;right:8px;top:8px;width:auto;max-height:calc(100% - 16px)} #shWin canvas{height:220px} #shWin .sw-g{display:none} #shWin .sw-k{grid-template-columns:repeat(2,1fr)}}`; document.head.appendChild(st); }
+@media(max-width:700px){#shWin{left:8px;right:8px;top:56px;width:auto;max-height:calc(100% - 64px)} #shWin canvas{height:220px} #shWin .sw-g{display:none} #shWin .sw-k{grid-template-columns:repeat(2,1fr)}}`; document.head.appendChild(st); }
 
 let R=null, SS=null, SC=null, CT=null, BG=null, PARTS=null;
 function init(){ const cv=WD.querySelector('canvas'); R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); R.setPixelRatio(Math.min(2,devicePixelRatio||1)); R.outputEncoding=THREE.sRGBEncoding;
@@ -77,11 +66,12 @@ function init(){ const cv=WD.querySelector('canvas'); R=new THREE.WebGLRenderer(
   SS.add(new THREE.HemisphereLight(0xffffff,0x9aa0a6,0.78)); const d1=new THREE.DirectionalLight(0xffffff,0.72); d1.position.set(1.2,1.7,2.3); SS.add(d1); const d2=new THREE.DirectionalLight(0xffffff,0.32); d2.position.set(-1.6,-0.8,1.1); SS.add(d2);
   CT=new THREE.OrbitControls(SC,cv); CT.enableDamping=true; CT.dampingFactor=0.14; CT.minDistance=0.22; CT.maxDistance=3.2; CT.rotateSpeed=0.8; CT.addEventListener('change',()=>{ WIN.dirty=true; });
   CT.addEventListener('start',()=>{ WIN.cam=null; }); }
-function cvH(){ const cv=WD.querySelector('canvas'), V=WD.parentElement, ph=V.clientWidth<700, top=8, hd=WD.querySelector('.sw-h').offsetHeight||50;
+function cvH(){ const cv=WD.querySelector('canvas'), V=WD.parentElement, ph=V.clientWidth<700, top=ph?56:110, hd=WD.querySelector('.sw-h').offsetHeight||50;   // вікно не закриває рядок видів і компас
   const av=V.clientHeight-top-8-hd-38-(ph?90:110); cv.style.height=Math.round(Math.max(ph?160:180,Math.min(ph?240:330,av)))+'px'; }
 function fit(){ const cv=R.domElement, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return; const pr=R.getPixelRatio(); if(cv.width!==Math.round(w*pr)||cv.height!==Math.round(h*pr)) R.setSize(w,h,false); if(Math.abs(SC.aspect-w/h)>1e-3){ SC.aspect=w/h; SC.updateProjectionMatrix(); } }
-const VW={fr:[[0.6,0.2,1.36],[0.0,0.0,0.0]],bot:[[0.48,-1.2,0.78],[0.0,-0.24,0.02]],ex:[[-0.8,0.42,1.38],[0.0,-0.03,0.08]]};
-function view(k,now){ const v=VW[k]; if(now){ SC.position.set(...v[0]); CT.target.set(...v[1]); CT.update(); WIN.cam=null; } else WIN.cam={p0:SC.position.clone(),c0:CT.target.clone(),p1:new V3(...v[0]),c1:new V3(...v[1]),t:0}; WIN.dirty=true; }
+const VWB={fr:[[0.6,0.2,1.36],[0.0,0.0,0.0]],bot:[[0.48,-1.2,0.78],[0.0,-0.24,0.02]],ex:[[-0.8,0.42,1.38],[0.0,-0.03,0.08]]},
+  VWS={fr:[[0.85,0.28,2.25],[0.0,-0.02,0.0]],bot:[[0.7,-2.3,1.2],[0.0,-0.55,0.03]],ex:[[-1.6,0.7,2.6],[0.0,-0.05,0.1]]};
+function view(k,now){ const v=(WIN.kind==='shv'?VWS:VWB)[k]; if(now){ SC.position.set(...v[0]); CT.target.set(...v[1]); CT.update(); WIN.cam=null; } else WIN.cam={p0:SC.position.clone(),c0:CT.target.clone(),p1:new V3(...v[0]),c1:new V3(...v[1]),t:0}; WIN.dirty=true; }
 
 // ---------- матеріали і геометрії (спільні для всіх щитів)
 const mm=(c,o)=>std(lin(c),o||{});
@@ -197,10 +187,87 @@ function model(id){ const b=BXD[id]||SH.boxes[0], ns=b.ns, G=new THREE.Group(), 
   dl(new V3(-W_/2,-H_/2-0.045,D_/2),new V3(W_/2,-H_/2-0.045,D_/2),`${EN.w} мм`,new V3(0,-0.016,0));
   dl(new V3(-W_/2-0.045,-H_/2,D_/2),new V3(-W_/2-0.045,H_/2,D_/2),`${EN.h} мм`,new V3(-0.03,0,0));
   dl(new V3(W_/2+0.045,H_/2,-D_/2),new V3(W_/2+0.045,H_/2,D_/2),`${EN.d} мм`,new V3(0.035,0.012,0));
-  return {G,enc,door,pg,WR,DM,EXP}; }
+  return {G,enc,door,pg,WR,DM,EXP,dz0:D_/2-0.004}; }
+// ================= шафа вводу ШВ (07.11, власник: «деталізуй шафи»): calc/ep04/shv_pv.py → shvdata.js (SHV)
+const SV=typeof SHV!=='undefined'?SHV:null, SVD={}; if(SV) SV.shv.forEach(v=>SVD[v.id]=v);
+const SVO=new Map(), SVPOS={};
+E4m.g.traverse(o=>{ const inf=o.userData&&o.userData.info; if(!o.isMesh||!inf||typeof inf!=='object'||!inf.t||!/^ШВ K-\d/.test(inf.t)) return; const id='ШВ '+inf.t.split(' ')[1].replace('K','К'); if(!SVD[id]) return; SVO.set(o,id); SVPOS[id]=o; });
+Object.entries(SVPOS).forEach(([id,o])=>{ const v=SVD[id], m=new THREE.MeshBasicMaterial({map:plateTex(id,hx(KCOL[v.K]||0x52514e)),toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+  [[0,0.42,0.1512,0,0],[0,0.42,-0.1512,0,Math.PI],[0,0.6015,0,-Math.PI/2,0]].forEach(([x,y,z,rx,ry])=>{ const pm=new THREE.Mesh(PLG,m); pm.scale.setScalar(1.4); pm.position.set(x,y,z); pm.rotation.set(rx,ry,0); o.add(pm); }); });
+function modelShv(id){ const v=SVD[id], E_=SV.enc, W=E_.w/1000, H=E_.h/1000, D=E_.d/1000, ox=(E_.w-E_.plate[0])/2, oy=(E_.h-E_.plate[1])/2, pz=E_.plate_z, t=0.002, EXP=[];
+  const P_=(x,y,z)=>new V3(-W/2+(ox+x)/1000,-H/2+(oy+y)/1000,-D/2+(pz+z)/1000), BT_=(x,z)=>[-W/2+x/1000,-D/2+z/1000], G=new THREE.Group(), enc=new THREE.Group(); G.add(enc);
+  const L=v.lines, used=j=>j<=v.n, lin=j=>L[j-1];
+  bx(enc,M.enc,W,H,t,0,0,-D/2+t/2); [-1,1].forEach(s=>bx(enc,M.enc,t,H,D-0.01,s*(W/2-t/2),0,-0.005)); [-1,1].forEach(s=>bx(enc,M.enc,W,t,D-0.01,0,s*(H/2-t/2),-0.005));
+  [-1,1].forEach(s=>bx(enc,M.gas,W,0.008,0.004,0,s*(H/2-0.004),D/2-0.012)); [-1,1].forEach(s=>bx(enc,M.gas,0.008,H,0.004,s*(W/2-0.004),0,D/2-0.012));
+  if(/берм/.test(v.place)){ [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>bx(enc,M.rail,0.041,0.3,0.041,sx*(W/2-0.03),-H/2-0.15,sz*(D/2-0.03))); [-1,1].forEach(sz=>bx(enc,M.rail,W,0.041,0.041,0,-H/2-0.28,sz*(D/2-0.03))); }
+  else [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(([sx,sy])=>bx(enc,M.met,0.05,0.035,0.006,sx*(W/2+0.02),sy*(H/2-0.06),-D/2+0.004));
+  const pg=new THREE.Group(); G.add(pg); bx(pg,M.plate,E_.plate[0]/1000,E_.plate[1]/1000,0.003,0,0,-D/2+(pz-1.5)/1000);
+  const rail=(x0,x1,yc)=>{ const p=P_((x0+x1)/2,yc,3.75); bx(pg,M.rail,(x1-x0)/1000,0.035,0.0075,p.x,p.y,p.z); };
+  rail(60,800,381.5); rail(60,800,641.5); rail(60,800,852);
+  SV.aps.forEach(a=>{ const g=new THREE.Group(); pg.add(g); const w=a.w/1000,h=a.h/1000,d=a.d/1000; g.position.copy(P_(a.x+a.w/2,a.y+a.h/2,0)); let dz=0.14;
+    const j=+(a.id.match(/\d+/)||[0])[0];
+    if(a.k==='wff'){ const pos=a.id.endsWith('+'); bx(g,M.fh,w,h*0.78,d*0.78,0,0,d*0.39); bx(g,M.fhC,w*0.9,h*0.5,d*0.12,0,0,d*0.84);
+      [h/2-0.022,-h/2+0.022].forEach(y=>{ bx(g,M.qsC,w*0.8,0.03,d*0.6,0,y,d*0.3); cy(g,M.met,0.006,0.028,0,y,d*0.6+0.014,'z'); cy(g,M.met,0.0095,0.007,0,y,d*0.6+0.03,'z',CYL6); });
+      bx(g,pos?M.red:M.blk,w*0.6,0.005,0.002,0,h*0.14,d*0.9+0.001); plt(g,txt([a.id]),w*0.8,0.013,0,-h*0.08,d*0.9+0.0015); dz=0.16; }
+    else if(a.k==='spd'){ if(!used(j)){ g.visible=false; return; } const f3=lin(j).spd==='F3', hh=f3?h:0.096; bx(g,M.spd,w,hh,d*0.62,0,(hh-h)/2,d*0.31); [-1,0,1].forEach(i=>{ bx(g,M.spd,w/3-0.0012,hh*0.6,d*0.38,i*w/3,(hh-h)/2,d*0.81); bx(g,f3?M.red:M.grn,w/3*0.55,0.008,0.002,i*w/3,(hh-h)/2+hh*0.18,d+0.001); });
+      plt(g,txt([`F${j} · ${lin(j).spd}`]),0.045,0.012,0,(hh-h)/2-hh/2+0.012,d*0.62+0.0015); dz=0.24; }
+    else if(a.k==='pe'){ [-1,0,1].forEach(s_=>cy(g,M.pe,0.009,d-0.006,s_*(w/2-0.03),0,(d-0.006)/2,'z')); bx(g,M.brass,w,h,0.006,0,0,d-0.003); for(let i=0;i<26;i++) cy(g,M.met,0.0032,0.004,-w/2+0.02+i*0.028,0,d+0.001,'z');
+      plt(g,txt(['PE'],{bg:'#3f9a4f',fg:'#fff'}),0.024,0.012,w/2+0.018,0,0.002); dz=0.06; }
+    else if(a.k==='rail'){ bx(g,M.rail,w,h,d,0,0,d/2); dz=0.03; }
+    EXP.push([g,g.position.z,dz]); });
+  // кабелі і провідники: Al знизу на нижню шпильку, Cu 50 з тієї ж шпильки вниз; «−» проходять перед рядом «+»; ПЗІП — від верхніх шпильок
+  const WR=new THREE.Group(); G.add(WR); const glg=k=>SV.gl.find(g=>g.id===k);
+  for(let j=1;j<=SV.nl;j++){ if(!used(j)) continue; const l=lin(j), od=(l.od||20)/2000, ga=glg(`G${j}+`), xc=ga.x-ox, zA=ga.z-pz, zCp=glg(`C${j}+`).z-pz, zAm=glg(`G${j}−`).z-pz, zCm=glg(`C${j}−`).z-pz;
+    wire(WR,M.al,od,[P_(xc,-10,zA),P_(xc,200,zA+10),P_(xc,292,96),P_(xc,316,100)]); cy(WR,M.shR,od*1.12,0.03,...P_(xc,262,92).toArray());
+    wire(WR,M.wR,0.0073,[P_(xc+13,316,104),P_(xc+13,280,104),P_(xc+13,200,zCp),P_(xc+13,-10,zCp)]);
+    wire(WR,M.al,od,[P_(xc-4,-10,zAm),P_(xc-4,200,zAm),P_(xc-4,470,zAm),P_(xc,545,112),P_(xc,576,100)]); cy(WR,M.shB,od*1.12,0.03,...P_(xc,520,125).toArray());
+    wire(WR,M.wB,0.0073,[P_(xc+13,576,104),P_(xc+13,540,135),P_(xc+13,470,zCm),P_(xc+13,200,zCm),P_(xc+13,-10,zCm)]);
+    [[316,M.shR],[576,M.shB]].forEach(([y,m])=>{ const q=P_(xc,y,96); bx(WR,M.lug,0.024,0.034,0.004,q.x,q.y,q.z); bx(WR,M.cu,0.022,0.03,0.004,q.x,q.y,q.z+0.005); });
+    wire(WR,M.wR,0.0034,[P_(xc-14,448,95),P_(xc-14,480,124),P_(xc-14,780,124),P_(xc-14,800,72)]); wire(WR,M.wB,0.0034,[P_(xc+14,708,95),P_(xc+14,780,96),P_(xc+14,800,72)]);
+    wire(WR,M.wPE,0.0034,[P_(xc,905,72),P_(xc,960,60),P_(xc,1000,42)]); }
+  { const gp=glg('GPE'); wire(WR,M.wPE,0.0045,[P_(gp.x-ox,-10,gp.z-pz),P_(gp.x-ox,700,60),P_(812,1015,42)]); }
+  // низ: вводи M40 (Al) і M25 (Cu 50), PE, клапан; кабелі назовні — у трубах до контейнера
+  const yb=-H/2;
+  SV.gl.forEach(g=>{ const [x,z]=BT_(g.x,g.z), j=+(g.id.match(/\d+/)||[0])[0], u=g.id==='GPE'||g.id==='V1'||used(j), r=g.dia/2000;
+    if(g.k==='vent'){ cy(enc,M.glnd,0.0085,0.012,x,yb-0.006,z); cy(enc,M.gy,0.011,0.004,x,yb-0.014,z); return; }
+    cy(enc,M.glnd,r*1.25,0.01,x,yb-0.005,z,null,CYL6); cy(enc,M.glnd,r*0.98,0.018,x,yb-0.019,z); cy(enc,M.glnd,r*1.25,0.006,x,yb+0.0055,z,null,CYL6);
+    if(!u){ cy(enc,M.gy,r*0.7,0.004,x,yb-0.03,z); return; }
+    const pos=g.id.endsWith('+'), l=lin(j); if(g.k==='m40') cy(enc,M.al,(l.od||20)/2000,0.4,x,yb-0.23,z); else if(g.id==='GPE') cy(enc,M.wPE,0.0045,0.4,x,yb-0.23,z); else cy(enc,pos?M.wR:M.wB,0.0073,0.4,x,yb-0.23,z);
+    if(g.k==='m40') cy(enc,pos?M.shR:M.shB,(l.od||20)/2000*1.12,0.03,x,yb-0.12,z); });
+  // двері
+  const door=new THREE.Group(); door.position.set(-W/2,0,D/2-0.005); G.add(door); const dp=new THREE.Group(); dp.position.x=W/2; door.add(dp);
+  bx(dp,M.enc,W,H,0.01,0,0,0); [-1,1].forEach(s=>{ bx(dp,M.gas,W-0.03,0.01,0.003,0,s*(H/2-0.02),-0.0065); bx(dp,M.gas,0.01,H-0.03,0.003,s*(W/2-0.02),0,-0.0065); });
+  [0.4,0,-0.4].forEach(y=>cy(door,M.met,0.007,0.07,0,y,0));
+  plt(dp,txt([`${v.id} · шафа вводу PV → ${KN(v.K)}`,`${v.n} ліній Al → Cu 50 · PV1…PV${v.n} · Uхх ≤ ${nf(SV.uoc,1)} В DC · IP66`],{w:1024,h:180,bd:'#1d2a33'}),0.42,0.074,-0.1,0.48,0.0052);
+  plt(dp,warnTex(),0.09,0.09,0.3,0.48,0.0052,{tr:true});
+  plt(dp,txt(['Увага! Постійна напруга до 1 000 В від щитів PV','під напругою вдень',`Знеструмити: QS1 у щитах PV і вхід ${KN(v.K)}`],{w:900,h:220,bg:'#f2c40f',fg:'#1d1d1d',bd:'#1d1d1d',fs:0.58}),0.32,0.078,-0.12,0.33,0.0052);
+  bx(dp,M.blk,0.03,0.12,0.02,W/2-0.05,0,0.012); bx(dp,M.met,0.012,0.05,0.012,W/2-0.05,0,0.028);
+  // розміри
+  const DM=new THREE.Group(); G.add(DM); const dl=(a,b_,txt_,off)=>{ wire(DM,M.gy,0.0012,[a,b_]); const m=a.clone().add(b_).multiplyScalar(0.5).add(off); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:txt([txt_],{w:200,h:64,bg:'#ffffff',fs:0.7}),depthTest:false})); s.scale.set(0.14,0.045,1); s.position.copy(m); DM.add(s); };
+  dl(new V3(-W/2,-H/2-0.07,D/2),new V3(W/2,-H/2-0.07,D/2),`${E_.w} мм`,new V3(0,-0.03,0)); dl(new V3(-W/2-0.07,-H/2,D/2),new V3(-W/2-0.07,H/2,D/2),`${E_.h} мм`,new V3(-0.05,0,0)); dl(new V3(W/2+0.07,H/2,-D/2),new V3(W/2+0.07,H/2,D/2),`${E_.d} мм`,new V3(0.06,0.02,0));
+  return {G,enc,door,pg,WR,DM,EXP,dz0:D/2-0.005}; }
+function infoShv(id){ const v=SVD[id], f1_=x=>nf(x,x%1?1:0), dimA=a=>`${f1_(a.w)} × ${f1_(a.h)} × ${f1_(a.d)}`, ok=SV.chk.filter(c=>c.ok).length;
+  const F=(t,l)=>t.replace(/\{K\}/g,KN(v.K)).replace(/\{n\}/g,v.n).replace(/\{j\}/g,l?l.j:1).replace(/\{box\}/g,l?l.box:'').replace(/\{spd\}/g,l?l.spd:'');
+  const lr=[]; for(let j=1;j<=SV.nl;j++){ const l=v.lines[j-1]; lr.push(l?`<tr><td class="c">${j}</td><td class="c">${esc(l.box)}</td><td>${esc(l.g)} · ${l.ns} стр.</td><td class="n">1×${l.S}</td><td class="n">${l.L?nf(l.L,1):'—'}</td><td class="c">${l.spd}</td></tr>`:`<tr class="fr"><td class="c">${j}</td><td colspan="5">вільне місце — клеми є, ПЗІП не встановлено, вводи із заглушками</td></tr>`); }
+  const grp={}; SV.aps.forEach(a=>{ const k=a.k==='wff'?'wff':a.k==='spd'?'spd':a.id; (grp[k]=grp[k]||{a,ids:[]}).ids.push(a.id); });
+  const apR=Object.entries(grp).map(([k,{a,ids}])=>`<tr><td class="c">${k==='wff'?'XT1±…XT12±':k==='spd'?'F1…F12':esc(ids[0])}</td><td>${esc(k==='wff'?a.n.replace(/ — лінія.*?:/,' —'):k==='spd'?a.n.replace(/ лінії \d+/,''):a.n)}${k==='spd'?`<br><small>встановлено ${v.n}: F2 — ${v.f2}, F3 — ${v.f3}</small>`:''}</td><td class="n">${dimA(a)}</td><td class="n">${k==='spd'?v.n:ids.length}</td></tr>`).join('');
+  const gk=[['m40','Вводи M40 — Al «+» і «−»'],['m25','Вводи M25 — Cu 50 «+» і «−», PE'],['vent','Клапан вентиляційний']].map(([k,n])=>{ const L_=SV.gl.filter(g=>g.k===k); return `<tr><td>${n}${k!=='vent'?`<br><small>затискання ${L_[0].rng[0]}–${L_[0].rng[1]} мм</small>`:''}</td><td class="n">Ø ${L_[0].dia}</td><td class="n">${L_.length}</td></tr>`; }).join('');
+  const klR=SV.kl.map(k=>`<tr><td class="c">${esc(k.m)}</td><td>${esc(k.n)}</td><td class="n">${f1_(k.q)} ${esc(k.u)}</td></tr>`).join('');
+  const mkR=SV.mk.map(m=>`<tr><td class="c">${esc(m.w)}</td><td>${esc(F(m.t,v.lines[0]))}</td><td class="n">${/\{j\}/.test(m.t)?m.q*v.n:m.q}</td></tr>`).join('');
+  const chR=SV.chk.map(c=>`<tr><td>${esc(c.n)}</td><td class="n">${esc(c.v)}</td><td class="${c.ok?'ok':''}">${c.ok?'✓':'✗'}</td></tr>`).join('');
+  return `<div class="sw-k"><div><small>Ліній</small><b>${v.n} з ${SV.nl}</b></div><div><small>Потужність</small><b>${nf(v.kwp,1)} кВтп</b></div><div><small>ПЗІП F2 / F3</small><b>${v.f2} / ${v.f3}</b></div>
+  <div><small>Контейнер</small><b>${KN(v.K)} · ${v.tp}</b></div><div><small>Корпус</small><b>${SV.enc.w}×${SV.enc.h}×${SV.enc.d}</b></div><div><small>Перевірки</small><b>${ok} з ${SV.chk.length}</b></div></div>
+  <p>${esc(v.place)}. Кожна лінія Al щит PV → ШВ закінчується на двох болтових клемах M12: на нижній шпильці — наконечник DTL-2 лінії і мідний ТМЛ 50-12 на Cu 1×50 до входу контейнера (2 × 6 м), на верхній — провідник 16 мм² до ПЗІП.</p>
+  <h4>Лінії — щит, кабель, ПЗІП</h4><table><thead><tr><th>Вх.</th><th>Щит</th><th>Де</th><th>Al</th><th>Лінія, м</th><th>ПЗІП</th></tr></thead><tbody>${lr.join('')}</tbody></table>
+  <h4>Апарати — габарит Ш × В × Г, мм</h4><table><tbody>${apR}</tbody></table>
+  <h4>Низ корпусу — вводи</h4><table><tbody>${gk}</tbody></table>
+  <h4>Клеми, наконечники, провідники (на 12 ліній)</h4><table><tbody>${klR}</tbody></table>
+  <h4>Маркування (приклад — лінія 1)</h4><table><tbody>${mkR}</tbody></table>
+  <h4>Перевірки</h4><table><tbody>${chR}</tbody></table>
+  <p><small>Корпус ${esc(SV.enc.mat)}; ${esc(SV.enc.stand)}. Габарити апаратів — за паспортами еталонних (${esc(Object.values(SV.src).map(t=>t.split(' — ')[0].split(':')[0]).join('; '))}); аналоги в замовленні — не більші.</small></p>`; }
 function disposeM(o){ o.traverse(x=>{ if(x.material&&(x.material.isMeshBasicMaterial||x.material.isSpriteMaterial)) x.material.dispose(); }); }
 function anim(){ if(!PARTS) return; const e=WIN.ex, s=e*e*(3-2*e);
-  PARTS.door.rotation.y=-1.95*WIN.door; PARTS.door.visible=s<0.5; PARTS.enc.position.z=-0.3*s; PARTS.door.position.z=D_/2-0.004-0.3*s; PARTS.pg.position.z=-0.06*s;
+  PARTS.door.rotation.y=-1.95*WIN.door; PARTS.door.visible=s<0.5; PARTS.enc.position.z=-0.3*s; PARTS.door.position.z=PARTS.dz0-0.3*s; PARTS.pg.position.z=-0.06*s;
   PARTS.EXP.forEach(([g,z0,dz])=>{ g.position.z=z0+dz*1.4*s; }); PARTS.WR.visible=s<0.02; PARTS.DM.visible=s<0.02; }
 
 // ---------- текст під 3D: входи, апарати, низ, клеми і роз'єми, маркування — саме цього щита
@@ -227,7 +294,15 @@ function infoHTML(id){ const b=BXD[id], ss=strOf(id), e=E4B[id]||{}, free=7-b.ns
 // ---------- відкрити / закрити
 function btnSync(){ const d=WD.querySelector('[data-a="door"]'), x=WD.querySelector('[data-a="ex"]'); d.setAttribute('aria-pressed',String(WIN.doorT>0.5)); d.textContent=WIN.doorT>0.5?'Двері відчинені':'Двері зачинені'; x.setAttribute('aria-pressed',String(WIN.exT>0.5)); x.textContent=WIN.exT>0.5?'Зібрати':'Розібрати'; }
 function rowsMark(id){ document.querySelectorAll('.m5p [data-shr]').forEach(r=>r.classList.toggle('on',r.dataset.shr===id)); }
-function open(id,fly){ if(!BXD[id]) return; if(!R) init(); WIN.id=id; WD.hidden=false;
+function openShv(id,fly){ if(!SVD[id]) return; if(!R) init(); WIN.kind='shv'; WIN.id=id; WD.hidden=false;
+  if(BG){ SS.remove(BG); disposeM(BG); } PARTS=modelShv(id); BG=PARTS.G; SS.add(BG); WIN.door=WIN.doorT=1; WIN.ex=WIN.exT=0; anim(); btnSync();
+  const v=SVD[id]; WD.querySelector('.sw-t').textContent=`${id} · шафа вводу PV → ${KN(v.K)}`; WD.querySelector('.sw-s').textContent=`${v.tp} · ${v.n} ліній Al → Cu 50 · ${nf(v.kwp,1)} кВтп`;
+  const I=WD.querySelector('.sw-i'); I.innerHTML=infoShv(id); I.scrollTop=0;
+  if(typeof xPhone==='function'&&xPhone()&&state.sheet&&state.sheet!=='peek'&&typeof sheetSet==='function') sheetSet('peek');
+  CT.maxDistance=6; cvH(); fit(); view('fr',true); { const o=SVPOS[id]; if(o){ const bb=new THREE.Box3().setFromObject(o); bb.getCenter(SEL.position); SEL.scale.copy(bb.getSize(new V3()).addScalar(0.2)); SEL.visible=true; } }
+  rowsMark(id); if(fly&&SVPOS[id]&&typeof goTo==='function'){ const c=SVPOS[id].getWorldPosition(new V3()), w=/берм/.test(v.place); goTo({p:[c.x+(w?3:6),c.y+2.2,c.z+(w?6:2.5)],c:[c.x,c.y,c.z]}); }
+  WIN.open=true; WIN.dirty=true; need=true; if(!WIN.loop){ WIN.loop=true; requestAnimationFrame(loop); } }
+function open(id,fly){ if(/^ШВ/.test(id)) return openShv(id,fly); if(!BXD[id]) return; if(!R) init(); WIN.kind='box'; CT.maxDistance=3.2; WIN.id=id; WD.hidden=false;
   if(BG){ SS.remove(BG); disposeM(BG); } PARTS=model(id); BG=PARTS.G; SS.add(BG); WIN.door=WIN.doorT=1; WIN.ex=WIN.exT=0; anim(); btnSync();
   const b=BXD[id], e=E4B[id]||{}; WD.querySelector('.sw-t').textContent=`${id} · щит PV 7/1 → ${KN(b.K)} вх. ${b.q}`;
   WD.querySelector('.sw-s').textContent=`${b.g} · етап ${b.st} · ${TPN[b.K]||''} · ${b.ns} ${strW(b.ns)}, ${nf(b.kwp,1)} кВтп`;
@@ -252,15 +327,17 @@ if(typeof ResizeObserver!=='undefined') new ResizeObserver(()=>{ if(WIN.open){ c
 window.addEventListener('keydown',e=>{ if(e.key==='Escape'&&WIN.open) close(); });
 
 // ---------- видимість: лише в «Електрика → Щити PV»; натискання на щит або підпис на моделі відкриває вікно
-const onShch=()=>state.sec==='pz'&&M5m.cur().sub[0]==='shch'&&visUp(E4m.g);
-function sync(){ const on=onShch(); TG[1].visible=on&&stOn(1); TG[2].visible=on&&stOn(2); if(!on&&WIN.open) close(); else if(WIN.open&&!stOn(BXD[WIN.id].st)) close(); need=true; }
+const onShch=()=>state.sec==='pz'&&M5m.cur().sub[0]==='shch'&&visUp(E4m.g), onShv=()=>state.sec==='pz'&&M5m.cur().sub[0]==='shv'&&visUp(E4m.g);
+function sync(){ const on=onShch(), onV=onShv(); if(WIN.open&&(WIN.kind==='shv'?!onV:(!on||!stOn(BXD[WIN.id].st)))) close(); need=true; }
 const apS=apply; apply=function(){ const r=apS.apply(this,arguments); sync(); return r; }; T_.apply=apply;
 let dn=null; canvas.addEventListener('pointerdown',e=>{ dn=[e.clientX,e.clientY]; });
-canvas.addEventListener('pointerup',e=>{ if(!onShch()||!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>(e.pointerType==='touch'?12:5)) return;
+canvas.addEventListener('pointerup',e=>{ if(onShv()&&dn&&Math.hypot(e.clientX-dn[0],e.clientY-dn[1])<=(e.pointerType==='touch'?12:5)){ const h=pickHits()[0]; if(h&&SVO.has(h.object)){ if(typeof hideTip==='function') hideTip(); openShv(SVO.get(h.object),false); } return; }
+  if(!onShch()||!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>(e.pointerType==='touch'?12:5)) return;
   const th=ray.intersectObjects(TAGS.filter(s=>visUp(s)),false); let id=th.length?th[0].object.userData.shb:null;
   if(!id){ const h=pickHits()[0]; if(h&&BOXO.has(h.object)) id=BOXO.get(h.object); }
   if(id){ if(typeof hideTip==='function') hideTip(); open(id,false); } });
-T_.shch={open,close,model:id=>model(id).G,BOXO,flyTo,WIN};
-XB.push({has:o=>BOXO.has(o),build:o=>{ open(BOXO.get(o),false); return {done:true}; }});   // подвійне натискання на щит у будь-якому розділі
+T_.shch={open,openShv,close,model:id=>model(id).G,BOXO,SVO,flyTo,WIN};
+XB.push({has:o=>BOXO.has(o),build:o=>{ open(BOXO.get(o),false); return {done:true}; }});
+XB.push({has:o=>SVO.has(o),build:o=>{ openShv(SVO.get(o),false); return {done:true}; }});   // подвійне натискання на шафу ШВ   // подвійне натискання на щит у будь-якому розділі
 sync();
 } }
