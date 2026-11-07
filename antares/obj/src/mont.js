@@ -91,7 +91,7 @@ const PI={blk:{size:'300 × 300 × 60 мм з муфтою; мат 320 × 320 ×
   mod:{size:'ZNSHINE 730 Вт; середній притиск M8×60, Z33',kg:'36,5 кг',qty:`${nf(S.roof.n)} модулів даху · насуваються по лагах від проходу`,pw:true,c:k=>[['Модулів',RT.pv.st[k].n],['Притисків',RT.mcl.st[k].n+((RT.zcl.st[k]||{n:0}).n)]]}};
 ARCH.forEach(r=>PH.forEach(([ph,nm,keys],j)=>{ if(!RT.pv.st[r.no]) return; STEPS.push({e:2,arch:r,ph,n:`Дах цеху · арка ${r.no} з ${ARCH.length}: ${nm.charAt(0).toLowerCase()+nm.slice(1)}`,s:r.no===ARCH[0].no?ph:null,...PI[ph],c:PI[ph].c(r.no),
   t:keys.filter(k=>RT[k]&&RT[k].st[r.no]).map(k=>({rt:RT[k],a:r.no})),shot:shotArch(r),crane:archSide(r),dur:ph==='mod'?7:5}); }));
-STEPS.push({e:0,n:'Електрика: стрінги, щити PV, лінії до контейнерів',s:'box',t:ew,c:[['Стрінгів',259]],size:'щит PV 7/1 · 0,66 × 1,05 × 0,36 м',kg:'—',qty:'259 стрінгів по 11, щити PV → контейнери',cam:'over',dur:6});
+STEPS.push({e:0,n:'Електрика: стрінги, щити PV, лінії до контейнерів',s:'box',t:ew,c:[['Стрінгів',259]],size:'щит PV 7/1 · 600 × 500 × 200 мм',kg:'—',qty:'259 стрінгів по 11, щити PV → контейнери',cam:'over',dur:6});
 STEPS.forEach(s_=>{ s_.t=s_.t.filter(Boolean); });
 const SV=document.createElement('div'); SV.id='mtSample'; SV.innerHTML='<canvas></canvas><div class="mt-l"></div>'; SV.hidden=true;
 (document.querySelector('#view')||canvas.parentElement).appendChild(SV); SV.title='Натисніть, щоб згорнути або розгорнути зразок'; SV.onclick=()=>SV.classList.toggle('min');
@@ -116,7 +116,7 @@ const SAMP={
   blk:()=>[MSH(G_.blk,MM.bl),MSH(G_.mat,MM.mt),MSH(G_.lbolt,MM.rod)],
   lag:()=>{ const o=MSH(G_.lag,MM.zn); o.scale.x=1.2; return [o,MSH(G_.ang,MM.zn,0.6,0,0.024)]; },
   rod:()=>{ const r=MSH(G_.rod,MM.rod,0,-0.0515,0); r.scale.z=0.6; return [MSH(G_.sleeve,MM.sl,0,0,-0.3),MSH(G_.cpl,MM.sl,0,0,-0.3),MSH(G_.sleeve,MM.sl,0,0,0.3),MSH(G_.cpl,MM.sl,0,0,0.3),r]; },
-  box:()=>[MSH(new THREE.BoxGeometry(0.66,1.05,0.36),std(lin(0xd9dde0),{roughness:0.5}))]};
+  box:()=>{ const S=window.__twin.shch; return S?[S.model('ЩД-12')]:[MSH(new THREE.BoxGeometry(0.6,0.5,0.2),std(lin(0xd9dde0),{roughness:0.5}))]; }};
 function setSample(k){ while(SP.children.length) SP.remove(SP.children[0]); const L_=(SAMP[k]||SAMP.mod)(); L_.forEach(o=>SP.add(o));
   const b=new THREE.Box3().setFromObject(SP), c=b.getCenter(new V3()), r=b.getSize(new V3()).length()/2||1; SP.children.forEach(o=>o.position.sub(c));
   SC.position.set(r*1.6,r*1.1,r*1.9); SC.lookAt(0,0,0); SC.near=r/50; SC.far=r*20; SC.updateProjectionMatrix(); }

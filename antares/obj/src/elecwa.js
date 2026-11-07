@@ -121,7 +121,7 @@ function TB(){ const P=[],N=[],I=[]; let nv=0; const d=new V3(), u=new V3(), v=n
     mesh(mat){ if(!nv) return null; const ge=new THREE.BufferGeometry(); ge.setAttribute('position',new THREE.Float32BufferAttribute(P,3)); ge.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
       ge.setIndex(nv>65000?new THREE.Uint32BufferAttribute(I,1):new THREE.Uint16BufferAttribute(I,1)); const m=new THREE.Mesh(ge,mat); m.castShadow=m.receiveShadow=false; m.frustumCulled=false; return m; } }; }
 const TBS={}, tbOf=(st,K)=>TBS[st+K]||(TBS[st+K]={st,K,b:TB()}), RC=0.03;
-const rzW=x=>roofZ(Math.max(0,Math.min(96.64,x))), BT=b=>b.pos.clone().add(new V3(0,0.46,0));   // верх щита
+const rzW=x=>roofZ(Math.max(0,Math.min(96.64,x))), BT=b=>b.pos.clone().add(new V3(0,0.27,0));   // верх щита (корпус 600 × 500 × 200, 07.11)
 const arc=(a,b,up)=>{ const m=a.clone().lerp(b,0.5); m.y=Math.max(a.y,b.y)+up; const o=[]; for(let i=0;i<=16;i++){ const t=i/16, s1=1-t; o.push(new V3(s1*s1*a.x+2*s1*t*m.x+t*t*b.x,s1*s1*a.y+2*s1*t*m.y+t*t*b.y,s1*s1*a.z+2*s1*t*m.z+t*t*b.z)); } return o; };
 const route={
   roof(s,b){ const i=s.Q.reduce((a,q,j)=>Math.abs(q[1]-b.Y)+Math.abs(q[0]-b.X)<Math.abs(s.Q[a][1]-b.Y)+Math.abs(s.Q[a][0]-b.X)?j:a,0), [X,Y,h]=s.Q[i], ho=h-rzW(X)+0.07, o=[W(X,Y,h+0.07),W(X,b.Y,h+0.07)];

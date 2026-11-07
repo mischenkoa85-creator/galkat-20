@@ -87,7 +87,7 @@ for g in G:
     holes.setdefault(k, [g, 0]); holes[k][1] += 1
 niz = [[e(g['id'] if n == 1 else g['id'].replace('1', '1…7', 1)), e(k), f'Ø {nf(g["dia"], 1 if g["dia"] % 1 else 0)}' + (f', затиск {g["rng"][0]}–{g["rng"][1]}' if g.get('rng') else ''), n] for k, (g, n) in holes.items()]
 ex = next(b for b in D['boxes'] if b['id'] == 'ЩД-12')
-fill = lambda t: t.format(id=ex['id'], K=ex['K'].replace('K', 'К'), q=ex['q'], ns=ex['ns'], kwp=nf(ex['kwp'], 1), isc=nf(ex['isc'], 1), s='…', j='1…7')
+fill = lambda t: t.format(id=ex['id'], K=ex['K'].replace('K', 'К'), q=ex['q'], ns=ex['ns'], kwp=nf(ex['kwp'], 1), isc=nf(ex['isc'], 1), s='Д-110', j='1')
 CSS = f"""@font-face {{ font-family: 'InterK'; src: url('{(FONTS / 'InterK-Regular.ttf').as_uri()}'); font-weight: 400 }}
 @font-face {{ font-family: 'InterK'; src: url('{(FONTS / 'InterK-SemiBold.ttf').as_uri()}'); font-weight: 600 }}
 @font-face {{ font-family: 'InterK'; src: url('{(FONTS / 'InterK-Bold.ttf').as_uri()}'); font-weight: 700 }}
@@ -129,3 +129,4 @@ with sync_playwright() as p:
     b = p.chromium.launch(); pg = b.new_page(); pg.goto(hp.as_uri()); pg.wait_for_timeout(400)
     pdf = out / 'Креслення_компоновки_щита_PV_7-1_Антарес.pdf'; pg.pdf(path=str(pdf), prefer_css_page_size=True, print_background=True); b.close()
 hp.unlink(); print(pdf)
+import shutil; dk = H.parent.parent / 'obj' / 'dok'; dk.mkdir(exist_ok=True); shutil.copy(pdf, dk / pdf.name)   # для завантаження з двійника (build.sh → DOKY)
