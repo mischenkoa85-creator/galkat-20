@@ -26,7 +26,12 @@ def abk(f):   # 06.11 (власник): двійник бачить замовн
     if f != 'abk_data.js': return '\n'.join(l for l in s.split('\n') if not l.startswith('// рядок кошторису → позиція в моделі'))
     i = s.index('{'); j = s.rstrip().rstrip(';').rindex('}') + 1; D = json.loads(s[i:j]); D['est'] = {'rows': []}
     return s[:i] + json.dumps(D, ensure_ascii=False, separators=(',', ':')) + s[j:]
-body = r('tpl.html').replace('<script>/*DATA*/</script>', ('<script>window.__PUB=true;</script>' if PUB else '<script>window.__PUB=false;</script>') + ''.join('<script>' + rd(f) + '</script>' for f in data) + ''.join('<script>' + abk(f) + '</script>' for f in ('abk_data.js', 'abk_model.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
+# листи в ОСР — шаблони (ses-uze-modul: python3 -m ses_uze.lysty_osr obiekty/antares [--bez-kontaktiv] --vyhid obj/lysty[_vn]); у публічній — без телефонів і пошти
+import base64, glob
+LD = 'lysty' if PUB or not glob.glob('lysty_vn/*.pdf') else 'lysty_vn'
+LY = [dict(f=os.path.basename(f), n=os.path.basename(f)[:-4].replace('_шаблон', '').replace('_', ' '), b=base64.b64encode(open(f, 'rb').read()).decode()) for f in sorted(glob.glob(LD + '/*.pdf'))]
+LYS = '<script>const LYSTY=' + json.dumps(LY, ensure_ascii=False) + ';</script>'
+body = r('tpl.html').replace('<script>/*DATA*/</script>', ('<script>window.__PUB=true;</script>' if PUB else '<script>window.__PUB=false;</script>') + LYS + ''.join('<script>' + rd(f) + '</script>' for f in data) + ''.join('<script>' + abk(f) + '</script>' for f in ('abk_data.js', 'abk_model.js'))).replace('<script>/*APP*/</script>', '<script>' + app + '</script>')
 body = body.replace('<title>Антарес 3D-двійник</title>', "<title>Антарес · весь об'єкт</title>")
 head = '<!doctype html>\n<html lang="uk">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
 out = 'index.html' if PUB else 'index_vn.html'
