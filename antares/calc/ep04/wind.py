@@ -14,7 +14,8 @@ GW, GG = 1.5, 0.9                                            # γ вітру; γ
 # вага на панель (крок 2,406 × 1,325 м)
 A = 2.406 * 1.325; k = 1831 / 1749
 mod = 36.5; metal = (5282.7 * 1.45 + 1989.8 * 0.45 + 2202.1 * 0.48 + 579.3 * 1.45 + 935.2 * 1.2 + (3979.5 + 3091.2) * 0.06 + 5884.2 * 0.02 + 7622 * 0.1) / 1749
-blk = (4803.6 + 856.5) / 1749 * 13.0
+EDGE_BLK = 0.0                                               # 07.11 (власник): блоки без мата під крайніми профілями прибрано (було 856,5 на 1 749 модулів)
+blk = (4803.6 + EDGE_BLK) / 1749 * 13.0
 g = (mod + metal + blk) * 9.81 / 1000 / A                     # кПа
 R_d = GG * g; cnet_ok = R_d / (GW * QP)
 # крайові модулі: немає сусіда хоча б з одного боку (крок X ≈1,32, Y ≈2,41)
@@ -44,7 +45,7 @@ F_slide = (g + 0.8 * S0) * seg_A * math.sin(alpha)            # кН на всі
 per_m = F_slide / (lan_len * 2); per_tie = per_m * 2.06
 ties = 194; tie_cost = ties * (12.0 + 0.5 * 15.59); anc_cost = 194 * (44.99 + 0.75 * 15.59)
 # тиск блока на утеплювач під снігом
-p_blk = ((0.8 * S0 + g) * A / ((4803.6 + 856.5) / 1749)) / 0.09
+p_blk = ((0.8 * S0 + g) * A / ((4803.6 + EDGE_BLK) / 1749)) / 0.09
 OUT = dict(qp=QP, qp4=QP4, vb=vb, g=g, R_d=R_d, cnet_ok=cnet_ok, mod=mod, metal=metal, blk=blk, A=A, edge=edge, n=len(P), Afield=Afield, rows=rows,
            F_slide=F_slide, per_m=per_m, per_tie=per_tie, tie_cost=tie_cost, anc_cost=anc_cost, p_blk=p_blk, lan_len=lan_len)
 json.dump(OUT, open('wind.json', 'w'), ensure_ascii=False)

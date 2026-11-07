@@ -5,6 +5,7 @@ import json, math, collections
 D = json.load(open('data.json')); W = json.load(open('wind.json'))
 QP, g, A = W['qp'], W['g'], W['A']
 GW, GG = 1.5, 0.9; BLK_KN = 13 * 9.81 / 1000
+ONLY_FG = True                                               # 07.11 (власник): блоки під крайніми профілями прибрано, додаткові — лише F/G
 X0, X1, Y0, Y1 = -0.15, 96.64, -0.5, 96.59; H = 15.9
 e = min(X1 - X0, Y1 - Y0, 2 * H); s10, s4 = e / 10, e / 4
 P = [((m[0] + m[1]) / 2, m[2]) for m in D['roof']]
@@ -25,9 +26,10 @@ for nm, C in SETS.items():
     add_F = Z['F'] * max(0, math.ceil(per['F'])) ; add_G = Z['G'] * max(0, math.ceil(per['G']))
     # H — у зв’язаних блоках зону H тримає надлишок зони I (смуга між проходами — один блок шпильками)
     defH = Z['H'] * max(0, per['H']); surI = Z['I'] * max(0, -per['I'])
-    add_H = max(0, math.ceil(defH - surI))
+    H_def = max(0, math.ceil(defH - surI))                  # нестача зони H після надлишку зони I (у блоках на все зв'язане поле)
+    add_H = 0 if ONLY_FG else H_def                         # 07.11 (власник): додаткові блоки — лише F і G; нестачу H показуємо, не додаємо
     tot = add_F + add_G + add_H
-    res[nm] = dict(per={z: round(v, 2) for z, v in per.items()}, F=add_F, G=add_G, H=add_H, tot=tot, t=tot * 13 / 1000, cost=tot * (3.34 + 0.0396 * 15.59))
+    res[nm] = dict(per={z: round(v, 2) for z, v in per.items()}, F=add_F, G=add_G, H=add_H, H_def=H_def, tot=tot, t=tot * 13 / 1000, cost=tot * (3.34 + 0.0396 * 15.59))
 # бортики: периметр поля біля парапетів (смуги F/G), сталевий скіс 0,15 м на кінцях лаг (оцінка 6 $/м з кріпленням)
 per_len = 2 * (X1 - X0 - 2 * 1.83) + 2 * (Y1 - Y0 - 2.53 - 2.46)
 skirt_cost = per_len * 6.0
