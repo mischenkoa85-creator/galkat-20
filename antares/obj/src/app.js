@@ -998,7 +998,7 @@ function xDouble(e,r){ if(effSec()==='bud') return false;
   if(XN){ const xh=ray.intersectObject(XG,true).filter(x=>x.object.isMesh); if(xh.length){ xPlay(XN.dir>0?-1:1); hideTip(); return true; } }
   const hits=pickHits(); if(!hits.length) return false; const h=hits[0], o=h.object;
   if(XCAN.has(o)){ const X=h.point.x, Y=-h.point.z, i=state.proj==='rp'?rpModAt(X,Y):ourModAt(X,Y); if(i>=0){ hideTip(); openNode(state.proj,i); return true; } }
-  const b=XB.find(b=>b.has(o)); if(b){ closeNode(true); const N=b.build(o,h.instanceId,h.point); if(N){ N.kind=N.kind||'el'; N.proj=state.proj; hideTip(); xShow(N); return true; } }
+  const b=XB.find(b=>b.has(o)); if(b){ closeNode(true); const N=b.build(o,h.instanceId,h.point); if(N&&N.msg){ showTip(N.msg,e,r); return true; } if(N&&N.done){ hideTip(); return true; } if(N){ N.kind=N.kind||'el'; N.proj=state.proj; hideTip(); if(!N.shown) xShow(N); return true; } }
   showTip({t:'Цей елемент не розбирається',d:'Деталей його складу в даних проєкту немає.'},e,r); return true; }
 function showTip(inf,e,r,dbl){ if(!inf){ hideTip(); return; } tip.innerHTML=`<b>${esc(inf.t)}</b>${esc(inf.d||'')}${dbl?'<small style="display:block;margin-top:4px;color:var(--ink-3)">Двічі натисніть — розбереться</small>':''}`; tip.hidden=false; tipT=performance.now();
   const tw=tip.offsetWidth, th=tip.offsetHeight; let x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x+tw>r.width-8) x=r.width-tw-8; if(y+th>r.height-8) y=e.clientY-r.top-th-14;

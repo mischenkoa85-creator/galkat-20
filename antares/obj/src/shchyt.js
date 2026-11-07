@@ -80,7 +80,7 @@ function init(){ const cv=WD.querySelector('canvas'); R=new THREE.WebGLRenderer(
 function cvH(){ const cv=WD.querySelector('canvas'), V=WD.parentElement, ph=V.clientWidth<700, top=8, hd=WD.querySelector('.sw-h').offsetHeight||50;
   const av=V.clientHeight-top-8-hd-38-(ph?90:110); cv.style.height=Math.round(Math.max(ph?160:180,Math.min(ph?240:330,av)))+'px'; }
 function fit(){ const cv=R.domElement, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return; const pr=R.getPixelRatio(); if(cv.width!==Math.round(w*pr)||cv.height!==Math.round(h*pr)) R.setSize(w,h,false); if(Math.abs(SC.aspect-w/h)>1e-3){ SC.aspect=w/h; SC.updateProjectionMatrix(); } }
-const VW={fr:[[0.58,0.16,1.24],[0.0,-0.04,0.0]],bot:[[0.48,-1.2,0.78],[0.0,-0.24,0.02]],ex:[[-0.8,0.42,1.38],[0.0,-0.03,0.08]]};
+const VW={fr:[[0.6,0.2,1.36],[0.0,0.0,0.0]],bot:[[0.48,-1.2,0.78],[0.0,-0.24,0.02]],ex:[[-0.8,0.42,1.38],[0.0,-0.03,0.08]]};
 function view(k,now){ const v=VW[k]; if(now){ SC.position.set(...v[0]); CT.target.set(...v[1]); CT.update(); WIN.cam=null; } else WIN.cam={p0:SC.position.clone(),c0:CT.target.clone(),p1:new V3(...v[0]),c1:new V3(...v[1]),t:0}; WIN.dirty=true; }
 
 // ---------- матеріали і геометрії (спільні для всіх щитів)
@@ -122,6 +122,8 @@ function model(id){ const b=BXD[id]||SH.boxes[0], ns=b.ns, G=new THREE.Group(), 
   [-1,1].forEach(s=>bx(enc,M.enc,t,H_,D_-0.008,s*(W_/2-t/2),0,-0.004)); [-1,1].forEach(s=>bx(enc,M.enc,W_,t,D_-0.008,0,s*(H_/2-t/2),-0.004));
   [-1,1].forEach(s=>bx(enc,M.gas,W_,0.006,0.004,0,s*(H_/2-0.003),D_/2-0.010)); [-1,1].forEach(s=>bx(enc,M.gas,0.006,H_,0.004,s*(W_/2-0.003),0,D_/2-0.010));
   [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(([sx,sy])=>bx(enc,M.met,0.045,0.03,0.005,sx*(W_/2+0.018),sy*(H_/2-0.045),-D_/2+0.004));   // кріплення до рами / стіни
+  { const kz=new THREE.Group(); kz.position.set(0,H_/2+0.035,0.06); kz.rotation.x=0.17; enc.add(kz); bx(kz,M.met,0.65,0.0015,0.35,0,0,0); bx(kz,M.met,0.65,0.02,0.0015,0,-0.01,0.175);   // козирок 650 × 350, сталь 0,7 мм, з відгином
+    [-1,1].forEach(s=>bx(enc,M.met,0.004,0.04,0.12,s*0.25,H_/2+0.02,-0.04)); }
   // монтажна панель і DIN-рейки
   const pg=new THREE.Group(); G.add(pg); bx(pg,M.plate,EN.plate[0]/1000,EN.plate[1]/1000,0.003,0,0,-D_/2+(PZ-1.5)/1000);
   const A=SH.aps, apF=k=>A.filter(a=>a.k===k), span=L=>[Math.min(...L.map(a=>a.x))-6,Math.max(...L.map(a=>a.x+a.w))+6];
@@ -140,7 +142,7 @@ function model(id){ const b=BXD[id]||SH.boxes[0], ns=b.ns, G=new THREE.Group(), 
     else if(a.k==='bus'){ const pos=a.id==='W+'; [-1,1].forEach(s=>cy(g,pos?M.red:M.blk,0.008,d-0.005,s*(w/2-0.018),0,(d-0.005)/2,'z')); bx(g,M.cu,w,h,0.005,0,0,d-0.0025);
       for(let i=0;i<8;i++) cy(g,M.met,0.0035,0.003,-w/2+0.03+i*0.027,0,d+0.0005,'z'); bx(g,pos?M.red:M.blk,0.02,h+0.001,0.0055,w/2-0.012,0,d-0.0025); plt(g,txt([a.id]),0.018,0.009,-w/2+0.014,h/2+0.008,0.012); dz=0.06; }
     else if(a.k==='qs'){ bx(g,M.qs,w,h*0.7,d,0,0,d/2); [-1,1].forEach(s=>bx(g,M.qsC,w*0.92,h*0.15,d*0.8,0,s*h*0.425,d*0.4)); bx(g,M.met,0.01,0.01,0.05,0,0,d+0.025);
-      plt(g,txt(['QS1','250 А · 1000 В DC'],{w:256,h:96}),0.06,0.022,0,-h*0.2,d+0.0015); dz=0.24; }
+      plt(g,txt(['QS1','2P · 1000 В DC-PV2'],{w:256,h:96}),0.06,0.022,0,-h*0.2,d+0.0015); dz=0.24; }
     else if(a.k==='xt'){ const n=Math.max(2,Math.round(a.w/6)); for(let i=0;i<n;i++){ bx(g,M.xt,0.0055,h,d,-w/2+0.003+i*0.006,0,d/2); bx(g,i%2?M.xtB:M.xtO,0.0045,0.006,0.002,-w/2+0.003+i*0.006,h/2-0.01,d+0.001); }
       plt(g,txt([a.id]),Math.min(0.03,w*0.9),0.009,0,-h/2-0.008,0.002); dz=0.1; }
     else if(a.k==='pe'){ [-1,1].forEach(s=>cy(g,M.pe,0.008,d-0.006,s*(w/2-0.015),0,(d-0.006)/2,'z')); bx(g,M.brass,w,h,0.006,0,0,d-0.003); for(let i=0;i<7;i++) cy(g,M.met,0.0032,0.004,-w/2+0.012+i*0.019,0,d+0.001,'z');
@@ -220,7 +222,7 @@ function infoHTML(id){ const b=BXD[id], ss=strOf(id), e=E4B[id]||{}, free=7-b.ns
   <h4>Низ корпусу — роз'єми і вводи</h4><table><tbody>${gR}</tbody></table>
   <h4>Клеми, роз'єми і провідники всередині</h4><table><tbody>${klR}</tbody></table>
   <h4>Маркування</h4><table><tbody>${mkR}</tbody></table>
-  <p><small>Корпус ${esc(SH.enc.mat)}; монтажна панель ${SH.enc.plate[0]} × ${SH.enc.plate[1]} мм. Габарити апаратів — за паспортами еталонних; аналоги в замовленні — не більші.</small></p>`; }
+  <p><small>Зверху — ${esc(SH.enc.kz||'козирок')}. Корпус ${esc(SH.enc.mat)}; монтажна панель ${SH.enc.plate[0]} × ${SH.enc.plate[1]} мм. Габарити апаратів — за паспортами еталонних; аналоги в замовленні — не більші.</small></p>`; }
 
 // ---------- відкрити / закрити
 function btnSync(){ const d=WD.querySelector('[data-a="door"]'), x=WD.querySelector('[data-a="ex"]'); d.setAttribute('aria-pressed',String(WIN.doorT>0.5)); d.textContent=WIN.doorT>0.5?'Двері відчинені':'Двері зачинені'; x.setAttribute('aria-pressed',String(WIN.exT>0.5)); x.textContent=WIN.exT>0.5?'Зібрати':'Розібрати'; }
@@ -259,5 +261,6 @@ canvas.addEventListener('pointerup',e=>{ if(!onShch()||!dn||Math.hypot(e.clientX
   if(!id){ const h=pickHits()[0]; if(h&&BOXO.has(h.object)) id=BOXO.get(h.object); }
   if(id){ if(typeof hideTip==='function') hideTip(); open(id,false); } });
 T_.shch={open,close,model:id=>model(id).G,BOXO,flyTo,WIN};
+XB.push({has:o=>BOXO.has(o),build:o=>{ open(BOXO.get(o),false); return {done:true}; }});   // подвійне натискання на щит у будь-якому розділі
 sync();
 } }

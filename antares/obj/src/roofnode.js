@@ -181,10 +181,15 @@ function nodeOf(mi){ const m=MODS[mi]; if(!m||!LAYS[m.grp]) return null; closeNo
   N.c=m.c.clone().addScaledVector(m.w,0.12); N.kind='rn';
   // камера — збоку від довгого боку модуля (сусідні модулі прозорі), трохи з краю ряду і згори ≈30°: шари розходяться на екрані вгору
   const su=!m.nb.mu?-1:!m.nb.pu?1:-1, dv=m.v.clone().multiplyScalar(-0.85).addScaledVector(m.u,0.35*su).addScaledVector(m.w,0.5); if(dv.y<0.32) dv.y=0.32; N.vdir=dv.normalize(); N.vd=xPhone()?6.6:4.7; N.top=xPhone()?0.5:1.15;   // ціль нижче середини вузла — низ не ховається під панеллю вузла
-  xShow(N,true); return N; }
+  xShow(N,true); N.shown=true; return N; }
 { const cn0=closeNode; closeNode=function(){ const was=XN&&XN.kind==='rn'; const r=cn0.apply(this,arguments); if(was){ SKIP=-1; dimDG(false); ghost(false); upd(true); } return r; }; }
 // модуль для розбору за замовчуванням — на краю ряду (видно крайній профіль, кінці лаг), з сусідом по стику
 function nodeDefault(g){ g=g||'roof'; const ms=MODS.map((m,i)=>[m,i]).filter(([m])=>m.grp===g&&m.nb.mv&&m.nb.pu&&!m.nb.mu&&visUp(m.im)); const p=ms[Math.floor(ms.length*0.35)]; return p?nodeOf(p[1]):null; }
+// 07.11 (власник: «елементи по 2 кліках не розбираються»): подвійне натискання на модуль даху цеху або складу в будь-якому розділі — розбір цього модуля
+{ const IMSET=new Set(MODS.map(m=>m.im)); XB.push({has:o=>IMSET.has(o),build:(o,id,p)=>{ let mi=MODS.findIndex(m=>m.im===o&&m.i===id);
+  if(mi<0&&p){ let bd=1e9; MODS.forEach((m,i)=>{ if(m.im!==o) return; const d=m.c.distanceToSquared(p); if(d<bd){ bd=d; mi=i; } }); }
+  const m=MODS[mi]; if(!m) return null; if(!LAYS[m.grp]) return {msg:{t:'Модуль на ліхтарі',d:'Рейки 41×41 є в моделі; на що їх спирати над склінням — ще не вирішено, тому розбору вузла немає.'}};
+  return nodeOf(mi); }}); }
 window.__twin.roofnode={MODS,BOM,IMS,upd,G_,node:nodeDefault,nodeOf,rec:m=>REC[m.grp](m),setEx:f=>{ if(Math.abs(f-EX)<1e-4) return; EX=f; ghost(f>0); upd(true); }};
 upd(true);
 } }

@@ -450,7 +450,7 @@ function abkBuild(){ const CA=ABR.cells; if(!ABR.pre){ const k=RADD.ghi/abkGhi()
 function abkRun(){ if(ABR.done||ABR.job||!A) return; if(!ABR.cells) abkPrep(); if(ABR.pre){ abkBuild(); return; }
   const tick=()=>{ ABR.job=null; const done=abkStep(); if(done){ abkBuild(); setVis(); legendSun(); panelNow(); need=true; return; } legendSun(); ABR.job=setTimeout(tick,0); }; ABR.job=setTimeout(tick,0); }
 const radOn2=()=>!!state.lay.rad&&state.proj==='ours'&&state.sec!=='mis';   // шар «Радіація» — у будь-якому розділі (власник 04.11, 23:05)
-setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); RGA.visible=on&&ABR.done; if(!on) return; abkRun();
+setVis=(f=>function(){ f.apply(this,arguments); const on=radOn2(); if(on) abkRun(); RGA.visible=on&&ABR.done; if(!on) return;   // 07.11: спершу abkRun (готовий розрахунок будується одразу), потім видимість — інакше АБК і козирок без кольору
   G.ours.visible=true; if(FP&&FP.FG) FP.FG.visible=false; WHI.forEach(w=>{ w.im.visible=false; });
   L28.LG28.forEach(q=>{ Object.values(q.v2m||{}).forEach(g=>g.visible=false); Object.values(q.v2r||{}).forEach(g=>g.visible=false); });
   Object.values(R28.VG||{}).forEach(g=>g.children.forEach(o=>{ if(o.userData.part==='roof') o.visible=false; }));
