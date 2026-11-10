@@ -1805,7 +1805,7 @@ window.SITE20={"DATUM":317.0,"parts":[{"id":0,"num":"","name":"Цех метал
       const mS = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .6, metalness: .2 }, o || {}));
       const MB = { frame: mS(0x38424a, { metalness: .5 }), steel: mS(0x8d969c, { metalness: .6, roughness: .4 }), alu: mS(0xc4cacd, { metalness: .6, roughness: .35 }),
         found: mS(0xa7abad, { roughness: .9, metalness: 0 }), step: mS(0xb3b6b4, { roughness: .9, metalness: 0 }), lid: mS(0xc9cdd0, { roughness: .9, metalness: 0 }),
-        apron: mS(0xaeb1ab, { roughness: .95, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+        apron: mS(0xa3a6a0, { roughness: .95, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
         dem: mS(0xd0021b, { metalness: 0, emissive: 0x6a0010, emissiveIntensity: .4 }) };
       const canv = (Lm, Hm, draw) => { if (!hasDocB) return null; const PX = 60, c = document.createElement('canvas'); c.width = Math.max(8, Math.round(Lm * PX)); c.height = Math.max(8, Math.round(Hm * PX));
         const g = c.getContext('2d'), X = m => m * PX, Y = m => c.height - m * PX; draw(g, X, Y, c); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; };
@@ -1856,7 +1856,7 @@ window.SITE20={"DATUM":317.0,"parts":[{"id":0,"num":"","name":"Цех метал
       { const A = B.apron, sh = new THREE.Shape(A.outer.map(q => new THREE.Vector2(q[0], q[1])));
         A.holes.forEach(hh => sh.holes.push(new THREE.Path(hh.map(q => new THREE.Vector2(q[0], q[1])))));
         const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);
-        const m = new THREE.Mesh(geo, MB.apron); m.position.y = A.y + 0.03; m.receiveShadow = true; m.name = 'BESS20_apron';
+        const m = new THREE.Mesh(geo, MB.apron); m.position.y = Math.max(A.y, ...A.outer.map(q => terrainAt(q[0], q[1]))) + 0.04; m.receiveShadow = true; m.name = 'BESS20_apron';
         m.userData.info = A.info; m.userData.matFacade = MB.apron; m.userData.matSource = srcMat.drawings; pickables.push(m); LB.add(m); }
       B.dem.forEach((q, n) => {
         const pts = q.xy.map(p => new THREE.Vector3(p[0], terrainAt(p[0], p[1]) + 0.6, -p[1]));
